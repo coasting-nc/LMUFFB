@@ -59,7 +59,7 @@ TEST_CASE(test_load_stops_at_presets, "Persistence") {
     Config::Load(engine, test_file);
     
     // In the buggy version, it would be 2.0
-    ASSERT_NEAR(engine.m_gain, 0.5f, 0.001f);
+    ASSERT_NEAR(engine.m_general.gain, 0.5f, 0.001f);
     
     std::remove(test_file.c_str());
 }

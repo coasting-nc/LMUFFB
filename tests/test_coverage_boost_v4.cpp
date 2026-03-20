@@ -42,8 +42,8 @@ TEST_CASE(test_config_legacy_migrations, "Config") {
         ofs << "max_torque_ref=50.0\n";
         ofs.close();
         Config::Load(engine, f);
-        ASSERT_NEAR(engine.m_wheelbase_max_nm, 15.0, 0.001);
-        ASSERT_NEAR(engine.m_target_rim_nm, 10.0, 0.001);
+        ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0, 0.001);
+        ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0, 0.001);
         std::remove(f);
     }
 
@@ -54,8 +54,8 @@ TEST_CASE(test_config_legacy_migrations, "Config") {
         ofs << "max_torque_ref=20.0\n";
         ofs.close();
         Config::Load(engine, f);
-        ASSERT_NEAR(engine.m_wheelbase_max_nm, 20.0, 0.001);
-        ASSERT_NEAR(engine.m_target_rim_nm, 20.0, 0.001);
+        ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 20.0, 0.001);
+        ASSERT_NEAR(engine.m_general.target_rim_nm, 20.0, 0.001);
         std::remove(f);
     }
 }

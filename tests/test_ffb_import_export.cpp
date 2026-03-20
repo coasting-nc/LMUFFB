@@ -14,7 +14,7 @@ TEST_CASE(test_preset_export_import, "Config") {
 
     std::string test_preset_name = "ExportTestPreset";
     Preset p(test_preset_name);
-    p.gain = 0.75f;
+    p.general.gain = 0.75f;
     p.sop = 1.25f;
     p.road_enabled = true;
     p.road_gain = 0.5f;
@@ -54,7 +54,7 @@ TEST_CASE(test_preset_export_import, "Config") {
 
     Preset& imported_p = Config::presets.back();
     ASSERT_TRUE(imported_p.name.find("ExportTestPreset") != std::string::npos);
-    ASSERT_NEAR(imported_p.gain, 0.75f, 0.001f);
+    ASSERT_NEAR(imported_p.general.gain, 0.75f, 0.001f);
     ASSERT_NEAR(imported_p.sop, 1.25f, 0.001f);
     ASSERT_TRUE(imported_p.road_enabled);
     ASSERT_NEAR(imported_p.road_gain, 0.5f, 0.001f);
@@ -87,7 +87,7 @@ TEST_CASE(test_import_name_collision, "Config") {
     Preset& imported_p = Config::presets.back();
     // Should be "Default (1)"
     ASSERT_TRUE(imported_p.name == "Default (1)");
-    ASSERT_NEAR(imported_p.gain, 0.5f, 0.001f);
+    ASSERT_NEAR(imported_p.general.gain, 0.5f, 0.001f);
 
     // Clean up
     if (std::filesystem::exists(filename)) std::filesystem::remove(filename);

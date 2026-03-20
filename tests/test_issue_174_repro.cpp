@@ -14,9 +14,9 @@ void test_issue_174_menu_muting() {
     // Setup Soft Lock to be strong
     engine.m_soft_lock_enabled = true;
     engine.m_soft_lock_stiffness = 20.0f;
-    engine.m_wheelbase_max_nm = 100.0f;
-    engine.m_target_rim_nm = 100.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 100.0f;
+    engine.m_general.target_rim_nm = 100.0f;
+    engine.m_general.gain = 1.0f;
 
     // Normalization setup
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);

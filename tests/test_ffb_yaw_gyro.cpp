@@ -13,8 +13,8 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value for test expectations
     engine.m_sop_effect = 0.0f; // Disable Base SoP
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Reference torque for normalization
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Reference torque for normalization
+    engine.m_general.gain = 1.0f;
     // Disable other effects
     engine.m_understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
@@ -71,8 +71,8 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     // Setup
     engine.m_gyro_gain = 1.0f;
     engine.m_gyro_smoothing = 0.1f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Reference torque for normalization
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Reference torque for normalization
+    engine.m_general.gain = 1.0f;
     
     // Disable other effects to isolate gyro damping
     engine.m_understeer_effect = 0.0f;
@@ -165,8 +165,8 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Legacy value
     engine.m_sop_effect = 0.0f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
@@ -229,8 +229,8 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     InitializeEngine(engine2); // v0.5.12: Initialize with T300 defaults
     engine2.m_sop_yaw_gain = 1.0f;
     engine2.m_sop_effect = 0.0f;
-    engine2.m_wheelbase_max_nm = 20.0f; engine2.m_target_rim_nm = 20.0f;
-    engine2.m_gain = 1.0f;
+    engine2.m_general.wheelbase_max_nm = 20.0f; engine2.m_general.target_rim_nm = 20.0f;
+    engine2.m_general.gain = 1.0f;
     engine2.m_understeer_effect = 0.0f;
     engine2.m_lockup_enabled = false;
     engine2.m_spin_enabled = false;
@@ -282,8 +282,8 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value
     engine.m_sop_effect = 0.0f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_invert_force = false;
     engine.m_understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
@@ -362,8 +362,8 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     engine.m_slide_texture_gain = 1.0f;
     
     engine.m_sop_effect = 0.0f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
@@ -460,8 +460,8 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     // Setup: Isolate Yaw Kick effect
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_sop_effect = 0.0f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
@@ -483,7 +483,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     // Ensure all effects that could mask are off
     engine.m_sop_effect = 0.0f;
     engine.m_understeer_effect = 0.0f;
-    engine.m_min_force = 0.0f;
+    engine.m_general.min_force = 0.0f;
     
     double force_idle = engine.calculate_force(&data);
     
@@ -724,8 +724,8 @@ TEST_CASE(test_sop_yaw_kick_direction, "YawGyro") {
     std::memset(&data, 0, sizeof(data));
     
     engine.m_sop_yaw_gain = 1.0f;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     
     // Case: Car rotates Right (+Yaw Accel)

@@ -132,7 +132,7 @@ Currently, `Preset` and `FFBEngine` have over 100 loose variables. Group them in
             toml::table tbl = toml::parse_file(filename);
             
             // Safely read values with fallbacks if missing
-            engine.m_gain = tbl["General"]["gain"].value_or(1.0f);
+            engine.m_general.gain = tbl["General"]["gain"].value_or(1.0f);
             engine.m_invert_force = tbl["General"]["invert_force"].value_or(false);
             
             // Read grouped structs easily

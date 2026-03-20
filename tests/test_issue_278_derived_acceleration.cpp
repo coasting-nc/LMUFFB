@@ -11,9 +11,9 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0f;
     engine.m_vibration_gain = 1.0f;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 20.0f;
-    engine.m_target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;
+    engine.m_general.target_rim_nm = 20.0f;
 
     // Disable other effects
     engine.m_understeer_effect = 0.0f;
@@ -63,7 +63,7 @@ TEST_CASE(test_issue_278_road_texture_velocity_response, "DerivedAccel") {
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0f;
     engine.m_vibration_gain = 1.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_invert_force = false;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
@@ -105,7 +105,7 @@ TEST_CASE(test_issue_278_lockup_continuity, "DerivedAccel") {
     engine.m_lockup_enabled = true;
     engine.m_lockup_gain = 1.0f;
     engine.m_vibration_gain = 1.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_lockup_prediction_sens = 10.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);

@@ -83,9 +83,9 @@ void test_safety_restrictiveness() {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_safety.m_safety_window_duration = 2.0f;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0/10.0);
 
@@ -150,9 +150,9 @@ void test_safety_reentry_smoothing() {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_safety.m_safety_window_duration = 2.0f;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0/10.0);
 

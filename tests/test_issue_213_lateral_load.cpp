@@ -12,8 +12,8 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vect
     engine.m_sop_effect = 1.0f;       // Lateral G
     engine.m_lat_load_effect = 1.0f;  // Lateral Load
     engine.m_sop_scale = 1.0f;
-    engine.m_wheelbase_max_nm = 20.0f;
-    engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;
+    engine.m_general.target_rim_nm = 20.0f;
 
     // Force a car class to initialize load reference
     engine.calculate_force(nullptr, "GT3", "Test Car");
@@ -125,7 +125,7 @@ TEST_CASE_TAGGED(test_issue_213_orientation_matrix, "CorePhysics", (std::vector<
     engine.m_sop_effect = 1.0f;
     engine.m_lat_load_effect = 1.0f;
     engine.m_sop_scale = 1.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_invert_force = true; // Match app default (Pull away from centripetal)
 
     // Scenario 1: Right Turn (Centrifugal force LEFT, Load shift LEFT)

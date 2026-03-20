@@ -70,7 +70,7 @@ TEST_CASE(test_ffb_engine_invalid_range_warning_multiple, "Diagnostics") {
 TEST_CASE(test_ffb_engine_contextual_spike_rejection, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
     engine.m_torque_source = 0; // Shaft
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
@@ -94,7 +94,7 @@ TEST_CASE(test_ffb_engine_contextual_spike_rejection, "Physics") {
 TEST_CASE(test_ffb_engine_clean_state_false_branches, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
@@ -110,7 +110,7 @@ TEST_CASE(test_ffb_engine_clean_state_false_branches, "Physics") {
     // 2. High Torque Slew (is_clean_state = false)
     // Reset state for clean sub-test
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
     data.mLocalAccel.x = 0.0;
     FFBEngineTestAccess::SetLastRawTorque(engine, 0.0);
     data.mSteeringShaftTorque = 50.0; // Slew = 50/0.01 = 5000 > 1000
@@ -123,7 +123,7 @@ TEST_CASE(test_ffb_engine_clean_state_false_branches, "Physics") {
 TEST_CASE(test_ffb_engine_dynamic_normalization_decay, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 50.0);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
@@ -255,8 +255,8 @@ TEST_CASE(test_ffb_engine_significant_soft_lock_allowed_branch, "Safety") {
     // but soft_lock_force > 0.5
     engine.m_soft_lock_enabled = true;
     engine.m_soft_lock_stiffness = 20.0f;
-    engine.m_wheelbase_max_nm = 20.0f; // Spring force will be high
-    engine.m_min_force = 0.1f;
+    engine.m_general.wheelbase_max_nm = 20.0f; // Spring force will be high
+    engine.m_general.min_force = 0.1f;
     
     // Call with allowed = false (AI/Garage)
     engine.calculate_force(&data, "GT3", "911", 0.0f, false);

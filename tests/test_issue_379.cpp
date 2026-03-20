@@ -55,7 +55,7 @@ TEST_CASE(test_issue_379_teleport_spike_prevention, "Regression") {
     engine.m_bottoming_enabled = true;
     engine.m_bottoming_method = 1; // Force-derivative based
     engine.m_bottoming_gain = 1.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0, 0.0);
 

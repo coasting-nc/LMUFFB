@@ -93,7 +93,7 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     // Force some gains so snapshots have non-zero results
     engine.m_gyro_gain = 1.0f;
     engine.m_abs_gain = 1.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
     
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));

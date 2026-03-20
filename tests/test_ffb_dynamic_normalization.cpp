@@ -10,7 +10,7 @@ TEST_CASE(test_peak_follower_fast_attack, "StructuralNormalization") {
     std::cout << "\nTest: Peak Follower Fast Attack (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
 
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
@@ -39,7 +39,7 @@ TEST_CASE(test_peak_follower_fast_attack_disabled, "StructuralNormalization") {
     std::cout << "\nTest: Peak Follower Fast Attack (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = false;
+    engine.m_general.dynamic_normalization_enabled = false;
 
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
@@ -65,7 +65,7 @@ TEST_CASE(test_peak_follower_exponential_decay, "StructuralNormalization") {
     std::cout << "\nTest: Peak Follower Exponential Decay (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
 
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.01f; // 100Hz
@@ -98,7 +98,7 @@ TEST_CASE(test_peak_follower_exponential_decay_disabled, "StructuralNormalizatio
     std::cout << "\nTest: Peak Follower Exponential Decay (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = false;
+    engine.m_general.dynamic_normalization_enabled = false;
 
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.01f;
@@ -123,7 +123,7 @@ TEST_CASE(test_contextual_spike_rejection, "StructuralNormalization") {
     std::cout << "\nTest: Contextual Spike Rejection (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
 
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
@@ -150,7 +150,7 @@ TEST_CASE(test_contextual_spike_rejection_disabled, "StructuralNormalization") {
     std::cout << "\nTest: Contextual Spike Rejection (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = false;
+    engine.m_general.dynamic_normalization_enabled = false;
 
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;
@@ -176,14 +176,14 @@ TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     std::cout << "\nTest: Structural vs Texture Separation (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine); // Use standard test initialization (invert_force=false)
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
 
     // Inject custom values via TestAccess
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 50.0);
     // Bypass smoothing for the multiplier to ensure exact match
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 50.0); // 0.02
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Multiplier 1/20 = 0.05
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Multiplier 1/20 = 0.05
+    engine.m_general.gain = 1.0f;
 
     TelemInfoV01 data = {};
     data.mDeltaTime = 0.0025f;

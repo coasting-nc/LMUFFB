@@ -26,9 +26,9 @@ TEST_CASE(test_soft_lock_normalization_consistency, "Regression") {
     engine.m_soft_lock_enabled = true;
     engine.m_soft_lock_stiffness = 100.0f; // 100%
     engine.m_soft_lock_damping = 0.0f;
-    engine.m_wheelbase_max_nm = 15.0f;
-    engine.m_target_rim_nm = 10.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 15.0f;
+    engine.m_general.target_rim_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_steering_shaft_gain = 0.0f; // Mute other forces
 
     // Small excess to test non-clamped behavior if necessary,

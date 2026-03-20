@@ -11,8 +11,8 @@ TEST_CASE(test_hardware_scaling_structural, "HardwareScaling") {
     // 1. Session Peak = 30.0 Nm (via target_rim_nm at Apply time)
     // 2. Target Rim = 10.0 Nm
     // 3. Wheelbase Max = 20.0 Nm
-    engine.m_target_rim_nm = 10.0f;
-    engine.m_wheelbase_max_nm = 20.0f;
+    engine.m_general.target_rim_nm = 10.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 30.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 30.0);
 
@@ -26,7 +26,7 @@ TEST_CASE(test_hardware_scaling_structural, "HardwareScaling") {
     double norm_structural = structural_sum * FFBEngineTestAccess::GetSmoothedStructuralMult(engine);
     ASSERT_NEAR(norm_structural, 1.0, 0.0001);
 
-    double di_structural = norm_structural * ((double)engine.m_target_rim_nm / (double)engine.m_wheelbase_max_nm);
+    double di_structural = norm_structural * ((double)engine.m_general.target_rim_nm / (double)engine.m_general.wheelbase_max_nm);
     ASSERT_NEAR(di_structural, 0.5, 0.0001);
 }
 
@@ -38,16 +38,16 @@ TEST_CASE(test_hardware_scaling_textures, "HardwareScaling") {
     // 1. Wheelbase Max = 20.0 Nm
     // 2. Texture Sum = 5.0 Nm (Absolute)
     // di_texture = 5.0 / 20.0 = 0.25
-    engine.m_wheelbase_max_nm = 20.0f;
-    engine.m_target_rim_nm = 10.0f; // Should not affect textures
+    engine.m_general.wheelbase_max_nm = 20.0f;
+    engine.m_general.target_rim_nm = 10.0f; // Should not affect textures
 
     double texture_sum_nm = 5.0;
-    double di_texture = texture_sum_nm / (double)engine.m_wheelbase_max_nm;
+    double di_texture = texture_sum_nm / (double)engine.m_general.wheelbase_max_nm;
     ASSERT_NEAR(di_texture, 0.25, 0.0001);
 
     // Changing target_rim should NOT change texture scaling
-    engine.m_target_rim_nm = 15.0f;
-    di_texture = texture_sum_nm / (double)engine.m_wheelbase_max_nm;
+    engine.m_general.target_rim_nm = 15.0f;
+    di_texture = texture_sum_nm / (double)engine.m_general.wheelbase_max_nm;
     ASSERT_NEAR(di_texture, 0.25, 0.0001);
 }
 
@@ -73,8 +73,8 @@ TEST_CASE(test_config_migration_max_torque, "HardwareScaling") {
         FFBEngine engine;
         Config::Load(engine, test_file);
 
-        ASSERT_NEAR(engine.m_wheelbase_max_nm, 15.0f, 0.0001);
-        ASSERT_NEAR(engine.m_target_rim_nm, 10.0f, 0.0001);
+        ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0f, 0.0001);
+        ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0f, 0.0001);
 
         std::remove(test_file.c_str());
     }
@@ -90,8 +90,8 @@ TEST_CASE(test_config_migration_max_torque, "HardwareScaling") {
         FFBEngine engine;
         Config::Load(engine, test_file);
 
-        ASSERT_NEAR(engine.m_wheelbase_max_nm, 20.0f, 0.0001);
-        ASSERT_NEAR(engine.m_target_rim_nm, 20.0f, 0.0001);
+        ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 20.0f, 0.0001);
+        ASSERT_NEAR(engine.m_general.target_rim_nm, 20.0f, 0.0001);
 
         std::remove(test_file.c_str());
     }

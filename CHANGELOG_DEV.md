@@ -2600,6 +2600,23 @@ test_ffb_persistent_load.cpp, switched to strncpy_s on Windows.
 
 For versions 0.6.x and older, see [CHANGELOG_ARCHIVE_v0.6.x_and_older.md](CHANGELOG_ARCHIVE_v0.6.x_and_older.md).
 
+## [0.7.208] - 2026-03-26
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 1)**:
+  - Began the architectural refactoring of the configuration system using the "Strangler Fig" pattern.
+  - **Grouped Data Structures**: Introduced `GeneralConfig` struct to centralize master scaling, hardware limits, and global normalization settings.
+  - **FFBEngine & Preset Refinement**: Refactored both classes to utilize the new grouped structure, reducing boilerplate and improving data consistency.
+  - **Nested Pathing**: Updated all references across the engine, configuration, and GUI layers to use nested variable paths (e.g., `m_general.gain`).
+  - **Preserved Global Settings**: Kept `m_invert_force` as a global engine variable to ensure it remains persistent across preset changes, satisfying community feedback for hardware-specific settings.
+
+### Testing
+- **New Safety Suite**: Added `tests/test_refactor_general.cpp` verifying physics consistency, round-trip synchronization, and validation clamping for the new grouped structure.
+- **Regression Guard**: Updated the entire test suite (574 cases) to align with the new data model.
+- Verified 100% pass rate across the full suite.
+
+---
+
 ## [0.7.207] - 2026-03-21
 ### Changed
 - Improved Stationary Damping setting (Issue #430):

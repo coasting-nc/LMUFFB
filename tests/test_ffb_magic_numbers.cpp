@@ -280,7 +280,7 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
 
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true; // ENABLED
+    engine.m_general.auto_load_normalization_enabled = true; // ENABLED
     engine.m_bottoming_enabled = true;
     engine.m_bottoming_gain = 1.0f;
     engine.m_bottoming_method = 0;
@@ -294,7 +294,7 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
     engine.calculate_force(&data, "GT3", "911");
 
     // NOW enable it and learn
-    engine.m_auto_load_normalization_enabled = true;
+    engine.m_general.auto_load_normalization_enabled = true;
     data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3", "911");
 

@@ -296,13 +296,13 @@ TEST_CASE(test_preset_equals_branches, "System") {
         p1.field = val; \
         if (!p1.Equals(p2)) { g_tests_passed++; }
 
-    TEST_FIELD_NE(gain, 0.5f);
+    TEST_FIELD_NE(general.gain, 0.5f);
     TEST_FIELD_NE(understeer, 0.5f);
     TEST_FIELD_NE(sop, 0.5f);
     TEST_FIELD_NE(sop_scale, 0.5f);
     TEST_FIELD_NE(sop_smoothing, 0.5f);
     TEST_FIELD_NE(slip_smoothing, 0.5f);
-    TEST_FIELD_NE(min_force, 0.5f);
+    TEST_FIELD_NE(general.min_force, 0.5f);
     TEST_FIELD_NE(oversteer_boost, 0.5f);
     TEST_FIELD_NE(long_load_effect, 0.5f);
     TEST_FIELD_NE(long_load_smoothing, 0.5f);
@@ -333,8 +333,8 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(soft_lock_enabled, !p2.soft_lock_enabled);
     TEST_FIELD_NE(soft_lock_stiffness, 0.5f);
     TEST_FIELD_NE(soft_lock_damping, 0.5f);
-    TEST_FIELD_NE(wheelbase_max_nm, 100.0f);
-    TEST_FIELD_NE(target_rim_nm, 100.0f);
+    TEST_FIELD_NE(general.wheelbase_max_nm, 100.0f);
+    TEST_FIELD_NE(general.target_rim_nm, 100.0f);
     TEST_FIELD_NE(lockup_freq_scale, 0.5f);
     TEST_FIELD_NE(bottoming_method, 1);
     TEST_FIELD_NE(scrub_drag_gain, 0.5f);

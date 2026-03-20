@@ -34,7 +34,7 @@ TEST_CASE(test_ffb_engine_extreme_edge_cases, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // 1. Wheelbase max NM < 1.0 (Line 608)
-    engine.m_wheelbase_max_nm = 0.5f; 
+    engine.m_general.wheelbase_max_nm = 0.5f;
     
     // 2. Wheel radius < RADIUS_FALLBACK_MIN_M (Line 188 context)
     // Note: circumference > 0 is always true because fallback is 0.33, 

@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include "FFBEngine.h"
+#include "ffb/FFBConfig.h"
 #include <string>
 #include <vector>
 #include <chrono>
@@ -27,7 +28,7 @@ struct Preset {
     // 3. Any test presets in Config.cpp that rely on these defaults
     //
     // Current defaults match: GT3 DD 15 Nm (Simagic Alpha) - v0.6.35
-   float gain = 1.0f;
+    GeneralConfig general;
     float understeer = 1.0f;  // New scale: 0.0-2.0, where 1.0 = proportional
     float understeer_gamma = 1.0f; // NEW: shapes the grip loss curve
     float sop = 1.666f;
@@ -36,7 +37,6 @@ struct Preset {
     float sop_scale = 1.0f;
     float sop_smoothing = 0.0f;
     float slip_smoothing = 0.002f;
-    float min_force = 0.0f;
     float oversteer_boost = 2.52101f;
     float long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
     float long_load_smoothing = 0.15f; // Renamed from dynamic_weight_smoothing (#301)
@@ -83,15 +83,9 @@ struct Preset {
     float road_gain = 0.0f;
     float vibration_gain = 1.0f; // New v0.7.110 (Issue #206)
 
-    bool dynamic_normalization_enabled = false;
-    bool auto_load_normalization_enabled = false;
-
     bool soft_lock_enabled = true;
     float soft_lock_stiffness = 20.0f;
     float soft_lock_damping = 0.5f;
-    
-    float wheelbase_max_nm = 15.0f; // Default DD
-    float target_rim_nm = 10.0f;    // Default target
     
     float lockup_freq_scale = 1.02f;      // New v0.6.20
     bool bottoming_enabled = true;
@@ -184,13 +178,13 @@ struct Preset {
     Preset() : name("Unnamed"), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading
 
     // 3. Fluent Setters (The "Python Dictionary" feel)
-    Preset& SetGain(float v) { gain = v; return *this; }
+    Preset& SetGain(float v) { general.gain = v; return *this; }
     Preset& SetUndersteer(float v) { understeer = v; return *this; }
     Preset& SetUndersteerGamma(float v) { understeer_gamma = v; return *this; }
     Preset& SetSoP(float v) { sop = v; return *this; }
     Preset& SetSoPScale(float v) { sop_scale = v; return *this; }
     Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
-    Preset& SetMinForce(float v) { min_force = v; return *this; }
+    Preset& SetMinForce(float v) { general.min_force = v; return *this; }
     Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
     Preset& SetLongitudinalLoad(float v) { long_load_effect = v; return *this; }
     Preset& SetLongitudinalLoadSmoothing(float v) { long_load_smoothing = v; return *this; }
@@ -226,7 +220,7 @@ struct Preset {
     }
     Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
     Preset& SetVibrationGain(float v) { vibration_gain = v; return *this; }
-    Preset& SetDynamicNormalization(bool enabled) { dynamic_normalization_enabled = enabled; return *this; }
+    Preset& SetDynamicNormalization(bool enabled) { general.dynamic_normalization_enabled = enabled; return *this; }
 
     Preset& SetSoftLock(bool enabled, float stiffness, float damping) {
         soft_lock_enabled = enabled;
@@ -236,8 +230,8 @@ struct Preset {
     }
     
     Preset& SetHardwareScaling(float wheelbase, float target) {
-        wheelbase_max_nm = wheelbase;
-        target_rim_nm = target;
+        general.wheelbase_max_nm = wheelbase;
+        general.target_rim_nm = target;
         return *this;
     }
     
@@ -370,9 +364,9 @@ struct Preset {
     // Apply this preset to an engine instance
     // v0.7.16: Added comprehensive safety clamping to prevent crashes/NaN from invalid config values
     void Apply(FFBEngine& engine) const {
-        engine.m_dynamic_normalization_enabled = dynamic_normalization_enabled;
-        engine.m_auto_load_normalization_enabled = auto_load_normalization_enabled;
-        engine.m_gain = (std::max)(0.0f, gain);
+        engine.m_general = this->general;
+        engine.m_general.Validate();
+
         engine.m_understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer));
         engine.m_understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));
         engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
@@ -381,7 +375,6 @@ struct Preset {
         engine.m_sop_scale = (std::max)(0.01f, sop_scale);
         engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
-        engine.m_min_force = (std::max)(0.0f, min_force);
         engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);
         engine.m_long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
         engine.m_long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
@@ -427,8 +420,6 @@ struct Preset {
         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
 
-        engine.m_wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);
-        engine.m_target_rim_nm = (std::max)(1.0f, target_rim_nm);
         engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
         engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
@@ -509,13 +500,13 @@ struct Preset {
 
         // Stage 1 & 2 Normalization (Issue #152 & #153)
         // Initialize session peak from target rim torque to provide a sane starting point.
-        engine.m_session_peak_torque = (std::max)(1.0, (double)target_rim_nm);
+        engine.m_session_peak_torque = (std::max)(1.0, (double)engine.m_general.target_rim_nm);
         engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;
     }
 
     // NEW: Ensure values are within safe ranges (v0.7.16)
     void Validate() {
-        gain = (std::max)(0.0f, gain);
+        general.Validate();
         understeer = (std::max)(0.0f, (std::min)(2.0f, understeer));
         understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));
         sop = (std::max)(0.0f, (std::min)(2.0f, sop));
@@ -524,7 +515,6 @@ struct Preset {
         sop_scale = (std::max)(0.01f, sop_scale);
         sop_smoothing = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         slip_smoothing = (std::max)(0.0001f, slip_smoothing);
-        min_force = (std::max)(0.0f, min_force);
         oversteer_boost = (std::max)(0.0f, oversteer_boost);
         long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
         long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
@@ -550,8 +540,6 @@ struct Preset {
         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));
         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
-        wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);
-        target_rim_nm = (std::max)(1.0f, target_rim_nm);
         abs_freq = (std::max)(1.0f, abs_freq);
         lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
@@ -613,9 +601,7 @@ struct Preset {
 
     // NEW: Capture current engine state into this preset
     void UpdateFromEngine(const FFBEngine& engine) {
-        dynamic_normalization_enabled = engine.m_dynamic_normalization_enabled;
-        auto_load_normalization_enabled = engine.m_auto_load_normalization_enabled;
-        gain = engine.m_gain;
+        general = engine.m_general;
         understeer = engine.m_understeer_effect;
         understeer_gamma = engine.m_understeer_gamma;
         sop = engine.m_sop_effect;
@@ -624,7 +610,6 @@ struct Preset {
         sop_scale = engine.m_sop_scale;
         sop_smoothing = engine.m_sop_smoothing_factor;
         slip_smoothing = engine.m_slip_angle_smoothing;
-        min_force = engine.m_min_force;
         oversteer_boost = engine.m_oversteer_boost;
         long_load_effect = engine.m_long_load_effect;
         long_load_smoothing = engine.m_long_load_smoothing;
@@ -669,8 +654,6 @@ struct Preset {
         soft_lock_stiffness = engine.m_soft_lock_stiffness;
         soft_lock_damping = engine.m_soft_lock_damping;
 
-        wheelbase_max_nm = engine.m_wheelbase_max_nm;
-        target_rim_nm = engine.m_target_rim_nm;
         abs_freq = engine.m_abs_freq_hz;
         lockup_freq_scale = engine.m_lockup_freq_scale;
         spin_freq_scale = engine.m_spin_freq_scale;
@@ -754,7 +737,7 @@ struct Preset {
         const float eps = 0.0001f;
         auto is_near = [](float a, float b, float epsilon) { return std::abs(a - b) < epsilon; };
 
-        if (!is_near(gain, p.gain, eps)) return false;
+        if (!general.Equals(p.general)) return false;
         if (!is_near(understeer, p.understeer, eps)) return false;
         if (!is_near(understeer_gamma, p.understeer_gamma, eps)) return false;
         if (!is_near(sop, p.sop, eps)) return false;
@@ -763,7 +746,6 @@ struct Preset {
         if (!is_near(sop_scale, p.sop_scale, eps)) return false;
         if (!is_near(sop_smoothing, p.sop_smoothing, eps)) return false;
         if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
-        if (!is_near(min_force, p.min_force, eps)) return false;
         if (!is_near(oversteer_boost, p.oversteer_boost, eps)) return false;
         if (!is_near(long_load_effect, p.long_load_effect, eps)) return false;
         if (!is_near(long_load_smoothing, p.long_load_smoothing, eps)) return false;
@@ -809,15 +791,10 @@ struct Preset {
         if (!is_near(road_gain, p.road_gain, eps)) return false;
         if (!is_near(vibration_gain, p.vibration_gain, eps)) return false;
 
-        if (dynamic_normalization_enabled != p.dynamic_normalization_enabled) return false;
-        if (auto_load_normalization_enabled != p.auto_load_normalization_enabled) return false;
-
         if (soft_lock_enabled != p.soft_lock_enabled) return false;
         if (!is_near(soft_lock_stiffness, p.soft_lock_stiffness, eps)) return false;
         if (!is_near(soft_lock_damping, p.soft_lock_damping, eps)) return false;
 
-        if (!is_near(wheelbase_max_nm, p.wheelbase_max_nm, eps)) return false;
-        if (!is_near(target_rim_nm, p.target_rim_nm, eps)) return false;
         if (!is_near(lockup_freq_scale, p.lockup_freq_scale, eps)) return false;
         if (bottoming_enabled != p.bottoming_enabled) return false;
         if (!is_near(bottoming_gain, p.bottoming_gain, eps)) return false;

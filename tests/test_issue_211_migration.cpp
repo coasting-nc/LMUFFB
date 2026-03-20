@@ -32,15 +32,15 @@ TEST_CASE(test_issue_211_preset_gain_migration, "Config") {
             found = true;
             // Current code (before fix) will reset wheelbase_max_nm to 15.0 but KEEP gain at 1.0
             // We expect gain to be scaled to 0.15f after fix.
-            if (preset.wheelbase_max_nm == 15.0f) {
-                if (std::abs(preset.gain - 0.15f) < 0.001f) {
-                    std::cout << "[PASS] Legacy preset gain migrated correctly: " << preset.gain << std::endl;
+            if (preset.general.wheelbase_max_nm == 15.0f) {
+                if (std::abs(preset.general.gain - 0.15f) < 0.001f) {
+                    std::cout << "[PASS] Legacy preset gain migrated correctly: " << preset.general.gain << std::endl;
                     g_tests_passed++;
                 } else {
-                    FAIL_TEST("Legacy preset gain NOT migrated. Got: " << preset.gain << " (Expected ~0.15)");
+                    FAIL_TEST("Legacy preset gain NOT migrated. Got: " << preset.general.gain << " (Expected ~0.15)");
                 }
             } else {
-                FAIL_TEST("Legacy preset wheelbase_max_nm NOT reset. Got: " << preset.wheelbase_max_nm);
+                FAIL_TEST("Legacy preset wheelbase_max_nm NOT reset. Got: " << preset.general.wheelbase_max_nm);
             }
             break;
         }
@@ -73,11 +73,11 @@ TEST_CASE(test_issue_211_config_gain_migration, "Config") {
     Config::Load(engine, test_file);
 
     // Expected gain: 0.8 * 0.15 = 0.12
-    if (std::abs(engine.m_gain - 0.12f) < 0.001f) {
-        std::cout << "[PASS] Legacy config gain migrated correctly: " << engine.m_gain << std::endl;
+    if (std::abs(engine.m_general.gain - 0.12f) < 0.001f) {
+        std::cout << "[PASS] Legacy config gain migrated correctly: " << engine.m_general.gain << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Legacy config gain NOT migrated. Got: " << engine.m_gain << " (Expected ~0.12)");
+        FAIL_TEST("Legacy config gain NOT migrated. Got: " << engine.m_general.gain << " (Expected ~0.12)");
     }
 
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);

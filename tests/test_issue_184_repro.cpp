@@ -16,9 +16,9 @@ void test_soft_lock_stationary_not_allowed() {
     engine.m_soft_lock_enabled = true;
     engine.m_soft_lock_stiffness = 20.0f;
     engine.m_soft_lock_damping = 0.0f;
-    engine.m_wheelbase_max_nm = 100.0f;
-    engine.m_target_rim_nm = 100.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 100.0f;
+    engine.m_general.target_rim_nm = 100.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_steering_shaft_gain = 1.0f;
 
     // Set speed to 0

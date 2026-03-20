@@ -11,8 +11,8 @@ TEST_CASE(test_yaw_kick_derived_from_rate, "YawKick") {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_yaw_accel_smoothing = 0.050f; // 50ms smoothing
     engine.m_sop_effect = 0.0f;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;
     engine.m_invert_force = false;
     
     // Scenario: Game reports 0 raw acceleration, but Yaw Rate is increasing.

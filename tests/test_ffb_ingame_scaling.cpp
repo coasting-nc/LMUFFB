@@ -8,7 +8,7 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     FFBEngine engine;
 
     // Setup a clean state
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_understeer_effect = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_oversteer_boost = 0.0f;
@@ -23,7 +23,7 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_bottoming_gain = 0.0f;
     engine.m_soft_lock_enabled = false;
-    engine.m_min_force = 0.0f;
+    engine.m_general.min_force = 0.0f;
     engine.m_invert_force = false;
 
     // 1. In-Game FFB Source (m_torque_source = 1)
@@ -32,8 +32,8 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     // 4. In-Game Gain = 1.0
     // 5. Game Input = 1.0 (Full strength)
     engine.m_torque_source = 1;
-    engine.m_wheelbase_max_nm = 20.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;
+    engine.m_general.target_rim_nm = 10.0f;
     engine.m_ingame_ffb_gain = 1.0f;
     engine.m_torque_passthrough = true;
 

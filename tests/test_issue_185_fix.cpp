@@ -9,11 +9,11 @@ TEST_CASE(test_issue_185_fix_repro, "Internal") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_gain = 1.0f;
-    engine.m_min_force = 0.05f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.min_force = 0.05f;
     engine.m_steering_shaft_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
 
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 10.0);
@@ -43,10 +43,10 @@ TEST_CASE(test_issue_185_fix_soft_lock, "Internal") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_gain = 1.0f;
-    engine.m_min_force = 0.05f;
-    engine.m_wheelbase_max_nm = 100.0f;
-    engine.m_target_rim_nm = 100.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.min_force = 0.05f;
+    engine.m_general.wheelbase_max_nm = 100.0f;
+    engine.m_general.target_rim_nm = 100.0f;
 
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
@@ -80,11 +80,11 @@ TEST_CASE(test_issue_235_garage_noise, "Internal") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_gain = 1.0f;
-    engine.m_min_force = 0.05f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.min_force = 0.05f;
     engine.m_steering_shaft_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
     engine.m_soft_lock_enabled = true;
     engine.m_soft_lock_stiffness = 20.0f;
 

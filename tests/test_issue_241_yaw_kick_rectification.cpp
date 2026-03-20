@@ -11,9 +11,9 @@ TEST_CASE(test_issue_241_rectification_fix, "YawGyro") {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_yaw_kick_threshold = 1.0f; // Threshold = 1.0
     engine.m_yaw_accel_smoothing = 0.05f; // Smoothing tau
-    engine.m_wheelbase_max_nm = 20.0f;
-    engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;
+    engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_invert_force = false;
 
     // Disable other effects
@@ -65,9 +65,9 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     engine.m_sop_yaw_gain = 1.0f;
     engine.m_yaw_kick_threshold = 1.0f; // Threshold = 1.0
     engine.m_yaw_accel_smoothing = 0.0001f; // Fast response for testing
-    engine.m_wheelbase_max_nm = 20.0f;
-    engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;
+    engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_invert_force = false;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);

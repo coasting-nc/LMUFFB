@@ -101,8 +101,8 @@ TEST_CASE(test_config_migration_logic, "Config") {
 
         Config::Load(engine, "legacy_config.ini");
         ASSERT_NEAR(engine.m_understeer_effect, 1.5, 0.001);
-        ASSERT_NEAR(engine.m_wheelbase_max_nm, 15.0, 0.001);
-        ASSERT_NEAR(engine.m_target_rim_nm, 10.0, 0.001);
+        ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0, 0.001);
+        ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0, 0.001);
 
         std::remove("legacy_config.ini");
     }

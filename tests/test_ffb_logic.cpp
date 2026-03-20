@@ -103,7 +103,7 @@ TEST_CASE(test_preset_management_system, "Logic") {
     Config::presets.clear();
 
     FFBEngine engine;
-    engine.m_gain = 0.88f;
+    engine.m_general.gain = 0.88f;
     engine.m_understeer_effect = 12.3f;
 
     Config::AddUserPreset("TestPreset_Logic", engine);
@@ -114,7 +114,7 @@ TEST_CASE(test_preset_management_system, "Logic") {
     for (const auto& p : Config::presets) {
         if (p.name == "TestPreset_Logic") {
             found = true;
-            ASSERT_TRUE(p.gain == engine.m_gain);
+            ASSERT_TRUE(p.general.gain == engine.m_general.gain);
             ASSERT_TRUE(p.understeer == engine.m_understeer_effect);
             ASSERT_TRUE(p.is_builtin == false);
             break;
