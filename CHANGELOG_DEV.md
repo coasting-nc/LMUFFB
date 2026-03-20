@@ -34,6 +34,18 @@ All notable changes to this project will be documented in this file.
 - **Regression Guard**: Updated the entire test suite (574 cases) to align with the new data model.
 - Verified 100% pass rate across the full suite.
 
+
+---
+
+## Cumulative changes from version 0.7.203 till 0.7.207
+
+### Fixed
+
+- Fixed Strong Oscillations when in the Pits or very low speed (by adding the "Stationary Damping" setting)
+- Strong spikes or jolts (when pausing, back to menus or leaving the game) have been significantly reduced, except for edge cases (eg.  pausing when doing donuts).
+- FFB join/leave stutters should be barely noticeable now
+- Minor Fix to Preset Data Loss on Exit
+
 ---
 
 ## [0.7.207]  
@@ -96,6 +108,20 @@ All notable changes to this project will be documented in this file.
 - **New Regression Test**: Added `tests/test_issue_371_repro.cpp` verifying that a Load -> Save -> Load cycle preserves user presets without requiring GUI interaction.
 - Verified 100% pass rate for Config and Presets test categories.
 
+
+---
+
+
+## Cumulative changes from version 0.7.197 till 0.7.203
+
+### Fixed
+- More fixed for FFB Smoothness, to remove possible sources of graininess and wrong vibrations.
+- Fixed bugs that were triggering the bottoming effect during high-speed cornering.
+- Removed unreliable REST API car brand detection.
+
+### Added
+- GUI toggle for Dynamic Load Sensitivity of optimal slip angle.
+
 ---
 
 ## [0.7.203] - 2026-03-23
@@ -112,19 +138,6 @@ All notable changes to this project will be documented in this file.
 - **Test Suite Update**: Renamed `tests/test_rest_api_manufacturer.cpp` to `tests/test_vehicle_brand.cpp` and refactored it to verify the local `ParseVehicleBrand` heuristics instead of the removed REST API parsing.
 - Verified 100% pass rate: **565/565 test cases, 2646 assertions, 0 failures**.
 
-
----
-
-
-## Cumulative changes from version 0.7.197 till 0.7.203
-
-### Fixed
-- More fixed for FFB Smoothness, to remove possible sources of graininess and wrong vibrations.
-- Fixed bugs that were triggering the bottoming effect during high-speed cornering.
-- Removed unreliable REST API car brand detection.
-
-### Added
-- GUI toggle for Dynamic Load Sensitivity of optimal slip angle.
 
 ---
 
