@@ -158,7 +158,7 @@ public:
     float m_sop_yaw_gain;
     float m_gyro_gain;
     float m_gyro_smoothing;
-    float m_stationary_damping = 0.0f; // New v0.7.206 (Issue #418)
+    float m_stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
     float m_yaw_accel_smoothing;
     float m_chassis_inertia_smoothing;
     
