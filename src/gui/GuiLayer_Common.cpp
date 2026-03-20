@@ -504,6 +504,14 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Target Rim Torque", &engine.m_target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
         FloatSetting("Min Force", &engine.m_min_force, 0.0f, 0.20f, "%.3f", Tooltips::MIN_FORCE);
 
+        // Dynamically format the tooltip to show the exact fade-out speed in km/h
+        char stat_damp_tooltip[512];
+        StringUtils::SafeFormat(stat_damp_tooltip, sizeof(stat_damp_tooltip),
+            "%s\n\nCurrently fades to 0%% at: %.1f km/h (See Advanced Settings -> Speed Gate).",
+            Tooltips::STATIONARY_DAMPING, (float)engine.m_speed_gate_upper * 3.6f);
+
+        FloatSetting("Stationary Damping", &engine.m_stationary_damping, 0.0f, 1.0f, FormatPct(engine.m_stationary_damping), stat_damp_tooltip);
+
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
             BoolSetting("Enable Soft Lock", &engine.m_soft_lock_enabled, Tooltips::SOFT_LOCK_ENABLE);
@@ -691,8 +699,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
-        FloatSetting("Stationary Damping", &engine.m_stationary_damping, 0.0f, 1.0f, FormatDecoupled(engine.m_stationary_damping, FFBEngine::BASE_NM_GYRO_DAMPING),
-            "Applies friction ONLY when the car is stopped to prevent oscillations in the pits.\nFades out completely to 0% as you start driving.\nWorks independently of Gyro Damping.");
 
         FloatSetting("  Gyro Smooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::GYRO_SMOOTH,

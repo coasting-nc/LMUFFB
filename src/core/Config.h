@@ -103,7 +103,7 @@ struct Preset {
     float kerb_strike_rejection = 0.0f; // NEW
     float sop_yaw_gain = 0.333f;
     float gyro_gain = 0.0f;
-    float stationary_damping = 0.0f; // New v0.7.206 (Issue #418)
+    float stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
     
     float steering_shaft_gain = 1.0f;
     float ingame_ffb_gain = 1.0f; // New v0.7.71 (Issue #160)

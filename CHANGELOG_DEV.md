@@ -2599,3 +2599,11 @@ test_ffb_persistent_load.cpp, switched to strncpy_s on Windows.
 ## Older Versions
 
 For versions 0.6.x and older, see [CHANGELOG_ARCHIVE_v0.6.x_and_older.md](CHANGELOG_ARCHIVE_v0.6.x_and_older.md).
+
+## [0.7.207] - 2026-03-21
+### Changed
+- Improved Stationary Damping setting (Issue #430):
+  - Changed default value to 100% (enabled by default).
+  - Moved slider to "General FFB" section for better visibility.
+  - Updated tooltip with detailed explanation and dynamic fade-out speed in km/h.
+  - Formatted slider as a percentage for better intuition.
