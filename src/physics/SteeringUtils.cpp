@@ -35,12 +35,12 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
         // At stiffness 100 (max), reaches 100% force at 0.05% excess.
         double stiffness = (double)(std::max)(1.0f, m_soft_lock_stiffness);
         double excess_for_max = 5.0 / (stiffness * 100.0);
-        double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)m_wheelbase_max_nm * 2.0;
+        double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)m_general.wheelbase_max_nm * 2.0;
 
         // Damping Force: opposes movement to prevent bouncing.
         // Scaled by hardware torque to remain relevant across all wheelbases.
-        double damping_nm = m_steering_velocity_smoothed * m_soft_lock_damping * (double)m_wheelbase_max_nm * 0.1;
-        damping_nm = std::clamp(damping_nm, -(double)m_wheelbase_max_nm * 0.5, (double)m_wheelbase_max_nm * 0.5);
+        double damping_nm = m_steering_velocity_smoothed * m_soft_lock_damping * (double)m_general.wheelbase_max_nm * 0.1;
+        damping_nm = std::clamp(damping_nm, -(double)m_general.wheelbase_max_nm * 0.5, (double)m_general.wheelbase_max_nm * 0.5);
 
         // Total Soft Lock force (opposing the steering direction)
         ctx.soft_lock_force = -(spring_nm * sign + damping_nm);

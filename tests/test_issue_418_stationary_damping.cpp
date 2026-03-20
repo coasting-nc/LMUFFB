@@ -83,9 +83,9 @@ TEST_CASE(test_stationary_damping_active_in_menus, "Physics") {
     InitializeEngine(engine);
 
     engine.m_stationary_damping = 1.0f;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
     engine.m_speed_gate_lower = 1.0f; // 3.6 km/h
     engine.m_speed_gate_upper = 5.0f; // 18.0 km/h
 
@@ -113,7 +113,7 @@ TEST_CASE(test_stationary_damping_active_in_menus, "Physics") {
 
     // Account for dynamic normalization scaling: force * mult * (target/max) * gain
     double structural_mult = FFBEngineTestAccess::GetSmoothedStructuralMult(engine);
-    float expected_total = last_stationary_damping * (float)structural_mult * (engine.m_target_rim_nm / engine.m_wheelbase_max_nm) * engine.m_gain;
+    float expected_total = last_stationary_damping * (float)structural_mult * (engine.m_general.target_rim_nm / engine.m_general.wheelbase_max_nm) * engine.m_general.gain;
 
     ASSERT_NEAR(last_total, expected_total, 0.01f);
 }

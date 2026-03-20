@@ -155,7 +155,7 @@ void FFBThread() {
                             info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
                             info.track_name = tName;
                             info.driver_name = "Auto";
-                            info.gain = g_engine.m_gain;
+                            info.general = g_engine.m_general;
                             info.understeer_effect = g_engine.m_understeer_effect;
                             info.sop_effect = g_engine.m_sop_effect;
                             info.lat_load_effect = g_engine.m_lat_load_effect;
@@ -170,8 +170,6 @@ void FFBThread() {
                             info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
                             info.slope_decay_rate = g_engine.m_slope_decay_rate;
                             info.torque_passthrough = g_engine.m_torque_passthrough;
-                            info.dynamic_normalization = g_engine.m_dynamic_normalization_enabled;
-                            info.auto_load_normalization = g_engine.m_auto_load_normalization_enabled;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }

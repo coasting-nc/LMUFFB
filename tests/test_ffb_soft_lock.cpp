@@ -20,8 +20,8 @@ void test_soft_lock() {
         engine.m_soft_lock_enabled = true;
         engine.m_soft_lock_stiffness = 20.0f;
         engine.m_soft_lock_damping = 0.0f;
-        engine.m_wheelbase_max_nm = 100.0f; engine.m_target_rim_nm = 100.0f;
-        engine.m_gain = 1.0f;
+        engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
+        engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
         engine.m_steering_shaft_gain = 0.0f;
 
@@ -58,8 +58,8 @@ void test_soft_lock() {
         engine.m_soft_lock_enabled = true;
         engine.m_soft_lock_stiffness = 20.0f;
         engine.m_soft_lock_damping = 1.0f; // High damping
-        engine.m_wheelbase_max_nm = 15.0f; engine.m_target_rim_nm = 10.0f;
-        engine.m_gain = 1.0f;
+        engine.m_general.wheelbase_max_nm = 15.0f; engine.m_general.target_rim_nm = 10.0f;
+        engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
         engine.m_steering_shaft_gain = 0.0f;
 
@@ -88,8 +88,8 @@ void test_soft_lock() {
         engine.m_soft_lock_enabled = true;
         engine.m_soft_lock_stiffness = 0.0f;
         engine.m_soft_lock_damping = 0.1f; // Use larger damping for easier test
-        engine.m_wheelbase_max_nm = 100.0f; engine.m_target_rim_nm = 100.0f;
-        engine.m_gain = 1.0f;
+        engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
+        engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
         engine.m_steering_shaft_gain = 0.0f;
 

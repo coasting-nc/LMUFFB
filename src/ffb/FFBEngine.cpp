@@ -343,7 +343,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_sop_load_smoothed = (t_load > 1.0) ? (fr_l + rr_l - fl_l - rl_l) / t_load : 0.0;
 
         m_steering_velocity_smoothed = 0.0;
-        m_steering_shaft_torque_smoothed = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : shaft_torque;
+        m_steering_shaft_torque_smoothed = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_general.wheelbase_max_nm : shaft_torque;
         m_last_raw_torque = m_steering_shaft_torque_smoothed;
         m_rolling_average_torque = std::abs(m_steering_shaft_torque_smoothed);
 
@@ -357,7 +357,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Select Torque Source
     // v0.7.63 Fix: genFFBTorque (Direct Torque 400Hz) is normalized [-1.0, 1.0].
     // It must be scaled by m_wheelbase_max_nm to match the engine's internal Nm-based pipeline.
-    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_wheelbase_max_nm : shaft_torque;
+    double raw_torque_input = (m_torque_source == 1) ? (double)genFFBTorque * (double)m_general.wheelbase_max_nm : shaft_torque;
 
     // RELIABILITY FIX: Sanitize input torque
     if (!std::isfinite(raw_torque_input)) return 0.0;
@@ -379,7 +379,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     bool is_clean_state = (lat_g_abs < LAT_G_CLEAN_LIMIT) && (torque_slew < TORQUE_SLEW_CLEAN_LIMIT) && !is_contextual_spike;
 
     // 2. Leaky Integrator (Exponential Decay + Floor)
-    if (is_clean_state && m_torque_source == 0 && m_dynamic_normalization_enabled) {
+    if (is_clean_state && m_torque_source == 0 && m_general.dynamic_normalization_enabled) {
         if (current_abs_torque > m_session_peak_torque) {
             m_session_peak_torque = current_abs_torque; // Fast attack
         } else {
@@ -395,11 +395,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.71: For In-Game FFB (1), we normalize against the wheelbase max since the signal is already normalized [-1, 1].
     double target_structural_mult;
     if (m_torque_source == 1) {
-        target_structural_mult = 1.0 / ((double)m_wheelbase_max_nm + (double)EPSILON_DIV);
-    } else if (m_dynamic_normalization_enabled) {
+        target_structural_mult = 1.0 / ((double)m_general.wheelbase_max_nm + (double)EPSILON_DIV);
+    } else if (m_general.dynamic_normalization_enabled) {
         target_structural_mult = 1.0 / (m_session_peak_torque + (double)EPSILON_DIV);
     } else {
-        target_structural_mult = 1.0 / ((double)m_target_rim_nm + (double)EPSILON_DIV);
+        target_structural_mult = 1.0 / ((double)m_general.target_rim_nm + (double)EPSILON_DIV);
     }
     double alpha_gain = ffb_dt / ((double)STRUCT_MULT_SMOOTHING_TAU + ffb_dt); // 250ms smoothing
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
@@ -566,7 +566,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     update_static_load_reference(ctx.avg_front_load, ctx.avg_rear_load, ctx.car_speed, ctx.dt);
     
     // Peak Hold Logic
-    if (m_auto_load_normalization_enabled && !seeded) {
+    if (m_general.auto_load_normalization_enabled && !seeded) {
         if (ctx.avg_front_load > m_auto_peak_front_load) {
             m_auto_peak_front_load = ctx.avg_front_load; // Fast Attack
         } else {
@@ -611,7 +611,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     ctx.brake_load_factor = (std::min)(brake_safe_max, m_smoothed_vibration_mult);
     
     // Hardware Scaling Safeties
-    double wheelbase_max_safe = (double)m_wheelbase_max_nm;
+    double wheelbase_max_safe = (double)m_general.wheelbase_max_nm;
     if (wheelbase_max_safe < 1.0) wheelbase_max_safe = 1.0;
 
     // Speed Gate - v0.7.2 Smoothstep S-curve
@@ -773,12 +773,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // --- 7. OUTPUT SCALING (Physical Target Model) ---
     // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %
-    double di_structural = norm_structural * ((double)m_target_rim_nm / wheelbase_max_safe);
+    double di_structural = norm_structural * ((double)m_general.target_rim_nm / wheelbase_max_safe);
 
     // Map absolute texture Nm directly to the wheelbase max
     double di_texture = final_texture_nm / wheelbase_max_safe;
 
-    double norm_force = (di_structural + di_texture) * m_gain;
+    double norm_force = (di_structural + di_texture) * m_general.gain;
 
     // --- SAFETY MITIGATION (Stage 2) ---
     norm_force = m_safety.ProcessSafetyMitigation(norm_force, ctx.dt);
@@ -791,9 +791,9 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
                                  (std::abs(ctx.soft_lock_force) > 0.5); // > 0.5 Nm
 
     if (allowed || significant_soft_lock) {
-        if (std::abs(norm_force) > FFB_EPSILON && std::abs(norm_force) < m_min_force) {
+        if (std::abs(norm_force) > FFB_EPSILON && std::abs(norm_force) < m_general.min_force) {
             double sign = (norm_force > 0.0) ? 1.0 : -1.0;
-            norm_force = sign * m_min_force;
+            norm_force = sign * m_general.min_force;
         }
     }
 
@@ -1669,7 +1669,7 @@ void FFBEngine::ResetNormalization() {
     // 1. Structural Normalization Reset (Stage 1)
     // If disabled, we return to the user's manual target.
     // If enabled, we reset to the target to restart the learning process.
-    m_session_peak_torque = (std::max)(1.0, (double)m_target_rim_nm);
+    m_session_peak_torque = (std::max)(1.0, (double)m_general.target_rim_nm);
     m_smoothed_structural_mult = 1.0 / (m_session_peak_torque + EPSILON_DIV);
     m_rolling_average_torque = m_session_peak_torque;
     m_last_raw_torque = 0.0;

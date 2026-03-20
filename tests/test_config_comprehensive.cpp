@@ -98,10 +98,10 @@ TEST_CASE(test_config_comprehensive_import, "Config") {
 
     const Preset& imported = Config::presets.back();
     ASSERT_EQ_STR(imported.name, "Comprehensive");
-    ASSERT_NEAR(imported.gain, 1.1f, 0.01);
+    ASSERT_NEAR(imported.general.gain, 1.1f, 0.01);
     ASSERT_NEAR(imported.understeer, 0.6f, 0.01);
     ASSERT_EQ(imported.lockup_enabled, true);
-    ASSERT_NEAR(imported.wheelbase_max_nm, 18.0f, 0.01);
+    ASSERT_NEAR(imported.general.wheelbase_max_nm, 18.0f, 0.01);
 
     std::remove(test_file);
 }
@@ -207,10 +207,10 @@ TEST_CASE(test_config_comprehensive_load_v2, "Config") {
     Config::Load(engine, test_file);
 
     // Verify some key fields
-    ASSERT_NEAR(engine.m_gain, 1.1f, 0.01);
+    ASSERT_NEAR(engine.m_general.gain, 1.1f, 0.01);
     ASSERT_NEAR(engine.m_understeer_effect, 0.6f, 0.01);
     ASSERT_EQ(engine.m_lockup_enabled, true);
-    ASSERT_NEAR(engine.m_wheelbase_max_nm, 18.0f, 0.01);
+    ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 18.0f, 0.01);
     ASSERT_EQ(Config::m_always_on_top, true);
 
     double saved_load;

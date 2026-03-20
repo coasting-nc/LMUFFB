@@ -48,6 +48,7 @@ enum class LoadTransform {
 #include "FFBSafetyMonitor.h"
 #include "FFBMetadataManager.h"
 #include "FFBDebugBuffer.h"
+#include "FFBConfig.h"
 
 // BiquadNotch moved to MathUtils.h
 
@@ -114,10 +115,8 @@ public:
     static constexpr int STR_BUF_64 = 64;
 
     // Settings (GUI Sliders)
-    bool m_dynamic_normalization_enabled = false; // Issue #207: Structural force normalization toggle
-    bool m_auto_load_normalization_enabled = false; // Stage 3: Vibration Normalization (Load-based)
+    GeneralConfig m_general;
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
-    float m_gain;
     float m_understeer_effect;
     float m_understeer_gamma = 1.0f; // NEW: Gamma curve for understeer
     float m_sop_effect;
@@ -125,7 +124,6 @@ public:
     LoadTransform m_lat_load_transform = LoadTransform::LINEAR; // New v0.7.154 (Issue #282)
     float m_long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
     LoadTransform m_long_load_transform = LoadTransform::LINEAR; // New #301
-    float m_min_force;
 
     // Smoothing Settings (v0.7.47)
     float m_long_load_smoothing; // Renamed from dynamic_weight_smoothing (#301)
@@ -138,11 +136,9 @@ public:
     float m_texture_load_cap = 1.5f; 
     float m_brake_load_cap = 1.5f;   
     float m_sop_scale;
+    bool m_invert_force = true;
     
     // v0.4.4 Features
-    float m_wheelbase_max_nm;
-    float m_target_rim_nm;
-    bool m_invert_force = true;
     
     // Base Force Debugging (v0.4.13)
     float m_steering_shaft_gain;

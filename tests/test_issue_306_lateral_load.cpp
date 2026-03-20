@@ -94,7 +94,7 @@ TEST_CASE_TAGGED(test_issue_306_scrub_drag_scaling, "CorePhysics", (std::vector<
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_scrub_drag_gain = 1.0f;
-    engine.m_auto_load_normalization_enabled = false;
+    engine.m_general.auto_load_normalization_enabled = false;
     engine.m_static_front_load = 4000.0; // Static front load (per axle)
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);

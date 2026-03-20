@@ -60,7 +60,7 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     double force_0 = engine.calculate_force(&tel);
 
     // Increase wheelbase max Nm to avoid clipping for scaling verification
-    engine.m_wheelbase_max_nm = 1000.0f;
+    engine.m_general.wheelbase_max_nm = 1000.0f;
 
     std::cout << "[INFO] Force (100%): " << force_100 << std::endl;
     std::cout << "[INFO] Force (50%): " << force_50 << std::endl;
@@ -93,7 +93,7 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     double vibration_sum_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch + ctx.abs_pulse_force + ctx.lockup_rumble;
     double final_texture_nm = (vibration_sum_nm * (double)m_vibration_gain) + ctx.soft_lock_force;
     double di_texture = final_texture_nm / wheelbase_max_safe;
-    double norm_force = (di_structural + di_texture) * m_gain;
+    double norm_force = (di_structural + di_texture) * m_general.gain;
     */
 
     // The individual texture_road, texture_slide etc in FFBSnapshot are BEFORE scaling by m_vibration_gain.
@@ -122,8 +122,8 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     batch = engine.GetDebugBatch();
     const auto& s_sl = batch.back();
     double sl_nm = (double)s_sl.ffb_soft_lock;
-    double sl_di = sl_nm / (double)engine.m_wheelbase_max_nm;
-    double sl_total = std::clamp(sl_di * (double)engine.m_gain, -1.0, 1.0);
+    double sl_di = sl_nm / (double)engine.m_general.wheelbase_max_nm;
+    double sl_total = std::clamp(sl_di * (double)engine.m_general.gain, -1.0, 1.0);
     if (engine.m_invert_force) sl_total *= -1.0;
 
     std::cout << "[INFO] f100: " << f100 << ", f50: " << f50 << ", f0: " << f0 << ", sl_total: " << sl_total << std::endl;

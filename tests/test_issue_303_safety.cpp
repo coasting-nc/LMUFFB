@@ -48,9 +48,9 @@ void test_issue_303_safety_mitigation() {
     InitializeEngine(engine);
     // Explicitly set duration for test, as default is now 0.0 (Issue #350)
     engine.m_safety.m_safety_window_duration = 2.0f;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0/10.0);
 
@@ -115,9 +115,9 @@ void test_issue_303_full_tock_timer() {
 
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_gain = 1.0f;
-    engine.m_target_rim_nm = 10.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.target_rim_nm = 10.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0/10.0);
 

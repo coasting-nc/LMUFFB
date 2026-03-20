@@ -37,7 +37,7 @@ TEST_CASE(TestFFBTorqueSnapshot, "Diagnostics") {
 
     // Switch source to 1: Direct Torque
     engine.m_torque_source = 1;
-    engine.m_wheelbase_max_nm = 1.0f; engine.m_target_rim_nm = 1.0f; // Scale by 1.0 for easy verification
+    engine.m_general.wheelbase_max_nm = 1.0f; engine.m_general.target_rim_nm = 1.0f; // Scale by 1.0 for easy verification
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3", genFFBTorque);
 
     snapshots = engine.GetDebugBatch();

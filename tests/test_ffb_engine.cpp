@@ -37,15 +37,15 @@ TEST_CASE(test_load_weighted_grip, "Physics") {
 TEST_CASE(test_long_load_scaling, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true;
+    engine.m_general.auto_load_normalization_enabled = true;
     Preset p;
     p.long_load_effect = 1.0f; // Enable
     p.long_load_smoothing = 0.0f; // Disable smoothing for instant test
     p.steering_shaft_gain = 1.0f;
     p.understeer = 0.0f; // Disable understeer drop for pure gain test
     engine.m_invert_force = false; // Easier to test
-    p.wheelbase_max_nm = 100.0f;
-    p.target_rim_nm = 100.0f;
+    p.general.wheelbase_max_nm = 100.0f;
+    p.general.target_rim_nm = 100.0f;
     p.Apply(engine);
 
     // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
@@ -83,12 +83,12 @@ TEST_CASE(test_long_load_scaling, "Physics") {
 //     FFBEngine engine;
 //     InitializeEngine(engine);
 //     engine.m_understeer_effect = 0.0f; // Disable understeer for pure gate test
-//     engine.m_auto_load_normalization_enabled = true;
+//     engine.m_general.auto_load_normalization_enabled = true;
 //     engine.m_invert_force = false;
 //     Preset p;
 //     p.long_load_effect = 1.0f;
-//     p.wheelbase_max_nm = 100.0f;
-//     p.target_rim_nm = 100.0f;
+//     p.general.wheelbase_max_nm = 100.0f;
+//     p.general.target_rim_nm = 100.0f;
 //     p.Apply(engine);
 // 
 //     // v0.7.67 Fix for Issue #152: Ensure consistent scaling for test
@@ -132,8 +132,8 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     // Use high scaling to see Nm directly
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
-    engine.m_wheelbase_max_nm = 100.0f;
-    engine.m_target_rim_nm = 100.0f;
+    engine.m_general.wheelbase_max_nm = 100.0f;
+    engine.m_general.target_rim_nm = 100.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mSteeringShaftTorque = 10.0;
@@ -177,8 +177,8 @@ TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
     // Use high scaling to see Nm directly
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 100.0);
-    engine.m_wheelbase_max_nm = 100.0f;
-    engine.m_target_rim_nm = 100.0f;
+    engine.m_general.wheelbase_max_nm = 100.0f;
+    engine.m_general.target_rim_nm = 100.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
@@ -223,9 +223,9 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     engine.m_rear_align_effect = 1.0f;
     engine.m_kerb_strike_rejection = 1.0f; // 100% rejection
     engine.m_invert_force = false;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 100.0f;
-    engine.m_target_rim_nm = 100.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 100.0f;
+    engine.m_general.target_rim_nm = 100.0f;
     engine.m_optimal_slip_angle = 0.1f;
 
     // Seed static load

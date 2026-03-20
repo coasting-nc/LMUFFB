@@ -279,9 +279,9 @@ TEST_CASE(test_calculate_force_transitions, "Safety") {
 TEST_CASE(test_dynamic_normalization_branches, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = true;
+    engine.m_general.dynamic_normalization_enabled = true;
     engine.m_torque_source = 0; // Shaft
-    engine.m_target_rim_nm = 20.0f;
+    engine.m_general.target_rim_nm = 20.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mSteeringShaftTorque = 30.0;
@@ -313,7 +313,7 @@ TEST_CASE(test_dynamic_normalization_branches, "Physics") {
 
     // 3. Torque Source 1 (In-Game)
     FFBEngineTestAccess::SetTorqueSource(engine, 1);
-    engine.m_wheelbase_max_nm = 25.0f;
+    engine.m_general.wheelbase_max_nm = 25.0f;
     engine.calculate_force(&data, "GT3", "911", 0.5f); // 0.5 * 25 = 12.5Nm
     // target_structural_mult should be 1/25 = 0.04
     ASSERT_NEAR(FFBEngineTestAccess::GetSmoothedStructuralMult(engine), 0.04, 0.01);

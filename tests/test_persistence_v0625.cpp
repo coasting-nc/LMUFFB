@@ -316,7 +316,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     FFBEngine engine;
     Preset::ApplyDefaultsToEngine(engine);
     
-    engine.m_gain = 0.77f;
+    engine.m_general.gain = 0.77f;
     engine.m_understeer_effect = 0.444f;
     engine.m_sop_effect = 1.23f;
     engine.m_texture_load_cap = 2.1f;
@@ -332,7 +332,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     Preset::ApplyDefaultsToEngine(engine2);
     Config::Load(engine2, "roundtrip.ini");
     
-    ASSERT_NEAR(engine2.m_gain, 0.77f, 0.001f);
+    ASSERT_NEAR(engine2.m_general.gain, 0.77f, 0.001f);
     ASSERT_NEAR(engine2.m_understeer_effect, 0.444f, 0.001f);
     ASSERT_NEAR(engine2.m_sop_effect, 1.23f, 0.001f);
     ASSERT_NEAR(engine2.m_texture_load_cap, 2.1f, 0.001f);
@@ -360,7 +360,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     ASSERT_TRUE(idx != -1);
     if (idx != -1) {
         Config::ApplyPreset(idx, engine3);
-        ASSERT_NEAR(engine3.m_gain, 0.77f, 0.001f);
+        ASSERT_NEAR(engine3.m_general.gain, 0.77f, 0.001f);
         ASSERT_NEAR(engine3.m_understeer_effect, 0.444f, 0.001f);
         ASSERT_NEAR(engine3.m_sop_effect, 1.23f, 0.001f);
         ASSERT_NEAR(engine3.m_texture_load_cap, 2.1f, 0.001f);
@@ -416,7 +416,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     Preset custom_preset("SyncTest");
     
     // Set custom values for ALL synchronizable fields
-    custom_preset.gain = 0.77f;
+    custom_preset.general.gain = 0.77f;
     custom_preset.understeer = 0.88f;
     custom_preset.sop = 1.11f;
     custom_preset.optimal_slip_angle = 0.15f;
@@ -439,7 +439,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     custom_preset.Apply(engine_apply);
     
     // Verify Apply() worked
-    ASSERT_NEAR(engine_apply.m_gain, 0.77f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_general.gain, 0.77f, 0.001f);
     ASSERT_NEAR(engine_apply.m_understeer_effect, 0.88f, 0.001f);
     ASSERT_NEAR(engine_apply.m_sop_effect, 1.11f, 0.001f);
     ASSERT_NEAR(engine_apply.m_optimal_slip_angle, 0.15f, 0.001f);
@@ -465,7 +465,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     Preset::ApplyDefaultsToEngine(engine_source);
     
     // Set custom values directly on engine
-    engine_source.m_gain = 0.55f;
+    engine_source.m_general.gain = 0.55f;
     engine_source.m_understeer_effect = 0.66f;
     engine_source.m_optimal_slip_angle = 0.22f;
     engine_source.m_optimal_slip_ratio = 0.25f;
@@ -487,7 +487,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     captured_preset.UpdateFromEngine(engine_source);
     
     // Verify UpdateFromEngine() worked
-    ASSERT_NEAR(captured_preset.gain, 0.55f, 0.001f);
+    ASSERT_NEAR(captured_preset.general.gain, 0.55f, 0.001f);
     ASSERT_NEAR(captured_preset.understeer, 0.66f, 0.001f);
     ASSERT_NEAR(captured_preset.optimal_slip_angle, 0.22f, 0.001f);
     ASSERT_NEAR(captured_preset.optimal_slip_ratio, 0.25f, 0.001f);

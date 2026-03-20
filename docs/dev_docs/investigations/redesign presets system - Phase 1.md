@@ -18,7 +18,6 @@ Group the loose variables into logical categories. Add an `Equals` method to eac
 ```cpp
 struct GeneralConfig {
     float gain = 1.0f;
-    bool invert_force = true;
     float min_force = 0.0f;
     float wheelbase_max_nm = 15.0f;
     float target_rim_nm = 10.0f;
@@ -26,7 +25,6 @@ struct GeneralConfig {
     
     bool Equals(const GeneralConfig& o) const {
         return std::abs(gain - o.gain) < 0.0001f &&
-               invert_force == o.invert_force &&
                // ... compare rest ...
     }
     void Validate() {
@@ -288,7 +286,7 @@ public:
     FrontAxleConfig m_front_axle;
 
     // --- NOT YET MIGRATED (Leave these alone for now) ---
-    float m_gain;
+    bool m_invert_force;
     float m_sop_effect;
     bool m_lockup_enabled;
     // ... etc ...
@@ -474,7 +472,6 @@ struct FFBConfig {
 ```cpp
 struct GeneralConfig {
     float gain = 1.0f;
-    bool invert_force = true;
     float min_force = 0.0f;
     float wheelbase_max_nm = 15.0f;
     float target_rim_nm = 10.0f;

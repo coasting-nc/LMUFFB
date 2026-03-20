@@ -359,8 +359,8 @@ public:
     // Load Normalization Test Access
     static double GetAutoPeakLoad(const FFBEngine& e) { return e.m_auto_peak_front_load; }
     static void SetAutoPeakLoad(FFBEngine& e, double val) { e.m_auto_peak_front_load = val; }
-    static void SetAutoNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_auto_load_normalization_enabled = enabled; }
-    static void SetDynamicNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_dynamic_normalization_enabled = enabled; }
+    static void SetAutoNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_general.auto_load_normalization_enabled = enabled; }
+    static void SetDynamicNormalizationEnabled(FFBEngine& e, bool enabled) { e.m_general.dynamic_normalization_enabled = enabled; }
 
     // Smoothing Test Access
     static double GetLongitudinalLoadSmoothed(const FFBEngine& e) { return e.m_long_load_smoothed; }
@@ -428,7 +428,7 @@ public:
     static void SetTorqueSource(FFBEngine& e, int val) { e.m_torque_source = val; }
     static void SetSteering100HzReconstruction(FFBEngine& e, int val) { e.m_steering_100hz_reconstruction = val; }
     static void SetInvertForce(FFBEngine& e, bool val) { e.m_invert_force = val; }
-    static void SetMinForce(FFBEngine& e, float val) { e.m_min_force = val; }
+    static void SetMinForce(FFBEngine& e, float val) { e.m_general.min_force = val; }
     static void SetSoftLockEnabled(FFBEngine& e, bool val) { e.m_soft_lock_enabled = val; }
     static void SetLockupEnabled(FFBEngine& e, bool val) { e.m_lockup_enabled = val; }
     static void CallCalculateSlideTexture(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {

@@ -12,8 +12,8 @@ TEST_CASE(test_base_force_passthrough, "CorePhysics") {
     data.mDeltaTime = 0.0025;
     data.mLocalVel.z = -20.0; 
     
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f; 
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_steering_shaft_gain = 0.5f; 
     engine.m_invert_force = false;
     
@@ -45,8 +45,8 @@ TEST_CASE(test_grip_modulation, "CorePhysics") {
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     data.mLocalVel.z = -20.0; 
 
-    engine.m_gain = 1.0; 
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
 
     data.mSteeringShaftTorque = 10.0; 
@@ -86,8 +86,8 @@ TEST_CASE(test_min_force, "CorePhysics") {
 
     data.mSteeringShaftTorque = 0.05; 
     data.mLocalVel.z = -20.0; 
-    engine.m_min_force = 0.10f; 
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.min_force = 0.10f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
 
     double force = engine.calculate_force(&data);
@@ -126,10 +126,10 @@ TEST_CASE(test_grip_low_speed, "CorePhysics") {
     data.mWheel[1].mGripFract = 0.0;
     data.mWheel[0].mTireLoad = 4000.0; 
     data.mWheel[1].mTireLoad = 4000.0;
-    engine.m_gain = 1.0;
+    engine.m_general.gain = 1.0;
     engine.m_understeer_effect = 1.0;
     data.mSteeringShaftTorque = 40.0; 
-    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
+    engine.m_general.wheelbase_max_nm = 40.0f; engine.m_general.target_rim_nm = 40.0f;
     
     data.mLocalVel.z = 1.0; 
     
@@ -165,7 +165,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     data.mWheel[3].mRideHeight = 0.1;
     data.mWheel[0].mTireLoad = 4000.0;
     data.mWheel[1].mTireLoad = 4000.0;
-    engine.m_gain = 1.0;
+    engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
     engine.m_understeer_effect = 0.0; 
     engine.m_oversteer_boost = 0.0;
@@ -174,17 +174,17 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     {
         FFBEngine e1;
         InitializeEngine(e1);
-        e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
+        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_rear_align_effect = 1.0;
-        e1.m_wheelbase_max_nm = 20.0f; e1.m_target_rim_nm = 20.0f;
+        e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
         ra1 = e1.calculate_force(&data);
     }
     {
         FFBEngine e2;
         InitializeEngine(e2);
-        e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
+        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_rear_align_effect = 1.0;
-        e2.m_wheelbase_max_nm = 60.0f; e2.m_target_rim_nm = 60.0f;
+        e2.m_general.wheelbase_max_nm = 60.0f; e2.m_general.target_rim_nm = 60.0f;
         ra2 = e2.calculate_force(&data);
     }
 
@@ -199,20 +199,20 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     {
         FFBEngine e1;
         InitializeEngine(e1);
-        e1.m_gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
+        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
         e1.m_slide_texture_enabled = true;
         e1.m_slide_texture_gain = 1.0;
-        e1.m_wheelbase_max_nm = 20.0f; e1.m_target_rim_nm = 20.0f;
+        e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
         e1.m_slide_phase = 0.5;
         s1 = e1.calculate_force(&data);
     }
     {
         FFBEngine e2;
         InitializeEngine(e2);
-        e2.m_gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
+        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
         e2.m_slide_texture_enabled = true;
         e2.m_slide_texture_gain = 1.0;
-        e2.m_wheelbase_max_nm = 100.0f; e2.m_target_rim_nm = 100.0f;
+        e2.m_general.wheelbase_max_nm = 100.0f; e2.m_general.target_rim_nm = 100.0f;
         e2.m_slide_phase = 0.5;
         s2 = e2.calculate_force(&data);
     }
@@ -231,15 +231,15 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     data.mWheel[1].mGripFract = 0.6;
 
     // Enable Dynamic Normalization to test its consistent scaling
-    engine.m_dynamic_normalization_enabled = true;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.dynamic_normalization_enabled = true;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 20.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
 
     // Issue #397: Pump for longer to settle HW filters
     double u1 = PumpEngineTime(engine, data, 1.0);
 
-    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
+    engine.m_general.wheelbase_max_nm = 40.0f; engine.m_general.target_rim_nm = 40.0f;
     // Session peak should remain 20.0 because input torque (10.0) < peak (20.0)
     double u2 = PumpEngineTime(engine, data, 1.0);
 
@@ -260,7 +260,7 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     std::cout << "\nTest: FFB Signal Gain Compensation (Disabled - Issue #207)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_dynamic_normalization_enabled = false;
+    engine.m_general.dynamic_normalization_enabled = false;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -272,7 +272,7 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     data.mWheel[3].mRideHeight = 0.1;
     data.mWheel[0].mTireLoad = 4000.0;
     data.mWheel[1].mTireLoad = 4000.0;
-    engine.m_gain = 1.0;
+    engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
     engine.m_understeer_effect = 0.0;
     engine.m_oversteer_boost = 0.0;
@@ -284,17 +284,17 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     {
         FFBEngine e1;
         InitializeEngine(e1);
-        e1.m_dynamic_normalization_enabled = false;
+        e1.m_general.dynamic_normalization_enabled = false;
         e1.m_rear_align_effect = 1.0;
-        e1.m_wheelbase_max_nm = 20.0f; e1.m_target_rim_nm = 20.0f;
+        e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
         ra1 = e1.calculate_force(&data);
     }
     {
         FFBEngine e2;
         InitializeEngine(e2);
-        e2.m_dynamic_normalization_enabled = false;
+        e2.m_general.dynamic_normalization_enabled = false;
         e2.m_rear_align_effect = 1.0;
-        e2.m_wheelbase_max_nm = 60.0f; e2.m_target_rim_nm = 20.0f; // Target is SAME, wheelbase is larger
+        e2.m_general.wheelbase_max_nm = 60.0f; e2.m_general.target_rim_nm = 20.0f; // Target is SAME, wheelbase is larger
         ra2 = e2.calculate_force(&data);
     }
 
@@ -304,8 +304,8 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     // mult = 1 / target
     // di_structural = structural_sum * (1/target) * (target/max) = structural_sum / max.
     // Wait, the formula is:
-    // target_structural_mult = 1.0 / m_target_rim_nm
-    // di_structural = norm_structural * (m_target_rim_nm / wheelbase_max_safe)
+    // target_structural_mult = 1.0 / m_general.target_rim_nm
+    // di_structural = norm_structural * (m_general.target_rim_nm / wheelbase_max_safe)
     // di_structural = (structural_sum / target) * (target / max) = structural_sum / max.
     // So if wheelbase_max_nm differs, di_structural differs?
     // No, structural_sum is in Nm.
@@ -320,20 +320,20 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     ASSERT_NEAR(ra1, ra2 * 3.0, 0.001);
 
     // Now test Understeer drop when disabled
-    engine.m_dynamic_normalization_enabled = false;
+    engine.m_general.dynamic_normalization_enabled = false;
     engine.m_understeer_effect = 0.5;
     data.mSteeringShaftTorque = 10.0;
     data.mWheel[0].mGripFract = 0.6;
     data.mWheel[1].mGripFract = 0.6;
 
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     // v0.7.109: Ensure multiplier matches target before first calc
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 20.0);
 
     // Issue #397: Pump for longer to settle HW filters
     double u1 = PumpEngineTime(engine, data, 1.0);
 
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 10.0f; // Target halved
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 10.0f; // Target halved
     // Ensure multiplier matches target before second calc
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 10.0);
     double u2 = PumpEngineTime(engine, data, 1.0);
@@ -361,7 +361,7 @@ TEST_CASE(test_high_gain_stability, "CorePhysics") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.15); 
     
-    engine.m_gain = 2.0f; 
+    engine.m_general.gain = 2.0f;
     engine.m_understeer_effect = 200.0f;
     engine.m_abs_gain = 10.0f;
     engine.m_lockup_gain = 3.0f;
@@ -454,7 +454,7 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     engine.m_sop_smoothing_factor = 0.5;
     engine.m_sop_scale = 1.0;  
     engine.m_sop_effect = 1.0;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     
     data.mLocalAccel.x = 9.81; 
@@ -592,9 +592,9 @@ TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {
     engine.m_rear_align_effect = 1.0;
     engine.m_sop_effect = 0.0; // Isolate rear torque
     engine.m_oversteer_boost = 0.0;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
-    engine.m_gain = 1.0f; // Explicit gain for clarity
+    engine.m_general.gain = 1.0f; // Explicit gain for clarity
     
     // Setup: Car is sliding sideways (5 m/s) but has Grip (1.0)
     // This means Rear Torque is 0.0 (because grip is good), BUT LPF should be tracking the slide.
@@ -642,8 +642,8 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     data.mLocalVel.z = -20.0;
 
     engine.m_steering_shaft_smoothing = 0.050f; // 50ms tau
-    engine.m_gain = 1.0;
-    engine.m_wheelbase_max_nm = 1.0; engine.m_target_rim_nm = 1.0;
+    engine.m_general.gain = 1.0;
+    engine.m_general.wheelbase_max_nm = 1.0; engine.m_general.target_rim_nm = 1.0;
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 1.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0);
@@ -688,9 +688,9 @@ TEST_CASE(test_holt_winters_modes, "Math") {
     engine.m_torque_source = 0; // 100Hz Legacy source
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_invert_force = false;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mElapsedTime = 1.0;
@@ -726,9 +726,9 @@ TEST_CASE(test_holt_winters_modes, "Math") {
     engine.m_torque_source = 0;
     engine.m_steering_shaft_gain = 1.0f;
     engine.m_invert_force = false;
-    engine.m_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 10.0f;
-    engine.m_target_rim_nm = 10.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 10.0f;
+    engine.m_general.target_rim_nm = 10.0f;
     FFBEngineTestAccess::SetSteering100HzReconstruction(engine, 1);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 0.1);
 

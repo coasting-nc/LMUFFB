@@ -42,13 +42,13 @@ TEST_CASE(test_engine_dirty_detection, "Presets") {
     ASSERT_TRUE(!Config::IsEngineDirtyRelativeToPreset(0, engine));
 
     // Modify engine
-    engine.m_gain += 0.05f;
+    engine.m_general.gain += 0.05f;
 
     // Should now BE dirty
     ASSERT_TRUE(Config::IsEngineDirtyRelativeToPreset(0, engine));
 
     // Reset and check again
-    engine.m_gain -= 0.05f;
+    engine.m_general.gain -= 0.05f;
     ASSERT_TRUE(!Config::IsEngineDirtyRelativeToPreset(0, engine));
 }
 
@@ -99,7 +99,7 @@ TEST_CASE(test_delete_preset_preserves_global_config, "Presets") {
     Config::LoadPresets();
 
     // 1. Set a non-default global value
-    engine.m_gain = 0.55f;
+    engine.m_general.gain = 0.55f;
     Config::Save(engine, "test_preservation.ini");
     Config::m_config_path = "test_preservation.ini";
 
@@ -120,7 +120,7 @@ TEST_CASE(test_delete_preset_preserves_global_config, "Presets") {
     FFBEngine engine2;
     Config::Load(engine2, "test_preservation.ini");
 
-    ASSERT_NEAR(engine2.m_gain, 0.55f, 0.001);
+    ASSERT_NEAR(engine2.m_general.gain, 0.55f, 0.001);
 
     if (std::filesystem::exists("test_preservation.ini")) std::filesystem::remove("test_preservation.ini");
     Config::m_config_path = "config.ini"; // Reset
@@ -136,7 +136,7 @@ TEST_CASE(test_add_user_preset_updates_existing, "Presets") {
     size_t count_after_add = Config::presets.size();
 
     // 2. Change engine state
-    engine.m_gain = 0.75f;
+    engine.m_general.gain = 0.75f;
 
     // 3. Add same preset again (simulating Save Current Config)
     Config::AddUserPreset("MyPreset", engine);
@@ -152,7 +152,7 @@ TEST_CASE(test_add_user_preset_updates_existing, "Presets") {
         }
     }
     ASSERT_TRUE(index != -1);
-    ASSERT_NEAR(Config::presets[index].gain, 0.75f, 0.001);
+    ASSERT_NEAR(Config::presets[index].general.gain, 0.75f, 0.001);
 }
 
 TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
@@ -169,10 +169,10 @@ TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
             break;
         }
     }
-    float original_gain = Config::presets[index].gain;
+    float original_gain = Config::presets[index].general.gain;
 
     // 2. Change engine state
-    engine.m_gain = original_gain + 0.1f;
+    engine.m_general.gain = original_gain + 0.1f;
 
     // 3. Call global Save (simulating what happens when selected_preset == -1)
     Config::Save(engine, "test_global_save.ini");
@@ -192,7 +192,7 @@ TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
         }
     }
     ASSERT_TRUE(new_index != -1);
-    ASSERT_NEAR(Config::presets[new_index].gain, original_gain, 0.001);
+    ASSERT_NEAR(Config::presets[new_index].general.gain, original_gain, 0.001);
 
     if (std::filesystem::exists("test_global_save.ini")) std::filesystem::remove("test_global_save.ini");
     Config::m_config_path = old_path;

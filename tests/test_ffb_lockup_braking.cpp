@@ -149,8 +149,8 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     // Common Setup
     engine.m_lockup_enabled = true;
     engine.m_lockup_gain = 1.0;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
     
     data.mUnfilteredBrake = 1.0; // Braking
     data.mLocalVel.z = 20.0;     // 20 m/s
@@ -427,7 +427,7 @@ TEST_CASE(test_refactor_abs_pulse, "LockupBraking") {
     // Enable ABS
     engine.m_abs_pulse_enabled = true;
     engine.m_abs_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Scale 1.0
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Scale 1.0
 
     // Trigger condition: High Brake + Pressure Delta
     data.mUnfilteredBrake = 1.0;
@@ -457,7 +457,7 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     data.mSteeringShaftTorque = 10.0; // 0.5 normalized
     engine.m_spin_enabled = true;
     engine.m_spin_gain = 1.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
 
     // Trigger Spin
     data.mUnfilteredThrottle = 1.0;
@@ -484,7 +484,7 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     // Delta = 2.0 / 50.0 = 0.04.
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0f;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f; // Scale 1.0
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Scale 1.0
 
     // v0.7.69: Ensure vibration multiplier is 1.0 for this test
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);

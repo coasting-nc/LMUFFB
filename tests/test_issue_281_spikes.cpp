@@ -18,9 +18,9 @@ void test_issue_281_transition_smoothing() {
     // Setup: High torque wheelbase, Soft Lock enabled
     engine.m_soft_lock_enabled = true;
     engine.m_soft_lock_stiffness = 20.0f; // Standard stiffness
-    engine.m_wheelbase_max_nm = 20.0f;     // 20Nm base
-    engine.m_target_rim_nm = 20.0f;
-    engine.m_gain = 1.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f;     // 20Nm base
+    engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
 
     // Normalization setup (ensure structural mult is valid)
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 20.0);

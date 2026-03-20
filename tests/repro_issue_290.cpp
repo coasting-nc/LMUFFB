@@ -33,7 +33,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 0.7f;
 
     // Set other gains to 0 to isolate textures
-    engine.m_gain = 1.0f;
+    engine.m_general.gain = 1.0f;
     engine.m_steering_shaft_gain = 0.0f;
     engine.m_sop_effect = 0.0f;
     engine.m_sop_yaw_gain = 0.0f;
@@ -41,7 +41,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     engine.m_gyro_gain = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_soft_lock_enabled = false;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
 
     // Issue #397: Flush the 10ms transient ramp
     double force = 0.0;

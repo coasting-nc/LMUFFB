@@ -46,8 +46,8 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
 
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0;
-    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
-    engine.m_gain = 1.0; // Ensure gain is 1.0
+    engine.m_general.wheelbase_max_nm = 40.0f; engine.m_general.target_rim_nm = 40.0f;
+    engine.m_general.gain = 1.0; // Ensure gain is 1.0
     engine.m_invert_force = false;
     
     // Frame 1: 0.0
@@ -281,8 +281,8 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     data.mWheel[0].mLateralPatchVel = 0.25;
     data.mWheel[1].mLateralPatchVel = 0.25;
     data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
-    engine.m_wheelbase_max_nm = 40.0f; engine.m_target_rim_nm = 40.0f;
-    engine.m_gain = 1.0;
+    engine.m_general.wheelbase_max_nm = 40.0f; engine.m_general.target_rim_nm = 40.0f;
+    engine.m_general.gain = 1.0;
     
     // v0.7.67 Fix for Issue #152: Ensure normalization matches the test scaling
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 40.0);

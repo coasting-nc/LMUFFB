@@ -6,14 +6,14 @@ TEST_CASE(test_config_persistence, "Config") {
     std::cout << "\nTest: Config Save/Load Persistence" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_gain = 1.23f;
+    engine.m_general.gain = 1.23f;
     engine.m_sop_effect = 0.45f;
     engine.m_road_texture_enabled = true;
     Config::Save(engine, "test_config.ini");
     FFBEngine engine_load;
     InitializeEngine(engine_load);
     Config::Load(engine_load, "test_config.ini");
-    ASSERT_NEAR(engine_load.m_gain, 1.23f, 0.01);
+    ASSERT_NEAR(engine_load.m_general.gain, 1.23f, 0.01);
     ASSERT_NEAR(engine_load.m_sop_effect, 0.45f, 0.01);
     ASSERT_TRUE(engine_load.m_road_texture_enabled);
 }
@@ -125,7 +125,7 @@ TEST_CASE(test_presets, "Config") {
     
     if(idx != -1) {
         Config::ApplyPreset(idx, engine);
-        ASSERT_NEAR(engine.m_gain, 1.0f, 0.01);
+        ASSERT_NEAR(engine.m_general.gain, 1.0f, 0.01);
         ASSERT_NEAR(engine.m_sop_effect, 0.08f, 0.01);
     } else {
         FAIL_TEST("Preset 'Test: SoP Only' not found");
@@ -435,8 +435,8 @@ TEST_CASE(test_config_migration_logic, "Config") {
         file.close();
     }
     Config::Load(engine, test_file_dd);
-    ASSERT_NEAR(engine.m_wheelbase_max_nm, 15.0f, 0.01);
-    ASSERT_NEAR(engine.m_target_rim_nm, 10.0f, 0.01);
+    ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0f, 0.01);
+    ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0f, 0.01);
     std::remove(test_file_dd);
 
     // Case 2: max_torque_ref <= 40 (Actual wheelbase torque)
@@ -447,8 +447,8 @@ TEST_CASE(test_config_migration_logic, "Config") {
         file.close();
     }
     Config::Load(engine, test_file_tuned);
-    ASSERT_NEAR(engine.m_wheelbase_max_nm, 20.0f, 0.01);
-    ASSERT_NEAR(engine.m_target_rim_nm, 20.0f, 0.01);
+    ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 20.0f, 0.01);
+    ASSERT_NEAR(engine.m_general.target_rim_nm, 20.0f, 0.01);
     std::remove(test_file_tuned);
 
     // Case 3: max_load_factor legacy key (maps to texture_load_cap)

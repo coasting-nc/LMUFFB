@@ -84,11 +84,11 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     
     engine.m_sop_effect = 1.0;
     engine.m_oversteer_boost = 1.0;
-    engine.m_gain = 1.0;
+    engine.m_general.gain = 1.0;
     engine.m_sop_scale = 10.0;
     engine.m_rear_align_effect = 1.0f;
     engine.m_invert_force = false;
-    engine.m_wheelbase_max_nm = 100.0f; engine.m_target_rim_nm = 100.0f;
+    engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
     engine.m_slip_angle_smoothing = 0.0f; // Instant
 
     data.mLocalVel.z = -20.0;
@@ -142,7 +142,7 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
     engine.m_rear_align_effect = 2.0f;
     engine.m_oversteer_boost = 0.0f; 
     engine.m_sop_effect = 0.0f;
-    engine.m_wheelbase_max_nm = 100.0f; engine.m_target_rim_nm = 100.0f;
+    engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
     engine.m_slip_angle_smoothing = 0.0f;
     
     data.mLocalVel.z = -20.0;
@@ -188,9 +188,9 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     engine.m_sop_effect = 1.0;
     engine.m_oversteer_boost = 1.0;
-    engine.m_gain = 1.0;
+    engine.m_general.gain = 1.0;
     engine.m_sop_scale = 10.0;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     
     data.mLocalAccel.x = 9.81;
     data.mWheel[0].mGripFract = 1.0;
@@ -249,7 +249,7 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     data.mWheel[1].mGripFract = 0.0;
     data.mLocalVel.z = 20.0;
     data.mDeltaTime = 0.01;
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     
     // Set low but non-zero suspension force
     data.mWheel[0].mSuspForce = 100.0;

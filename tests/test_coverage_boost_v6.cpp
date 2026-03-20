@@ -762,7 +762,7 @@ TEST_CASE(test_config_branches_v6, "System") {
     Config::LoadPresets();
 
     // 6. Test save with many settings changed
-    engine.m_gain = 1.1f;
+    engine.m_general.gain = 1.1f;
     engine.m_soft_lock_enabled = true;
     Config::Save(engine, "test_save_v6.ini");
 

@@ -6,7 +6,7 @@ TEST_CASE(test_class_seeding, "Physics") {
     std::cout << "\nTest: Load Normalization - Class Seeding (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true; // Enable for testing seeding behavior
+    engine.m_general.auto_load_normalization_enabled = true; // Enable for testing seeding behavior
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -51,7 +51,7 @@ TEST_CASE(test_fallback_seeding, "Physics") {
     std::cout << "\nTest: Load Normalization - Fallback Seeding (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true;
+    engine.m_general.auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -86,7 +86,7 @@ TEST_CASE(test_peak_hold_adaptation, "Physics") {
     std::cout << "\nTest: Load Normalization - Peak Hold Adaptation (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true;
+    engine.m_general.auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -113,7 +113,7 @@ TEST_CASE(test_peak_hold_adaptation_disabled, "Physics") {
     std::cout << "\nTest: Load Normalization - Peak Hold Adaptation (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = false;
+    engine.m_general.auto_load_normalization_enabled = false;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -141,7 +141,7 @@ TEST_CASE(test_peak_hold_decay, "Physics") {
     std::cout << "\nTest: Load Normalization - Peak Hold Decay (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true;
+    engine.m_general.auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -172,7 +172,7 @@ TEST_CASE(test_peak_hold_decay_disabled, "Physics") {
     std::cout << "\nTest: Load Normalization - Peak Hold Decay (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = false;
+    engine.m_general.auto_load_normalization_enabled = false;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -205,7 +205,7 @@ TEST_CASE(test_lmp2_restricted_load, "Physics") {
     std::cout << "\nTest: Load Normalization - LMP2 Restricted (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true;
+    engine.m_general.auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -268,7 +268,7 @@ TEST_CASE(test_static_load_fallback_class_aware, "Physics") {
     std::cout << "\nTest: Static Load Fallback Class-Aware (Enabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = true;
+    engine.m_general.auto_load_normalization_enabled = true;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -293,7 +293,7 @@ TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
     InitializeEngine(engine);
 
     // Default should be DISABLED
-    ASSERT_FALSE(engine.m_auto_load_normalization_enabled);
+    ASSERT_FALSE(engine.m_general.auto_load_normalization_enabled);
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
@@ -338,7 +338,7 @@ TEST_CASE(test_static_load_fallback_class_aware_disabled, "Physics") {
     std::cout << "\nTest: Static Load Fallback Class-Aware (Disabled)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_auto_load_normalization_enabled = false;
+    engine.m_general.auto_load_normalization_enabled = false;
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));

@@ -125,7 +125,7 @@ void InitializeEngine(FFBEngine& engine) {
     std::cout << "--- InitializeEngine Called ---" << std::endl;
     Preset::ApplyDefaultsToEngine(engine);
     // v0.5.12: Force consistent baseline for legacy tests
-    engine.m_wheelbase_max_nm = 20.0f; engine.m_target_rim_nm = 20.0f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     
     // v0.6.31: Zero out all auxiliary effects for clean physics testing by default.
@@ -155,7 +155,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_abs_pulse_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
-    engine.m_min_force = 0.0f;
+    engine.m_general.min_force = 0.0f;
     
     // v0.6.25: Disable speed gate by default for legacy tests (avoids muting physics at 0 speed)
     engine.m_speed_gate_lower = -10.0f;
@@ -169,8 +169,8 @@ void InitializeEngine(FFBEngine& engine) {
     FFBEngineTestAccess::SetLastRawTorque(engine, 20.0);
 
     // v0.7.109: Ensure toggles are initialized to FALSE to match global defaults
-    engine.m_dynamic_normalization_enabled = false;
-    engine.m_auto_load_normalization_enabled = false;
+    engine.m_general.dynamic_normalization_enabled = false;
+    engine.m_general.auto_load_normalization_enabled = false;
     // v0.7.147: Initialize static load reference to match CreateBasicTestTelemetry default
     engine.m_static_front_load = 4000.0f;
 

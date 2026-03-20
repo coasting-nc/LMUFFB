@@ -61,20 +61,20 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
 
 bool Config::ParseSystemLine(const std::string& key, const std::string& value, Preset& current_preset, std::string& current_preset_version, bool& needs_save, bool& legacy_torque_hack, float& legacy_torque_val) {
     if (key == "app_version") { current_preset_version = value; return true; }
-    if (key == "gain") { current_preset.gain = std::stof(value); return true; }
-    if (key == "wheelbase_max_nm") { current_preset.wheelbase_max_nm = std::stof(value); return true; }
-    if (key == "target_rim_nm") { current_preset.target_rim_nm = std::stof(value); return true; }
-    if (key == "min_force") { current_preset.min_force = std::stof(value); return true; }
+    if (key == "gain") { current_preset.general.gain = std::stof(value); return true; }
+    if (key == "wheelbase_max_nm") { current_preset.general.wheelbase_max_nm = std::stof(value); return true; }
+    if (key == "target_rim_nm") { current_preset.general.target_rim_nm = std::stof(value); return true; }
+    if (key == "min_force") { current_preset.general.min_force = std::stof(value); return true; }
     if (key == "max_torque_ref") {
         float old_val = std::stof(value);
         if (old_val > 40.0f) {
-            current_preset.wheelbase_max_nm = 15.0f;
-            current_preset.target_rim_nm = 10.0f;
+            current_preset.general.wheelbase_max_nm = 15.0f;
+            current_preset.general.target_rim_nm = 10.0f;
             legacy_torque_hack = true;
             legacy_torque_val = old_val;
         } else {
-            current_preset.wheelbase_max_nm = old_val;
-            current_preset.target_rim_nm = old_val;
+            current_preset.general.wheelbase_max_nm = old_val;
+            current_preset.general.target_rim_nm = old_val;
         }
         needs_save = true;
         return true;
@@ -181,8 +181,8 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
     if (key == "bottoming_enabled") { current_preset.bottoming_enabled = (value == "1" || value == "true"); return true; }
     if (key == "bottoming_gain") { current_preset.bottoming_gain = std::stof(value); return true; }
     if (key == "bottoming_method") { current_preset.bottoming_method = std::stoi(value); return true; }
-    if (key == "dynamic_normalization_enabled") { current_preset.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "auto_load_normalization_enabled") { current_preset.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "dynamic_normalization_enabled") { current_preset.general.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "auto_load_normalization_enabled") { current_preset.general.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_enabled") { current_preset.soft_lock_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_stiffness") { current_preset.soft_lock_stiffness = std::stof(value); return true; }
     if (key == "soft_lock_damping") { current_preset.soft_lock_damping = std::stof(value); return true; }
@@ -224,21 +224,21 @@ bool Config::SyncSystemLine(const std::string& key, const std::string& value, FF
     if (key == "show_graphs") { show_graphs = (value == "1" || value == "true"); return true; }
     if (key == "auto_start_logging") { m_auto_start_logging = (value == "1" || value == "true"); return true; }
     if (key == "log_path") { m_log_path = value; return true; }
-    if (key == "invert_force") { engine.m_invert_force = std::stoi(value); return true; }
-    if (key == "gain") { engine.m_gain = std::stof(value); return true; }
-    if (key == "wheelbase_max_nm") { engine.m_wheelbase_max_nm = std::stof(value); return true; }
-    if (key == "target_rim_nm") { engine.m_target_rim_nm = std::stof(value); return true; }
-    if (key == "min_force") { engine.m_min_force = std::stof(value); return true; }
+    if (key == "invert_force") { engine.m_invert_force = (value == "1" || value == "true"); return true; }
+    if (key == "gain") { engine.m_general.gain = std::stof(value); return true; }
+    if (key == "wheelbase_max_nm") { engine.m_general.wheelbase_max_nm = std::stof(value); return true; }
+    if (key == "target_rim_nm") { engine.m_general.target_rim_nm = std::stof(value); return true; }
+    if (key == "min_force") { engine.m_general.min_force = std::stof(value); return true; }
     if (key == "max_torque_ref") {
         float old_val = std::stof(value);
         if (old_val > 40.0f) {
-            engine.m_wheelbase_max_nm = 15.0f;
-            engine.m_target_rim_nm = 10.0f;
+            engine.m_general.wheelbase_max_nm = 15.0f;
+            engine.m_general.target_rim_nm = 10.0f;
             legacy_torque_hack = true;
             legacy_torque_val = old_val;
         } else {
-            engine.m_wheelbase_max_nm = old_val;
-            engine.m_target_rim_nm = old_val;
+            engine.m_general.wheelbase_max_nm = old_val;
+            engine.m_general.target_rim_nm = old_val;
         }
         needs_save = true;
         return true;
@@ -355,8 +355,8 @@ bool Config::SyncVibrationLine(const std::string& key, const std::string& value,
     if (key == "vibration_gain" || key == "tactile_gain") { engine.m_vibration_gain = std::stof(value); return true; }
     if (key == "bottoming_enabled") { engine.m_bottoming_enabled = (value == "1" || value == "true"); return true; }
     if (key == "bottoming_gain") { engine.m_bottoming_gain = std::stof(value); return true; }
-    if (key == "dynamic_normalization_enabled") { engine.m_dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "auto_load_normalization_enabled") { engine.m_auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "dynamic_normalization_enabled") { engine.m_general.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "auto_load_normalization_enabled") { engine.m_general.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_enabled") { engine.m_soft_lock_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_stiffness") { engine.m_soft_lock_stiffness = std::stof(value); return true; }
     if (key == "soft_lock_damping") { engine.m_soft_lock_damping = std::stof(value); return true; }
@@ -409,10 +409,10 @@ void Config::LoadPresets() {
     // 2. T300 (Custom optimized)
     {
         Preset p("T300", true);
-        p.gain = 1.0f;
-        p.wheelbase_max_nm = 4.0f;
-        p.target_rim_nm = 4.0f;
-        p.min_force = 0.01f;
+        p.general.gain = 1.0f;
+        p.general.wheelbase_max_nm = 4.0f;
+        p.general.target_rim_nm = 4.0f;
+        p.general.min_force = 0.01f;
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 0.5f;
@@ -473,10 +473,10 @@ void Config::LoadPresets() {
     {
         Preset p("T300 v0.7.164", true);
         p.app_version = "0.7.165";
-        p.gain = 0.559471f;
-        p.wheelbase_max_nm = 25.1f;
-        p.target_rim_nm = 24.5f;
-        p.min_force = 0.02f;
+        p.general.gain = 0.559471f;
+        p.general.wheelbase_max_nm = 25.1f;
+        p.general.target_rim_nm = 24.5f;
+        p.general.min_force = 0.02f;
         p.steering_shaft_gain = 0.955947f;
         p.ingame_ffb_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
@@ -556,8 +556,8 @@ void Config::LoadPresets() {
         p.road_gain = 0.0f;
         p.vibration_gain = 1.0f;
         p.road_fallback_scale = 0.05f;
-        p.dynamic_normalization_enabled = false;
-        p.auto_load_normalization_enabled = false;
+        p.general.dynamic_normalization_enabled = false;
+        p.general.auto_load_normalization_enabled = false;
         p.soft_lock_enabled = false;
         p.soft_lock_stiffness = 20.0f;
         p.soft_lock_damping = 0.5f;
@@ -586,10 +586,10 @@ void Config::LoadPresets() {
     // 4. GT3 DD 15 Nm (Simagic Alpha)
     {
         Preset p("GT3 DD 15 Nm (Simagic Alpha)", true);
-        p.gain = 1.0f;
-        p.wheelbase_max_nm = 15.0f;
-        p.target_rim_nm = 10.0f;
-        p.min_force = 0.0f;
+        p.general.gain = 1.0f;
+        p.general.wheelbase_max_nm = 15.0f;
+        p.general.target_rim_nm = 10.0f;
+        p.general.min_force = 0.0f;
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 1.0f;
@@ -649,10 +649,10 @@ void Config::LoadPresets() {
     // 5. LMPx/HY DD 15 Nm (Simagic Alpha)
     {
         Preset p("LMPx/HY DD 15 Nm (Simagic Alpha)", true);
-        p.gain = 1.0f;
-        p.wheelbase_max_nm = 15.0f;
-        p.target_rim_nm = 10.0f;
-        p.min_force = 0.0f;
+        p.general.gain = 1.0f;
+        p.general.wheelbase_max_nm = 15.0f;
+        p.general.target_rim_nm = 10.0f;
+        p.general.min_force = 0.0f;
         p.steering_shaft_gain = 1.0f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 1.0f;
@@ -712,10 +712,10 @@ void Config::LoadPresets() {
     // 6. GM DD 21 Nm (Moza R21 Ultra)
     {
         Preset p("GM DD 21 Nm (Moza R21 Ultra)", true);
-        p.gain = 1.454f;
-        p.wheelbase_max_nm = 21.0f;
-        p.target_rim_nm = 12.0f;
-        p.min_force = 0.0f;
+        p.general.gain = 1.454f;
+        p.general.wheelbase_max_nm = 21.0f;
+        p.general.target_rim_nm = 12.0f;
+        p.general.min_force = 0.0f;
         p.steering_shaft_gain = 1.989f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 0.638f;
@@ -776,10 +776,10 @@ void Config::LoadPresets() {
     {
         // Copy GM preset and add yaw kick
         Preset p("GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)", true);
-        p.gain = 1.454f;
-        p.wheelbase_max_nm = 21.0f;
-        p.target_rim_nm = 12.0f;
-        p.min_force = 0.0f;
+        p.general.gain = 1.454f;
+        p.general.wheelbase_max_nm = 21.0f;
+        p.general.target_rim_nm = 12.0f;
+        p.general.min_force = 0.0f;
         p.steering_shaft_gain = 1.989f;
         p.steering_shaft_smoothing = 0.0f;
         p.understeer = 0.638f;
@@ -1146,7 +1146,7 @@ void Config::LoadPresets() {
                 
                 // Issue #211: Legacy 100Nm hack scaling
                 if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
-                    current_preset.gain *= (15.0f / legacy_torque_val);
+                    current_preset.general.gain *= (15.0f / legacy_torque_val);
                     Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
                     needs_save = true;
                 }
@@ -1201,7 +1201,7 @@ void Config::LoadPresets() {
         
         // Issue #211: Legacy 100Nm hack scaling
         if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
-            current_preset.gain *= (15.0f / legacy_torque_val);
+            current_preset.general.gain *= (15.0f / legacy_torque_val);
             Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for preset '%s'. Scaling gain.", current_preset_name.c_str());
             needs_save = true;
         }
@@ -1243,10 +1243,10 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
 
 void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "app_version=" << p.app_version << "\n";
-    file << "gain=" << p.gain << "\n";
-    file << "wheelbase_max_nm=" << p.wheelbase_max_nm << "\n";
-    file << "target_rim_nm=" << p.target_rim_nm << "\n";
-    file << "min_force=" << p.min_force << "\n";
+    file << "gain=" << p.general.gain << "\n";
+    file << "wheelbase_max_nm=" << p.general.wheelbase_max_nm << "\n";
+    file << "target_rim_nm=" << p.general.target_rim_nm << "\n";
+    file << "min_force=" << p.general.min_force << "\n";
 
     file << "steering_shaft_gain=" << p.steering_shaft_gain << "\n";
     file << "ingame_ffb_gain=" << p.ingame_ffb_gain << "\n";
@@ -1337,8 +1337,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "road_gain=" << p.road_gain << "\n";
     file << "vibration_gain=" << p.vibration_gain << "\n";
     file << "road_fallback_scale=" << p.road_fallback_scale << "\n";
-    file << "dynamic_normalization_enabled=" << (p.dynamic_normalization_enabled ? "1" : "0") << "\n";
-    file << "auto_load_normalization_enabled=" << (p.auto_load_normalization_enabled ? "1" : "0") << "\n";
+    file << "dynamic_normalization_enabled=" << (p.general.dynamic_normalization_enabled ? "1" : "0") << "\n";
+    file << "auto_load_normalization_enabled=" << (p.general.auto_load_normalization_enabled ? "1" : "0") << "\n";
     file << "soft_lock_enabled=" << (p.soft_lock_enabled ? "1" : "0") << "\n";
     file << "soft_lock_stiffness=" << p.soft_lock_stiffness << "\n";
     file << "soft_lock_damping=" << p.soft_lock_damping << "\n";
@@ -1427,7 +1427,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
 
         // Issue #211: Legacy 100Nm hack scaling
         if (legacy_torque_hack && IsVersionLessEqual(current_preset_version, "0.7.66")) {
-            current_preset.gain *= (15.0f / legacy_torque_val);
+            current_preset.general.gain *= (15.0f / legacy_torque_val);
             Logger::Get().LogFile("[Config] Migrated legacy 100Nm hack for imported preset '%s'. Scaling gain.", current_preset_name.c_str());
         }
 
@@ -1588,15 +1588,15 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 
         file << "\n; --- General FFB ---\n";
         file << "invert_force=" << engine.m_invert_force << "\n";
-        file << "gain=" << engine.m_gain << "\n";
-        file << "dynamic_normalization_enabled=" << engine.m_dynamic_normalization_enabled << "\n";
-        file << "auto_load_normalization_enabled=" << engine.m_auto_load_normalization_enabled << "\n";
+        file << "gain=" << engine.m_general.gain << "\n";
+        file << "dynamic_normalization_enabled=" << engine.m_general.dynamic_normalization_enabled << "\n";
+        file << "auto_load_normalization_enabled=" << engine.m_general.auto_load_normalization_enabled << "\n";
         file << "soft_lock_enabled=" << engine.m_soft_lock_enabled << "\n";
         file << "soft_lock_stiffness=" << engine.m_soft_lock_stiffness << "\n";
         file << "soft_lock_damping=" << engine.m_soft_lock_damping << "\n";
-        file << "wheelbase_max_nm=" << engine.m_wheelbase_max_nm << "\n";
-        file << "target_rim_nm=" << engine.m_target_rim_nm << "\n";
-        file << "min_force=" << engine.m_min_force << "\n";
+        file << "wheelbase_max_nm=" << engine.m_general.wheelbase_max_nm << "\n";
+        file << "target_rim_nm=" << engine.m_general.target_rim_nm << "\n";
+        file << "min_force=" << engine.m_general.min_force << "\n";
 
         file << "\n; --- Front Axle (Understeer) ---\n";
         file << "steering_shaft_gain=" << engine.m_steering_shaft_gain << "\n";
@@ -1813,10 +1813,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     // These checks ensure that even if config.ini is manually edited with invalid values,
     // the engine remains stable and doesn't crash or produce NaN.
 
-    engine.m_gain = (std::max)(0.0f, engine.m_gain);
-    engine.m_wheelbase_max_nm = (std::max)(1.0f, engine.m_wheelbase_max_nm);
-    engine.m_target_rim_nm = (std::max)(1.0f, engine.m_target_rim_nm);
-    engine.m_min_force = (std::max)(0.0f, engine.m_min_force);
+    engine.m_general.Validate();
     engine.m_sop_scale = (std::max)(0.01f, engine.m_sop_scale);
     engine.m_slip_angle_smoothing = (std::max)(0.0001f, engine.m_slip_angle_smoothing);
     engine.m_notch_q = (std::max)(0.1f, engine.m_notch_q);
@@ -1911,7 +1908,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
     // Issue #211: Legacy 100Nm hack scaling
     if (legacy_torque_hack && IsVersionLessEqual(config_version, "0.7.66")) {
-        engine.m_gain *= (15.0f / legacy_torque_val);
+        engine.m_general.gain *= (15.0f / legacy_torque_val);
         Logger::Get().Log("[Config] Migrated legacy 100Nm hack for main config. Scaling gain.");
         Logger::Get().Log("[Config] Migrated legacy 100Nm hack for main config. Scaling gain.");
         m_needs_save = true;

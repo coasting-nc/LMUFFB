@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <cstdint>   // For uint8_t
 #include <lz4.h>     // For LZ4 compression
+#include "ffb/FFBConfig.h"
 
 // Forward declaration
 struct TelemInfoV01;
@@ -203,7 +204,7 @@ struct SessionInfo {
     std::string app_version;
     
     // Key settings snapshot
-    float gain;
+    GeneralConfig general;
     float understeer_effect;
     float sop_effect;
     float lat_load_effect; // v0.7.152
@@ -218,8 +219,6 @@ struct SessionInfo {
     float slope_alpha_threshold;
     float slope_decay_rate;
     bool torque_passthrough; // v0.7.63
-    bool dynamic_normalization;
-    bool auto_load_normalization;
 };
 
 class AsyncLogger {
@@ -427,7 +426,7 @@ private:
         m_file << "# ========================\n";
         m_file << "# FFB Settings\n";
         m_file << "# ========================\n";
-        m_file << "# Gain: " << info.gain << "\n";
+        m_file << "# Gain: " << info.general.gain << "\n";
         m_file << "# Understeer Effect: " << info.understeer_effect << "\n";
         m_file << "# SoP Effect: " << info.sop_effect << "\n";
         m_file << "# Lateral Load Effect: " << info.lat_load_effect << "\n";
@@ -442,8 +441,8 @@ private:
         m_file << "# Slope Alpha Threshold: " << info.slope_alpha_threshold << "\n";
         m_file << "# Slope Decay Rate: " << info.slope_decay_rate << "\n";
         m_file << "# Torque Passthrough: " << (info.torque_passthrough ? "Enabled" : "Disabled") << "\n";
-        m_file << "# Dynamic Normalization: " << (info.dynamic_normalization ? "Enabled" : "Disabled") << "\n";
-        m_file << "# Auto Load Normalization: " << (info.auto_load_normalization ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Dynamic Normalization: " << (info.general.dynamic_normalization_enabled ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Auto Load Normalization: " << (info.general.auto_load_normalization_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# ========================\n";
         
         // CSV Header for human readability
