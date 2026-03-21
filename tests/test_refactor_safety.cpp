@@ -7,14 +7,14 @@ TEST_CASE(test_refactor_safety_consistency, "RefactorSafety") {
     InitializeEngine(engine);
 
     // Set specific Safety values (using current loose variables)
-    engine.m_safety.m_safety_window_duration = 2.5f;
-    engine.m_safety.m_safety_gain_reduction = 0.5f;
-    engine.m_safety.m_safety_smoothing_tau = 0.1f;
-    engine.m_safety.m_spike_detection_threshold = 400.0f;
-    engine.m_safety.m_immediate_spike_threshold = 1200.0f;
-    engine.m_safety.m_safety_slew_full_scale_time_s = 0.5f;
-    engine.m_safety.m_stutter_safety_enabled = true;
-    engine.m_safety.m_stutter_threshold = 1.8f;
+    engine.m_safety.m_config.window_duration = 2.5f;
+    engine.m_safety.m_config.gain_reduction = 0.5f;
+    engine.m_safety.m_config.smoothing_tau = 0.1f;
+    engine.m_safety.m_config.spike_detection_threshold = 400.0f;
+    engine.m_safety.m_config.immediate_spike_threshold = 1200.0f;
+    engine.m_safety.m_config.slew_full_scale_time_s = 0.5f;
+    engine.m_safety.m_config.stutter_safety_enabled = true;
+    engine.m_safety.m_config.stutter_threshold = 1.8f;
 
     // Create a telemetry state that might trigger safety logic
     TelemInfoV01 data = CreateBasicTestTelemetry(25.0, 0.08);
@@ -41,27 +41,27 @@ TEST_CASE(test_refactor_safety_roundtrip, "RefactorSafety") {
 
     Preset original("TestPreset", false);
     // Set wild values for Safety variables
-    original.safety_window_duration = 3.3f;
-    original.safety_gain_reduction = 0.15f;
-    original.safety_smoothing_tau = 0.25f;
-    original.spike_detection_threshold = 888.0f;
-    original.immediate_spike_threshold = 2222.0f;
-    original.safety_slew_full_scale_time_s = 0.75f;
-    original.stutter_safety_enabled = true;
-    original.stutter_threshold = 2.5f;
+    original.safety.window_duration = 3.3f;
+    original.safety.gain_reduction = 0.15f;
+    original.safety.smoothing_tau = 0.25f;
+    original.safety.spike_detection_threshold = 888.0f;
+    original.safety.immediate_spike_threshold = 2222.0f;
+    original.safety.slew_full_scale_time_s = 0.75f;
+    original.safety.stutter_safety_enabled = true;
+    original.safety.stutter_threshold = 2.5f;
 
     // Apply to engine
     original.Apply(engine);
 
     // Verify engine received them (using current loose variables)
-    ASSERT_NEAR(engine.m_safety.m_safety_window_duration, 3.3f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_safety_gain_reduction, 0.15f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_safety_smoothing_tau, 0.25f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_spike_detection_threshold, 888.0f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_immediate_spike_threshold, 2222.0f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_safety_slew_full_scale_time_s, 0.75f, 0.0001);
-    ASSERT_EQ(engine.m_safety.m_stutter_safety_enabled, true);
-    ASSERT_NEAR(engine.m_safety.m_stutter_threshold, 2.5f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.window_duration, 3.3f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.gain_reduction, 0.15f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.smoothing_tau, 0.25f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.spike_detection_threshold, 888.0f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.immediate_spike_threshold, 2222.0f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.slew_full_scale_time_s, 0.75f, 0.0001);
+    ASSERT_EQ(engine.m_safety.m_config.stutter_safety_enabled, true);
+    ASSERT_NEAR(engine.m_safety.m_config.stutter_threshold, 2.5f, 0.0001);
 
     // Extract back to a new preset
     Preset extracted("Extracted", false);
@@ -78,24 +78,24 @@ TEST_CASE(test_refactor_safety_validation, "RefactorSafety") {
     Preset bad_preset("Bad", false);
 
     // Set malicious Safety values
-    bad_preset.safety_window_duration = -1.0f;         // Should clamp to 0.0
-    bad_preset.safety_gain_reduction = 5.0f;          // Should clamp to 1.0
-    bad_preset.safety_smoothing_tau = 0.0f;           // Should clamp to 0.001
-    bad_preset.spike_detection_threshold = 0.5f;      // Should clamp to 1.0
-    bad_preset.immediate_spike_threshold = 0.1f;      // Should clamp to 1.0
-    bad_preset.safety_slew_full_scale_time_s = 0.0f;  // Should clamp to 0.01
-    bad_preset.stutter_threshold = 0.5f;              // Should clamp to 1.01
+    bad_preset.safety.window_duration = -1.0f;         // Should clamp to 0.0
+    bad_preset.safety.gain_reduction = 5.0f;          // Should clamp to 1.0
+    bad_preset.safety.smoothing_tau = 0.0f;           // Should clamp to 0.001
+    bad_preset.safety.spike_detection_threshold = 0.5f;      // Should clamp to 1.0
+    bad_preset.safety.immediate_spike_threshold = 0.1f;      // Should clamp to 1.0
+    bad_preset.safety.slew_full_scale_time_s = 0.0f;  // Should clamp to 0.01
+    bad_preset.safety.stutter_threshold = 0.5f;              // Should clamp to 1.01
 
     bad_preset.Apply(engine);
 
     // Verify engine clamped them (using current loose variables)
-    ASSERT_NEAR(engine.m_safety.m_safety_window_duration, 0.0f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_safety_gain_reduction, 1.0f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_safety_smoothing_tau, 0.001f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_spike_detection_threshold, 1.0f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_immediate_spike_threshold, 1.0f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_safety_slew_full_scale_time_s, 0.01f, 0.0001);
-    ASSERT_NEAR(engine.m_safety.m_stutter_threshold, 1.01f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.window_duration, 0.0f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.gain_reduction, 1.0f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.smoothing_tau, 0.001f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.spike_detection_threshold, 1.0f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.immediate_spike_threshold, 1.0f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.slew_full_scale_time_s, 0.01f, 0.0001);
+    ASSERT_NEAR(engine.m_safety.m_config.stutter_threshold, 1.01f, 0.0001);
 }
 
 }

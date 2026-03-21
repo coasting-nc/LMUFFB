@@ -34,10 +34,12 @@ From `Preset` (loose variables) and `FFBSafetyMonitor` (internal members):
    - Run all tests and ensure they pass.
 
 ## Encountered Issues
-- None yet.
+- **Missing Header in FFBSafetyMonitor.h**: After refactoring `FFBSafetyMonitor` to use `SafetyConfig`, I had to add `#include "FFBConfig.h"` to the header to fix compiler errors.
+- **Multiple Test Failures**: Several existing safety-related tests (`test_issue_303_safety.cpp`, `test_issue_314_safety_v2.cpp`, `test_issue_316_safety_gui.cpp`, `test_coverage_boost_v7.cpp`, `test_coverage_boost_v8.cpp`) directly accessed the old loose variables in `engine.m_safety` and `Preset`. I had to update all these tests to use the new nested paths.
+- **main.cpp Update**: The stutter detection logic in `main.cpp` used the loose variables in `g_engine.m_safety`. I updated it to use `g_engine.m_safety.m_config`.
 
 ## Deviations from the Plan
-- None yet.
+- None.
 
 ## Suggestions for the Future
-- Continue with other categories until all are refactored.
+- Now that `SafetyConfig` is implemented, all planned Phase 1 categories are complete.

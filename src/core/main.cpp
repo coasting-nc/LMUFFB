@@ -181,7 +181,7 @@ void FFBThread() {
 
                     // --- LOST FRAME DETECTION (Issue #303) ---
                     static double last_telem_et = -1.0;
-                    if (g_engine.m_safety.m_stutter_safety_enabled && last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_safety.m_stutter_threshold)) {
+                    if (g_engine.m_safety.m_config.stutter_safety_enabled && last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_safety.m_config.stutter_threshold)) {
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         g_engine.m_safety.TriggerSafetyWindow("Lost Frames");
                     }

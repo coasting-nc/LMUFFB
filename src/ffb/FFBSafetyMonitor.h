@@ -7,6 +7,7 @@
 #include "io/lmu_sm_interface/InternalsPluginWrapper.h"
 #include "logging/Logger.h"
 #include "utils/StringUtils.h"
+#include "FFBConfig.h"
 
 class FFBSafetyMonitor {
 public:
@@ -16,14 +17,7 @@ public:
     FFBSafetyMonitor() = default;
 
     // FFB Safety Settings
-    float m_safety_window_duration = 0.0f;
-    float m_safety_gain_reduction = 0.3f;
-    float m_safety_smoothing_tau = 0.2f;
-    float m_spike_detection_threshold = 500.0f;
-    float m_immediate_spike_threshold = 1500.0f;
-    float m_safety_slew_full_scale_time_s = 1.0f; 
-    bool  m_stutter_safety_enabled = false;
-    float m_stutter_threshold = 1.5f;
+    SafetyConfig m_config;
 
     // API methods for FFBEngine
     double GetSafetyTimer() const { return safety_timer; }

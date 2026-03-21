@@ -30,20 +30,20 @@ void FFBSafetyMonitor::TriggerSafetyWindow(const char* reason, double now) {
     if (timer_expired || different_reason) {
         // Always log if the window was inactive or the reason changed
         Logger::Get().LogFile("[Safety] Triggered Safety Window (%.1fs). Reason: %s", 
-            (double)m_safety_window_duration, reason);
+            (double)m_config.window_duration, reason);
         last_reset_log_time = current_now;
         StringUtils::SafeCopy(last_reset_reason, 64, reason);
     } else {
         // Same reason, apply 1-second throttling to avoid spam
         if (current_now > (last_reset_log_time + 1.0)) {
             Logger::Get().LogFile("[Safety] Triggered Safety Window (%.1fs). Reason: %s (Subsequent)", 
-                (double)m_safety_window_duration, reason);
+                (double)m_config.window_duration, reason);
             last_reset_log_time = current_now;
         }
     }
 
-    safety_timer = (double)m_safety_window_duration;
-    if (m_safety_window_duration <= 0.001f) {
+    safety_timer = (double)m_config.window_duration;
+    if (m_config.window_duration <= 0.001f) {
         safety_timer = 0.0; // Ensure it's exactly 0 if disabled
     }
 
@@ -67,8 +67,8 @@ double FFBSafetyMonitor::ApplySafetySlew(double target_force, double current_out
     double slew_limit = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;
     
     // If safety window is active, we apply the user-defined slew limit (Issue #316)
-    if (safety_timer > 0.0 && m_safety_slew_full_scale_time_s > 0.01f) {
-        slew_limit = 1.0 / (double)m_safety_slew_full_scale_time_s;
+    if (safety_timer > 0.0 && m_config.slew_full_scale_time_s > 0.01f) {
+        slew_limit = 1.0 / (double)m_config.slew_full_scale_time_s;
     }
 
     double max_delta = slew_limit * dt;
@@ -76,14 +76,14 @@ double FFBSafetyMonitor::ApplySafetySlew(double target_force, double current_out
     double requested_rate = std::abs(delta) / (dt + 1e-9);
 
     // 2. Spike Detection (independent of slew limit)
-    if (requested_rate > (double)m_immediate_spike_threshold) {
+    if (requested_rate > (double)m_config.immediate_spike_threshold) {
          if (current_now > (last_massive_spike_log_time + 5.0)) {
             Logger::Get().LogFile("[Safety] Massive Spike! Rate: %.0f u/s (Limit: %.0f). Triggering Safety.", 
-                requested_rate, (double)m_immediate_spike_threshold);
+                requested_rate, (double)m_config.immediate_spike_threshold);
             last_massive_spike_log_time = current_now;
         }
         TriggerSafetyWindow("Massive Spike", current_now);
-    } else if (requested_rate > (double)m_spike_detection_threshold) {
+    } else if (requested_rate > (double)m_config.spike_detection_threshold) {
         spike_counter++;
         if (spike_counter >= 5) { // 5 consecutive frames of high slew
             if (current_now > (last_high_spike_log_time + 5.0)) {
@@ -107,7 +107,7 @@ double FFBSafetyMonitor::ApplySafetySlew(double target_force, double current_out
 double FFBSafetyMonitor::ProcessSafetyMitigation(double norm_force, double dt) {
     if (safety_timer > 0.0) {
         // Apply extra gain reduction
-        norm_force *= (double)m_safety_gain_reduction;
+        norm_force *= (double)m_config.gain_reduction;
 
         // Apply extra smoothing to the final output to blunt any jitter
         // Using a 200ms EMA (Issue #314)
@@ -116,7 +116,7 @@ double FFBSafetyMonitor::ProcessSafetyMitigation(double norm_force, double dt) {
             safety_smoothed_force = norm_force;
             safety_is_seeded = true;
         } else {
-            double safety_alpha = dt / ((double)m_safety_smoothing_tau + dt);
+            double safety_alpha = dt / ((double)m_config.smoothing_tau + dt);
             safety_smoothed_force += safety_alpha * (norm_force - safety_smoothed_force);
         }
         norm_force = safety_smoothed_force;
