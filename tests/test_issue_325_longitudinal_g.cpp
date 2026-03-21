@@ -16,7 +16,7 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_load_forces.long_load_transform = (int)LoadTransform::LINEAR;
-    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
+    engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 1G Braking (+Z is rearward/deceleration)
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
@@ -59,7 +59,7 @@ TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_load_forces.long_load_transform = (int)LoadTransform::LINEAR;
-    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
+    engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 3G Braking
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0);
@@ -96,7 +96,7 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_load_forces.long_load_transform = (int)LoadTransform::CUBIC;
-    engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
+    engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 0.5G Braking (4.905 m/s2)
     // Domain Scaling: MAX_G_RANGE = 5.0
@@ -139,7 +139,7 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
     engine.m_front_axle.understeer_effect = 0.0f;
 
     // Scenario: 0G Acceleration (Constant Speed) but MASSIVE front load (Aero)
-    engine.m_chassis_inertia_smoothing = 1000.0f;
+    engine.m_grip_estimation.chassis_inertia_smoothing = 1000.0f;
     engine.m_accel_z_smoothed = 0.0;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(80.0);

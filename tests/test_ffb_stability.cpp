@@ -12,8 +12,8 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
     p.lockup_gamma = -1.0f;
     p.front_axle.notch_q = -5.0f;
     p.general.wheelbase_max_nm = -100.0f;
-    p.optimal_slip_angle = -0.1f;
-    p.optimal_slip_ratio = 0.0f;
+    p.grip_estimation.optimal_slip_angle = -0.1f;
+    p.grip_estimation.optimal_slip_ratio = 0.0f;
     p.slope_alpha_threshold = -0.01f;
     p.slope_decay_rate = -5.0f;
     p.slope_smoothing_tau = -0.04f;
@@ -26,8 +26,8 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
     ASSERT_GE(engine.m_lockup_gamma, 0.1f);
     ASSERT_GE(engine.m_front_axle.notch_q, 0.1f);
     ASSERT_GE(engine.m_general.wheelbase_max_nm, 1.0f);
-    ASSERT_GE(engine.m_optimal_slip_angle, 0.01f);
-    ASSERT_GE(engine.m_optimal_slip_ratio, 0.01f);
+    ASSERT_GE(engine.m_grip_estimation.optimal_slip_angle, 0.01f);
+    ASSERT_GE(engine.m_grip_estimation.optimal_slip_ratio, 0.01f);
     ASSERT_GE(engine.m_slope_alpha_threshold, 0.001f);
     ASSERT_GE(engine.m_slope_decay_rate, 0.1f);
     ASSERT_GE(engine.m_slope_smoothing_tau, 0.001f);
@@ -59,7 +59,7 @@ TEST_CASE(test_config_load_validation, "Stability") {
     ASSERT_GE(engine.m_general.gain, 0.0f);
     ASSERT_GE(engine.m_general.wheelbase_max_nm, 1.0f);
     ASSERT_GE(engine.m_lockup_gamma, 0.1f);
-    ASSERT_GE(engine.m_optimal_slip_angle, 0.01f);
+    ASSERT_GE(engine.m_grip_estimation.optimal_slip_angle, 0.01f);
     ASSERT_TRUE(engine.m_slope_sg_window >= 5);
     ASSERT_TRUE(engine.m_slope_sg_window % 2 != 0);
 

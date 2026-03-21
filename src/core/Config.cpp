@@ -107,9 +107,9 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "long_load_effect" || key == "dynamic_weight_gain") { current_preset.load_forces.long_load_effect = std::stof(value); return true; }
     if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { current_preset.load_forces.long_load_smoothing = std::stof(value); return true; }
     if (key == "long_load_transform") { current_preset.load_forces.long_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
-    if (key == "grip_smoothing_steady") { current_preset.grip_smoothing_steady = std::stof(value); return true; }
-    if (key == "grip_smoothing_fast") { current_preset.grip_smoothing_fast = std::stof(value); return true; }
-    if (key == "grip_smoothing_sensitivity") { current_preset.grip_smoothing_sensitivity = std::stof(value); return true; }
+    if (key == "grip_smoothing_steady") { current_preset.grip_estimation.grip_smoothing_steady = std::stof(value); return true; }
+    if (key == "grip_smoothing_fast") { current_preset.grip_estimation.grip_smoothing_fast = std::stof(value); return true; }
+    if (key == "grip_smoothing_sensitivity") { current_preset.grip_estimation.grip_smoothing_sensitivity = std::stof(value); return true; }
     if (key == "rear_align_effect") { current_preset.rear_axle.rear_align_effect = std::stof(value); return true; }
     if (key == "kerb_strike_rejection") { current_preset.rear_axle.kerb_strike_rejection = std::stof(value); return true; }
     if (key == "sop_yaw_gain") { current_preset.rear_axle.sop_yaw_gain = std::stof(value); return true; }
@@ -128,8 +128,8 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "gyro_gain") { current_preset.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "stationary_damping") { current_preset.stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { current_preset.gyro_smoothing = std::stof(value); return true; }
-    if (key == "optimal_slip_angle") { current_preset.optimal_slip_angle = std::stof(value); return true; }
-    if (key == "optimal_slip_ratio") { current_preset.optimal_slip_ratio = std::stof(value); return true; }
+    if (key == "optimal_slip_angle") { current_preset.grip_estimation.optimal_slip_angle = std::stof(value); return true; }
+    if (key == "optimal_slip_ratio") { current_preset.grip_estimation.optimal_slip_ratio = std::stof(value); return true; }
     if (key == "slope_detection_enabled") { current_preset.slope_detection_enabled = (value == "1"); return true; }
     if (key == "slope_sg_window") { current_preset.slope_sg_window = std::stoi(value); return true; }
     if (key == "slope_sensitivity") { current_preset.slope_sensitivity = std::stof(value); return true; }
@@ -143,9 +143,9 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "slope_use_torque") { current_preset.slope_use_torque = (value == "1"); return true; }
     if (key == "slope_torque_sensitivity") { current_preset.slope_torque_sensitivity = std::stof(value); return true; }
     if (key == "slope_confidence_max_rate") { current_preset.slope_confidence_max_rate = std::stof(value); return true; }
-    if (key == "slip_angle_smoothing") { current_preset.slip_smoothing = std::stof(value); return true; }
-    if (key == "chassis_inertia_smoothing") { current_preset.chassis_smoothing = std::stof(value); return true; }
-    if (key == "load_sensitivity_enabled") { current_preset.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "slip_angle_smoothing") { current_preset.grip_estimation.slip_angle_smoothing = std::stof(value); return true; }
+    if (key == "chassis_inertia_smoothing") { current_preset.grip_estimation.chassis_inertia_smoothing = std::stof(value); return true; }
+    if (key == "load_sensitivity_enabled") { current_preset.grip_estimation.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
     return false;
 }
 
@@ -279,9 +279,9 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "long_load_effect" || key == "dynamic_weight_gain") { engine.m_load_forces.long_load_effect = std::stof(value); return true; }
     if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { engine.m_load_forces.long_load_smoothing = std::stof(value); return true; }
     if (key == "long_load_transform") { engine.m_load_forces.long_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
-    if (key == "grip_smoothing_steady") { engine.m_grip_smoothing_steady = std::stof(value); return true; }
-    if (key == "grip_smoothing_fast") { engine.m_grip_smoothing_fast = std::stof(value); return true; }
-    if (key == "grip_smoothing_sensitivity") { engine.m_grip_smoothing_sensitivity = std::stof(value); return true; }
+    if (key == "grip_smoothing_steady") { engine.m_grip_estimation.grip_smoothing_steady = std::stof(value); return true; }
+    if (key == "grip_smoothing_fast") { engine.m_grip_estimation.grip_smoothing_fast = std::stof(value); return true; }
+    if (key == "grip_smoothing_sensitivity") { engine.m_grip_estimation.grip_smoothing_sensitivity = std::stof(value); return true; }
     if (key == "rear_align_effect") { engine.m_rear_axle.rear_align_effect = std::stof(value); return true; }
     if (key == "kerb_strike_rejection") { engine.m_rear_axle.kerb_strike_rejection = std::stof(value); return true; }
     if (key == "sop_yaw_gain") { engine.m_rear_axle.sop_yaw_gain = std::stof(value); return true; }
@@ -300,8 +300,8 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "gyro_gain") { engine.m_gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "stationary_damping") { engine.m_stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { engine.m_gyro_smoothing = std::stof(value); return true; }
-    if (key == "optimal_slip_angle") { engine.m_optimal_slip_angle = std::stof(value); return true; }
-    if (key == "optimal_slip_ratio") { engine.m_optimal_slip_ratio = std::stof(value); return true; }
+    if (key == "optimal_slip_angle") { engine.m_grip_estimation.optimal_slip_angle = std::stof(value); return true; }
+    if (key == "optimal_slip_ratio") { engine.m_grip_estimation.optimal_slip_ratio = std::stof(value); return true; }
     if (key == "slope_detection_enabled") { engine.m_slope_detection_enabled = (value == "1"); return true; }
     if (key == "slope_sg_window") { engine.m_slope_sg_window = std::stoi(value); return true; }
     if (key == "slope_sensitivity") { engine.m_slope_sensitivity = std::stof(value); return true; }
@@ -315,9 +315,9 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "slope_use_torque") { engine.m_slope_use_torque = (value == "1"); return true; }
     if (key == "slope_torque_sensitivity") { engine.m_slope_torque_sensitivity = std::stof(value); return true; }
     if (key == "slope_confidence_max_rate") { engine.m_slope_confidence_max_rate = std::stof(value); return true; }
-    if (key == "slip_angle_smoothing") { engine.m_slip_angle_smoothing = std::stof(value); return true; }
-    if (key == "chassis_inertia_smoothing") { engine.m_chassis_inertia_smoothing = std::stof(value); return true; }
-    if (key == "load_sensitivity_enabled") { engine.m_load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "slip_angle_smoothing") { engine.m_grip_estimation.slip_angle_smoothing = std::stof(value); return true; }
+    if (key == "chassis_inertia_smoothing") { engine.m_grip_estimation.chassis_inertia_smoothing = std::stof(value); return true; }
+    if (key == "load_sensitivity_enabled") { engine.m_grip_estimation.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
     if (key == "speed_gate_lower") { engine.m_speed_gate_lower = std::stof(value); return true; }
     if (key == "speed_gate_upper") { engine.m_speed_gate_upper = std::stof(value); return true; }
     if (key == "road_fallback_scale") { engine.m_road_fallback_scale = std::stof(value); return true; }
@@ -433,10 +433,10 @@ void Config::LoadPresets() {
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.0f;
         p.understeer_affects_sop = false;
-        p.slip_smoothing = 0.0f;
-        p.chassis_smoothing = 0.0f;
-        p.optimal_slip_angle = 0.10f;   // CHANGED from 0.06f
-        p.optimal_slip_ratio = 0.12f;
+        p.grip_estimation.slip_angle_smoothing = 0.0f;
+        p.grip_estimation.chassis_inertia_smoothing = 0.0f;
+        p.grip_estimation.optimal_slip_angle = 0.10f;   // CHANGED from 0.06f
+        p.grip_estimation.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 2.0f;
         p.brake_load_cap = 10.0f;
@@ -493,9 +493,9 @@ void Config::LoadPresets() {
         p.load_forces.long_load_effect = 2.68722f;
         p.load_forces.long_load_smoothing = 0.15f;
         p.load_forces.long_load_transform = 0;
-        p.grip_smoothing_steady = 0.05f;
-        p.grip_smoothing_fast = 0.005f;
-        p.grip_smoothing_sensitivity = 0.1f;
+        p.grip_estimation.grip_smoothing_steady = 0.05f;
+        p.grip_estimation.grip_smoothing_fast = 0.005f;
+        p.grip_estimation.grip_smoothing_sensitivity = 0.1f;
         p.rear_axle.sop_effect = 0.0f;
         p.load_forces.lat_load_effect = 2.81938f;
         p.load_forces.lat_load_transform = 2;
@@ -531,10 +531,10 @@ void Config::LoadPresets() {
         p.slope_use_torque = true;
         p.slope_torque_sensitivity = 0.5f;
         p.slope_confidence_max_rate = 0.1f;
-        p.slip_smoothing = 0.002f;
-        p.chassis_smoothing = 0.0f;
-        p.optimal_slip_angle = 0.1f;
-        p.optimal_slip_ratio = 0.12f;
+        p.grip_estimation.slip_angle_smoothing = 0.002f;
+        p.grip_estimation.chassis_inertia_smoothing = 0.0f;
+        p.grip_estimation.optimal_slip_angle = 0.1f;
+        p.grip_estimation.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 3.0f;
         p.brake_load_cap = 10.0f;
@@ -610,10 +610,10 @@ void Config::LoadPresets() {
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.98f;
         p.understeer_affects_sop = false;
-        p.slip_smoothing = 0.002f;
-        p.chassis_smoothing = 0.012f;
-        p.optimal_slip_angle = 0.1f;
-        p.optimal_slip_ratio = 0.12f;
+        p.grip_estimation.slip_angle_smoothing = 0.002f;
+        p.grip_estimation.chassis_inertia_smoothing = 0.012f;
+        p.grip_estimation.optimal_slip_angle = 0.1f;
+        p.grip_estimation.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 0.37479f;
         p.brake_load_cap = 2.0f;
@@ -673,10 +673,10 @@ void Config::LoadPresets() {
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.59f;
         p.understeer_affects_sop = false;
-        p.slip_smoothing = 0.003f;
-        p.chassis_smoothing = 0.019f;
-        p.optimal_slip_angle = 0.12f;
-        p.optimal_slip_ratio = 0.12f;
+        p.grip_estimation.slip_angle_smoothing = 0.003f;
+        p.grip_estimation.chassis_inertia_smoothing = 0.019f;
+        p.grip_estimation.optimal_slip_angle = 0.12f;
+        p.grip_estimation.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 0.37479f;
         p.brake_load_cap = 2.0f;
@@ -736,10 +736,10 @@ void Config::LoadPresets() {
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 0.89f;
         p.understeer_affects_sop = false;
-        p.slip_smoothing = 0.002f;
-        p.chassis_smoothing = 0.0f;
-        p.optimal_slip_angle = 0.1f;
-        p.optimal_slip_ratio = 0.12f;
+        p.grip_estimation.slip_angle_smoothing = 0.002f;
+        p.grip_estimation.chassis_inertia_smoothing = 0.0f;
+        p.grip_estimation.optimal_slip_angle = 0.1f;
+        p.grip_estimation.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 0.977f;
         p.brake_load_cap = 81.0f;
@@ -800,10 +800,10 @@ void Config::LoadPresets() {
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 0.89f;
         p.understeer_affects_sop = false;
-        p.slip_smoothing = 0.002f;
-        p.chassis_smoothing = 0.0f;
-        p.optimal_slip_angle = 0.1f;
-        p.optimal_slip_ratio = 0.12f;
+        p.grip_estimation.slip_angle_smoothing = 0.002f;
+        p.grip_estimation.chassis_inertia_smoothing = 0.0f;
+        p.grip_estimation.optimal_slip_angle = 0.1f;
+        p.grip_estimation.optimal_slip_ratio = 0.12f;
         p.lockup_enabled = true;
         p.lockup_gain = 0.977f;
         p.brake_load_cap = 81.0f;
@@ -1267,9 +1267,9 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "long_load_effect=" << p.load_forces.long_load_effect << "\n";
     file << "long_load_smoothing=" << p.load_forces.long_load_smoothing << "\n";
     file << "long_load_transform=" << p.load_forces.long_load_transform << "\n";
-    file << "grip_smoothing_steady=" << p.grip_smoothing_steady << "\n";
-    file << "grip_smoothing_fast=" << p.grip_smoothing_fast << "\n";
-    file << "grip_smoothing_sensitivity=" << p.grip_smoothing_sensitivity << "\n";
+    file << "grip_smoothing_steady=" << p.grip_estimation.grip_smoothing_steady << "\n";
+    file << "grip_smoothing_fast=" << p.grip_estimation.grip_smoothing_fast << "\n";
+    file << "grip_smoothing_sensitivity=" << p.grip_estimation.grip_smoothing_sensitivity << "\n";
     file << "sop=" << p.rear_axle.sop_effect << "\n";
     file << "lateral_load_effect=" << p.load_forces.lat_load_effect << "\n";
     file << "lat_load_transform=" << p.load_forces.lat_load_transform << "\n";
@@ -1309,11 +1309,11 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "slope_torque_sensitivity=" << p.slope_torque_sensitivity << "\n";
     file << "slope_confidence_max_rate=" << p.slope_confidence_max_rate << "\n";
 
-    file << "slip_angle_smoothing=" << p.slip_smoothing << "\n";
-    file << "chassis_inertia_smoothing=" << p.chassis_smoothing << "\n";
-    file << "load_sensitivity_enabled=" << (p.load_sensitivity_enabled ? "1" : "0") << "\n";
-    file << "optimal_slip_angle=" << p.optimal_slip_angle << "\n";
-    file << "optimal_slip_ratio=" << p.optimal_slip_ratio << "\n";
+    file << "slip_angle_smoothing=" << p.grip_estimation.slip_angle_smoothing << "\n";
+    file << "chassis_inertia_smoothing=" << p.grip_estimation.chassis_inertia_smoothing << "\n";
+    file << "load_sensitivity_enabled=" << (p.grip_estimation.load_sensitivity_enabled ? "1" : "0") << "\n";
+    file << "optimal_slip_angle=" << p.grip_estimation.optimal_slip_angle << "\n";
+    file << "optimal_slip_ratio=" << p.grip_estimation.optimal_slip_ratio << "\n";
 
     file << "lockup_enabled=" << (p.lockup_enabled ? "1" : "0") << "\n";
     file << "lockup_gain=" << p.lockup_gain << "\n";
@@ -1619,9 +1619,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "long_load_effect=" << engine.m_load_forces.long_load_effect << "\n";
         file << "long_load_smoothing=" << engine.m_load_forces.long_load_smoothing << "\n";
         file << "long_load_transform=" << engine.m_load_forces.long_load_transform << "\n";
-        file << "grip_smoothing_steady=" << engine.m_grip_smoothing_steady << "\n";
-        file << "grip_smoothing_fast=" << engine.m_grip_smoothing_fast << "\n";
-        file << "grip_smoothing_sensitivity=" << engine.m_grip_smoothing_sensitivity << "\n";
+        file << "grip_smoothing_steady=" << engine.m_grip_estimation.grip_smoothing_steady << "\n";
+        file << "grip_smoothing_fast=" << engine.m_grip_estimation.grip_smoothing_fast << "\n";
+        file << "grip_smoothing_sensitivity=" << engine.m_grip_estimation.grip_smoothing_sensitivity << "\n";
         file << "sop=" << engine.m_rear_axle.sop_effect << "\n";
         file << "lateral_load_effect=" << engine.m_load_forces.lat_load_effect << "\n";
         file << "lat_load_transform=" << engine.m_load_forces.lat_load_transform << "\n";
@@ -1648,11 +1648,11 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "understeer_affects_sop=" << engine.m_understeer_affects_sop << "\n";
 
         file << "\n; --- Physics (Grip & Slip Angle) ---\n";
-        file << "slip_angle_smoothing=" << engine.m_slip_angle_smoothing << "\n";
-        file << "chassis_inertia_smoothing=" << engine.m_chassis_inertia_smoothing << "\n";
-        file << "load_sensitivity_enabled=" << engine.m_load_sensitivity_enabled << "\n";
-        file << "optimal_slip_angle=" << engine.m_optimal_slip_angle << "\n";
-        file << "optimal_slip_ratio=" << engine.m_optimal_slip_ratio << "\n";
+        file << "slip_angle_smoothing=" << engine.m_grip_estimation.slip_angle_smoothing << "\n";
+        file << "chassis_inertia_smoothing=" << engine.m_grip_estimation.chassis_inertia_smoothing << "\n";
+        file << "load_sensitivity_enabled=" << engine.m_grip_estimation.load_sensitivity_enabled << "\n";
+        file << "optimal_slip_angle=" << engine.m_grip_estimation.optimal_slip_angle << "\n";
+        file << "optimal_slip_ratio=" << engine.m_grip_estimation.optimal_slip_ratio << "\n";
         file << "slope_detection_enabled=" << engine.m_slope_detection_enabled << "\n";
         file << "slope_sg_window=" << engine.m_slope_sg_window << "\n";
         file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
@@ -1816,23 +1816,24 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_general.Validate();
     engine.m_front_axle.Validate();
     engine.m_rear_axle.Validate();
-    engine.m_slip_angle_smoothing = (std::max)(0.0001f, engine.m_slip_angle_smoothing);
     engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
 
     engine.m_gyro_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_gyro_gain));
     engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, engine.m_stationary_damping));
     engine.m_scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_scrub_drag_gain));
 
-    if (engine.m_optimal_slip_angle < 0.01f) {
-        Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_optimal_slip_angle);
-        Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_optimal_slip_angle);
-        engine.m_optimal_slip_angle = 0.10f;
+    if (engine.m_grip_estimation.optimal_slip_angle < 0.01f) {
+        Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_grip_estimation.optimal_slip_angle);
+        Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_grip_estimation.optimal_slip_angle);
+        engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     }
-    if (engine.m_optimal_slip_ratio < 0.01f) {
-        Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_optimal_slip_ratio);
-        Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_optimal_slip_ratio);
-        engine.m_optimal_slip_ratio = 0.12f;
+    if (engine.m_grip_estimation.optimal_slip_ratio < 0.01f) {
+        Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_grip_estimation.optimal_slip_ratio);
+        Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_grip_estimation.optimal_slip_ratio);
+        engine.m_grip_estimation.optimal_slip_ratio = 0.12f;
     }
+
+    engine.m_grip_estimation.Validate();
     
     // Slope Detection Validation
     if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;

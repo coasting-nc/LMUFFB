@@ -119,12 +119,8 @@ public:
     FrontAxleConfig m_front_axle;
     RearAxleConfig m_rear_axle;
     LoadForcesConfig m_load_forces;
+    GripEstimationConfig m_grip_estimation;
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
-
-    // Smoothing Settings (v0.7.47)
-    float m_grip_smoothing_steady;
-    float m_grip_smoothing_fast;
-    float m_grip_smoothing_sensitivity;
 
     // Configurable Smoothing & Caps (v0.3.9)
     float m_texture_load_cap = 1.5f; 
@@ -139,7 +135,6 @@ public:
     float m_gyro_gain;
     float m_gyro_smoothing;
     float m_stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
-    float m_chassis_inertia_smoothing;
     
     bool m_lockup_enabled;
     float m_lockup_gain;
@@ -174,12 +169,6 @@ public:
     float m_soft_lock_stiffness = 20.0f;
     float m_soft_lock_damping = 0.5f;
 
-    float m_slip_angle_smoothing;
-    
-    // NEW: Grip Estimation Settings (v0.5.7)
-    float m_optimal_slip_angle;
-    float m_optimal_slip_ratio;
-    
     // v0.4.41: Signal Filtering Settings
     
     // Static Notch Filter (v0.4.43)
@@ -195,7 +184,6 @@ public:
     // v0.6.23: Additional Advanced Physics (Reserved for future use)
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
-    bool m_load_sensitivity_enabled = true; // Issue #392: Dynamic Load Sensitivity toggle
     
     // ===== SLOPE DETECTION (v0.7.0 -> v0.7.3 stability fixes) =====
     bool m_slope_detection_enabled = false;

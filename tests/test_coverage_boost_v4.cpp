@@ -70,7 +70,7 @@ TEST_CASE(test_config_invalid_validation, "Config") {
         ofs << "optimal_slip_angle=0.005\n";
         ofs.close();
         Config::Load(engine, f);
-        ASSERT_NEAR(engine.m_optimal_slip_angle, 0.10, 0.001);
+        ASSERT_NEAR(engine.m_grip_estimation.optimal_slip_angle, 0.10, 0.001);
         std::remove(f);
     }
 

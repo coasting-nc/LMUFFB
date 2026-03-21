@@ -89,7 +89,7 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     engine.m_rear_axle.rear_align_effect = 1.0f;
     engine.m_invert_force = false;
     engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
-    engine.m_slip_angle_smoothing = 0.0f; // Instant
+    engine.m_grip_estimation.slip_angle_smoothing = 0.0f; // Instant
 
     data.mLocalVel.z = -20.0;
     data.mDeltaTime = 0.01;
@@ -143,7 +143,7 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
     engine.m_rear_axle.oversteer_boost = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
-    engine.m_slip_angle_smoothing = 0.0f;
+    engine.m_grip_estimation.slip_angle_smoothing = 0.0f;
     
     data.mLocalVel.z = -20.0;
     data.mDeltaTime = 0.01;

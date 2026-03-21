@@ -23,11 +23,11 @@ TEST_CASE(test_grip_symmetric_falloff, "SlipGrip") {
     InitializeEngine(engine);
     
     // Set clean thresholds for easy math
-    engine.m_optimal_slip_angle = 0.10f;
-    engine.m_optimal_slip_ratio = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
     engine.m_slope_detection_enabled = false; // Force friction circle fallback
-    engine.m_grip_smoothing_steady = 0.0f;    // Disable smoothing for instant results
-    engine.m_grip_smoothing_fast = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_steady = 0.0f;    // Disable smoothing for instant results
+    engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
@@ -76,11 +76,11 @@ TEST_CASE(test_grip_asymmetric_split, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.10f;
-    engine.m_optimal_slip_ratio = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
     engine.m_slope_detection_enabled = false;
-    engine.m_grip_smoothing_steady = 0.0f;
-    engine.m_grip_smoothing_fast = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
@@ -113,11 +113,11 @@ TEST_CASE(test_grip_friction_circle, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.10f;
-    engine.m_optimal_slip_ratio = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
     engine.m_slope_detection_enabled = false;
-    engine.m_grip_smoothing_steady = 0.0f;
-    engine.m_grip_smoothing_fast = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
@@ -149,11 +149,11 @@ TEST_CASE(test_grip_low_speed_bypass, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.10f;
-    engine.m_optimal_slip_ratio = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
     engine.m_slope_detection_enabled = false;
-    engine.m_grip_smoothing_steady = 0.0f;
-    engine.m_grip_smoothing_fast = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
     TelemWheelV01 w1, w2;
     double prev_slip1 = 0.0, prev_slip2 = 0.0;

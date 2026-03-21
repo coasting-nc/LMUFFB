@@ -441,7 +441,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // --- 2. SIGNAL CONDITIONING (STATE UPDATES) ---
     
     // Chassis Inertia Simulation
-    double chassis_tau = (double)m_chassis_inertia_smoothing;
+    double chassis_tau = (double)m_grip_estimation.chassis_inertia_smoothing;
     if (chassis_tau < MIN_TAU_S) chassis_tau = MIN_TAU_S;
     double alpha_chassis = ctx.dt / (chassis_tau + ctx.dt);
     if (m_derivatives_seeded && m_was_allowed && allowed) {
@@ -1219,7 +1219,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 
     // Soft-clip slip angle (Simulates Pneumatic Trail falloff)
     // Critical: Ensure division-by-zero protection if optimal slip angle is not yet latched
-    double optimal_slip_ref = (std::max)(0.01f, m_optimal_slip_angle);
+    double optimal_slip_ref = (std::max)(0.01f, m_grip_estimation.optimal_slip_angle);
     double normalized_slip = rear_slip_angle / (optimal_slip_ref + 0.001);
     double effective_slip = optimal_slip_ref * std::tanh(normalized_slip);
 

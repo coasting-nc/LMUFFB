@@ -40,8 +40,8 @@ TEST_CASE(test_grip_estimation_raw_passthrough, "SlipGrip") {
 TEST_CASE(test_grip_estimation_continuous_falloff, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_optimal_slip_angle = 0.10f;
-    engine.m_optimal_slip_ratio = 0.12f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.12f;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
     
     TelemWheelV01 w1, w2;
@@ -67,7 +67,7 @@ TEST_CASE(test_grip_estimation_continuous_falloff, "SlipGrip") {
 TEST_CASE(test_grip_estimation_load_sensitivity, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
     
     TelemWheelV01 w1, w2;
@@ -95,7 +95,7 @@ TEST_CASE(test_grip_estimation_load_sensitivity, "SlipGrip") {
 TEST_CASE(test_grip_estimation_load_smoothing, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
     
     TelemWheelV01 w1, w2;
@@ -129,7 +129,7 @@ TEST_CASE(test_grip_estimation_load_smoothing, "SlipGrip") {
 TEST_CASE(test_grip_estimation_sliding_asymptote, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
     
     TelemWheelV01 w1, w2;
@@ -150,8 +150,8 @@ TEST_CASE(test_grip_estimation_sliding_asymptote, "SlipGrip") {
 TEST_CASE(test_grip_estimation_combined_slip, "SlipGrip") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_optimal_slip_angle = 0.10f;
-    engine.m_optimal_slip_ratio = 0.12f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.12f;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
     
     TelemWheelV01 w1, w2;

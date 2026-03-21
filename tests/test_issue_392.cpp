@@ -5,7 +5,7 @@ namespace FFBEngineTests {
 TEST_CASE(test_issue_392_default_value, "Physics") {
     FFBEngine engine;
     // Default should be true as per plan
-    ASSERT_TRUE(engine.m_load_sensitivity_enabled == true);
+    ASSERT_TRUE(engine.m_grip_estimation.load_sensitivity_enabled == true);
 }
 
 TEST_CASE(test_issue_392_physics_toggle_impact, "Physics") {
@@ -29,7 +29,7 @@ TEST_CASE(test_issue_392_physics_toggle_impact, "Physics") {
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 3000.0);
 
     // 1. ENABLED (Default)
-    engine.m_load_sensitivity_enabled = true;
+    engine.m_grip_estimation.load_sensitivity_enabled = true;
 
     // Low Load (1500N)
     data.mWheel[0].mTireLoad = 1500.0;
@@ -48,7 +48,7 @@ TEST_CASE(test_issue_392_physics_toggle_impact, "Physics") {
     ASSERT_GT(grip_high_load, grip_low_load);
 
     // 2. DISABLED
-    engine.m_load_sensitivity_enabled = false;
+    engine.m_grip_estimation.load_sensitivity_enabled = false;
 
     // Low Load
     data.mWheel[0].mTireLoad = 1500.0;
@@ -71,23 +71,23 @@ TEST_CASE(test_issue_392_persistence, "Config") {
     Preset p("TestPreset");
 
     // Toggle off
-    engine.m_load_sensitivity_enabled = false;
+    engine.m_grip_estimation.load_sensitivity_enabled = false;
 
     // Update preset from engine
     p.UpdateFromEngine(engine);
-    ASSERT_FALSE(p.load_sensitivity_enabled);
+    ASSERT_FALSE(p.grip_estimation.load_sensitivity_enabled);
 
     // Toggle engine back on
-    engine.m_load_sensitivity_enabled = true;
+    engine.m_grip_estimation.load_sensitivity_enabled = true;
 
     // Apply preset
     p.Apply(engine);
-    ASSERT_FALSE(engine.m_load_sensitivity_enabled);
+    ASSERT_FALSE(engine.m_grip_estimation.load_sensitivity_enabled);
 
     // Equality check
     Preset p2 = p;
     ASSERT_TRUE(p.Equals(p2));
-    p2.load_sensitivity_enabled = true;
+    p2.grip_estimation.load_sensitivity_enabled = true;
     ASSERT_FALSE(p.Equals(p2));
 }
 

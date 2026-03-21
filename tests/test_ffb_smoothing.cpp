@@ -40,7 +40,7 @@ TEST_CASE(test_long_load_lpf, "Physics") {
     InitializeEngine(engine);
     engine.m_load_forces.long_load_effect = 1.0f;
     engine.m_load_forces.long_load_smoothing = 1.0f; // Very slow
-    engine.m_chassis_inertia_smoothing = 1000.0f; // Freeze chassis acceleration
+    engine.m_grip_estimation.chassis_inertia_smoothing = 1000.0f; // Freeze chassis acceleration
     FFBEngineTestAccess::SetLongitudinalLoadSmoothed(engine, 1.0);
 
     // Scenario: 1G braking (+Z)
@@ -65,9 +65,9 @@ TEST_CASE(test_long_load_lpf, "Physics") {
 TEST_CASE(test_grip_smoothing_integration, "Physics") {
     std::cout << "\nTest: Grip Smoothing Integration (v0.7.47)" << std::endl;
     FFBEngine engine;
-    engine.m_grip_smoothing_steady = 1.0f; // Very slow
-    engine.m_grip_smoothing_fast = 1.0f;   // Also slow for this test
-    engine.m_grip_smoothing_sensitivity = 1.0f;
+    engine.m_grip_estimation.grip_smoothing_steady = 1.0f; // Very slow
+    engine.m_grip_estimation.grip_smoothing_fast = 1.0f;   // Also slow for this test
+    engine.m_grip_estimation.grip_smoothing_sensitivity = 1.0f;
     FFBEngineTestAccess::SetFrontGripSmoothedState(engine, 1.0);
 
     TelemWheelV01 w1, w2;

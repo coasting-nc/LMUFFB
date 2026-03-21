@@ -7,11 +7,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.211]
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 5)**
+  - **Grouped Data Structures**: Introduced `GripEstimationConfig` struct to centralize tire physics and smoothing parameters.
+  - **FFBEngine & Preset Refinement**: Migrated `optimal_slip_angle`, `optimal_slip_ratio`, `slip_angle_smoothing`, `chassis_inertia_smoothing`, `load_sensitivity_enabled`, and all grip smoothing parameters into the new grouped structure.
+  - **Implementation Sync**: Updated `FFBEngine.cpp`, `Config.cpp`, `GuiLayer_Common.cpp`, `main.cpp`, and `GripLoadEstimation.cpp` to use nested configuration paths.
+
+### Testing
+- **New Safety Suite**: Added `tests/test_refactor_grip_estimation.cpp` verifying physics consistency, round-trip synchronization, and validation clamping.
+- **Regression Guard**: Updated the entire test suite (580+ cases) to align with the new data model.
+- Verified 100% pass rate across all relevant physics and configuration tests.
+
+---
+
 ## [0.7.210]  
 
 ### Refactored
-- **Preset System Redesign (Phase 1, Increment 3)**
-  - **Grouped Data Structures**: Introduced `RearAxleConfig` struct
+- **Preset System Redesign (Phase 1, Increment 4)**
+  - **Grouped Data Structures**: Introduced `RearAxleConfig` and `LoadForcesConfig` structs.
 
 
 ---

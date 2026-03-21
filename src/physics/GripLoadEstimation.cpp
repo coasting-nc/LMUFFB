@@ -181,7 +181,7 @@ double FFBEngine::calculate_slip_angle(const TelemWheelV01& w, double& prev_stat
     // Target: Alpha 0.1 at 400Hz (dt = 0.0025)
     // Formula: alpha = dt / (tau + dt) -> 0.1 = 0.0025 / (tau + 0.0025) -> tau approx 0.0225s
     // v0.4.40: Using configurable m_slip_angle_smoothing
-    double tau = (double)m_slip_angle_smoothing;
+    double tau = (double)m_grip_estimation.slip_angle_smoothing;
     if (tau < 0.0001) tau = 0.0001; // Safety clamp 
     
     double alpha = dt / (tau + dt);
@@ -289,8 +289,8 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                     
                     // Tire physics: Optimal slip angle increases with load (Hertzian cube root)
                     // Note: Future thermal/pressure multipliers would be applied here
-                    double dynamic_slip_angle = m_optimal_slip_angle;
-                    if (m_load_sensitivity_enabled) {
+                    double dynamic_slip_angle = m_grip_estimation.optimal_slip_angle;
+                    if (m_grip_estimation.load_sensitivity_enabled) {
                         dynamic_slip_angle *= std::pow(load_ratio, 0.333);
                     }
 
@@ -299,7 +299,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
 
                     // 3. Longitudinal Component
                     double long_ratio = calculate_manual_slip_ratio(w, car_speed);
-                    double long_metric = std::abs(long_ratio) / (double)m_optimal_slip_ratio;
+                    double long_metric = std::abs(long_ratio) / (double)m_grip_estimation.optimal_slip_ratio;
 
                     // 4. Combined Vector (Friction Circle)
                     double combined_slip = std::sqrt((lat_metric * lat_metric) + (long_metric * long_metric));
@@ -333,9 +333,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // Apply Adaptive Smoothing (v0.7.47)
     double& state = is_front ? m_front_grip_smoothed_state : m_rear_grip_smoothed_state;
     result.value = apply_adaptive_smoothing(result.value, state, dt,
-                                            (double)m_grip_smoothing_steady,
-                                            (double)m_grip_smoothing_fast,
-                                            (double)m_grip_smoothing_sensitivity);
+                                            (double)m_grip_estimation.grip_smoothing_steady,
+                                            (double)m_grip_estimation.grip_smoothing_fast,
+                                            (double)m_grip_estimation.grip_smoothing_sensitivity);
 
     result.value = (std::max)(0.0, (std::min)(1.0, result.value));
     return result;

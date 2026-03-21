@@ -457,17 +457,17 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine.m_rear_axle.rear_align_effect == reference_defaults.rear_axle.rear_align_effect);
         ASSERT_TRUE(engine.m_rear_axle.sop_yaw_gain == reference_defaults.rear_axle.sop_yaw_gain);
         ASSERT_TRUE(engine.m_gyro_gain == reference_defaults.gyro_gain);
-        ASSERT_TRUE(engine.m_optimal_slip_angle == reference_defaults.optimal_slip_angle);
-        ASSERT_TRUE(engine.m_slip_angle_smoothing == reference_defaults.slip_smoothing);
+        ASSERT_TRUE(engine.m_grip_estimation.optimal_slip_angle == reference_defaults.grip_estimation.optimal_slip_angle);
+        ASSERT_TRUE(engine.m_grip_estimation.slip_angle_smoothing == reference_defaults.grip_estimation.slip_angle_smoothing);
         ASSERT_TRUE(engine.m_rear_axle.sop_smoothing_factor == reference_defaults.rear_axle.sop_smoothing_factor);
         ASSERT_TRUE(engine.m_rear_axle.yaw_accel_smoothing == reference_defaults.rear_axle.yaw_accel_smoothing);
-        ASSERT_TRUE(engine.m_chassis_inertia_smoothing == reference_defaults.chassis_smoothing);
+        ASSERT_TRUE(engine.m_grip_estimation.chassis_inertia_smoothing == reference_defaults.grip_estimation.chassis_inertia_smoothing);
         ASSERT_TRUE(engine.m_gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(engine.m_front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
         ASSERT_TRUE(engine.m_load_forces.long_load_smoothing == reference_defaults.load_forces.long_load_smoothing);
-        ASSERT_TRUE(engine.m_grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
-        ASSERT_TRUE(engine.m_grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
-        ASSERT_TRUE(engine.m_grip_smoothing_sensitivity == reference_defaults.grip_smoothing_sensitivity);
+        ASSERT_TRUE(engine.m_grip_estimation.grip_smoothing_steady == reference_defaults.grip_estimation.grip_smoothing_steady);
+        ASSERT_TRUE(engine.m_grip_estimation.grip_smoothing_fast == reference_defaults.grip_estimation.grip_smoothing_fast);
+        ASSERT_TRUE(engine.m_grip_estimation.grip_smoothing_sensitivity == reference_defaults.grip_estimation.grip_smoothing_sensitivity);
     }
 
     // Test 3: Default preset from LoadPresets()
@@ -490,17 +490,17 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(default_preset.rear_axle.rear_align_effect == reference_defaults.rear_axle.rear_align_effect);
         ASSERT_TRUE(default_preset.rear_axle.sop_yaw_gain == reference_defaults.rear_axle.sop_yaw_gain);
         ASSERT_TRUE(default_preset.gyro_gain == reference_defaults.gyro_gain);
-        ASSERT_TRUE(default_preset.optimal_slip_angle == reference_defaults.optimal_slip_angle);
-        ASSERT_TRUE(default_preset.slip_smoothing == reference_defaults.slip_smoothing);
+        ASSERT_TRUE(default_preset.grip_estimation.optimal_slip_angle == reference_defaults.grip_estimation.optimal_slip_angle);
+        ASSERT_TRUE(default_preset.grip_estimation.slip_angle_smoothing == reference_defaults.grip_estimation.slip_angle_smoothing);
         ASSERT_TRUE(default_preset.rear_axle.sop_smoothing_factor == reference_defaults.rear_axle.sop_smoothing_factor);
         ASSERT_TRUE(default_preset.rear_axle.yaw_accel_smoothing == reference_defaults.rear_axle.yaw_accel_smoothing);
-        ASSERT_TRUE(default_preset.chassis_smoothing == reference_defaults.chassis_smoothing);
+        ASSERT_TRUE(default_preset.grip_estimation.chassis_inertia_smoothing == reference_defaults.grip_estimation.chassis_inertia_smoothing);
         ASSERT_TRUE(default_preset.gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(default_preset.front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
         ASSERT_TRUE(default_preset.load_forces.long_load_smoothing == reference_defaults.load_forces.long_load_smoothing);
-        ASSERT_TRUE(default_preset.grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
-        ASSERT_TRUE(default_preset.grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
-        ASSERT_TRUE(default_preset.grip_smoothing_sensitivity == reference_defaults.grip_smoothing_sensitivity);
+        ASSERT_TRUE(default_preset.grip_estimation.grip_smoothing_steady == reference_defaults.grip_estimation.grip_smoothing_steady);
+        ASSERT_TRUE(default_preset.grip_estimation.grip_smoothing_fast == reference_defaults.grip_estimation.grip_smoothing_fast);
+        ASSERT_TRUE(default_preset.grip_estimation.grip_smoothing_sensitivity == reference_defaults.grip_estimation.grip_smoothing_sensitivity);
     }
 
     // Test 4: T300 specialized preset
@@ -535,17 +535,17 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine1.m_rear_axle.rear_align_effect == engine2.m_rear_axle.rear_align_effect);
         ASSERT_TRUE(engine1.m_rear_axle.sop_yaw_gain == engine2.m_rear_axle.sop_yaw_gain);
         ASSERT_TRUE(engine1.m_gyro_gain == engine2.m_gyro_gain);
-        ASSERT_TRUE(engine1.m_optimal_slip_angle == engine2.m_optimal_slip_angle);
-        ASSERT_TRUE(engine1.m_slip_angle_smoothing == engine2.m_slip_angle_smoothing);
+        ASSERT_TRUE(engine1.m_grip_estimation.optimal_slip_angle == engine2.m_grip_estimation.optimal_slip_angle);
+        ASSERT_TRUE(engine1.m_grip_estimation.slip_angle_smoothing == engine2.m_grip_estimation.slip_angle_smoothing);
         ASSERT_TRUE(engine1.m_rear_axle.sop_smoothing_factor == engine2.m_rear_axle.sop_smoothing_factor);
         ASSERT_TRUE(engine1.m_rear_axle.yaw_accel_smoothing == engine2.m_rear_axle.yaw_accel_smoothing);
-        ASSERT_TRUE(engine1.m_chassis_inertia_smoothing == engine2.m_chassis_inertia_smoothing);
+        ASSERT_TRUE(engine1.m_grip_estimation.chassis_inertia_smoothing == engine2.m_grip_estimation.chassis_inertia_smoothing);
         ASSERT_TRUE(engine1.m_gyro_smoothing == engine2.m_gyro_smoothing);
         ASSERT_TRUE(engine1.m_front_axle.steering_shaft_smoothing == engine2.m_front_axle.steering_shaft_smoothing);
         ASSERT_TRUE(engine1.m_load_forces.long_load_smoothing == engine2.m_load_forces.long_load_smoothing);
-        ASSERT_TRUE(engine1.m_grip_smoothing_steady == engine2.m_grip_smoothing_steady);
-        ASSERT_TRUE(engine1.m_grip_smoothing_fast == engine2.m_grip_smoothing_fast);
-        ASSERT_TRUE(engine1.m_grip_smoothing_sensitivity == engine2.m_grip_smoothing_sensitivity);
+        ASSERT_TRUE(engine1.m_grip_estimation.grip_smoothing_steady == engine2.m_grip_estimation.grip_smoothing_steady);
+        ASSERT_TRUE(engine1.m_grip_estimation.grip_smoothing_fast == engine2.m_grip_estimation.grip_smoothing_fast);
+        ASSERT_TRUE(engine1.m_grip_estimation.grip_smoothing_sensitivity == engine2.m_grip_estimation.grip_smoothing_sensitivity);
     }
 
     // Test 6: Verify no config file still produces correct defaults
