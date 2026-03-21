@@ -35,6 +35,8 @@ You must also increase the app version in `VERSION` file (by the smallest increm
 1. **Scope:** Work ONLY on `GripEstimationConfig`. Do not work on other logical categories (those will be worked on in future iterations).
 2. **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation, testing, and review process autonomously until the task is complete, all 580+ tests pass, and the code is perfect.
 
+Before starting your work, build and run all tests, to confirm that they all pass before you start. This is to verify that if there is any test failure later on, it is due to your changes and not due to some pre-existing issue.
+
 **⚠️ MANDATORY CHECKPOINTING & RECOVERY PROTOCOL:**
 To prevent losing work due to file corruption and resetting your workspace, you **MUST** use version control to create incremental checkpoints. 
 
