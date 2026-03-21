@@ -2,6 +2,9 @@
 #include <fstream>
 #include <filesystem>
 
+// Declaration of the helper function from main.cpp
+void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine);
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_audit_config_load_validation, "AuditRegressions") {
@@ -17,7 +20,7 @@ TEST_CASE(test_audit_config_load_validation, "AuditRegressions") {
         f << "target_rim_nm=-10.0\n";
         f << "min_force=-1.0\n";
 
-        f << "understeer=5.0\n"; // Should clamp to 2.0 (or divide by 100 if > 2.0, depends on legacy logic)
+        f << "understeer=5.0\n"; // Should clamp to 2.0
         f << "understeer_gamma=0.05\n"; // Should clamp to 0.1
         f << "torque_source=5\n"; // Should clamp to 1
 
@@ -114,16 +117,14 @@ TEST_CASE(test_audit_logger_header_completeness, "AuditRegressions") {
     info.safety.gain_reduction = 0.15f;
 
     AsyncLogger::Get().Stop(); // Ensure clean state
-    std::string log_dir = "audit_logs";
+    std::string log_dir = "audit_header_logs";
     AsyncLogger::Get().Start(info, log_dir);
 
-    // We need to log at least one frame or wait a bit to ensure file is written
     LogFrame frame = {};
     AsyncLogger::Get().Log(frame);
 
     AsyncLogger::Get().Stop();
 
-    // Verify file exists and check header
     std::string filename = AsyncLogger::Get().GetFilename();
     ASSERT_FALSE(filename.empty());
 
@@ -165,8 +166,47 @@ TEST_CASE(test_audit_logger_header_completeness, "AuditRegressions") {
     }
 
     f.close();
-    // Cleanup
     std::filesystem::remove_all(log_dir);
+}
+
+TEST_CASE(test_audit_populate_session_info, "AuditRegressions") {
+    FFBEngine engine;
+    VehicleScoringInfoV01 scoring = {};
+    StringUtils::SafeCopy(scoring.mVehicleName, 64, "Ferrari 296 GT3");
+    StringUtils::SafeCopy(scoring.mVehicleClass, 64, "GT3");
+    const char* trackName = "Spa-Francorchamps";
+
+    // Initialize engine with unique values in all 10 categories
+    engine.m_general.gain = 0.123f;
+    engine.m_front_axle.understeer_effect = 0.456f;
+    engine.m_rear_axle.sop_effect = 0.789f;
+    engine.m_load_forces.lat_load_effect = 1.011f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.121f;
+    engine.m_slope_detection.sensitivity = 0.314f;
+    engine.m_braking.lockup_gain = 0.516f;
+    engine.m_vibration.vibration_gain = 0.718f;
+    engine.m_advanced.gyro_gain = 0.920f;
+    engine.m_safety.m_config.gain_reduction = 0.222f;
+
+    SessionInfo info;
+    PopulateSessionInfo(info, scoring, trackName, engine);
+
+    // Verify all 10 categories correctly populated
+    ASSERT_NEAR(info.general.gain, 0.123f, 0.0001);
+    ASSERT_NEAR(info.front_axle.understeer_effect, 0.456f, 0.0001);
+    ASSERT_NEAR(info.rear_axle.sop_effect, 0.789f, 0.0001);
+    ASSERT_NEAR(info.load_forces.lat_load_effect, 1.011f, 0.0001);
+    ASSERT_NEAR(info.grip_estimation.optimal_slip_angle, 0.121f, 0.0001);
+    ASSERT_NEAR(info.slope_detection.sensitivity, 0.314f, 0.0001);
+    ASSERT_NEAR(info.braking.lockup_gain, 0.516f, 0.0001);
+    ASSERT_NEAR(info.vibration.vibration_gain, 0.718f, 0.0001);
+    ASSERT_NEAR(info.advanced.gyro_gain, 0.920f, 0.0001);
+    ASSERT_NEAR(info.safety.gain_reduction, 0.222f, 0.0001);
+
+    // Verify metadata
+    ASSERT_EQ_STR(info.vehicle_name.c_str(), "Ferrari 296 GT3");
+    ASSERT_EQ_STR(info.track_name.c_str(), "Spa-Francorchamps");
+    ASSERT_EQ_STR(info.app_version.c_str(), LMUFFB_VERSION);
 }
 
 }

@@ -44,6 +44,7 @@ The following issues were identified and resolved during this audit:
 New regression tests were added in `tests/test_audit_regressions.cpp` to prevent future regressions of these issues:
 - `test_audit_config_load_validation`: Verifies that `Config::Load` correctly clamps and resets invalid values for all 10 configuration categories when reading from a file.
 - `test_audit_logger_header_completeness`: Verifies that the telemetry log header contains metadata for all 10 refactored configuration categories.
+- `test_audit_populate_session_info`: Verifies that the `PopulateSessionInfo` helper (extracted from `main.cpp`) correctly maps the engine's 10 configuration categories to the logging system's session metadata.
 
 ## Conclusion
 The Phase 1 refactoring of the preset system is **complete and verified**. The data model is now fully grouped into logical categories across the engine, the preset system, and the logging system. This provides a robust foundation for Phase 2 (TOML integration).
