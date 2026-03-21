@@ -300,7 +300,7 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
     engine.m_front_axle.understeer_effect = 0.0; // Disabled effect initially
-    engine.m_sop_effect = 0.0;
+    engine.m_rear_axle.sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
     
@@ -345,13 +345,13 @@ TEST_CASE(test_oversteer_boost, "Texture") {
     // Default RH to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     
-    engine.m_sop_effect = 1.0;
-    engine.m_oversteer_boost = 1.0;
+    engine.m_rear_axle.sop_effect = 1.0;
+    engine.m_rear_axle.oversteer_boost = 1.0;
     engine.m_general.gain = 1.0;
     // Lower Scale to match new Nm range
-    engine.m_sop_scale = 10.0; 
+    engine.m_rear_axle.sop_scale = 10.0;
     // Disable smoothing to verify math instantly (v0.4.2 fix) 
-    engine.m_sop_smoothing_factor = 0.0;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     engine.m_invert_force = false;
     
@@ -394,9 +394,9 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     
     engine.m_spin_enabled = true;
     engine.m_spin_gain = 1.0;
-    engine.m_sop_effect = 1.0;
+    engine.m_rear_axle.sop_effect = 1.0;
     engine.m_general.gain = 1.0;
-    engine.m_sop_scale = 10.0;
+    engine.m_rear_axle.sop_scale = 10.0;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Fix Reference for Test (v0.4.4)
     
     // High SoP force

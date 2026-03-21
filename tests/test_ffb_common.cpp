@@ -132,8 +132,8 @@ void InitializeEngine(FFBEngine& engine) {
     // Individual tests can re-enable what they need.
     engine.m_front_axle.steering_shaft_smoothing = 0.0f;
     engine.m_slip_angle_smoothing = 0.0f;
-    engine.m_sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
-    engine.m_yaw_accel_smoothing = 0.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0f;
     engine.m_gyro_smoothing = 0.0f;
     engine.m_chassis_inertia_smoothing = 0.0f;
     engine.m_long_load_smoothing = 0.0f;
@@ -141,11 +141,11 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_grip_smoothing_fast = 0.0f;
     engine.m_grip_smoothing_sensitivity = 1.0f;
     
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 0.0f; // New v0.7.121
-    engine.m_sop_yaw_gain = 0.0f;
-    engine.m_oversteer_boost = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
+    engine.m_rear_axle.oversteer_boost = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     
     engine.m_slide_texture_enabled = false;

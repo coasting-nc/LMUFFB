@@ -1170,7 +1170,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     }
 
     // Smoothing: Map 0.0-1.0 slider to 0.1-0.0001s tau
-    double smoothness = (double)m_sop_smoothing_factor;
+    double smoothness = (double)m_rear_axle.sop_smoothing_factor;
     smoothness = (std::max)(0.0, (std::min)(SMOOTHNESS_LIMIT_0999, smoothness));
     double tau = smoothness * SOP_SMOOTHING_MAX_TAU;
     double alpha = ctx.dt / (tau + ctx.dt);
@@ -1180,11 +1180,11 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     m_sop_load_smoothed += alpha * (lat_load_norm - m_sop_load_smoothed);
 
     // Base SoP Force (G-based only - Issue #282)
-    double sop_base = (m_sop_lat_g_smoothed * (double)m_sop_effect) * (double)m_sop_scale;
+    double sop_base = (m_sop_lat_g_smoothed * (double)m_rear_axle.sop_effect) * (double)m_rear_axle.sop_scale;
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
 
     // Independent Lateral Load Force (Issue #282)
-    ctx.lat_load_force = (m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_sop_scale;
+    ctx.lat_load_force = (m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_rear_axle.sop_scale;
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
@@ -1201,7 +1201,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     if (!m_slope_detection_enabled) {
         double grip_delta = ctx.avg_front_grip - ctx.avg_rear_grip;
         if (grip_delta > 0.0) {
-            sop_base *= (1.0 + (grip_delta * m_oversteer_boost * OVERSTEER_BOOST_MULT));
+            sop_base *= (1.0 + (grip_delta * m_rear_axle.oversteer_boost * OVERSTEER_BOOST_MULT));
         }
     }
     ctx.sop_base_force = sop_base;
@@ -1226,7 +1226,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     // --- FIX 2: Hybrid Kerb Strike Rejection (GUI Controlled) ---
     double kerb_attenuation = 1.0;
 
-    if (m_kerb_strike_rejection > 0.0) {
+    if (m_rear_axle.kerb_strike_rejection > 0.0) {
         // A. Surface Type Detection (Works on ALL cars)
         bool on_kerb = (data->mWheel[2].mSurfaceType == 5) || (data->mWheel[3].mSurfaceType == 5);
 
@@ -1249,7 +1249,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
         if (m_kerb_timer > 0.0) {
             // If slider is 1.0, attenuation drops to 0.0 (100% muted)
             // If slider is 0.5, attenuation drops to 0.5 (50% muted)
-            kerb_attenuation = 1.0 - (double)m_kerb_strike_rejection;
+            kerb_attenuation = 1.0 - (double)m_rear_axle.kerb_strike_rejection;
         }
     }
 
@@ -1259,7 +1259,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 
     // Torque = Force * Aligning_Lever * Kerb_Attenuation
     // Note negative sign: Oversteer (Rear Slide) pushes wheel TOWARDS slip direction
-    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_align_effect * kerb_attenuation;
+    ctx.rear_torque = -ctx.calc_rear_lat_force * REAR_ALIGN_TORQUE_COEFFICIENT * m_rear_axle.rear_align_effect * kerb_attenuation;
     
     // 4. Yaw Kicks (Context-Aware Oversteer - Issue #322)
 
@@ -1289,25 +1289,25 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     yaw_jerk = std::clamp(yaw_jerk, -100.0, 100.0);
 
     // --- A. General Yaw Kick (Baseline Rotation Feel) ---
-    double tau_yaw = (double)m_yaw_accel_smoothing;
+    double tau_yaw = (double)m_rear_axle.yaw_accel_smoothing;
     if (tau_yaw < MIN_TAU_S) tau_yaw = MIN_TAU_S;
     double alpha_yaw = ctx.dt / (tau_yaw + ctx.dt);
     m_yaw_accel_smoothed += alpha_yaw * (derived_yaw_accel - m_yaw_accel_smoothed);
 
     double general_yaw_force = 0.0;
     if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS) {
-        if (std::abs(m_yaw_accel_smoothed) > (double)m_yaw_kick_threshold) {
-            double processed_yaw = m_yaw_accel_smoothed - std::copysign((double)m_yaw_kick_threshold, m_yaw_accel_smoothed);
-            general_yaw_force = -1.0 * processed_yaw * m_sop_yaw_gain * (double)BASE_NM_YAW_KICK;
+        if (std::abs(m_yaw_accel_smoothed) > (double)m_rear_axle.yaw_kick_threshold) {
+            double processed_yaw = m_yaw_accel_smoothed - std::copysign((double)m_rear_axle.yaw_kick_threshold, m_yaw_accel_smoothed);
+            general_yaw_force = -1.0 * processed_yaw * m_rear_axle.sop_yaw_gain * (double)BASE_NM_YAW_KICK;
         }
     }
 
     // --- B. Unloaded Yaw Kick (Braking / Lift-off) ---
     double unloaded_yaw_force = 0.0;
-    if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_unloaded_yaw_gain > 0.001f) {
+    if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_rear_axle.unloaded_yaw_gain > 0.001f) {
         double load_ratio = (m_static_rear_load > 1.0) ? ctx.avg_rear_load / m_static_rear_load : 1.0;
         double rear_load_drop = (std::max)(0.0, 1.0 - load_ratio);
-        double raw_unloaded_vuln = (std::min)(1.0, rear_load_drop * (double)m_unloaded_yaw_sens);
+        double raw_unloaded_vuln = (std::min)(1.0, rear_load_drop * (double)m_rear_axle.unloaded_yaw_sens);
 
         // ASYMMETRIC SMOOTHING: 2ms attack (instant), 50ms decay (prevents chatter)
         double tau_unloaded = (raw_unloaded_vuln > m_unloaded_vulnerability_smoothed) ? 0.002 : 0.050;
@@ -1317,31 +1317,31 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
             // Attack Phase Gate: Only apply punch if jerk is amplifying the current acceleration
             double punch_addition = 0.0;
             if ((yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0) {
-                punch_addition = std::clamp(yaw_jerk * (double)m_unloaded_yaw_punch, -10.0, 10.0);
+                punch_addition = std::clamp(yaw_jerk * (double)m_rear_axle.unloaded_yaw_punch, -10.0, 10.0);
             }
 
             // CRITICAL FIX: Use the 15ms smoothed yaw, NOT the raw derived yaw
             double punchy_yaw = m_fast_yaw_accel_smoothed + punch_addition;
 
-            if (std::abs(punchy_yaw) > (double)m_unloaded_yaw_threshold) {
-                double processed_yaw = punchy_yaw - std::copysign((double)m_unloaded_yaw_threshold, punchy_yaw);
+            if (std::abs(punchy_yaw) > (double)m_rear_axle.unloaded_yaw_threshold) {
+                double processed_yaw = punchy_yaw - std::copysign((double)m_rear_axle.unloaded_yaw_threshold, punchy_yaw);
                 double sign = (processed_yaw >= 0.0) ? 1.0 : -1.0;
                 double yaw_norm = (std::min)(1.0, std::abs(processed_yaw) / 10.0);
-                double shaped_yaw = std::pow(yaw_norm, (double)m_unloaded_yaw_gamma) * 10.0 * sign;
-                unloaded_yaw_force = -1.0 * shaped_yaw * (double)m_unloaded_yaw_gain * (double)BASE_NM_YAW_KICK * m_unloaded_vulnerability_smoothed;
+                double shaped_yaw = std::pow(yaw_norm, (double)m_rear_axle.unloaded_yaw_gamma) * 10.0 * sign;
+                unloaded_yaw_force = -1.0 * shaped_yaw * (double)m_rear_axle.unloaded_yaw_gain * (double)BASE_NM_YAW_KICK * m_unloaded_vulnerability_smoothed;
             }
         }
     }
 
     // --- C. Power Yaw Kick (Acceleration / Traction Loss) ---
     double power_yaw_force = 0.0;
-    if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_power_yaw_gain > 0.001f) {
+    if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_rear_axle.power_yaw_gain > 0.001f) {
         double slip_rl = calculate_wheel_slip_ratio(data->mWheel[2]);
         double slip_rr = calculate_wheel_slip_ratio(data->mWheel[3]);
         double max_rear_spin = (std::max)({ 0.0, slip_rl, slip_rr });
 
-        double slip_start = (double)m_power_slip_threshold * 0.5;
-        double slip_vulnerability = inverse_lerp(slip_start, (double)m_power_slip_threshold, max_rear_spin);
+        double slip_start = (double)m_rear_axle.power_slip_threshold * 0.5;
+        double slip_vulnerability = inverse_lerp(slip_start, (double)m_rear_axle.power_slip_threshold, max_rear_spin);
         double throttle = std::clamp((double)data->mUnfilteredThrottle, 0.0, 1.0);
         double raw_power_vuln = slip_vulnerability * throttle;
 
@@ -1353,18 +1353,18 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
             // Attack Phase Gate: Only apply punch if jerk is amplifying the current acceleration
             double punch_addition = 0.0;
             if ((yaw_jerk * m_fast_yaw_accel_smoothed) > 0.0) {
-                punch_addition = std::clamp(yaw_jerk * (double)m_power_yaw_punch, -10.0, 10.0);
+                punch_addition = std::clamp(yaw_jerk * (double)m_rear_axle.power_yaw_punch, -10.0, 10.0);
             }
 
             // CRITICAL FIX: Use the 15ms smoothed yaw, NOT the raw derived yaw
             double punchy_yaw = m_fast_yaw_accel_smoothed + punch_addition;
 
-            if (std::abs(punchy_yaw) > (double)m_power_yaw_threshold) {
-                double processed_yaw = punchy_yaw - std::copysign((double)m_power_yaw_threshold, punchy_yaw);
+            if (std::abs(punchy_yaw) > (double)m_rear_axle.power_yaw_threshold) {
+                double processed_yaw = punchy_yaw - std::copysign((double)m_rear_axle.power_yaw_threshold, punchy_yaw);
                 double sign = (processed_yaw >= 0.0) ? 1.0 : -1.0;
                 double yaw_norm = (std::min)(1.0, std::abs(processed_yaw) / 10.0);
-                double shaped_yaw = std::pow(yaw_norm, (double)m_power_yaw_gamma) * 10.0 * sign;
-                power_yaw_force = -1.0 * shaped_yaw * (double)m_power_yaw_gain * (double)BASE_NM_YAW_KICK * m_power_vulnerability_smoothed;
+                double shaped_yaw = std::pow(yaw_norm, (double)m_rear_axle.power_yaw_gamma) * 10.0 * sign;
+                power_yaw_force = -1.0 * shaped_yaw * (double)m_rear_axle.power_yaw_gain * (double)BASE_NM_YAW_KICK * m_power_vulnerability_smoothed;
             }
         }
     }

@@ -50,7 +50,7 @@ TEST_CASE(test_grip_modulation, "CorePhysics") {
     engine.m_invert_force = false;
 
     data.mSteeringShaftTorque = 10.0; 
-    engine.m_sop_effect = 0.0;
+    engine.m_rear_axle.sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
 
@@ -82,7 +82,7 @@ TEST_CASE(test_min_force, "CorePhysics") {
 
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
-    engine.m_sop_effect = 0.0;
+    engine.m_rear_axle.sop_effect = 0.0;
 
     data.mSteeringShaftTorque = 0.05; 
     data.mLocalVel.z = -20.0; 
@@ -168,22 +168,22 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
     engine.m_front_axle.understeer_effect = 0.0;
-    engine.m_oversteer_boost = 0.0;
+    engine.m_rear_axle.oversteer_boost = 0.0;
 
     double ra1, ra2;
     {
         FFBEngine e1;
         InitializeEngine(e1);
-        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_front_axle.understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
-        e1.m_rear_align_effect = 1.0;
+        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_front_axle.understeer_effect = 0.0; e1.m_rear_axle.oversteer_boost = 0.0;
+        e1.m_rear_axle.rear_align_effect = 1.0;
         e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
         ra1 = e1.calculate_force(&data);
     }
     {
         FFBEngine e2;
         InitializeEngine(e2);
-        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_front_axle.understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
-        e2.m_rear_align_effect = 1.0;
+        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_front_axle.understeer_effect = 0.0; e2.m_rear_axle.oversteer_boost = 0.0;
+        e2.m_rear_axle.rear_align_effect = 1.0;
         e2.m_general.wheelbase_max_nm = 60.0f; e2.m_general.target_rim_nm = 60.0f;
         ra2 = e2.calculate_force(&data);
     }
@@ -199,7 +199,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     {
         FFBEngine e1;
         InitializeEngine(e1);
-        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_front_axle.understeer_effect = 0.0; e1.m_oversteer_boost = 0.0;
+        e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_front_axle.understeer_effect = 0.0; e1.m_rear_axle.oversteer_boost = 0.0;
         e1.m_slide_texture_enabled = true;
         e1.m_slide_texture_gain = 1.0;
         e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
@@ -209,7 +209,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     {
         FFBEngine e2;
         InitializeEngine(e2);
-        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_front_axle.understeer_effect = 0.0; e2.m_oversteer_boost = 0.0;
+        e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_front_axle.understeer_effect = 0.0; e2.m_rear_axle.oversteer_boost = 0.0;
         e2.m_slide_texture_enabled = true;
         e2.m_slide_texture_gain = 1.0;
         e2.m_general.wheelbase_max_nm = 100.0f; e2.m_general.target_rim_nm = 100.0f;
@@ -275,7 +275,7 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
     engine.m_front_axle.understeer_effect = 0.0;
-    engine.m_oversteer_boost = 0.0;
+    engine.m_rear_axle.oversteer_boost = 0.0;
 
     // With normalization disabled, structural forces scale to target_rim_nm.
     // If target_rim_nm == wheelbase_max_nm, force should be absolute.
@@ -285,7 +285,7 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
         FFBEngine e1;
         InitializeEngine(e1);
         e1.m_general.dynamic_normalization_enabled = false;
-        e1.m_rear_align_effect = 1.0;
+        e1.m_rear_axle.rear_align_effect = 1.0;
         e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
         ra1 = e1.calculate_force(&data);
     }
@@ -293,7 +293,7 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
         FFBEngine e2;
         InitializeEngine(e2);
         e2.m_general.dynamic_normalization_enabled = false;
-        e2.m_rear_align_effect = 1.0;
+        e2.m_rear_axle.rear_align_effect = 1.0;
         e2.m_general.wheelbase_max_nm = 60.0f; e2.m_general.target_rim_nm = 20.0f; // Target is SAME, wheelbase is larger
         ra2 = e2.calculate_force(&data);
     }
@@ -366,7 +366,7 @@ TEST_CASE(test_high_gain_stability, "CorePhysics") {
     engine.m_abs_gain = 10.0f;
     engine.m_lockup_gain = 3.0f;
     engine.m_brake_load_cap = 10.0f;
-    engine.m_oversteer_boost = 4.0f;
+    engine.m_rear_axle.oversteer_boost = 4.0f;
     
     data.mWheel[0].mLongitudinalPatchVel = -15.0; 
     data.mUnfilteredBrake = 1.0;
@@ -451,9 +451,9 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
 
     // v0.7.147 Mapping: 0.5 factor means 50ms Tau.
     // Frame 1 (2.5ms) response: alpha = 2.5 / (50 + 2.5) = 2.5/52.5 approx 0.0476
-    engine.m_sop_smoothing_factor = 0.5;
-    engine.m_sop_scale = 1.0;  
-    engine.m_sop_effect = 1.0;
+    engine.m_rear_axle.sop_smoothing_factor = 0.5;
+    engine.m_rear_axle.sop_scale = 1.0;
+    engine.m_rear_axle.sop_effect = 1.0;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     
@@ -573,9 +573,9 @@ TEST_CASE(test_sop_effect, "CorePhysics") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    engine.m_sop_effect = 0.5f;
-    engine.m_sop_scale = 10.0f;
-    engine.m_sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
+    engine.m_rear_axle.sop_effect = 0.5f;
+    engine.m_rear_axle.sop_scale = 10.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
     data.mLocalAccel.x = 4.905; // 0.5G
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     double force = engine.calculate_force(&data);
@@ -589,9 +589,9 @@ TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    engine.m_rear_align_effect = 1.0;
-    engine.m_sop_effect = 0.0; // Isolate rear torque
-    engine.m_oversteer_boost = 0.0;
+    engine.m_rear_axle.rear_align_effect = 1.0;
+    engine.m_rear_axle.sop_effect = 0.0; // Isolate rear torque
+    engine.m_rear_axle.oversteer_boost = 0.0;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;
     engine.m_general.gain = 1.0f; // Explicit gain for clarity
@@ -651,7 +651,7 @@ TEST_CASE(test_steering_shaft_smoothing, "CorePhysics") {
     FFBEngineTestAccess::SetLastRawTorque(engine, 1.0);
 
     engine.m_front_axle.understeer_effect = 0.0; // Neutralize modifiers
-    engine.m_sop_effect = 0.0f;      // Disable SoP
+    engine.m_rear_axle.sop_effect = 0.0f;      // Disable SoP
     engine.m_invert_force = false;   // Disable inversion
     data.mDeltaTime = 0.01; // 100Hz
 

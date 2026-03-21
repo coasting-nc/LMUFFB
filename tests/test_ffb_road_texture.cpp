@@ -103,7 +103,7 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     data.mLocalVel.z = -20.0; // Moving fast (v0.6.21)
     
     // Disable others
-    engine.m_sop_effect = 0.0;
+    engine.m_rear_axle.sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     
     // Straight line condition: Zero steering force
@@ -135,7 +135,7 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     InitializeEngine(engine2); // v0.5.12: Initialize with T300 defaults
     engine2.m_bottoming_enabled = true;
     engine2.m_bottoming_gain = 1.0;
-    engine2.m_sop_effect = 0.0;
+    engine2.m_rear_axle.sop_effect = 0.0;
     engine2.m_slide_texture_enabled = false;
     data.mDeltaTime = 0.005;
     

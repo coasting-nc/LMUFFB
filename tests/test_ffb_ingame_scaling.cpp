@@ -10,10 +10,10 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     // Setup a clean state
     engine.m_general.gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_sop_effect = 0.0f;
-    engine.m_oversteer_boost = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
-    engine.m_sop_yaw_gain = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
+    engine.m_rear_axle.oversteer_boost = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_road_texture_gain = 0.0f;
     engine.m_slide_texture_gain = 0.0f;

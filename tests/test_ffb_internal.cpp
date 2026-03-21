@@ -147,9 +147,9 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
     engine.m_general.gain = 1.0f;
     engine.m_general.min_force = 0.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_sop_effect = 0.0f;
-    engine.m_oversteer_boost = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
+    engine.m_rear_axle.oversteer_boost = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
@@ -292,10 +292,10 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
 
     // Setup SoP + Boost
-    engine.m_sop_effect = 1.0f;
-    engine.m_oversteer_boost = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f; // Instant
-    engine.m_sop_scale = 10.0f; // 1G -> 1.0 unboosted (normalized 20Nm)
+    engine.m_rear_axle.sop_effect = 1.0f;
+    engine.m_rear_axle.oversteer_boost = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // Instant
+    engine.m_rear_axle.sop_scale = 10.0f; // 1G -> 1.0 unboosted (normalized 20Nm)
 
     data.mLocalAccel.x = 9.81; // 1G Lat
 
@@ -346,9 +346,9 @@ void FFBEngineTestAccess::test_unit_sop_lateral() {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mLocalAccel.x = 9.81; // 1G
-    engine.m_sop_effect = 1.0;
-    engine.m_sop_scale = 10.0;
-    engine.m_sop_smoothing_factor = 0.0; // Instant
+    engine.m_rear_axle.sop_effect = 1.0;
+    engine.m_rear_axle.sop_scale = 10.0;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0; // Instant
 
     engine.calculate_sop_lateral(&data, ctx);
 

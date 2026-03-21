@@ -400,7 +400,7 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         engine.m_slope_detection_enabled = true;
-        engine.m_oversteer_boost = 0.5f;
+        engine.m_rear_axle.oversteer_boost = 0.5f;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         engine.m_lockup_enabled = true;
