@@ -149,6 +149,7 @@ set(TEST_SOURCES
     test_refactor_general.cpp
     test_refactor_front_axle.cpp
     test_refactor_rear_axle.cpp
+    test_refactor_load_forces.cpp
     ../src/core/main.cpp
 )
 

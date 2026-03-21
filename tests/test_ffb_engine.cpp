@@ -39,8 +39,8 @@ TEST_CASE(test_long_load_scaling, "Physics") {
     InitializeEngine(engine);
     engine.m_general.auto_load_normalization_enabled = true;
     Preset p;
-    p.long_load_effect = 1.0f; // Enable
-    p.long_load_smoothing = 0.0f; // Disable smoothing for instant test
+    p.load_forces.long_load_effect = 1.0f; // Enable
+    p.load_forces.long_load_smoothing = 0.0f; // Disable smoothing for instant test
     p.front_axle.steering_shaft_gain = 1.0f;
     p.front_axle.understeer_effect = 0.0f; // Disable understeer drop for pure gain test
     engine.m_invert_force = false; // Easier to test
@@ -86,7 +86,7 @@ TEST_CASE(test_long_load_scaling, "Physics") {
 //     engine.m_general.auto_load_normalization_enabled = true;
 //     engine.m_invert_force = false;
 //     Preset p;
-//     p.long_load_effect = 1.0f;
+//     p.load_forces.long_load_effect = 1.0f;
 //     p.general.wheelbase_max_nm = 100.0f;
 //     p.general.target_rim_nm = 100.0f;
 //     p.Apply(engine);
@@ -124,8 +124,8 @@ TEST_CASE(test_long_load_scaling, "Physics") {
 TEST_CASE(test_long_load_transformations, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 0.0f;
+    engine.m_load_forces.long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_invert_force = false;
     engine.m_chassis_inertia_smoothing = 1000.0f;
 
@@ -139,7 +139,7 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     data.mSteeringShaftTorque = 10.0;
 
     auto get_long_load_force = [&](LoadTransform transform, double g_force) {
-        engine.m_long_load_transform = transform;
+        engine.m_load_forces.long_load_transform = static_cast<int>(transform);
         engine.m_accel_z_smoothed = g_force;
         // Issue #397: Flush the 10ms transient ramp
         PumpEngineTime(engine, data, 0.015);
@@ -169,8 +169,8 @@ TEST_CASE(test_long_load_transformations, "Physics") {
 TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 0.0f;
+    engine.m_load_forces.long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_invert_force = false;
     engine.m_chassis_inertia_smoothing = 1000.0f;
 
