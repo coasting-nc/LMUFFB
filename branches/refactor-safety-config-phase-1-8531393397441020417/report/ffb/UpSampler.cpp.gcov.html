@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-21 19:44:12</td>
+            <td class="headerValue">2026-03-21 19:54:51</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -85,26 +85,26 @@
 <span id="L14"><span class="lineNum">      14</span>         [<span class="tlaGBC" title="Branch 0 was taken 17 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          17 :     m_history.fill(0.0);</span></span>
 <span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">          17 : }</span></span>
 <span id="L16"><span class="lineNum">      16</span>                 :             : </span>
-<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">        8011 : double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_physics_tick) {</span></span>
-<span id="L18"><span class="lineNum">      18</span>         [<span class="tlaGBC" title="Branch 0 was taken 3202 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4809 times"> + </span>]:<span class="tlaGNC">        8011 :     if (is_new_physics_tick) {</span></span>
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        3202 :         m_pending_sample = latest_physics_sample;</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">        8272 : double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_physics_tick) {</span></span>
+<span id="L18"><span class="lineNum">      18</span>         [<span class="tlaGBC" title="Branch 0 was taken 3307 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4965 times"> + </span>]:<span class="tlaGNC">        8272 :     if (is_new_physics_tick) {</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">        3307 :         m_pending_sample = latest_physics_sample;</span></span>
 <span id="L20"><span class="lineNum">      20</span>                 :             :     }</span>
 <span id="L21"><span class="lineNum">      21</span>                 :             : </span>
-<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 3196 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4815 times"> + </span>]:<span class="tlaGNC">        8011 :     if (m_needs_shift) {</span></span>
+<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 3300 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4972 times"> + </span>]:<span class="tlaGNC">        8272 :     if (m_needs_shift) {</span></span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :         // Shift history and add pending sample</span>
-<span id="L24"><span class="lineNum">      24</span>                 :<span class="tlaGNC">        3196 :         m_history[0] = m_history[1];</span></span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">        3196 :         m_history[1] = m_history[2];</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        3196 :         m_history[2] = m_pending_sample;</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        3196 :         m_needs_shift = false;</span></span>
+<span id="L24"><span class="lineNum">      24</span>                 :<span class="tlaGNC">        3300 :         m_history[0] = m_history[1];</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">        3300 :         m_history[1] = m_history[2];</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        3300 :         m_history[2] = m_pending_sample;</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        3300 :         m_needs_shift = false;</span></span>
 <span id="L28"><span class="lineNum">      28</span>                 :             :     }</span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : </span>
 <span id="L30"><span class="lineNum">      30</span>                 :             :     // Apply the 3-tap FIR filter for the current phase</span>
-<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">        8011 :     const double* c = COEFFS[m_phase];</span></span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">        8272 :     const double* c = COEFFS[m_phase];</span></span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : </span>
 <span id="L33"><span class="lineNum">      33</span>                 :             :     // FIX 1: Correct convolution order.</span>
 <span id="L34"><span class="lineNum">      34</span>                 :             :     // c[0] is the earliest tap, so it must multiply the newest sample (m_history[2]).</span>
 <span id="L35"><span class="lineNum">      35</span>                 :             :     // y[n] = c[0]*x[n] + c[1]*x[n-1] + c[2]*x[n-2]</span>
-<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">        8011 :     double output = c[0] * m_history[2] + c[1] * m_history[1] + c[2] * m_history[0];</span></span>
+<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">        8272 :     double output = c[0] * m_history[2] + c[1] * m_history[1] + c[2] * m_history[0];</span></span>
 <span id="L37"><span class="lineNum">      37</span>                 :             : </span>
 <span id="L38"><span class="lineNum">      38</span>                 :             :     // Advance phase (1000Hz ticks)</span>
 <span id="L39"><span class="lineNum">      39</span>                 :             :     // The phase accumulator in main.cpp handles the 2/5 relationship,</span>
@@ -113,13 +113,13 @@
 <span id="L42"><span class="lineNum">      42</span>                 :             : </span>
 <span id="L43"><span class="lineNum">      43</span>                 :             :     // FIX 2: For a 5/2 resampling ratio (400Hz to 1000Hz), the phase must advance by 2</span>
 <span id="L44"><span class="lineNum">      44</span>                 :             :     // modulo 5 for every output sample.</span>
-<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">        8011 :     m_phase += 2;</span></span>
-<span id="L46"><span class="lineNum">      46</span>         [<span class="tlaGBC" title="Branch 0 was taken 3202 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4809 times"> + </span>]:<span class="tlaGNC">        8011 :     if (m_phase &gt;= 5) {</span></span>
-<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">        3202 :         m_phase -= 5;</span></span>
-<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        3202 :         m_needs_shift = true;</span></span>
+<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">        8272 :     m_phase += 2;</span></span>
+<span id="L46"><span class="lineNum">      46</span>         [<span class="tlaGBC" title="Branch 0 was taken 3307 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4965 times"> + </span>]:<span class="tlaGNC">        8272 :     if (m_phase &gt;= 5) {</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">        3307 :         m_phase -= 5;</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        3307 :         m_needs_shift = true;</span></span>
 <span id="L49"><span class="lineNum">      49</span>                 :             :     }</span>
 <span id="L50"><span class="lineNum">      50</span>                 :             : </span>
-<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">        8011 :     return output;</span></span>
+<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">        8272 :     return output;</span></span>
 <span id="L52"><span class="lineNum">      52</span>                 :             : }</span>
 <span id="L53"><span class="lineNum">      53</span>                 :             : </span>
 <span id="L54"><span class="lineNum">      54</span>                 :             : } // namespace ffb_math</span>
