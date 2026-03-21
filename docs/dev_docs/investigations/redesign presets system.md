@@ -145,6 +145,9 @@ Currently, `Preset` and `FFBEngine` have over 100 loose variables. Group them in
     ```
 *   **Why this is safe:** You are only replacing the I/O for the main settings. The preset logic remains untouched for now.
 
+Since we are adding toml++, we must make sure that it gets properly installed or included in the project also in the *.yml files like .github\workflows\windows-build-and-test.yml (GitHub Actions) or in the makefile. See how we do this for other external libraries, like LZ4 and ImGui (note that we integrate differently LZ4 and ImGui, see the most appropriate approach for toml++).
+We also must update the license information if we are bundling toml++ with our compiled and distributed app. Make sure that our LICENSE file include all necessary information for LZ4, ImGui (if necessary to put such info in the LICENSE file), and toml++.
+
 #### Phase 3: Refactor Preset Loading & Migration Logic
 **Goal:** Move the migration logic out of the parsing loop and into a dedicated step.
 *   **Action:** Rewrite `ImportPreset`, `ExportPreset`, and `ParsePresetLine` to use TOML. Create a dedicated `MigratePreset(toml::table& tbl)` function.
