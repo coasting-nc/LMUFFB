@@ -156,6 +156,7 @@ set(TEST_SOURCES
     test_refactor_vibration.cpp
     test_refactor_advanced.cpp
     test_refactor_safety.cpp
+    test_audit_regressions.cpp
     ../src/core/main.cpp
 )
 

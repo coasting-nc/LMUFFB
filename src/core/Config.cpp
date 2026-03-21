@@ -1816,47 +1816,58 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_general.Validate();
     engine.m_front_axle.Validate();
     engine.m_rear_axle.Validate();
+    engine.m_load_forces.Validate();
     engine.m_vibration.Validate();
     engine.m_advanced.Validate();
+    engine.m_braking.Validate();
 
+    // v0.7.199: Maintain legacy reset-to-default behavior for grip estimation
     if (engine.m_grip_estimation.optimal_slip_angle < 0.01f) {
-        Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_grip_estimation.optimal_slip_angle);
         Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_grip_estimation.optimal_slip_angle);
         engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     }
     if (engine.m_grip_estimation.optimal_slip_ratio < 0.01f) {
         Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_grip_estimation.optimal_slip_ratio);
-        Logger::Get().Log("[Config] Invalid optimal_slip_ratio (%.2f), resetting to default 0.12", engine.m_grip_estimation.optimal_slip_ratio);
         engine.m_grip_estimation.optimal_slip_ratio = 0.12f;
     }
 
-    engine.m_grip_estimation.Validate();
-    
-    // Slope Detection Validation
-    if (engine.m_slope_detection.sg_window < 5) engine.m_slope_detection.sg_window = 5;
-    if (engine.m_slope_detection.sg_window > 41) engine.m_slope_detection.sg_window = 41;
-    if (engine.m_slope_detection.sg_window % 2 == 0) engine.m_slope_detection.sg_window++; // Must be odd
-    if (engine.m_slope_detection.sensitivity < 0.1f) engine.m_slope_detection.sensitivity = 0.1f;
-    if (engine.m_slope_detection.sensitivity > 10.0f) engine.m_slope_detection.sensitivity = 10.0f;
-    if (engine.m_slope_detection.smoothing_tau < 0.001f) engine.m_slope_detection.smoothing_tau = 0.04f;
-    
+    // Slope Detection Legacy Resets
     if (engine.m_slope_detection.alpha_threshold < 0.001f || engine.m_slope_detection.alpha_threshold > 0.1f) {
-        Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_detection.alpha_threshold);
         Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_detection.alpha_threshold);
         engine.m_slope_detection.alpha_threshold = 0.02f;
     }
     if (engine.m_slope_detection.decay_rate < 0.1f || engine.m_slope_detection.decay_rate > 20.0f) {
         Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_detection.decay_rate);
-        Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_detection.decay_rate);
         engine.m_slope_detection.decay_rate = 5.0f;
     }
 
-    // Advanced Slope Validation (v0.7.40)
-    engine.m_slope_detection.g_slew_limit = (std::max)(1.0f, (std::min)(1000.0f, engine.m_slope_detection.g_slew_limit));
-    engine.m_slope_detection.torque_sensitivity = (std::max)(0.01f, (std::min)(10.0f, engine.m_slope_detection.torque_sensitivity));
-    engine.m_slope_detection.confidence_max_rate = (std::max)(engine.m_slope_detection.alpha_threshold + 0.01f, (std::min)(1.0f, engine.m_slope_detection.confidence_max_rate));
+    // Braking Legacy Clamping (v0.6.20)
+    if (engine.m_braking.lockup_gamma < 0.1f || engine.m_braking.lockup_gamma > 4.0f) {
+        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_braking.lockup_gamma);
+        engine.m_braking.lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, engine.m_braking.lockup_gamma));
+    }
+    if (engine.m_braking.lockup_prediction_sens < 10.0f || engine.m_braking.lockup_prediction_sens > 100.0f) {
+        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_braking.lockup_prediction_sens);
+        engine.m_braking.lockup_prediction_sens = (std::max)(10.0f, (std::min)(100.0f, engine.m_braking.lockup_prediction_sens));
+    }
+    if (engine.m_braking.lockup_bump_reject < 0.1f || engine.m_braking.lockup_bump_reject > 5.0f) {
+        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_braking.lockup_bump_reject);
+        engine.m_braking.lockup_bump_reject = (std::max)(0.1f, (std::min)(5.0f, engine.m_braking.lockup_bump_reject));
+    }
+    if (engine.m_braking.abs_gain < 0.0f || engine.m_braking.abs_gain > 10.0f) {
+        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_braking.abs_gain);
+        engine.m_braking.abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_braking.abs_gain));
+    }
 
-    // Migration: v0.7.x sensitivity â†’ v0.7.11 thresholds
+    // Legacy lockup_gain clamp
+    if (engine.m_braking.lockup_gain < 0.0f || engine.m_braking.lockup_gain > 3.0f) {
+        engine.m_braking.lockup_gain = (std::max)(0.0f, (std::min)(3.0f, engine.m_braking.lockup_gain));
+    }
+
+    // Now call struct validation to ensure physical clamping
+    engine.m_grip_estimation.Validate();
+
+    // Migration: v0.7.x sensitivity -> v0.7.11 thresholds
     // If loading old config with sensitivity but at default thresholds
     if (engine.m_slope_detection.min_threshold == -0.3f &&
         engine.m_slope_detection.max_threshold == -2.0f &&
@@ -1878,30 +1889,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_slope_detection.max_threshold > engine.m_slope_detection.min_threshold) {
         std::swap(engine.m_slope_detection.min_threshold, engine.m_slope_detection.max_threshold);
         Logger::Get().Log("[Config] Swapped slope thresholds (min should be > max)");
-        Logger::Get().Log("[Config] Swapped slope thresholds (min should be > max)");
     }
+
+    // Now call struct validation for slope detection to ensure physical clamping
+    engine.m_slope_detection.Validate();
     
-    // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges
-    if (engine.m_braking.lockup_gamma < 0.1f || engine.m_braking.lockup_gamma > 4.0f) {
-        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_braking.lockup_gamma);
-        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_braking.lockup_gamma);
-        engine.m_braking.lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, engine.m_braking.lockup_gamma));
-    }
-    if (engine.m_braking.lockup_prediction_sens < 10.0f || engine.m_braking.lockup_prediction_sens > 100.0f) {
-        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_braking.lockup_prediction_sens);
-        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_braking.lockup_prediction_sens);
-        engine.m_braking.lockup_prediction_sens = (std::max)(10.0f, (std::min)(100.0f, engine.m_braking.lockup_prediction_sens));
-    }
-    if (engine.m_braking.lockup_bump_reject < 0.1f || engine.m_braking.lockup_bump_reject > 5.0f) {
-        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_braking.lockup_bump_reject);
-        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_braking.lockup_bump_reject);
-        engine.m_braking.lockup_bump_reject = (std::max)(0.1f, (std::min)(5.0f, engine.m_braking.lockup_bump_reject));
-    }
-    if (engine.m_braking.abs_gain < 0.0f || engine.m_braking.abs_gain > 10.0f) {
-        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_braking.abs_gain);
-        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_braking.abs_gain);
-        engine.m_braking.abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_braking.abs_gain));
-    }
     // Issue #211: Legacy 100Nm hack scaling
     if (legacy_torque_hack && IsVersionLessEqual(config_version, "0.7.66")) {
         engine.m_general.gain *= (15.0f / legacy_torque_val);
@@ -1916,33 +1908,20 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         engine.m_front_axle.understeer_effect = engine.m_front_axle.understeer_effect / 100.0f;
         Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_front_axle.understeer_effect);
     }
-    if (engine.m_braking.lockup_gain < 0.0f || engine.m_braking.lockup_gain > 3.0f) {
-        engine.m_braking.lockup_gain = (std::max)(0.0f, (std::min)(3.0f, engine.m_braking.lockup_gain));
-    }
-    if (engine.m_braking.brake_load_cap < 1.0f || engine.m_braking.brake_load_cap > 10.0f) {
-        engine.m_braking.brake_load_cap = (std::max)(1.0f, (std::min)(10.0f, engine.m_braking.brake_load_cap));
-    }
-    if (engine.m_braking.lockup_rear_boost < 1.0f || engine.m_braking.lockup_rear_boost > 10.0f) {
-        engine.m_braking.lockup_rear_boost = (std::max)(1.0f, (std::min)(10.0f, engine.m_braking.lockup_rear_boost));
-    }
-    if (engine.m_rear_axle.oversteer_boost < 0.0f || engine.m_rear_axle.oversteer_boost > 4.0f) {
-        engine.m_rear_axle.oversteer_boost = (std::max)(0.0f, (std::min)(4.0f, engine.m_rear_axle.oversteer_boost));
-    }
-    if (engine.m_rear_axle.sop_yaw_gain < 0.0f || engine.m_rear_axle.sop_yaw_gain > 1.0f) {
-         engine.m_rear_axle.sop_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_rear_axle.sop_yaw_gain));
-    }
-    if (engine.m_vibration.slide_gain < 0.0f || engine.m_vibration.slide_gain > 2.0f) {
-        engine.m_vibration.slide_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_vibration.slide_gain));
-    }
-    if (engine.m_vibration.road_gain < 0.0f || engine.m_vibration.road_gain > 2.0f) {
-        engine.m_vibration.road_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_vibration.road_gain));
-    }
-    if (engine.m_vibration.spin_gain < 0.0f || engine.m_vibration.spin_gain > 2.0f) {
-        engine.m_vibration.spin_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_vibration.spin_gain));
-    }
 
     // FFB Safety Validation
     engine.m_safety.m_config.Validate();
+
+    // Final sweep of all struct-based validation
+    engine.m_general.Validate();
+    engine.m_front_axle.Validate();
+    engine.m_rear_axle.Validate();
+    engine.m_load_forces.Validate();
+    engine.m_grip_estimation.Validate();
+    engine.m_slope_detection.Validate();
+    engine.m_braking.Validate();
+    engine.m_vibration.Validate();
+    engine.m_advanced.Validate();
 
     Logger::Get().LogFile("[Config] Loaded from %s", final_path.c_str());
 }

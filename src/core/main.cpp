@@ -24,6 +24,26 @@
 #include <atomic>
 #include <mutex>
 
+// --- Helper for Testability ---
+void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
+    info.app_version = LMUFFB_VERSION;
+    info.vehicle_name = scoring.mVehicleName;
+    info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
+    info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
+    info.track_name = trackName ? trackName : "Unknown";
+    info.driver_name = "Auto";
+    info.general = engine.m_general;
+    info.front_axle = engine.m_front_axle;
+    info.rear_axle = engine.m_rear_axle;
+    info.load_forces = engine.m_load_forces;
+    info.grip_estimation = engine.m_grip_estimation;
+    info.slope_detection = engine.m_slope_detection;
+    info.braking = engine.m_braking;
+    info.vibration = engine.m_vibration;
+    info.advanced = engine.m_advanced;
+    info.safety = engine.m_safety.m_config;
+}
+
 // Constants
 
 // Threading Globals
@@ -148,22 +168,10 @@ void FFBThread() {
                             const char* tName = g_localData.scoring.scoringInfo.mTrackName;
 
                             SessionInfo info;
-                            info.app_version = LMUFFB_VERSION;
-                            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                            info.vehicle_name = scoring.mVehicleName;
-                            info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
-                            info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
-                            info.track_name = tName;
-                            info.driver_name = "Auto";
-                            info.general = g_engine.m_general;
-                            info.front_axle = g_engine.m_front_axle;
-                            info.rear_axle = g_engine.m_rear_axle;
-                            info.lat_load_effect = g_engine.m_load_forces.lat_load_effect;
-                            info.long_load_effect = g_engine.m_load_forces.long_load_effect;
-                            info.optimal_slip_angle = g_engine.m_grip_estimation.optimal_slip_angle;
-                            info.optimal_slip_ratio = g_engine.m_grip_estimation.optimal_slip_ratio;
-                            info.slope_detection = g_engine.m_slope_detection;
-                            info.braking = g_engine.m_braking;
+                            {
+                                std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                                PopulateSessionInfo(info, scoring, tName, g_engine);
+                            }
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }
