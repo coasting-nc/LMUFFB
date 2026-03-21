@@ -199,19 +199,19 @@ TEST_CASE(test_ffb_engine_soft_knee_compression_branches, "Physics") {
 TEST_CASE(test_ffb_engine_long_load_transform_branches, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_effect = 1.0f;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // QUADRATIC
-    engine.m_long_load_transform = LoadTransform::QUADRATIC;
+    engine.m_load_forces.long_load_transform = (int)LoadTransform::QUADRATIC;
     engine.calculate_force(&data);
     
     // CUBIC
-    engine.m_long_load_transform = LoadTransform::CUBIC;
+    engine.m_load_forces.long_load_transform = (int)LoadTransform::CUBIC;
     engine.calculate_force(&data);
     
     // HERMITE
-    engine.m_long_load_transform = LoadTransform::HERMITE;
+    engine.m_load_forces.long_load_transform = (int)LoadTransform::HERMITE;
     engine.calculate_force(&data);
 }
 

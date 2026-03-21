@@ -38,8 +38,8 @@ TEST_CASE(test_long_load_lpf, "Physics") {
     std::cout << "\nTest: Longitudinal G-Force LPF (v0.7.47)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 1.0f; // Very slow
+    engine.m_load_forces.long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_smoothing = 1.0f; // Very slow
     engine.m_chassis_inertia_smoothing = 1000.0f; // Freeze chassis acceleration
     FFBEngineTestAccess::SetLongitudinalLoadSmoothed(engine, 1.0);
 

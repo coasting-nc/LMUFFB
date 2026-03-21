@@ -99,14 +99,14 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "steering_100hz_reconstruction") { current_preset.front_axle.steering_100hz_reconstruction = std::stoi(value); return true; }
     if (key == "torque_passthrough") { current_preset.front_axle.torque_passthrough = (value == "1" || value == "true"); return true; }
     if (key == "sop") { current_preset.rear_axle.sop_effect = std::stof(value); return true; }
-    if (key == "lateral_load_effect") { current_preset.lateral_load = std::stof(value); return true; }
-    if (key == "lat_load_transform") { current_preset.lat_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
+    if (key == "lateral_load_effect") { current_preset.load_forces.lat_load_effect = std::stof(value); return true; }
+    if (key == "lat_load_transform") { current_preset.load_forces.lat_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
     if (key == "sop_scale") { current_preset.rear_axle.sop_scale = std::stof(value); return true; }
     if (key == "sop_smoothing_factor") { current_preset.rear_axle.sop_smoothing_factor = std::stof(value); return true; }
     if (key == "oversteer_boost") { current_preset.rear_axle.oversteer_boost = std::stof(value); return true; }
-    if (key == "long_load_effect" || key == "dynamic_weight_gain") { current_preset.long_load_effect = std::stof(value); return true; }
-    if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { current_preset.long_load_smoothing = std::stof(value); return true; }
-    if (key == "long_load_transform") { current_preset.long_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
+    if (key == "long_load_effect" || key == "dynamic_weight_gain") { current_preset.load_forces.long_load_effect = std::stof(value); return true; }
+    if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { current_preset.load_forces.long_load_smoothing = std::stof(value); return true; }
+    if (key == "long_load_transform") { current_preset.load_forces.long_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
     if (key == "grip_smoothing_steady") { current_preset.grip_smoothing_steady = std::stof(value); return true; }
     if (key == "grip_smoothing_fast") { current_preset.grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { current_preset.grip_smoothing_sensitivity = std::stof(value); return true; }
@@ -263,8 +263,8 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "steering_100hz_reconstruction") { engine.m_front_axle.steering_100hz_reconstruction = std::stoi(value); return true; }
     if (key == "torque_passthrough") { engine.m_front_axle.torque_passthrough = (value == "1" || value == "true"); return true; }
     if (key == "sop") { engine.m_rear_axle.sop_effect = std::stof(value); return true; }
-    if (key == "lateral_load_effect") { engine.m_lat_load_effect = std::stof(value); return true; }
-    if (key == "lat_load_transform") { engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3)); return true; }
+    if (key == "lateral_load_effect") { engine.m_load_forces.lat_load_effect = std::stof(value); return true; }
+    if (key == "lat_load_transform") { engine.m_load_forces.lat_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
     if (key == "sop_scale") { engine.m_rear_axle.sop_scale = std::stof(value); return true; }
     if (key == "sop_smoothing_factor" || key == "smoothing") {
         float val = std::stof(value);
@@ -276,9 +276,9 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
         return true;
     }
     if (key == "oversteer_boost") { engine.m_rear_axle.oversteer_boost = std::stof(value); return true; }
-    if (key == "long_load_effect" || key == "dynamic_weight_gain") { engine.m_long_load_effect = std::stof(value); return true; }
-    if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { engine.m_long_load_smoothing = std::stof(value); return true; }
-    if (key == "long_load_transform") { engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3)); return true; }
+    if (key == "long_load_effect" || key == "dynamic_weight_gain") { engine.m_load_forces.long_load_effect = std::stof(value); return true; }
+    if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { engine.m_load_forces.long_load_smoothing = std::stof(value); return true; }
+    if (key == "long_load_transform") { engine.m_load_forces.long_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
     if (key == "grip_smoothing_steady") { engine.m_grip_smoothing_steady = std::stof(value); return true; }
     if (key == "grip_smoothing_fast") { engine.m_grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { engine.m_grip_smoothing_sensitivity = std::stof(value); return true; }
@@ -490,15 +490,15 @@ void Config::LoadPresets() {
         p.front_axle.static_notch_freq = 11.0f;
         p.front_axle.static_notch_width = 2.0f;
         p.rear_axle.oversteer_boost = 0.0f;
-        p.long_load_effect = 2.68722f;
-        p.long_load_smoothing = 0.15f;
-        p.long_load_transform = 0;
+        p.load_forces.long_load_effect = 2.68722f;
+        p.load_forces.long_load_smoothing = 0.15f;
+        p.load_forces.long_load_transform = 0;
         p.grip_smoothing_steady = 0.05f;
         p.grip_smoothing_fast = 0.005f;
         p.grip_smoothing_sensitivity = 0.1f;
         p.rear_axle.sop_effect = 0.0f;
-        p.lateral_load = 2.81938f;
-        p.lat_load_transform = 2;
+        p.load_forces.lat_load_effect = 2.81938f;
+        p.load_forces.lat_load_transform = 2;
         p.rear_axle.rear_align_effect = 0.828194f;
         p.rear_axle.sop_yaw_gain = 0.418502f;
         p.rear_axle.yaw_kick_threshold = 1.01f;
@@ -1264,15 +1264,15 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "static_notch_width=" << p.front_axle.static_notch_width << "\n";
 
     file << "oversteer_boost=" << p.rear_axle.oversteer_boost << "\n";
-    file << "long_load_effect=" << p.long_load_effect << "\n";
-    file << "long_load_smoothing=" << p.long_load_smoothing << "\n";
-    file << "long_load_transform=" << p.long_load_transform << "\n";
+    file << "long_load_effect=" << p.load_forces.long_load_effect << "\n";
+    file << "long_load_smoothing=" << p.load_forces.long_load_smoothing << "\n";
+    file << "long_load_transform=" << p.load_forces.long_load_transform << "\n";
     file << "grip_smoothing_steady=" << p.grip_smoothing_steady << "\n";
     file << "grip_smoothing_fast=" << p.grip_smoothing_fast << "\n";
     file << "grip_smoothing_sensitivity=" << p.grip_smoothing_sensitivity << "\n";
     file << "sop=" << p.rear_axle.sop_effect << "\n";
-    file << "lateral_load_effect=" << p.lateral_load << "\n";
-    file << "lat_load_transform=" << p.lat_load_transform << "\n";
+    file << "lateral_load_effect=" << p.load_forces.lat_load_effect << "\n";
+    file << "lat_load_transform=" << p.load_forces.lat_load_transform << "\n";
     file << "rear_align_effect=" << p.rear_axle.rear_align_effect << "\n";
     file << "kerb_strike_rejection=" << p.rear_axle.kerb_strike_rejection << "\n";
     file << "sop_yaw_gain=" << p.rear_axle.sop_yaw_gain << "\n";
@@ -1616,15 +1616,15 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 
         file << "\n; --- Rear Axle (Oversteer) ---\n";
         file << "oversteer_boost=" << engine.m_rear_axle.oversteer_boost << "\n";
-        file << "long_load_effect=" << engine.m_long_load_effect << "\n";
-        file << "long_load_smoothing=" << engine.m_long_load_smoothing << "\n";
-        file << "long_load_transform=" << static_cast<int>(engine.m_long_load_transform) << "\n";
+        file << "long_load_effect=" << engine.m_load_forces.long_load_effect << "\n";
+        file << "long_load_smoothing=" << engine.m_load_forces.long_load_smoothing << "\n";
+        file << "long_load_transform=" << engine.m_load_forces.long_load_transform << "\n";
         file << "grip_smoothing_steady=" << engine.m_grip_smoothing_steady << "\n";
         file << "grip_smoothing_fast=" << engine.m_grip_smoothing_fast << "\n";
         file << "grip_smoothing_sensitivity=" << engine.m_grip_smoothing_sensitivity << "\n";
         file << "sop=" << engine.m_rear_axle.sop_effect << "\n";
-        file << "lateral_load_effect=" << engine.m_lat_load_effect << "\n";
-        file << "lat_load_transform=" << static_cast<int>(engine.m_lat_load_transform) << "\n";
+        file << "lateral_load_effect=" << engine.m_load_forces.lat_load_effect << "\n";
+        file << "lat_load_transform=" << engine.m_load_forces.lat_load_transform << "\n";
         file << "rear_align_effect=" << engine.m_rear_axle.rear_align_effect << "\n";
         file << "kerb_strike_rejection=" << engine.m_rear_axle.kerb_strike_rejection << "\n";
         file << "sop_yaw_gain=" << engine.m_rear_axle.sop_yaw_gain << "\n";

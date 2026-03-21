@@ -158,8 +158,8 @@ void FFBThread() {
                             info.general = g_engine.m_general;
                             info.front_axle = g_engine.m_front_axle;
                             info.rear_axle = g_engine.m_rear_axle;
-                            info.lat_load_effect = g_engine.m_lat_load_effect;
-                            info.long_load_effect = g_engine.m_long_load_effect;
+                            info.lat_load_effect = g_engine.m_load_forces.lat_load_effect;
+                            info.long_load_effect = g_engine.m_load_forces.long_load_effect;
                             info.optimal_slip_angle = g_engine.m_optimal_slip_angle;
                             info.optimal_slip_ratio = g_engine.m_optimal_slip_ratio;
                             info.slope_enabled = g_engine.m_slope_detection_enabled;
