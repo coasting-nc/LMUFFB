@@ -48,8 +48,8 @@ TEST_CASE(test_engine_disabled_effects, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry();
 
     // Disable all effects to hit early returns
-    engine.m_abs_pulse_enabled = false;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.abs_pulse_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;

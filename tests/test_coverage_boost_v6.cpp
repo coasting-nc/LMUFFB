@@ -403,10 +403,10 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
         engine.m_rear_axle.oversteer_boost = 0.5f;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_lockup_enabled = true;
+        engine.m_braking.lockup_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_abs_pulse_enabled = true;
+        engine.m_braking.abs_pulse_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         engine.m_slide_texture_enabled = true;

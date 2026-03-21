@@ -212,6 +212,7 @@ struct SessionInfo {
     float optimal_slip_angle; // v0.7.173
     float optimal_slip_ratio; // v0.7.173
     SlopeDetectionConfig slope_detection;
+    BrakingConfig braking;
 };
 
 class AsyncLogger {
@@ -426,6 +427,8 @@ private:
         m_file << "# Long Load Effect: " << info.long_load_effect << "\n";
         m_file << "# SoP Scale: " << info.rear_axle.sop_scale << "\n";
         m_file << "# SoP Smoothing: " << info.rear_axle.sop_smoothing_factor << "\n";
+        m_file << "# Lockup Gain: " << info.braking.lockup_gain << "\n";
+        m_file << "# ABS Gain: " << info.braking.abs_gain << "\n";
         m_file << "# Optimal Slip Angle: " << info.optimal_slip_angle << "\n";
         m_file << "# Optimal Slip Ratio: " << info.optimal_slip_ratio << "\n";
         m_file << "# Slope Detection: " << (info.slope_detection.enabled ? "Enabled" : "Disabled") << "\n";

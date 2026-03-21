@@ -191,8 +191,8 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     ASSERT_TRUE(p.slide_enabled == false);               // Slide texture disabled
     ASSERT_TRUE(p.road_enabled == false);                // Road texture disabled
     ASSERT_TRUE(p.spin_enabled == false);                // Spin texture disabled
-    ASSERT_TRUE(p.lockup_enabled == false);              // Lockup vibration disabled
-    ASSERT_TRUE(p.abs_pulse_enabled == false);           // ABS pulse disabled
+    ASSERT_TRUE(p.braking.lockup_enabled == false);              // Lockup vibration disabled
+    ASSERT_TRUE(p.braking.abs_pulse_enabled == false);           // ABS pulse disabled
     
     // VERIFY: Critical physics parameters are set correctly
     ASSERT_NEAR(p.grip_estimation.optimal_slip_angle, 0.10f, 0.001f);    // Optimal slip angle threshold

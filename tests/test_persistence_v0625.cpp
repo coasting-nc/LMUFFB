@@ -190,10 +190,10 @@ TEST_CASE(test_preset_clamping_brake, "Persistence") {
     
     ASSERT_TRUE(idx != -1);
     if (idx != -1) {
-        ASSERT_NEAR(Config::presets[idx].brake_load_cap, 8.5f, 0.001f);
+        ASSERT_NEAR(Config::presets[idx].braking.brake_load_cap, 8.5f, 0.001f);
         FFBEngine engine;
         Config::ApplyPreset(idx, engine);
-        ASSERT_NEAR(engine.m_brake_load_cap, 8.5f, 0.001f);
+        ASSERT_NEAR(engine.m_braking.brake_load_cap, 8.5f, 0.001f);
     }
 }
 
@@ -223,10 +223,10 @@ TEST_CASE(test_preset_clamping_lockup, "Persistence") {
     
     ASSERT_TRUE(idx != -1);
     if (idx != -1) {
-        ASSERT_NEAR(Config::presets[idx].lockup_gain, 2.9f, 0.001f);
+        ASSERT_NEAR(Config::presets[idx].braking.lockup_gain, 2.9f, 0.001f);
         FFBEngine engine;
         Config::ApplyPreset(idx, engine);
-        ASSERT_NEAR(engine.m_lockup_gain, 2.9f, 0.001f);
+        ASSERT_NEAR(engine.m_braking.lockup_gain, 2.9f, 0.001f);
     }
 }
 
@@ -243,7 +243,7 @@ TEST_CASE(test_main_config_clamping_brake, "Persistence") {
         file << "brake_load_cap=6.5\n";
     }
     Config::Load(engine, "test_clamp.ini");
-    ASSERT_NEAR(engine.m_brake_load_cap, 6.5f, 0.001f);
+    ASSERT_NEAR(engine.m_braking.brake_load_cap, 6.5f, 0.001f);
     
     // Over max
     {
@@ -251,7 +251,7 @@ TEST_CASE(test_main_config_clamping_brake, "Persistence") {
         file << "brake_load_cap=15.0\n";
     }
     Config::Load(engine, "test_clamp.ini");
-    ASSERT_NEAR(engine.m_brake_load_cap, 10.0f, 0.001f);
+    ASSERT_NEAR(engine.m_braking.brake_load_cap, 10.0f, 0.001f);
     
     // Under min
     {
@@ -259,7 +259,7 @@ TEST_CASE(test_main_config_clamping_brake, "Persistence") {
         file << "brake_load_cap=0.5\n";
     }
     Config::Load(engine, "test_clamp.ini");
-    ASSERT_NEAR(engine.m_brake_load_cap, 1.0f, 0.001f);
+    ASSERT_NEAR(engine.m_braking.brake_load_cap, 1.0f, 0.001f);
     
     std::remove("test_clamp.ini");
 }
@@ -277,7 +277,7 @@ TEST_CASE(test_main_config_clamping_lockup, "Persistence") {
         file << "lockup_gain=2.7\n";
     }
     Config::Load(engine, "test_clamp.ini");
-    ASSERT_NEAR(engine.m_lockup_gain, 2.7f, 0.001f);
+    ASSERT_NEAR(engine.m_braking.lockup_gain, 2.7f, 0.001f);
     
     // Over max
     {
@@ -285,7 +285,7 @@ TEST_CASE(test_main_config_clamping_lockup, "Persistence") {
         file << "lockup_gain=5.0\n";
     }
     Config::Load(engine, "test_clamp.ini");
-    ASSERT_NEAR(engine.m_lockup_gain, 3.0f, 0.001f);
+    ASSERT_NEAR(engine.m_braking.lockup_gain, 3.0f, 0.001f);
     
     std::remove("test_clamp.ini");
 }
@@ -320,7 +320,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     engine.m_front_axle.understeer_effect = 0.444f;
     engine.m_rear_axle.sop_effect = 1.23f;
     engine.m_texture_load_cap = 2.1f;
-    engine.m_brake_load_cap = 6.6f;
+    engine.m_braking.brake_load_cap = 6.6f;
     engine.m_speed_gate_lower = 2.2f;
     engine.m_speed_gate_upper = 8.8f;
     engine.m_road_fallback_scale = 0.11f;
@@ -336,7 +336,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     ASSERT_NEAR(engine2.m_front_axle.understeer_effect, 0.444f, 0.001f);
     ASSERT_NEAR(engine2.m_rear_axle.sop_effect, 1.23f, 0.001f);
     ASSERT_NEAR(engine2.m_texture_load_cap, 2.1f, 0.001f);
-    ASSERT_NEAR(engine2.m_brake_load_cap, 6.6f, 0.001f);
+    ASSERT_NEAR(engine2.m_braking.brake_load_cap, 6.6f, 0.001f);
     ASSERT_NEAR(engine2.m_speed_gate_lower, 2.2f, 0.001f);
     ASSERT_NEAR(engine2.m_speed_gate_upper, 8.8f, 0.001f);
     ASSERT_NEAR(engine2.m_road_fallback_scale, 0.11f, 0.001f);
@@ -364,7 +364,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
         ASSERT_NEAR(engine3.m_front_axle.understeer_effect, 0.444f, 0.001f);
         ASSERT_NEAR(engine3.m_rear_axle.sop_effect, 1.23f, 0.001f);
         ASSERT_NEAR(engine3.m_texture_load_cap, 2.1f, 0.001f);
-        ASSERT_NEAR(engine3.m_brake_load_cap, 6.6f, 0.001f);
+        ASSERT_NEAR(engine3.m_braking.brake_load_cap, 6.6f, 0.001f);
         ASSERT_NEAR(engine3.m_speed_gate_lower, 2.2f, 0.001f);
         ASSERT_NEAR(engine3.m_speed_gate_upper, 8.8f, 0.001f);
         ASSERT_NEAR(engine3.m_road_fallback_scale, 0.11f, 0.001f);
