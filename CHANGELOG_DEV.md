@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 
 
+
+---
+
+## [0.7.210]  
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 3)**
+  - **Grouped Data Structures**: Introduced `RearAxleConfig` struct
+
+
 ---
 
 ## [0.7.209]  

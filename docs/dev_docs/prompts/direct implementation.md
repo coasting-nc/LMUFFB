@@ -27,6 +27,8 @@ See also the implementation notes that were created in previous iterations:
 * `docs\dev_docs\implementation_plans\redesign_preset_system_phase1_front_axle.md`
 * `docs\dev_docs\implementation_plans\redesign_preset_system_phase1_rear_axle.md`
 
+You must also increase the app version in `VERSION` file (by the smallest increment possible), and add an entry to `CHANGELOG_DEV.md` file.
+
 **⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
 1. **Scope:** Work ONLY on `LoadForcesConfig`. Do not work on other logical categories (those will be worked on in future iterations).
 2. **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation, testing, and review process autonomously until the task is complete, all 580+ tests pass, and the code is perfect.
