@@ -40,6 +40,11 @@ The following issues were identified and resolved during this audit:
 - **`src/core/main.cpp`**: Updated `SessionInfo` population to align with the refactored data model.
 - **`src/core/Config.cpp`**: Standardized `Config::Load` to call `Validate()` for all 10 logical categories. Preserved legacy "reset-to-default" behaviors for grip estimation and slope detection to maintain compatibility with extremely old configuration files and existing regression tests.
 
+### 5. Regression Tests
+New regression tests were added in `tests/test_audit_regressions.cpp` to prevent future regressions of these issues:
+- `test_audit_config_load_validation`: Verifies that `Config::Load` correctly clamps and resets invalid values for all 10 configuration categories when reading from a file.
+- `test_audit_logger_header_completeness`: Verifies that the telemetry log header contains metadata for all 10 refactored configuration categories.
+
 ## Conclusion
 The Phase 1 refactoring of the preset system is **complete and verified**. The data model is now fully grouped into logical categories across the engine, the preset system, and the logging system. This provides a robust foundation for Phase 2 (TOML integration).
 
