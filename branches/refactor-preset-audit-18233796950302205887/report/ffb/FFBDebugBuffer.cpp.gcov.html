@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-21 20:56:28</td>
+            <td class="headerValue">2026-03-21 21:13:35</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">75.0&nbsp;%</td>
@@ -71,7 +71,7 @@
 <pre class="source">
 <span id="L1"><span class="lineNum">       1</span>                 :             : #include &quot;FFBDebugBuffer.h&quot;</span>
 <span id="L2"><span class="lineNum">       2</span>                 :             : </span>
-<span id="L3"><span class="lineNum">       3</span>                 :<span class="tlaGNC tlaBgGNC">         511 : FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}</span></span>
+<span id="L3"><span class="lineNum">       3</span>                 :<span class="tlaGNC tlaBgGNC">         512 : FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}</span></span>
 <span id="L4"><span class="lineNum">       4</span>                 :             : </span>
 <span id="L5"><span class="lineNum">       5</span>                 :<span class="tlaGNC">       67863 : void FFBDebugBuffer::Push(const FFBSnapshot&amp; snap) {</span></span>
 <span id="L6"><span class="lineNum">       6</span>         [<span class="tlaGBC" title="Branch 0 was taken 67863 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       67863 :     std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</span></span>
