@@ -52,9 +52,9 @@ TEST_CASE(test_issue_379_car_change_reset, "Regression") {
 TEST_CASE(test_issue_379_teleport_spike_prevention, "Regression") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_method = 1; // Force-derivative based
-    engine.m_bottoming_gain = 1.0f;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_method = 1; // Force-derivative based
+    engine.m_vibration.bottoming_gain = 1.0f;
     engine.m_general.gain = 1.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0, 0.0);

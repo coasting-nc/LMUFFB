@@ -34,7 +34,7 @@ TEST_CASE(test_texture_load_cap_in_presets, "Persistence") {
     FFBEngine engine;
     Preset::ApplyDefaultsToEngine(engine);
     
-    engine.m_texture_load_cap = 2.8f;
+    engine.m_vibration.texture_load_cap = 2.8f;
     
     // Clear existing presets to be sure
     Config::presets.clear();
@@ -58,7 +58,7 @@ TEST_CASE(test_texture_load_cap_in_presets, "Persistence") {
     ASSERT_TRUE(idx != -1);
     if (idx != -1) {
         Config::ApplyPreset(idx, engine2);
-        ASSERT_NEAR(engine2.m_texture_load_cap, 2.8f, 0.001f);
+        ASSERT_NEAR(engine2.m_vibration.texture_load_cap, 2.8f, 0.001f);
     }
 }
 
@@ -125,7 +125,7 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
     FFBEngine engine;
     Preset::ApplyDefaultsToEngine(engine);
     
-    engine.m_texture_load_cap = 2.2f;
+    engine.m_vibration.texture_load_cap = 2.2f;
     engine.m_speed_gate_lower = 3.0f;
     engine.m_speed_gate_upper = 9.0f;
     engine.m_road_fallback_scale = 0.08f;
@@ -156,7 +156,7 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
     ASSERT_TRUE(idx != -1);
     if (idx != -1) {
         Config::ApplyPreset(idx, engine2);
-        ASSERT_NEAR(engine2.m_texture_load_cap, 2.2f, 0.001f);
+        ASSERT_NEAR(engine2.m_vibration.texture_load_cap, 2.2f, 0.001f);
         ASSERT_NEAR(engine2.m_speed_gate_lower, 3.0f, 0.001f);
         ASSERT_NEAR(engine2.m_speed_gate_upper, 9.0f, 0.001f);
         ASSERT_NEAR(engine2.m_road_fallback_scale, 0.08f, 0.001f);
@@ -319,7 +319,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     engine.m_general.gain = 0.77f;
     engine.m_front_axle.understeer_effect = 0.444f;
     engine.m_rear_axle.sop_effect = 1.23f;
-    engine.m_texture_load_cap = 2.1f;
+    engine.m_vibration.texture_load_cap = 2.1f;
     engine.m_braking.brake_load_cap = 6.6f;
     engine.m_speed_gate_lower = 2.2f;
     engine.m_speed_gate_upper = 8.8f;
@@ -335,7 +335,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     ASSERT_NEAR(engine2.m_general.gain, 0.77f, 0.001f);
     ASSERT_NEAR(engine2.m_front_axle.understeer_effect, 0.444f, 0.001f);
     ASSERT_NEAR(engine2.m_rear_axle.sop_effect, 1.23f, 0.001f);
-    ASSERT_NEAR(engine2.m_texture_load_cap, 2.1f, 0.001f);
+    ASSERT_NEAR(engine2.m_vibration.texture_load_cap, 2.1f, 0.001f);
     ASSERT_NEAR(engine2.m_braking.brake_load_cap, 6.6f, 0.001f);
     ASSERT_NEAR(engine2.m_speed_gate_lower, 2.2f, 0.001f);
     ASSERT_NEAR(engine2.m_speed_gate_upper, 8.8f, 0.001f);
@@ -363,7 +363,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
         ASSERT_NEAR(engine3.m_general.gain, 0.77f, 0.001f);
         ASSERT_NEAR(engine3.m_front_axle.understeer_effect, 0.444f, 0.001f);
         ASSERT_NEAR(engine3.m_rear_axle.sop_effect, 1.23f, 0.001f);
-        ASSERT_NEAR(engine3.m_texture_load_cap, 2.1f, 0.001f);
+        ASSERT_NEAR(engine3.m_vibration.texture_load_cap, 2.1f, 0.001f);
         ASSERT_NEAR(engine3.m_braking.brake_load_cap, 6.6f, 0.001f);
         ASSERT_NEAR(engine3.m_speed_gate_lower, 2.2f, 0.001f);
         ASSERT_NEAR(engine3.m_speed_gate_upper, 8.8f, 0.001f);

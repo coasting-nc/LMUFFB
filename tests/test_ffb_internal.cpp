@@ -151,11 +151,11 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
     engine.m_rear_axle.oversteer_boost = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     
     // 2. Set Inputs that WOULD trigger forces if effects were on
     
@@ -450,7 +450,7 @@ TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     // Disable road texture effect
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.road_enabled = false;
     
     // 1. Establish steady state 0.0 acceleration
     data.mLocalVel.y = 0.0;

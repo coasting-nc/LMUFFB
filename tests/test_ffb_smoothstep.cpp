@@ -47,8 +47,8 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     InitializeEngine(engine);
     engine.m_speed_gate_lower = 1.0f;
     engine.m_speed_gate_upper = 5.0f;
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0f;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     TelemInfoV01 data_25 = CreateBasicTestTelemetry(2.0);
     data_25.mWheel[0].mVerticalTireDeflection = 0.002;
@@ -63,8 +63,8 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
         InitializeEngine(engine);
         engine.m_speed_gate_lower = 1.0f;
         engine.m_speed_gate_upper = 5.0f;
-        engine.m_road_texture_enabled = true;
-        engine.m_road_texture_gain = 1.0f;
+        engine.m_vibration.road_enabled = true;
+        engine.m_vibration.road_gain = 1.0f;
 
         // Steady state (deflection 0)
         d.mWheel[0].mVerticalTireDeflection = 0.0;
@@ -129,13 +129,13 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     engine.m_speed_gate_upper = 10.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(6.0); // Exactly halfway
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0;
+    engine.m_vibration.bottoming_enabled = false;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
     FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
-    engine.m_texture_load_cap = 1.0f;
+    engine.m_vibration.texture_load_cap = 1.0f;
 
     // Steady state
     data.mWheel[0].mVerticalTireDeflection = 0.0;

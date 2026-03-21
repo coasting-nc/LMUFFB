@@ -191,13 +191,13 @@ TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     data.mLocalVel.z = -20.0f; // Ensure speed gate is 1.0
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
-    engine.m_road_texture_gain = 1.0f;
+    engine.m_vibration.road_gain = 1.0f;
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_load_forces.long_load_effect = 0.0f;
     engine.m_front_axle.steering_shaft_smoothing = 0.0f;
     engine.m_speed_gate_lower = 1.0f;
     engine.m_speed_gate_upper = 5.0f;
-    engine.m_road_texture_enabled = true;
+    engine.m_vibration.road_enabled = true;
 
     // Settle rolling average and last torque
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 10.0);

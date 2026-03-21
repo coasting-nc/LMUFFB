@@ -148,13 +148,13 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
+    engine.m_vibration.spin_enabled = false;
     engine.m_braking.abs_pulse_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_general.min_force = 0.0f;
     
     // v0.6.25: Disable speed gate by default for legacy tests (avoids muting physics at 0 speed)

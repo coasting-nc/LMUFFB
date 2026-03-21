@@ -51,8 +51,8 @@ TEST_CASE(test_grip_modulation, "CorePhysics") {
 
     data.mSteeringShaftTorque = 10.0; 
     engine.m_rear_axle.sop_effect = 0.0;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
 
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
@@ -80,8 +80,8 @@ TEST_CASE(test_min_force, "CorePhysics") {
     data.mWheel[0].mGripFract = 1.0;
     data.mWheel[1].mGripFract = 1.0;
 
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
     engine.m_rear_axle.sop_effect = 0.0;
 
     data.mSteeringShaftTorque = 0.05; 
@@ -117,9 +117,9 @@ TEST_CASE(test_grip_low_speed, "CorePhysics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    engine.m_bottoming_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
     engine.m_invert_force = false;
 
     data.mWheel[0].mGripFract = 0.0; 
@@ -200,8 +200,8 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         FFBEngine e1;
         InitializeEngine(e1);
         e1.m_general.gain = 1.0; e1.m_invert_force = false; e1.m_front_axle.understeer_effect = 0.0; e1.m_rear_axle.oversteer_boost = 0.0;
-        e1.m_slide_texture_enabled = true;
-        e1.m_slide_texture_gain = 1.0;
+        e1.m_vibration.slide_enabled = true;
+        e1.m_vibration.slide_gain = 1.0;
         e1.m_general.wheelbase_max_nm = 20.0f; e1.m_general.target_rim_nm = 20.0f;
         e1.m_slide_phase = 0.5;
         s1 = e1.calculate_force(&data);
@@ -210,8 +210,8 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         FFBEngine e2;
         InitializeEngine(e2);
         e2.m_general.gain = 1.0; e2.m_invert_force = false; e2.m_front_axle.understeer_effect = 0.0; e2.m_rear_axle.oversteer_boost = 0.0;
-        e2.m_slide_texture_enabled = true;
-        e2.m_slide_texture_gain = 1.0;
+        e2.m_vibration.slide_enabled = true;
+        e2.m_vibration.slide_gain = 1.0;
         e2.m_general.wheelbase_max_nm = 100.0f; e2.m_general.target_rim_nm = 100.0f;
         e2.m_slide_phase = 0.5;
         s2 = e2.calculate_force(&data);
@@ -224,7 +224,7 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
         FAIL_TEST("Slide Texture compensation failed! 20Nm: " << s1 << " 100Nm: " << s2);
     }
 
-    engine.m_slide_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
     engine.m_front_axle.understeer_effect = 0.5;
     data.mSteeringShaftTorque = 10.0;
     data.mWheel[0].mGripFract = 0.6; 
@@ -390,11 +390,11 @@ TEST_CASE(test_stress_stability, "CorePhysics") {
     
     // Enable EVERYTHING
     engine.m_braking.lockup_enabled = true;
-    engine.m_spin_enabled = true;
-    engine.m_slide_texture_enabled = true;
-    engine.m_road_texture_enabled = true;
-    engine.m_bottoming_enabled = true;
-    engine.m_scrub_drag_gain = 1.0;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.slide_enabled = true;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.scrub_drag_gain = 1.0;
     
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(-100000.0, 100000.0);

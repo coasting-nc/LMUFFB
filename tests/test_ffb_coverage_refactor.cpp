@@ -110,8 +110,8 @@ TEST_CASE(test_coverage_textures, "Coverage") {
 
     // 1. Wheel Spin
     // Requirements: m_spin_enabled, Throttle > 0.05, Rear Slip > 0.2
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0;
     data.mUnfilteredThrottle = 1.0;
     
     // Set rear wheels spinning
@@ -136,16 +136,16 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     
     // 2. Slide Texture
     // effective_slip_vel > 1.5
-    engine.m_slide_texture_enabled = true;
-    engine.m_slide_texture_gain = 1.0;
+    engine.m_vibration.slide_enabled = true;
+    engine.m_vibration.slide_gain = 1.0;
     data.mWheel[0].mLateralPatchVel = 2.0;
     data.mWheel[1].mLateralPatchVel = 2.0; // Avg = 2.0 > 1.5
     FFBEngineTestAccess::CallCalculateSlideTexture(engine, &data, ctx);
     // ctx.slide_noise should be non-zero (unless phase is 0)
     
     // 3. Road Texture & Scrub
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0;
     FFBEngineTestAccess::SetScrubDragGain(engine, 1.0);
     
     // Scrub logic: abs(avg_lat_vel) > 0.001

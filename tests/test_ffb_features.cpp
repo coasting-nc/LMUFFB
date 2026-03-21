@@ -17,8 +17,8 @@ TEST_CASE(test_stationary_gate, "Texture") {
         TelemInfoV01 data = CreateBasicTestTelemetry(0.0);
         
         // Enable Road Texture
-        engine.m_road_texture_enabled = true;
-        engine.m_road_texture_gain = 1.0;
+        engine.m_vibration.road_enabled = true;
+        engine.m_vibration.road_gain = 1.0;
         
         // Simulate Engine Idle Vibration (Deflection Delta)
         data.mWheel[0].mVerticalTireDeflection = 0.001; 
@@ -34,7 +34,7 @@ TEST_CASE(test_stationary_gate, "Texture") {
     // Case 2: Moving slowly (0.5 m/s) -> Gate should be 0.0 (since 0.5 < m_speed_gate_lower)
     {
         TelemInfoV01 data = CreateBasicTestTelemetry(0.5);
-        engine.m_road_texture_enabled = true;
+        engine.m_vibration.road_enabled = true;
         data.mWheel[0].mVerticalTireDeflection = 0.001; 
         data.mWheel[1].mVerticalTireDeflection = 0.001;
         
@@ -45,8 +45,8 @@ TEST_CASE(test_stationary_gate, "Texture") {
     // Case 3: Moving at 5.0 m/s (m_speed_gate_upper) -> Gate should be 1.0
     {
         TelemInfoV01 data = CreateBasicTestTelemetry(5.0);
-        engine.m_road_texture_enabled = true;
-        engine.m_road_texture_gain = 1.0;
+        engine.m_vibration.road_enabled = true;
+        engine.m_vibration.road_gain = 1.0;
         engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
         
         // v0.7.69: Ensure vibration multiplier is 1.0 for this test
@@ -209,8 +209,8 @@ TEST_CASE(test_slide_texture, "Texture") {
         data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
         
         engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Standard scale for test
-        engine.m_slide_texture_enabled = true;
-        engine.m_slide_texture_gain = 1.0;
+        engine.m_vibration.slide_enabled = true;
+        engine.m_vibration.slide_gain = 1.0;
         
         data.mSteeringShaftTorque = 0.0;
         
@@ -227,7 +227,7 @@ TEST_CASE(test_slide_texture, "Texture") {
         data.mWheel[1].mTireLoad = 4000.0;
         data.mLocalVel.z = 20.0; // Moving fast (> 5.0 m/s cutoff)
         
-        engine.m_slide_freq_scale = 1.0f;
+        engine.m_vibration.slide_freq = 1.0f;
         
         data.mDeltaTime = 0.013; // 13ms. For 35Hz (5m/s input), period is 28ms. 
                                  // 13ms is ~0.46 period, ensuring non-zero phase advance.
@@ -252,9 +252,9 @@ TEST_CASE(test_slide_texture, "Texture") {
         data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
 
         engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
-        engine.m_slide_texture_enabled = true;
-        engine.m_slide_texture_gain = 1.0;
-        engine.m_slide_freq_scale = 1.0f;
+        engine.m_vibration.slide_enabled = true;
+        engine.m_vibration.slide_gain = 1.0;
+        engine.m_vibration.slide_freq = 1.0f;
         
         data.mSteeringShaftTorque = 0.0;
         
@@ -301,8 +301,8 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     data.mWheel[1].mGripFract = 1.0;
     engine.m_front_axle.understeer_effect = 0.0; // Disabled effect initially
     engine.m_rear_axle.sop_effect = 0.0;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
     
     // Explicitly set gain 1.0 for this baseline
     engine.m_general.gain = 1.0;
@@ -392,8 +392,8 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     // Default RH to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0;
     engine.m_rear_axle.sop_effect = 1.0;
     engine.m_general.gain = 1.0;
     engine.m_rear_axle.sop_scale = 10.0;
@@ -471,7 +471,7 @@ TEST_CASE(test_static_notch_integration, "Texture") {
     FFBEngineTestAccess::SetRollingAverageTorque(engine, 1.0);
     FFBEngineTestAccess::SetLastRawTorque(engine, 1.0);
 
-    engine.m_bottoming_enabled = false; // Disable to avoid interference
+    engine.m_vibration.bottoming_enabled = false; // Disable to avoid interference
     engine.m_invert_force = false;      // Disable inversion for clarity
     engine.m_front_axle.understeer_effect = 0.0;   // Disable grip logic clamping
 
@@ -721,8 +721,8 @@ TEST_CASE(test_multi_effect_interaction, "Texture") {
     // Enable both lockup and spin
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0;
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0;
     
     // Scenario: Braking AND spinning (e.g., locked front, spinning rear)
     data.mUnfilteredBrake = 1.0;

@@ -8,9 +8,9 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     InitializeEngine(engine);
 
     // Setup: Isolate Road Texture (Fallback Mode)
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0f;
-    engine.m_vibration_gain = 1.0f;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0f;
+    engine.m_vibration.vibration_gain = 1.0f;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f;
     engine.m_general.target_rim_nm = 20.0f;
@@ -22,9 +22,9 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     engine.m_gyro_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     engine.m_braking.abs_pulse_enabled = false;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0); // Speed = 10.0 (> 5.0 cutoff)
@@ -60,9 +60,9 @@ TEST_CASE(test_issue_278_road_texture_velocity_response, "DerivedAccel") {
     std::cout << "\nTest: Issue #278 Road Texture Velocity Response" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0f;
-    engine.m_vibration_gain = 1.0f;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0f;
+    engine.m_vibration.vibration_gain = 1.0f;
     engine.m_general.gain = 1.0f;
     engine.m_invert_force = false;
 
@@ -104,7 +104,7 @@ TEST_CASE(test_issue_278_lockup_continuity, "DerivedAccel") {
 
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0f;
-    engine.m_vibration_gain = 1.0f;
+    engine.m_vibration.vibration_gain = 1.0f;
     engine.m_general.gain = 1.0f;
     engine.m_braking.lockup_prediction_sens = 10.0f;
 

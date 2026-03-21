@@ -8,14 +8,14 @@ TEST_CASE(test_config_persistence, "Config") {
     InitializeEngine(engine);
     engine.m_general.gain = 1.23f;
     engine.m_rear_axle.sop_effect = 0.45f;
-    engine.m_road_texture_enabled = true;
+    engine.m_vibration.road_enabled = true;
     Config::Save(engine, "test_config.ini");
     FFBEngine engine_load;
     InitializeEngine(engine_load);
     Config::Load(engine_load, "test_config.ini");
     ASSERT_NEAR(engine_load.m_general.gain, 1.23f, 0.01);
     ASSERT_NEAR(engine_load.m_rear_axle.sop_effect, 0.45f, 0.01);
-    ASSERT_TRUE(engine_load.m_road_texture_enabled);
+    ASSERT_TRUE(engine_load.m_vibration.road_enabled);
 }
 
 TEST_CASE(test_channel_stats, "Config") {
@@ -152,7 +152,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     const int expected_bottoming_method = 0;
     
     Preset ref_defaults;
-    const float expected_scrub_drag_gain = ref_defaults.scrub_drag_gain;
+    const float expected_scrub_drag_gain = ref_defaults.vibration.scrub_drag_gain;
     
     // Specialized T300 Expectation (v0.6.30)
     const float t300_lockup_freq = 1.02f;
@@ -234,9 +234,9 @@ TEST_CASE(test_preset_initialization, "Config") {
                 fields_ok = false;
             }
 
-            if (std::abs(preset.scrub_drag_gain - exp_scrub) > 0.001f) {
+            if (std::abs(preset.vibration.scrub_drag_gain - exp_scrub) > 0.001f) {
                 std::cout << "[FAIL] " << preset.name << ": scrub_drag_gain = " 
-                          << preset.scrub_drag_gain << ", expected " << exp_scrub << std::endl;
+                          << preset.vibration.scrub_drag_gain << ", expected " << exp_scrub << std::endl;
                 fields_ok = false;
             }
 
@@ -247,15 +247,15 @@ TEST_CASE(test_preset_initialization, "Config") {
                 fields_ok = false;
             }
 
-            if (preset.spin_freq_scale != expected_spin_freq_scale) {
+            if (preset.vibration.spin_freq_scale != expected_spin_freq_scale) {
                  std::cout << "[FAIL] " << preset.name << ": spin_freq_scale = " 
-                          << preset.spin_freq_scale << ", expected " << expected_spin_freq_scale << std::endl;
+                          << preset.vibration.spin_freq_scale << ", expected " << expected_spin_freq_scale << std::endl;
                 fields_ok = false;
             }
             
-            if (preset.bottoming_method != expected_bottoming_method) {
+            if (preset.vibration.bottoming_method != expected_bottoming_method) {
                 std::cout << "[FAIL] " << preset.name << ": bottoming_method = " 
-                          << preset.bottoming_method << ", expected " << expected_bottoming_method << std::endl;
+                          << preset.vibration.bottoming_method << ", expected " << expected_bottoming_method << std::endl;
                 fields_ok = false;
             }
         }
@@ -362,20 +362,20 @@ TEST_CASE(test_config_safety_clamping, "Config") {
     bool all_clamped = true;
     
     // Clamp to 2.0f
-    if (engine.m_slide_texture_gain != 2.0f) {
-        std::cout << "[FAIL] slide_gain not clamped. Got: " << engine.m_slide_texture_gain << " Expected: 2.0" << std::endl;
+    if (engine.m_vibration.slide_gain != 2.0f) {
+        std::cout << "[FAIL] slide_gain not clamped. Got: " << engine.m_vibration.slide_gain << " Expected: 2.0" << std::endl;
         all_clamped = false;
     }
-    if (engine.m_road_texture_gain != 2.0f) {
-        std::cout << "[FAIL] road_gain not clamped. Got: " << engine.m_road_texture_gain << " Expected: 2.0" << std::endl;
+    if (engine.m_vibration.road_gain != 2.0f) {
+        std::cout << "[FAIL] road_gain not clamped. Got: " << engine.m_vibration.road_gain << " Expected: 2.0" << std::endl;
         all_clamped = false;
     }
     if (engine.m_braking.lockup_gain != 3.0f) {
         std::cout << "[FAIL] lockup_gain not clamped. Got: " << engine.m_braking.lockup_gain << " Expected: 3.0" << std::endl;
         all_clamped = false;
     }
-    if (engine.m_spin_gain != 2.0f) {
-        std::cout << "[FAIL] spin_gain not clamped. Got: " << engine.m_spin_gain << " Expected: 2.0" << std::endl;
+    if (engine.m_vibration.spin_gain != 2.0f) {
+        std::cout << "[FAIL] spin_gain not clamped. Got: " << engine.m_vibration.spin_gain << " Expected: 2.0" << std::endl;
         all_clamped = false;
     }
     if (engine.m_rear_axle.rear_align_effect != 2.0f) {
@@ -392,8 +392,8 @@ TEST_CASE(test_config_safety_clamping, "Config") {
     }
     
     // Clamp to 1.0f
-    if (engine.m_scrub_drag_gain != 1.0f) {
-        std::cout << "[FAIL] scrub_drag_gain not clamped. Got: " << engine.m_scrub_drag_gain << " Expected: 1.0" << std::endl;
+    if (engine.m_vibration.scrub_drag_gain != 1.0f) {
+        std::cout << "[FAIL] scrub_drag_gain not clamped. Got: " << engine.m_vibration.scrub_drag_gain << " Expected: 1.0" << std::endl;
         all_clamped = false;
     }
     if (engine.m_gyro_gain != 1.0f) {
@@ -459,7 +459,7 @@ TEST_CASE(test_config_migration_logic, "Config") {
         file.close();
     }
     Config::Load(engine, test_file_load);
-    ASSERT_NEAR(engine.m_texture_load_cap, 1.5f, 0.01);
+    ASSERT_NEAR(engine.m_vibration.texture_load_cap, 1.5f, 0.01);
     std::remove(test_file_load);
 
     // Case 4: understeer_effect migration (> 2.0f range)

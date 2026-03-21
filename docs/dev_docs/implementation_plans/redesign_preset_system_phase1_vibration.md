@@ -44,7 +44,10 @@ This document outlines the plan for refactoring the vibration-related configurat
 - Verify that saving and loading presets still works as expected.
 
 ## Encountered Issues
-(To be updated)
+- Pre-refactor tests: 595/595 passed (2813 assertions).
+- Refactored access to vibration variables in production code and test suite.
+- Fixed member access errors in `Config.cpp`, `FFBEngine.cpp`, `GuiLayer_Common.cpp`, and numerous test files.
+- All 24 `RefactorSafety` tests pass, confirming the structural refactor preserved physics and synchronization logic.
 
 ## Deviations from the Plan
 (To be updated)

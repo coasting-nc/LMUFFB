@@ -14,7 +14,7 @@ TEST_CASE(test_direct_torque_scaling, "Issue142") {
     engine.m_front_axle.understeer_effect = 0.0f; // Disable modulation for scaling test
     engine.m_load_forces.long_load_effect = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f; // Disable other effects
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.road_enabled = false;
 
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.0);
     float genFFBTorque = 1.0f; // Max normalized FFB

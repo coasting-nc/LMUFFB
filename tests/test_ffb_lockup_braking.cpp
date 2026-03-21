@@ -12,7 +12,7 @@ TEST_CASE(test_progressive_lockup, "LockupBraking") {
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0;
     engine.m_rear_axle.sop_effect = 0.0;
-    engine.m_slide_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
     
     data.mSteeringShaftTorque = 0.0;
     data.mUnfilteredBrake = 1.0;
@@ -251,15 +251,15 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 12000.0;
 
     // Config: Texture Cap = 1.0x, Brake Cap = 3.0x
-    engine.m_texture_load_cap = 1.0f; 
+    engine.m_vibration.texture_load_cap = 1.0f;
     engine.m_braking.brake_load_cap = 3.0f;
     engine.m_braking.abs_pulse_enabled = false; // Disable ABS to isolate lockup (v0.6.0)
     
     // ===================================================================
     // PART 1: Test Road Texture (Should be clamped to 1.0x)
     // ===================================================================
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0;
     engine.m_braking.lockup_enabled = false;
     data.mWheel[0].mVerticalTireDeflection = 0.01; // Bump FL
     data.mWheel[1].mVerticalTireDeflection = 0.01; // Bump FR
@@ -302,7 +302,7 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     // ===================================================================
     // PART 2: Test Lockup (Should use Brake Load Cap 3.0x)
     // ===================================================================
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.road_enabled = false;
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0;
     data.mUnfilteredBrake = 1.0;
@@ -331,7 +331,7 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     engine_low.m_braking.lockup_enabled = true;
     engine_low.m_braking.lockup_gain = 1.0;
     engine_low.m_braking.abs_pulse_enabled = false; // Disable ABS (v0.6.0)
-    engine_low.m_road_texture_enabled = false; // Disable Road (v0.6.0)
+    engine_low.m_vibration.road_enabled = false; // Disable Road (v0.6.0)
     
     // Reset phase and flush transients
     engine.m_lockup_phase = 0.0;
@@ -455,8 +455,8 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
 
     // Setup: Base force + Spin
     data.mSteeringShaftTorque = 10.0; // 0.5 normalized
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0f;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0f;
     engine.m_general.gain = 1.0f;
 
     // Trigger Spin
@@ -476,14 +476,14 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     // No, freq scale 0 -> phase 0 -> sin(0) = 0. No vibration.
     // Perfect for checking torque drop!
 
-    engine.m_spin_freq_scale = 0.0f;
+    engine.m_vibration.spin_freq_scale = 0.0f;
 
     // Add Road Texture (Texture Group - Should NOT be dropped)
     // Setup deflection delta for constant road noise
     // Force = Delta * 50.0. Target 0.1 normalized (2.0 Nm).
     // Delta = 2.0 / 50.0 = 0.04.
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0f;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Scale 1.0
 
     // v0.7.69: Ensure vibration multiplier is 1.0 for this test

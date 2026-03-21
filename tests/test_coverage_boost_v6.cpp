@@ -409,13 +409,13 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
         engine.m_braking.abs_pulse_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_slide_texture_enabled = true;
+        engine.m_vibration.slide_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_road_texture_enabled = true;
+        engine.m_vibration.road_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_spin_enabled = true;
+        engine.m_vibration.spin_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         Config::show_graphs = true;

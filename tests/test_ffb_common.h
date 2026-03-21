@@ -443,10 +443,10 @@ public:
     static void CallCalculateSoftLock(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_soft_lock(data, ctx);
     }
-    static void SetScrubDragGain(FFBEngine& e, float val) { e.m_scrub_drag_gain = val; }
-    static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_bottoming_enabled = val; }
-    static void SetBottomingGain(FFBEngine& e, float val) { e.m_bottoming_gain = val; }
-    static void SetBottomingMethod(FFBEngine& e, int val) { e.m_bottoming_method = val; }
+    static void SetScrubDragGain(FFBEngine& e, float val) { e.m_vibration.scrub_drag_gain = val; }
+    static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_vibration.bottoming_enabled = val; }
+    static void SetBottomingGain(FFBEngine& e, float val) { e.m_vibration.bottoming_gain = val; }
+    static void SetBottomingMethod(FFBEngine& e, int val) { e.m_vibration.bottoming_method = val; }
 
     // Dynamic Normalization Test Access
     static double GetSessionPeakTorque(const FFBEngine& e) { return e.m_session_peak_torque; }

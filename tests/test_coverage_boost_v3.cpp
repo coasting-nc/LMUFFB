@@ -50,10 +50,10 @@ TEST_CASE(test_engine_disabled_effects, "Physics") {
     // Disable all effects to hit early returns
     engine.m_braking.abs_pulse_enabled = false;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     engine.m_soft_lock_enabled = false;
 
     engine.calculate_force(&data, "GT3", "911", 0.0f);
@@ -65,8 +65,8 @@ TEST_CASE(test_engine_bottoming_fallback, "Physics") {
     FFBCalculationContext ctx;
     ctx.dt = 0.0025;
 
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_method = 0;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_method = 0;
     data.mWheel[0].mRideHeight = 1.0f; // No bottoming by ride height
 
     // Trigger safety fallback via raw load peak

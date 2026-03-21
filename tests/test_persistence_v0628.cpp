@@ -122,7 +122,7 @@ TEST_CASE(test_legacy_keys, "Persistence") {
     Config::Load(engine, test_file);
     
     ASSERT_NEAR(engine.m_rear_axle.sop_smoothing_factor, 0.1f, 0.001f);
-    ASSERT_NEAR(engine.m_texture_load_cap, 2.0f, 0.001f);
+    ASSERT_NEAR(engine.m_vibration.texture_load_cap, 2.0f, 0.001f);
     
     std::remove(test_file.c_str());
 }

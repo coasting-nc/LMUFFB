@@ -450,10 +450,10 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine.m_rear_axle.oversteer_boost == reference_defaults.rear_axle.oversteer_boost);
         ASSERT_TRUE(engine.m_braking.lockup_enabled == reference_defaults.braking.lockup_enabled);
         ASSERT_TRUE(engine.m_braking.lockup_gain == reference_defaults.braking.lockup_gain);
-        ASSERT_TRUE(engine.m_slide_texture_enabled == reference_defaults.slide_enabled);
-        ASSERT_TRUE(engine.m_slide_texture_gain == reference_defaults.slide_gain);
-        ASSERT_TRUE(engine.m_slide_freq_scale == reference_defaults.slide_freq);
-        ASSERT_TRUE(engine.m_scrub_drag_gain == reference_defaults.scrub_drag_gain);
+        ASSERT_TRUE(engine.m_vibration.slide_enabled == reference_defaults.vibration.slide_enabled);
+        ASSERT_TRUE(engine.m_vibration.slide_gain == reference_defaults.vibration.slide_gain);
+        ASSERT_TRUE(engine.m_vibration.slide_freq == reference_defaults.vibration.slide_freq);
+        ASSERT_TRUE(engine.m_vibration.scrub_drag_gain == reference_defaults.vibration.scrub_drag_gain);
         ASSERT_TRUE(engine.m_rear_axle.rear_align_effect == reference_defaults.rear_axle.rear_align_effect);
         ASSERT_TRUE(engine.m_rear_axle.sop_yaw_gain == reference_defaults.rear_axle.sop_yaw_gain);
         ASSERT_TRUE(engine.m_gyro_gain == reference_defaults.gyro_gain);
@@ -483,10 +483,10 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(default_preset.rear_axle.oversteer_boost == reference_defaults.rear_axle.oversteer_boost);
         ASSERT_TRUE(default_preset.braking.lockup_enabled == reference_defaults.braking.lockup_enabled);
         ASSERT_TRUE(default_preset.braking.lockup_gain == reference_defaults.braking.lockup_gain);
-        ASSERT_TRUE(default_preset.slide_enabled == reference_defaults.slide_enabled);
-        ASSERT_TRUE(default_preset.slide_gain == reference_defaults.slide_gain);
-        ASSERT_TRUE(default_preset.slide_freq == reference_defaults.slide_freq);
-        ASSERT_TRUE(default_preset.scrub_drag_gain == reference_defaults.scrub_drag_gain);
+        ASSERT_TRUE(default_preset.vibration.slide_enabled == reference_defaults.vibration.slide_enabled);
+        ASSERT_TRUE(default_preset.vibration.slide_gain == reference_defaults.vibration.slide_gain);
+        ASSERT_TRUE(default_preset.vibration.slide_freq == reference_defaults.vibration.slide_freq);
+        ASSERT_TRUE(default_preset.vibration.scrub_drag_gain == reference_defaults.vibration.scrub_drag_gain);
         ASSERT_TRUE(default_preset.rear_axle.rear_align_effect == reference_defaults.rear_axle.rear_align_effect);
         ASSERT_TRUE(default_preset.rear_axle.sop_yaw_gain == reference_defaults.rear_axle.sop_yaw_gain);
         ASSERT_TRUE(default_preset.gyro_gain == reference_defaults.gyro_gain);
@@ -514,7 +514,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(t300_preset.front_axle.understeer_effect == 0.5f);
         ASSERT_TRUE(abs(t300_preset.rear_axle.sop_effect - 0.425003f) < 0.0001f);
         ASSERT_TRUE(t300_preset.braking.lockup_freq_scale == 1.02f);
-        ASSERT_TRUE(t300_preset.scrub_drag_gain == 0.0462185f);
+        ASSERT_TRUE(t300_preset.vibration.scrub_drag_gain == 0.0462185f);
 
         ASSERT_TRUE(default_preset.front_axle.understeer_effect != t300_preset.front_axle.understeer_effect);
         ASSERT_TRUE(default_preset.rear_axle.sop_effect != t300_preset.rear_axle.sop_effect);
@@ -530,8 +530,8 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine1.m_rear_axle.sop_effect == engine2.m_rear_axle.sop_effect);
         ASSERT_TRUE(engine1.m_rear_axle.oversteer_boost == engine2.m_rear_axle.oversteer_boost);
         ASSERT_TRUE(engine1.m_braking.lockup_gain == engine2.m_braking.lockup_gain);
-        ASSERT_TRUE(engine1.m_slide_texture_gain == engine2.m_slide_texture_gain);
-        ASSERT_TRUE(engine1.m_scrub_drag_gain == engine2.m_scrub_drag_gain);
+        ASSERT_TRUE(engine1.m_vibration.slide_gain == engine2.m_vibration.slide_gain);
+        ASSERT_TRUE(engine1.m_vibration.scrub_drag_gain == engine2.m_vibration.scrub_drag_gain);
         ASSERT_TRUE(engine1.m_rear_axle.rear_align_effect == engine2.m_rear_axle.rear_align_effect);
         ASSERT_TRUE(engine1.m_rear_axle.sop_yaw_gain == engine2.m_rear_axle.sop_yaw_gain);
         ASSERT_TRUE(engine1.m_gyro_gain == engine2.m_gyro_gain);
@@ -601,7 +601,7 @@ TEST_CASE(test_legacy_config_migration, "Logic") {
     InitializeEngine(engine);
     Config::Load(engine, test_file);
 
-    ASSERT_TRUE(engine.m_texture_load_cap == 1.8f);
+    ASSERT_TRUE(engine.m_vibration.texture_load_cap == 1.8f);
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 

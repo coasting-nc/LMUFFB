@@ -17,12 +17,12 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_scrub_drag_gain = 0.0f;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
+    engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
@@ -88,11 +88,11 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_scrub_drag_gain = 0.0f;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
+    engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
@@ -180,17 +180,17 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup: Isolate Scrub Drag
-    engine.m_scrub_drag_gain = 1.0f;
-    engine.m_road_texture_enabled = true;
+    engine.m_vibration.scrub_drag_gain = 1.0f;
+    engine.m_vibration.road_enabled = true;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
+    engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
@@ -342,17 +342,17 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     engine.m_rear_axle.sop_effect = 1.0f;          // Lateral G
     engine.m_rear_axle.rear_align_effect = 1.0f;   // Rear Slip
     engine.m_rear_axle.sop_yaw_gain = 1.0f;        // Yaw Accel
-    engine.m_scrub_drag_gain = 1.0f;     // Front Slip
+    engine.m_vibration.scrub_drag_gain = 1.0f;     // Front Slip
     engine.m_rear_axle.sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
     engine.m_invert_force = false;
     
     // Disable others to isolate lateral logic
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_road_texture_enabled = true;  // Required for scrub drag
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.road_enabled = true;  // Required for scrub drag
+    engine.m_vibration.bottoming_enabled = false;
     
     // SCENARIO: Violent Snap Oversteer to the Right
     // 1. Car rotates Right (+Yaw)
@@ -453,18 +453,18 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     
     // Setup: Enable all effects that were problematic
     engine.m_rear_axle.rear_align_effect = 1.0f;
-    engine.m_scrub_drag_gain = 1.0f;
+    engine.m_vibration.scrub_drag_gain = 1.0f;
     engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 10.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
-    engine.m_road_texture_enabled = true;
+    engine.m_vibration.road_enabled = true;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
+    engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
@@ -555,12 +555,12 @@ TEST_CASE(test_regression_phase_explosion, "Coordinates") {
     std::memset(&data, 0, sizeof(data));
 
     // Enable All Oscillators
-    engine.m_slide_texture_enabled = true;
-    engine.m_slide_texture_gain = 1.0f;
+    engine.m_vibration.slide_enabled = true;
+    engine.m_vibration.slide_gain = 1.0f;
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0f;
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0f;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0f;
     
     engine.m_rear_axle.sop_effect = 0.0f;
 

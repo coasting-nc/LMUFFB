@@ -18,10 +18,10 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     // Disable other effects
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_invert_force = false;
     
@@ -78,10 +78,10 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     
@@ -169,10 +169,10 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine.m_general.gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
@@ -233,10 +233,10 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine2.m_general.gain = 1.0f;
     engine2.m_front_axle.understeer_effect = 0.0f;
     engine2.m_braking.lockup_enabled = false;
-    engine2.m_spin_enabled = false;
-    engine2.m_slide_texture_enabled = false;
-    engine2.m_bottoming_enabled = false;
-    engine2.m_scrub_drag_gain = 0.0f;
+    engine2.m_vibration.spin_enabled = false;
+    engine2.m_vibration.slide_enabled = false;
+    engine2.m_vibration.bottoming_enabled = false;
+    engine2.m_vibration.scrub_drag_gain = 0.0f;
     engine2.m_rear_axle.rear_align_effect = 0.0f;
     engine2.m_gyro_gain = 0.0f;
     
@@ -287,10 +287,10 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     engine.m_invert_force = false;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     
@@ -358,17 +358,17 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     
     // Setup: Enable BOTH Yaw Kick and Slide Rumble (the problematic combination)
     engine.m_rear_axle.sop_yaw_gain = 1.0f;  // Yaw Kick enabled
-    engine.m_slide_texture_enabled = true;  // Slide Rumble enabled
-    engine.m_slide_texture_gain = 1.0f;
+    engine.m_vibration.slide_enabled = true;  // Slide Rumble enabled
+    engine.m_vibration.slide_gain = 1.0f;
     
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     
@@ -464,10 +464,10 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     engine.m_general.gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
-    engine.m_spin_enabled = false;
-    engine.m_slide_texture_enabled = false;
-    engine.m_bottoming_enabled = false;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.spin_enabled = false;
+    engine.m_vibration.slide_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;

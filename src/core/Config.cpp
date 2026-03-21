@@ -173,20 +173,20 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
     if (key == "static_notch_enabled") { current_preset.front_axle.static_notch_enabled = (value == "1" || value == "true"); return true; }
     if (key == "static_notch_freq") { current_preset.front_axle.static_notch_freq = std::stof(value); return true; }
     if (key == "static_notch_width") { current_preset.front_axle.static_notch_width = std::stof(value); return true; }
-    if (key == "texture_load_cap" || key == "max_load_factor") { current_preset.texture_load_cap = std::stof(value); return true; }
-    if (key == "spin_enabled") { current_preset.spin_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "spin_gain") { current_preset.spin_gain = std::stof(value); return true; }
-    if (key == "spin_freq_scale") { current_preset.spin_freq_scale = std::stof(value); return true; }
-    if (key == "slide_enabled") { current_preset.slide_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "slide_gain") { current_preset.slide_gain = std::stof(value); return true; }
-    if (key == "slide_freq") { current_preset.slide_freq = std::stof(value); return true; }
-    if (key == "road_enabled") { current_preset.road_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "road_gain") { current_preset.road_gain = std::stof(value); return true; }
-    if (key == "vibration_gain" || key == "tactile_gain") { current_preset.vibration_gain = std::stof(value); return true; }
-    if (key == "scrub_drag_gain") { current_preset.scrub_drag_gain = std::stof(value); return true; }
-    if (key == "bottoming_enabled") { current_preset.bottoming_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "bottoming_gain") { current_preset.bottoming_gain = std::stof(value); return true; }
-    if (key == "bottoming_method") { current_preset.bottoming_method = std::stoi(value); return true; }
+    if (key == "texture_load_cap" || key == "max_load_factor") { current_preset.vibration.texture_load_cap = std::stof(value); return true; }
+    if (key == "spin_enabled") { current_preset.vibration.spin_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "spin_gain") { current_preset.vibration.spin_gain = std::stof(value); return true; }
+    if (key == "spin_freq_scale") { current_preset.vibration.spin_freq_scale = std::stof(value); return true; }
+    if (key == "slide_enabled") { current_preset.vibration.slide_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "slide_gain") { current_preset.vibration.slide_gain = std::stof(value); return true; }
+    if (key == "slide_freq") { current_preset.vibration.slide_freq = std::stof(value); return true; }
+    if (key == "road_enabled") { current_preset.vibration.road_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "road_gain") { current_preset.vibration.road_gain = std::stof(value); return true; }
+    if (key == "vibration_gain" || key == "tactile_gain") { current_preset.vibration.vibration_gain = std::stof(value); return true; }
+    if (key == "scrub_drag_gain") { current_preset.vibration.scrub_drag_gain = std::stof(value); return true; }
+    if (key == "bottoming_enabled") { current_preset.vibration.bottoming_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "bottoming_gain") { current_preset.vibration.bottoming_gain = std::stof(value); return true; }
+    if (key == "bottoming_method") { current_preset.vibration.bottoming_method = std::stoi(value); return true; }
     if (key == "dynamic_normalization_enabled") { current_preset.general.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { current_preset.general.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_enabled") { current_preset.soft_lock_enabled = (value == "1" || value == "true"); return true; }
@@ -349,25 +349,25 @@ bool Config::SyncVibrationLine(const std::string& key, const std::string& value,
     if (key == "static_notch_enabled") { engine.m_front_axle.static_notch_enabled = (value == "1" || value == "true"); return true; }
     if (key == "static_notch_freq") { engine.m_front_axle.static_notch_freq = std::stof(value); return true; }
     if (key == "static_notch_width") { engine.m_front_axle.static_notch_width = std::stof(value); return true; }
-    if (key == "texture_load_cap" || key == "max_load_factor") { engine.m_texture_load_cap = std::stof(value); return true; }
-    if (key == "spin_enabled") { engine.m_spin_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "spin_gain") { engine.m_spin_gain = std::stof(value); return true; }
-    if (key == "spin_freq_scale") { engine.m_spin_freq_scale = std::stof(value); return true; }
-    if (key == "slide_enabled") { engine.m_slide_texture_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "slide_gain") { engine.m_slide_texture_gain = std::stof(value); return true; }
-    if (key == "slide_freq") { engine.m_slide_freq_scale = std::stof(value); return true; }
-    if (key == "road_enabled") { engine.m_road_texture_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "road_gain") { engine.m_road_texture_gain = std::stof(value); return true; }
-    if (key == "vibration_gain" || key == "tactile_gain") { engine.m_vibration_gain = std::stof(value); return true; }
-    if (key == "bottoming_enabled") { engine.m_bottoming_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "bottoming_gain") { engine.m_bottoming_gain = std::stof(value); return true; }
+    if (key == "texture_load_cap" || key == "max_load_factor") { engine.m_vibration.texture_load_cap = std::stof(value); return true; }
+    if (key == "spin_enabled") { engine.m_vibration.spin_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "spin_gain") { engine.m_vibration.spin_gain = std::stof(value); return true; }
+    if (key == "spin_freq_scale") { engine.m_vibration.spin_freq_scale = std::stof(value); return true; }
+    if (key == "slide_enabled") { engine.m_vibration.slide_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "slide_gain") { engine.m_vibration.slide_gain = std::stof(value); return true; }
+    if (key == "slide_freq") { engine.m_vibration.slide_freq = std::stof(value); return true; }
+    if (key == "road_enabled") { engine.m_vibration.road_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "road_gain") { engine.m_vibration.road_gain = std::stof(value); return true; }
+    if (key == "vibration_gain" || key == "tactile_gain") { engine.m_vibration.vibration_gain = std::stof(value); return true; }
+    if (key == "bottoming_enabled") { engine.m_vibration.bottoming_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "bottoming_gain") { engine.m_vibration.bottoming_gain = std::stof(value); return true; }
     if (key == "dynamic_normalization_enabled") { engine.m_general.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { engine.m_general.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_enabled") { engine.m_soft_lock_enabled = (value == "1" || value == "true"); return true; }
     if (key == "soft_lock_stiffness") { engine.m_soft_lock_stiffness = std::stof(value); return true; }
     if (key == "soft_lock_damping") { engine.m_soft_lock_damping = std::stof(value); return true; }
-    if (key == "scrub_drag_gain") { engine.m_scrub_drag_gain = std::stof(value); return true; }
-    if (key == "bottoming_method") { engine.m_bottoming_method = std::stoi(value); return true; }
+    if (key == "scrub_drag_gain") { engine.m_vibration.scrub_drag_gain = std::stof(value); return true; }
+    if (key == "bottoming_method") { engine.m_vibration.bottoming_method = std::stoi(value); return true; }
     return false;
 }
 
@@ -450,20 +450,20 @@ void Config::LoadPresets() {
         p.braking.abs_pulse_enabled = true;
         p.braking.abs_gain = 2.0f;
         p.braking.abs_freq = 20.0f;
-        p.texture_load_cap = 1.96f;
-        p.slide_enabled = true;
-        p.slide_gain = 0.235294f;
-        p.slide_freq = 1.0f;
-        p.road_enabled = true;
-        p.road_gain = 2.0f;
+        p.vibration.texture_load_cap = 1.96f;
+        p.vibration.slide_enabled = true;
+        p.vibration.slide_gain = 0.235294f;
+        p.vibration.slide_freq = 1.0f;
+        p.vibration.road_enabled = true;
+        p.vibration.road_gain = 2.0f;
         p.road_fallback_scale = 0.05f;
-        p.spin_enabled = true;
-        p.spin_gain = 0.5f;
-        p.spin_freq_scale = 1.0f;
-        p.scrub_drag_gain = 0.0462185f;
-        p.bottoming_enabled = true;
-        p.bottoming_gain = 1.0f;
-        p.bottoming_method = 0;
+        p.vibration.spin_enabled = true;
+        p.vibration.spin_gain = 0.5f;
+        p.vibration.spin_freq_scale = 1.0f;
+        p.vibration.scrub_drag_gain = 0.0462185f;
+        p.vibration.bottoming_enabled = true;
+        p.vibration.bottoming_gain = 1.0f;
+        p.vibration.bottoming_method = 0;
         p.speed_gate_lower = 0.0f;
         p.speed_gate_upper = 0.277778f;
         presets.push_back(p);
@@ -548,26 +548,26 @@ void Config::LoadPresets() {
         p.braking.abs_pulse_enabled = false;
         p.braking.abs_gain = 2.0f;
         p.braking.abs_freq = 25.5f;
-        p.texture_load_cap = 1.5f;
-        p.slide_enabled = false;
-        p.slide_gain = 0.226562f;
-        p.slide_freq = 1.0f;
-        p.road_enabled = false;
-        p.road_gain = 0.0f;
-        p.vibration_gain = 1.0f;
+        p.vibration.texture_load_cap = 1.5f;
+        p.vibration.slide_enabled = false;
+        p.vibration.slide_gain = 0.226562f;
+        p.vibration.slide_freq = 1.0f;
+        p.vibration.road_enabled = false;
+        p.vibration.road_gain = 0.0f;
+        p.vibration.vibration_gain = 1.0f;
         p.road_fallback_scale = 0.05f;
         p.general.dynamic_normalization_enabled = false;
         p.general.auto_load_normalization_enabled = false;
         p.soft_lock_enabled = false;
         p.soft_lock_stiffness = 20.0f;
         p.soft_lock_damping = 0.5f;
-        p.spin_enabled = false;
-        p.spin_gain = 0.5f;
-        p.spin_freq_scale = 1.0f;
-        p.scrub_drag_gain = 0.0f;
-        p.bottoming_enabled = true;
-        p.bottoming_gain = 1.0f;
-        p.bottoming_method = 0;
+        p.vibration.spin_enabled = false;
+        p.vibration.spin_gain = 0.5f;
+        p.vibration.spin_freq_scale = 1.0f;
+        p.vibration.scrub_drag_gain = 0.0f;
+        p.vibration.bottoming_enabled = true;
+        p.vibration.bottoming_gain = 1.0f;
+        p.vibration.bottoming_method = 0;
         p.rest_api_enabled = true;
         p.rest_api_port = 6397;
         p.safety_window_duration = 0.0f;
@@ -627,20 +627,20 @@ void Config::LoadPresets() {
         p.braking.abs_pulse_enabled = false;
         p.braking.abs_gain = 2.1f;
         p.braking.abs_freq = 25.5f;
-        p.texture_load_cap = 1.5f;
-        p.slide_enabled = false;
-        p.slide_gain = 0.226562f;
-        p.slide_freq = 1.47f;
-        p.road_enabled = true;
-        p.road_gain = 0.0f;
+        p.vibration.texture_load_cap = 1.5f;
+        p.vibration.slide_enabled = false;
+        p.vibration.slide_gain = 0.226562f;
+        p.vibration.slide_freq = 1.47f;
+        p.vibration.road_enabled = true;
+        p.vibration.road_gain = 0.0f;
         p.road_fallback_scale = 0.05f;
-        p.spin_enabled = true;
-        p.spin_gain = 0.462185f;
-        p.spin_freq_scale = 1.8f;
-        p.scrub_drag_gain = 0.333f;
-        p.bottoming_enabled = true;
-        p.bottoming_gain = 1.0f;
-        p.bottoming_method = 1;
+        p.vibration.spin_enabled = true;
+        p.vibration.spin_gain = 0.462185f;
+        p.vibration.spin_freq_scale = 1.8f;
+        p.vibration.scrub_drag_gain = 0.333f;
+        p.vibration.bottoming_enabled = true;
+        p.vibration.bottoming_gain = 1.0f;
+        p.vibration.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
         presets.push_back(p);
@@ -690,20 +690,20 @@ void Config::LoadPresets() {
         p.braking.abs_pulse_enabled = false;
         p.braking.abs_gain = 2.1f;
         p.braking.abs_freq = 25.5f;
-        p.texture_load_cap = 1.5f;
-        p.slide_enabled = false;
-        p.slide_gain = 0.226562f;
-        p.slide_freq = 1.47f;
-        p.road_enabled = true;
-        p.road_gain = 0.0f;
+        p.vibration.texture_load_cap = 1.5f;
+        p.vibration.slide_enabled = false;
+        p.vibration.slide_gain = 0.226562f;
+        p.vibration.slide_freq = 1.47f;
+        p.vibration.road_enabled = true;
+        p.vibration.road_gain = 0.0f;
         p.road_fallback_scale = 0.05f;
-        p.spin_enabled = true;
-        p.spin_gain = 0.462185f;
-        p.spin_freq_scale = 1.8f;
-        p.scrub_drag_gain = 0.333f;
-        p.bottoming_enabled = true;
-        p.bottoming_gain = 1.0f;
-        p.bottoming_method = 1;
+        p.vibration.spin_enabled = true;
+        p.vibration.spin_gain = 0.462185f;
+        p.vibration.spin_freq_scale = 1.8f;
+        p.vibration.scrub_drag_gain = 0.333f;
+        p.vibration.bottoming_enabled = true;
+        p.vibration.bottoming_gain = 1.0f;
+        p.vibration.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
         presets.push_back(p);
@@ -753,20 +753,20 @@ void Config::LoadPresets() {
         p.braking.abs_pulse_enabled = false;
         p.braking.abs_gain = 2.1f;
         p.braking.abs_freq = 25.5f;
-        p.texture_load_cap = 1.5f;
-        p.slide_enabled = false;
-        p.slide_gain = 0.0f;
-        p.slide_freq = 1.47f;
-        p.road_enabled = true;
-        p.road_gain = 0.0f;
+        p.vibration.texture_load_cap = 1.5f;
+        p.vibration.slide_enabled = false;
+        p.vibration.slide_gain = 0.0f;
+        p.vibration.slide_freq = 1.47f;
+        p.vibration.road_enabled = true;
+        p.vibration.road_gain = 0.0f;
         p.road_fallback_scale = 0.05f;
-        p.spin_enabled = true;
-        p.spin_gain = 0.462185f;
-        p.spin_freq_scale = 1.8f;
-        p.scrub_drag_gain = 0.333f;
-        p.bottoming_enabled = true;
-        p.bottoming_gain = 1.0f;
-        p.bottoming_method = 1;
+        p.vibration.spin_enabled = true;
+        p.vibration.spin_gain = 0.462185f;
+        p.vibration.spin_freq_scale = 1.8f;
+        p.vibration.scrub_drag_gain = 0.333f;
+        p.vibration.bottoming_enabled = true;
+        p.vibration.bottoming_gain = 1.0f;
+        p.vibration.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
         presets.push_back(p);
@@ -817,20 +817,20 @@ void Config::LoadPresets() {
         p.braking.abs_pulse_enabled = false;
         p.braking.abs_gain = 2.1f;
         p.braking.abs_freq = 25.5f;
-        p.texture_load_cap = 1.5f;
-        p.slide_enabled = false;
-        p.slide_gain = 0.0f;
-        p.slide_freq = 1.47f;
-        p.road_enabled = true;
-        p.road_gain = 0.0f;
+        p.vibration.texture_load_cap = 1.5f;
+        p.vibration.slide_enabled = false;
+        p.vibration.slide_gain = 0.0f;
+        p.vibration.slide_freq = 1.47f;
+        p.vibration.road_enabled = true;
+        p.vibration.road_gain = 0.0f;
         p.road_fallback_scale = 0.05f;
-        p.spin_enabled = true;
-        p.spin_gain = 0.462185f;
-        p.spin_freq_scale = 1.8f;
-        p.scrub_drag_gain = 0.333f;
-        p.bottoming_enabled = true;
-        p.bottoming_gain = 1.0f;
-        p.bottoming_method = 1;
+        p.vibration.spin_enabled = true;
+        p.vibration.spin_gain = 0.462185f;
+        p.vibration.spin_freq_scale = 1.8f;
+        p.vibration.scrub_drag_gain = 0.333f;
+        p.vibration.bottoming_enabled = true;
+        p.vibration.bottoming_gain = 1.0f;
+        p.vibration.bottoming_method = 1;
         p.speed_gate_lower = 1.0f;
         p.speed_gate_upper = 5.0f;
         presets.push_back(p);
@@ -1329,26 +1329,26 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "abs_gain=" << p.braking.abs_gain << "\n";
     file << "abs_freq=" << p.braking.abs_freq << "\n";
 
-    file << "texture_load_cap=" << p.texture_load_cap << "\n";
-    file << "slide_enabled=" << (p.slide_enabled ? "1" : "0") << "\n";
-    file << "slide_gain=" << p.slide_gain << "\n";
-    file << "slide_freq=" << p.slide_freq << "\n";
-    file << "road_enabled=" << (p.road_enabled ? "1" : "0") << "\n";
-    file << "road_gain=" << p.road_gain << "\n";
-    file << "vibration_gain=" << p.vibration_gain << "\n";
+    file << "texture_load_cap=" << p.vibration.texture_load_cap << "\n";
+    file << "slide_enabled=" << (p.vibration.slide_enabled ? "1" : "0") << "\n";
+    file << "slide_gain=" << p.vibration.slide_gain << "\n";
+    file << "slide_freq=" << p.vibration.slide_freq << "\n";
+    file << "road_enabled=" << (p.vibration.road_enabled ? "1" : "0") << "\n";
+    file << "road_gain=" << p.vibration.road_gain << "\n";
+    file << "vibration_gain=" << p.vibration.vibration_gain << "\n";
     file << "road_fallback_scale=" << p.road_fallback_scale << "\n";
     file << "dynamic_normalization_enabled=" << (p.general.dynamic_normalization_enabled ? "1" : "0") << "\n";
     file << "auto_load_normalization_enabled=" << (p.general.auto_load_normalization_enabled ? "1" : "0") << "\n";
     file << "soft_lock_enabled=" << (p.soft_lock_enabled ? "1" : "0") << "\n";
     file << "soft_lock_stiffness=" << p.soft_lock_stiffness << "\n";
     file << "soft_lock_damping=" << p.soft_lock_damping << "\n";
-    file << "spin_enabled=" << (p.spin_enabled ? "1" : "0") << "\n";
-    file << "spin_gain=" << p.spin_gain << "\n";
-    file << "spin_freq_scale=" << p.spin_freq_scale << "\n";
-    file << "scrub_drag_gain=" << p.scrub_drag_gain << "\n";
-    file << "bottoming_enabled=" << (p.bottoming_enabled ? "1" : "0") << "\n";
-    file << "bottoming_gain=" << p.bottoming_gain << "\n";
-    file << "bottoming_method=" << p.bottoming_method << "\n";
+    file << "spin_enabled=" << (p.vibration.spin_enabled ? "1" : "0") << "\n";
+    file << "spin_gain=" << p.vibration.spin_gain << "\n";
+    file << "spin_freq_scale=" << p.vibration.spin_freq_scale << "\n";
+    file << "scrub_drag_gain=" << p.vibration.scrub_drag_gain << "\n";
+    file << "bottoming_enabled=" << (p.vibration.bottoming_enabled ? "1" : "0") << "\n";
+    file << "bottoming_gain=" << p.vibration.bottoming_gain << "\n";
+    file << "bottoming_method=" << p.vibration.bottoming_method << "\n";
     file << "rest_api_fallback_enabled=" << (p.rest_api_enabled ? "1" : "0") << "\n";
     file << "rest_api_port=" << p.rest_api_port << "\n";
 
@@ -1684,21 +1684,21 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "abs_freq=" << engine.m_braking.abs_freq << "\n";
 
         file << "\n; --- Vibration Effects ---\n";
-        file << "texture_load_cap=" << engine.m_texture_load_cap << "\n";
-        file << "slide_enabled=" << engine.m_slide_texture_enabled << "\n";
-        file << "slide_gain=" << engine.m_slide_texture_gain << "\n";
-        file << "slide_freq=" << engine.m_slide_freq_scale << "\n";
-        file << "road_enabled=" << engine.m_road_texture_enabled << "\n";
-        file << "road_gain=" << engine.m_road_texture_gain << "\n";
-        file << "vibration_gain=" << engine.m_vibration_gain << "\n";
+        file << "texture_load_cap=" << engine.m_vibration.texture_load_cap << "\n";
+        file << "slide_enabled=" << engine.m_vibration.slide_enabled << "\n";
+        file << "slide_gain=" << engine.m_vibration.slide_gain << "\n";
+        file << "slide_freq=" << engine.m_vibration.slide_freq << "\n";
+        file << "road_enabled=" << engine.m_vibration.road_enabled << "\n";
+        file << "road_gain=" << engine.m_vibration.road_gain << "\n";
+        file << "vibration_gain=" << engine.m_vibration.vibration_gain << "\n";
         file << "road_fallback_scale=" << engine.m_road_fallback_scale << "\n";
-        file << "spin_enabled=" << engine.m_spin_enabled << "\n";
-        file << "spin_gain=" << engine.m_spin_gain << "\n";
-        file << "spin_freq_scale=" << engine.m_spin_freq_scale << "\n";
-        file << "scrub_drag_gain=" << engine.m_scrub_drag_gain << "\n";
-        file << "bottoming_enabled=" << (engine.m_bottoming_enabled ? "1" : "0") << "\n";
-        file << "bottoming_gain=" << engine.m_bottoming_gain << "\n";
-        file << "bottoming_method=" << engine.m_bottoming_method << "\n";
+        file << "spin_enabled=" << engine.m_vibration.spin_enabled << "\n";
+        file << "spin_gain=" << engine.m_vibration.spin_gain << "\n";
+        file << "spin_freq_scale=" << engine.m_vibration.spin_freq_scale << "\n";
+        file << "scrub_drag_gain=" << engine.m_vibration.scrub_drag_gain << "\n";
+        file << "bottoming_enabled=" << (engine.m_vibration.bottoming_enabled ? "1" : "0") << "\n";
+        file << "bottoming_gain=" << engine.m_vibration.bottoming_gain << "\n";
+        file << "bottoming_method=" << engine.m_vibration.bottoming_method << "\n";
         file << "rest_api_fallback_enabled=" << engine.m_rest_api_enabled << "\n";
         file << "rest_api_port=" << engine.m_rest_api_port << "\n";
 
@@ -1820,7 +1820,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 
     engine.m_gyro_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_gyro_gain));
     engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, engine.m_stationary_damping));
-    engine.m_scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_scrub_drag_gain));
+    engine.m_vibration.scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_vibration.scrub_drag_gain));
 
     if (engine.m_grip_estimation.optimal_slip_angle < 0.01f) {
         Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_grip_estimation.optimal_slip_angle);
@@ -1934,14 +1934,14 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_rear_axle.sop_yaw_gain < 0.0f || engine.m_rear_axle.sop_yaw_gain > 1.0f) {
          engine.m_rear_axle.sop_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_rear_axle.sop_yaw_gain));
     }
-    if (engine.m_slide_texture_gain < 0.0f || engine.m_slide_texture_gain > 2.0f) {
-        engine.m_slide_texture_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_slide_texture_gain));
+    if (engine.m_vibration.slide_gain < 0.0f || engine.m_vibration.slide_gain > 2.0f) {
+        engine.m_vibration.slide_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_vibration.slide_gain));
     }
-    if (engine.m_road_texture_gain < 0.0f || engine.m_road_texture_gain > 2.0f) {
-        engine.m_road_texture_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_road_texture_gain));
+    if (engine.m_vibration.road_gain < 0.0f || engine.m_vibration.road_gain > 2.0f) {
+        engine.m_vibration.road_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_vibration.road_gain));
     }
-    if (engine.m_spin_gain < 0.0f || engine.m_spin_gain > 2.0f) {
-        engine.m_spin_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_spin_gain));
+    if (engine.m_vibration.spin_gain < 0.0f || engine.m_vibration.spin_gain > 2.0f) {
+        engine.m_vibration.spin_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_vibration.spin_gain));
     }
     engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
     engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);
