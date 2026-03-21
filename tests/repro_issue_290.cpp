@@ -11,7 +11,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     InitializeEngine(engine);
 
     // Set global vibration gain to zero
-    engine.m_vibration_gain = 0.0f;
+    engine.m_vibration.vibration_gain = 0.0f;
 
     // 1. Test ABS Pulse
     engine.m_braking.abs_pulse_enabled = true;
@@ -39,7 +39,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_soft_lock_enabled = false;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
 
@@ -79,8 +79,8 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     ASSERT_GT(std::abs(batch.back().total_output), 0.0f);
 
     // 3. Verify Road Texture is still muted
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0f;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0f;
     engine.m_braking.abs_pulse_enabled = false;
     engine.m_braking.lockup_enabled = false;
 

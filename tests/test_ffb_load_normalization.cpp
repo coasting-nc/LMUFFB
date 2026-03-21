@@ -224,9 +224,9 @@ TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
     FFBEngineTestAccess::SetAutoNormalizationEnabled(engine, false);
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_gain = 1.0;
-    engine.m_bottoming_method = 1; // Method B: Force Spike (which now includes safety trigger)
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_gain = 1.0;
+    engine.m_vibration.bottoming_method = 1; // Method B: Force Spike (which now includes safety trigger)
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));

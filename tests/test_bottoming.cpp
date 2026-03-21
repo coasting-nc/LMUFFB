@@ -98,7 +98,7 @@ TEST_CASE(test_bottoming_user_controls, "Texture") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_bottoming_method = 1;
+    engine.m_vibration.bottoming_method = 1;
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
 
     TelemInfoV01 data = CreateBasicTestTelemetry(70.0, 0.0);

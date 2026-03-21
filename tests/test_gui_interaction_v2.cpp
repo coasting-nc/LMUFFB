@@ -67,9 +67,9 @@ TEST_CASE(test_gui_interaction_v2, "GUI") {
         engine.m_soft_lock_enabled = true;
         engine.m_braking.abs_pulse_enabled = true;
         engine.m_braking.lockup_enabled = true;
-        engine.m_spin_enabled = true;
-        engine.m_slide_texture_enabled = true;
-        engine.m_road_texture_enabled = true;
+        engine.m_vibration.spin_enabled = true;
+        engine.m_vibration.slide_enabled = true;
+        engine.m_vibration.road_enabled = true;
         engine.m_front_axle.flatspot_suppression = true;
         engine.m_front_axle.static_notch_enabled = true;
         engine.m_slope_detection.enabled = true;

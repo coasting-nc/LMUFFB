@@ -882,33 +882,33 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Config::Save(engine);
         }
 
-        FloatSetting("Texture Load Cap", &engine.m_texture_load_cap, 1.0f, 3.0f, "%.2fx", Tooltips::TEXTURE_LOAD_CAP);
-        FloatSetting("Vibration Strength", &engine.m_vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration_gain), Tooltips::VIBRATION_GAIN);
+        FloatSetting("Texture Load Cap", &engine.m_vibration.texture_load_cap, 1.0f, 3.0f, "%.2fx", Tooltips::TEXTURE_LOAD_CAP);
+        FloatSetting("Vibration Strength", &engine.m_vibration.vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration.vibration_gain), Tooltips::VIBRATION_GAIN);
 
-        BoolSetting("Slide Rumble", &engine.m_slide_texture_enabled, Tooltips::SLIDE_RUMBLE);
-        if (engine.m_slide_texture_enabled) {
-            FloatSetting("  Slide Gain", &engine.m_slide_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_slide_texture_gain, FFBEngine::BASE_NM_SLIDE_TEXTURE), Tooltips::SLIDE_GAIN);
-            FloatSetting("  Slide Pitch", &engine.m_slide_freq_scale, 0.5f, 5.0f, "%.2fx", Tooltips::SLIDE_PITCH);
+        BoolSetting("Slide Rumble", &engine.m_vibration.slide_enabled, Tooltips::SLIDE_RUMBLE);
+        if (engine.m_vibration.slide_enabled) {
+            FloatSetting("  Slide Gain", &engine.m_vibration.slide_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.slide_gain, FFBEngine::BASE_NM_SLIDE_TEXTURE), Tooltips::SLIDE_GAIN);
+            FloatSetting("  Slide Pitch", &engine.m_vibration.slide_freq, 0.5f, 5.0f, "%.2fx", Tooltips::SLIDE_PITCH);
         }
 
-        BoolSetting("Road Details", &engine.m_road_texture_enabled, Tooltips::ROAD_DETAILS);
-        if (engine.m_road_texture_enabled) {
-            FloatSetting("  Road Gain", &engine.m_road_texture_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_road_texture_gain, FFBEngine::BASE_NM_ROAD_TEXTURE), Tooltips::ROAD_GAIN);
+        BoolSetting("Road Details", &engine.m_vibration.road_enabled, Tooltips::ROAD_DETAILS);
+        if (engine.m_vibration.road_enabled) {
+            FloatSetting("  Road Gain", &engine.m_vibration.road_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.road_gain, FFBEngine::BASE_NM_ROAD_TEXTURE), Tooltips::ROAD_GAIN);
         }
 
-        BoolSetting("Spin Vibration", &engine.m_spin_enabled, Tooltips::SPIN_VIBRATION);
-        if (engine.m_spin_enabled) {
-            FloatSetting("  Spin Strength", &engine.m_spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION), Tooltips::SPIN_STRENGTH);
-            FloatSetting("  Spin Pitch", &engine.m_spin_freq_scale, 0.5f, 2.0f, "%.2fx", Tooltips::SPIN_PITCH);
+        BoolSetting("Spin Vibration", &engine.m_vibration.spin_enabled, Tooltips::SPIN_VIBRATION);
+        if (engine.m_vibration.spin_enabled) {
+            FloatSetting("  Spin Strength", &engine.m_vibration.spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION), Tooltips::SPIN_STRENGTH);
+            FloatSetting("  Spin Pitch", &engine.m_vibration.spin_freq_scale, 0.5f, 2.0f, "%.2fx", Tooltips::SPIN_PITCH);
         }
 
-        FloatSetting("Scrub Drag", &engine.m_scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), Tooltips::SCRUB_DRAG);
+        FloatSetting("Scrub Drag", &engine.m_vibration.scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_vibration.scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), Tooltips::SCRUB_DRAG);
 
-        BoolSetting("Bottoming Effect", &engine.m_bottoming_enabled, Tooltips::BOTTOMING_EFFECT);
-        if (engine.m_bottoming_enabled) {
-            FloatSetting("  Bottoming Strength", &engine.m_bottoming_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_bottoming_gain, FFBEngine::BASE_NM_BOTTOMING), Tooltips::BOTTOMING_STRENGTH);
+        BoolSetting("Bottoming Effect", &engine.m_vibration.bottoming_enabled, Tooltips::BOTTOMING_EFFECT);
+        if (engine.m_vibration.bottoming_enabled) {
+            FloatSetting("  Bottoming Strength", &engine.m_vibration.bottoming_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.bottoming_gain, FFBEngine::BASE_NM_BOTTOMING), Tooltips::BOTTOMING_STRENGTH);
             const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
-            IntSetting("  Bottoming Logic", &engine.m_bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), Tooltips::BOTTOMING_LOGIC);
+            IntSetting("  Bottoming Logic", &engine.m_vibration.bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), Tooltips::BOTTOMING_LOGIC);
         }
 
         ImGui::TreePop();

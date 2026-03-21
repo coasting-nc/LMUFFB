@@ -604,7 +604,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_smoothed_vibration_mult += alpha_vibration * (compressed_load_factor - m_smoothed_vibration_mult);
 
     // 5. Apply to context with user caps
-    double texture_safe_max = (std::min)(USER_CAP_MAX, (double)m_texture_load_cap);
+    double texture_safe_max = (std::min)(USER_CAP_MAX, (double)m_vibration.texture_load_cap);
     ctx.texture_load_factor = (std::min)(texture_safe_max, m_smoothed_vibration_mult);
 
     double brake_safe_max = (std::min)(USER_CAP_MAX, (double)m_braking.brake_load_cap);
@@ -769,7 +769,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // v0.7.150: Decouple ABS and Lockup from global vibration gain (Issue #290)
     double surface_vibs_nm = ctx.road_noise + ctx.slide_noise + ctx.spin_rumble + ctx.bottoming_crunch;
     double critical_vibs_nm = ctx.abs_pulse_force + ctx.lockup_rumble;
-    double final_texture_nm = (surface_vibs_nm * (double)m_vibration_gain) + critical_vibs_nm + ctx.soft_lock_force;
+    double final_texture_nm = (surface_vibs_nm * (double)m_vibration.vibration_gain) + critical_vibs_nm + ctx.soft_lock_force;
 
     // --- 7. OUTPUT SCALING (Physical Target Model) ---
     // Map structural to the target rim torque, then divide by wheelbase max to get DirectInput %
@@ -1537,7 +1537,7 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
 
 // Helper: Calculate Wheel Spin Vibration (v0.6.36)
 void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx) {
-    if (m_spin_enabled && data->mUnfilteredThrottle > SPIN_THROTTLE_THRESHOLD) {
+    if (m_vibration.spin_enabled && data->mUnfilteredThrottle > SPIN_THROTTLE_THRESHOLD) {
         double slip_rl = calculate_wheel_slip_ratio(data->mWheel[2]);
         double slip_rr = calculate_wheel_slip_ratio(data->mWheel[3]);
         double max_slip = (std::max)(slip_rl, slip_rr);
@@ -1548,11 +1548,11 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
             
             // Attenuate primary torque when spinning (Torque Drop)
             // v0.6.43: Blunted effect (0.6 multiplier) to prevent complete loss of feel
-            ctx.gain_reduction_factor = (1.0 - (severity * m_spin_gain * SPIN_TORQUE_DROP_FACTOR));
+            ctx.gain_reduction_factor = (1.0 - (severity * m_vibration.spin_gain * SPIN_TORQUE_DROP_FACTOR));
             
             // Generate vibration based on spin velocity (RPM delta)
             double slip_speed_ms = ctx.car_speed * max_slip;
-            double freq = (SPIN_BASE_FREQ + (slip_speed_ms * SPIN_FREQ_SLIP_MULT)) * (double)m_spin_freq_scale;
+            double freq = (SPIN_BASE_FREQ + (slip_speed_ms * SPIN_FREQ_SLIP_MULT)) * (double)m_vibration.spin_freq_scale;
             if (freq > SPIN_MAX_FREQ) freq = SPIN_MAX_FREQ; // Human sensory limit for gross vibration
             
             m_spin_phase += freq * ctx.dt * TWO_PI;
@@ -1562,7 +1562,7 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
             double current_rear_load = (data->mWheel[2].mTireLoad + data->mWheel[3].mTireLoad) / DUAL_DIVISOR;
             double rear_load_factor = std::clamp(current_rear_load / (m_static_front_load + 1.0), 0.2, 2.0);
 
-            double amp = severity * m_spin_gain * (double)BASE_NM_SPIN_VIBRATION * rear_load_factor;
+            double amp = severity * m_vibration.spin_gain * (double)BASE_NM_SPIN_VIBRATION * rear_load_factor;
             ctx.spin_rumble = std::sin(m_spin_phase) * amp;
         }
     }
@@ -1570,7 +1570,7 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
 
 // Helper: Calculate Slide Texture (Friction Vibration)
 void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
-    if (!m_slide_texture_enabled) return;
+    if (!m_vibration.slide_enabled) return;
     
     // Use average lateral patch velocity of front wheels
     double lat_vel_fl = std::abs(data->mWheel[0].mLateralPatchVel);
@@ -1588,7 +1588,7 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
     if (effective_slip_vel > SLIDE_VEL_THRESHOLD) {
         // High-frequency sawtooth noise for localized friction feel
         double base_freq = SLIDE_BASE_FREQ + (effective_slip_vel * SLIDE_FREQ_VEL_MULT);
-        double freq = base_freq * (double)m_slide_freq_scale;
+        double freq = base_freq * (double)m_vibration.slide_freq;
         
         if (freq > SLIDE_MAX_FREQ) freq = SLIDE_MAX_FREQ; // Hard clamp for hardware safety
         
@@ -1601,14 +1601,14 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
         // Intensity scaling (Grip based)
         double grip_scale = (std::max)(0.0, 1.0 - ctx.avg_front_grip);
         
-        ctx.slide_noise = sawtooth * m_slide_texture_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale;
+        ctx.slide_noise = sawtooth * m_vibration.slide_gain * (double)BASE_NM_SLIDE_TEXTURE * ctx.texture_load_factor * grip_scale;
     }
 }
 
 // Helper: Calculate Road Texture & Scrub Drag
 void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     // 1. Scrub Drag (Longitudinal resistive force from lateral sliding)
-    if (m_scrub_drag_gain > 0.0) {
+    if (m_vibration.scrub_drag_gain > 0.0) {
         double avg_lat_vel = (data->mWheel[0].mLateralPatchVel + data->mWheel[1].mLateralPatchVel) / DUAL_DIVISOR;
         double abs_lat_vel = std::abs(avg_lat_vel);
         
@@ -1616,11 +1616,11 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
             double fade = (std::min)(1.0, abs_lat_vel / SCRUB_FADE_RANGE); // Fade in over 0.5m/s
             double drag_dir = (avg_lat_vel > 0.0) ? -1.0 : 1.0;
             // Issue #306: Scale by load factor
-            ctx.scrub_drag_force = drag_dir * m_scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.texture_load_factor;
+            ctx.scrub_drag_force = drag_dir * m_vibration.scrub_drag_gain * (double)BASE_NM_SCRUB_DRAG * fade * ctx.texture_load_factor;
         }
     }
 
-    if (!m_road_texture_enabled) return;
+    if (!m_vibration.road_enabled) return;
     
     // 2. Road Texture (Deflection Velocity Method)
     // Convert position delta to velocity (m/s) to ensure Time-Domain Independence
@@ -1657,7 +1657,7 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
         road_noise_val = jerk * ACCEL_ROAD_TEXTURE_SCALE * DEFLECTION_NM_SCALE * 0.01;
     }
     
-    ctx.road_noise = road_noise_val * m_road_texture_gain * ctx.texture_load_factor;
+    ctx.road_noise = road_noise_val * m_vibration.road_gain * ctx.texture_load_factor;
     ctx.road_noise *= ctx.speed_gate;
 }
 
@@ -1710,12 +1710,12 @@ void FFBEngine::ResetNormalization() {
 // Helper: Calculate Suspension Bottoming (v0.6.22)
 // NOTE: calculate_soft_lock has been moved to SteeringUtils.cpp.
 void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
-    if (!m_bottoming_enabled) return;
+    if (!m_vibration.bottoming_enabled) return;
     bool triggered = false;
     double intensity = 0.0;
     
     // Method 0: Direct Ride Height Monitoring
-    if (m_bottoming_method == 0) {
+    if (m_vibration.bottoming_method == 0) {
         double min_rh = (std::min)(data->mWheel[0].mRideHeight, data->mWheel[1].mRideHeight);
         if (min_rh < BOTTOMING_RH_THRESHOLD_M && min_rh > -1.0) { // < 2mm
             triggered = true;
@@ -1757,7 +1757,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
 
     if (triggered) {
         // Generate high-intensity low-frequency "thump"
-        double bump_magnitude = intensity * m_bottoming_gain * (double)BASE_NM_BOTTOMING;
+        double bump_magnitude = intensity * m_vibration.bottoming_gain * (double)BASE_NM_BOTTOMING;
         double freq = BOTTOMING_FREQ_HZ;
         
         m_bottoming_phase += freq * ctx.dt * TWO_PI;

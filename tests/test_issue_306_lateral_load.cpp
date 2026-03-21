@@ -93,7 +93,7 @@ TEST_CASE_TAGGED(test_issue_306_sign_convention, "CorePhysics", (std::vector<std
 TEST_CASE_TAGGED(test_issue_306_scrub_drag_scaling, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_scrub_drag_gain = 1.0f;
+    engine.m_vibration.scrub_drag_gain = 1.0f;
     engine.m_general.auto_load_normalization_enabled = false;
     engine.m_static_front_load = 4000.0; // Static front load (per axle)
 
@@ -122,8 +122,8 @@ TEST_CASE_TAGGED(test_issue_306_scrub_drag_scaling, "CorePhysics", (std::vector<
 TEST_CASE_TAGGED(test_issue_306_wheel_spin_scaling, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0f;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0f;
     engine.m_static_front_load = 4000.0;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);

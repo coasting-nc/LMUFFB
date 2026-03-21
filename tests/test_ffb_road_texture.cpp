@@ -8,10 +8,10 @@ TEST_CASE(test_regression_road_texture_toggle, "RoadTexture") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.road_enabled = false;
     engine.calculate_force(&data);
     data.mWheel[0].mVerticalTireDeflection = 0.05;
-    engine.m_road_texture_enabled = true;
+    engine.m_vibration.road_enabled = true;
     double f = engine.calculate_force(&data);
     ASSERT_TRUE(std::abs(f) < 0.1);
 }
@@ -22,10 +22,10 @@ TEST_CASE(test_regression_bottoming_switch, "RoadTexture") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_method = 0;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_method = 0;
     engine.calculate_force(&data);
-    engine.m_bottoming_method = 1;
+    engine.m_vibration.bottoming_method = 1;
     double f = engine.calculate_force(&data);
     ASSERT_NEAR(f, 0.0, 0.001);
 }
@@ -41,11 +41,11 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     data.mDeltaTime = 0.01;
     
     // Disable Bottoming
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     data.mLocalVel.z = -20.0; // Moving fast (v0.6.21)
 
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0;
     engine.m_general.wheelbase_max_nm = 40.0f; engine.m_general.target_rim_nm = 40.0f;
     engine.m_general.gain = 1.0; // Ensure gain is 1.0
     engine.m_invert_force = false;
@@ -98,13 +98,13 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     std::memset(&data, 0, sizeof(data));
 
     // Enable Bottoming
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_gain = 1.0;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_gain = 1.0;
     data.mLocalVel.z = -20.0; // Moving fast (v0.6.21)
     
     // Disable others
     engine.m_rear_axle.sop_effect = 0.0;
-    engine.m_slide_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
     
     // Straight line condition: Zero steering force
     data.mSteeringShaftTorque = 0.0;
@@ -133,10 +133,10 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     // Let's check frame 1 explicitly by resetting
     FFBEngine engine2;
     InitializeEngine(engine2); // v0.5.12: Initialize with T300 defaults
-    engine2.m_bottoming_enabled = true;
-    engine2.m_bottoming_gain = 1.0;
+    engine2.m_vibration.bottoming_enabled = true;
+    engine2.m_vibration.bottoming_gain = 1.0;
     engine2.m_rear_axle.sop_effect = 0.0;
-    engine2.m_slide_texture_enabled = false;
+    engine2.m_vibration.slide_enabled = false;
     data.mDeltaTime = 0.005;
     
     // Issue #397: Use PumpEngineTime
@@ -159,7 +159,7 @@ TEST_CASE(test_road_texture_state_persistence, "RoadTexture") {
     std::cout << "\nTest: Road Texture State Persistence [Texture][Integration]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_road_texture_enabled = true;
+    engine.m_vibration.road_enabled = true;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mWheel[0].mVerticalTireDeflection = 0.01;
     double f1 = engine.calculate_force(&data);
@@ -172,12 +172,12 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     std::cout << "\nTest: Universal Bottoming [Texture][Physics]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_gain = 1.0f;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_gain = 1.0f;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
     // Method A: Ride Height (Scrape)
-    engine.m_bottoming_method = 0;
+    engine.m_vibration.bottoming_method = 0;
     data.mWheel[0].mRideHeight = 0.001;
     
     // Set dt to ensure phase doesn't hit 0 crossing (50Hz)
@@ -199,7 +199,7 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     }
     
     // Method B: Suspension Deflection (Spike) - Using 10000N logic from other test
-    engine.m_bottoming_method = 1;
+    engine.m_vibration.bottoming_method = 1;
     data.mWheel[0].mRideHeight = 0.1; // Reset RH
     data.mWheel[0].mTireLoad = 10000.0; // Trigger spike
     data.mWheel[1].mTireLoad = 10000.0;
@@ -211,9 +211,9 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     // Reset Engine to clear phases
     FFBEngine engine2;
     InitializeEngine(engine2);
-    engine2.m_bottoming_enabled = true;
-    engine2.m_bottoming_gain = 1.0f;
-    engine2.m_bottoming_method = 1;
+    engine2.m_vibration.bottoming_enabled = true;
+    engine2.m_vibration.bottoming_gain = 1.0f;
+    engine2.m_vibration.bottoming_method = 1;
     
     // v0.7.198: Pump more frames to allow the interpolated ramp to create a derivative.
     bool found_spike = false;
@@ -247,7 +247,7 @@ TEST_CASE(test_unconditional_vert_accel_update, "RoadTexture") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    engine.m_road_texture_enabled = false;
+    engine.m_vibration.road_enabled = false;
 
     // v0.7.145 (Issue #278): We now derive accel from velocity
     data.mLocalVel.y = 0.0;
@@ -271,12 +271,12 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     std::memset(&data, 0, sizeof(data));
     
     // Disable Bottoming to avoid noise
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     // Disable Slide Texture (enabled by default)
-    engine.m_slide_texture_enabled = false;
+    engine.m_vibration.slide_enabled = false;
 
-    engine.m_road_texture_enabled = true;
-    engine.m_scrub_drag_gain = 1.0;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.scrub_drag_gain = 1.0;
     
     data.mWheel[0].mLateralPatchVel = 0.25;
     data.mWheel[1].mLateralPatchVel = 0.25;

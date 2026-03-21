@@ -35,6 +35,7 @@ struct Preset {
     GripEstimationConfig grip_estimation;
     SlopeDetectionConfig slope_detection;
     BrakingConfig braking;
+    VibrationConfig vibration;
 
     // FFB Safety (Issue #316)
     float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
@@ -46,28 +47,9 @@ struct Preset {
     bool stutter_safety_enabled = FFBEngine::DEFAULT_STUTTER_SAFETY_ENABLED;
     float stutter_threshold = FFBEngine::DEFAULT_STUTTER_THRESHOLD;
 
-    float texture_load_cap = 1.5f;  // NEW v0.6.25
-    
-    bool spin_enabled = true;
-    float spin_gain = 0.5f;
-    float spin_freq_scale = 1.0f;        // New v0.6.20
-    
-    bool slide_enabled = false;
-    float slide_gain = 0.226562f;
-    float slide_freq = 1.0f;
-    
-    bool road_enabled = true;
-    float road_gain = 0.0f;
-    float vibration_gain = 1.0f; // New v0.7.110 (Issue #206)
-
     bool soft_lock_enabled = true;
     float soft_lock_stiffness = 20.0f;
     float soft_lock_damping = 0.5f;
-    
-    bool bottoming_enabled = true;
-    float bottoming_gain = 1.0f;
-    int bottoming_method = 0;
-    float scrub_drag_gain = 0.0f;
     
     float gyro_gain = 0.0f;
     float stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
@@ -120,19 +102,19 @@ struct Preset {
     }
     Preset& SetBrakeCap(float v) { braking.brake_load_cap = v; return *this; }
     Preset& SetSpin(bool enabled, float g, float scale = 1.0f) { 
-        spin_enabled = enabled; 
-        spin_gain = g; 
-        spin_freq_scale = scale;
+        vibration.spin_enabled = enabled;
+        vibration.spin_gain = g;
+        vibration.spin_freq_scale = scale;
         return *this; 
     }
     Preset& SetSlide(bool enabled, float g, float f = 1.0f) { 
-        slide_enabled = enabled; 
-        slide_gain = g; 
-        slide_freq = f; 
+        vibration.slide_enabled = enabled;
+        vibration.slide_gain = g;
+        vibration.slide_freq = f;
         return *this; 
     }
-    Preset& SetRoad(bool enabled, float g) { road_enabled = enabled; road_gain = g; return *this; }
-    Preset& SetVibrationGain(float v) { vibration_gain = v; return *this; }
+    Preset& SetRoad(bool enabled, float g) { vibration.road_enabled = enabled; vibration.road_gain = g; return *this; }
+    Preset& SetVibrationGain(float v) { vibration.vibration_gain = v; return *this; }
     Preset& SetDynamicNormalization(bool enabled) { general.dynamic_normalization_enabled = enabled; return *this; }
 
     Preset& SetSoftLock(bool enabled, float stiffness, float damping) {
@@ -149,12 +131,12 @@ struct Preset {
     }
     
     Preset& SetBottoming(bool enabled, float gain, int method) {
-        bottoming_enabled = enabled;
-        bottoming_gain = gain;
-        bottoming_method = method;
+        vibration.bottoming_enabled = enabled;
+        vibration.bottoming_gain = gain;
+        vibration.bottoming_method = method;
         return *this;
     }
-    Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
+    Preset& SetScrub(float v) { vibration.scrub_drag_gain = v; return *this; }
     Preset& SetRearAlign(float v) { rear_axle.rear_align_effect = v; return *this; }
     Preset& SetKerbStrikeRejection(float v) { rear_axle.kerb_strike_rejection = v; return *this; }
     Preset& SetSoPYaw(float v) { rear_axle.sop_yaw_gain = v; return *this; }
@@ -298,6 +280,9 @@ struct Preset {
         engine.m_braking = this->braking;
         engine.m_braking.Validate();
 
+        engine.m_vibration = this->vibration;
+        engine.m_vibration.Validate();
+
         // FFB Safety (Issue #316)
         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
         engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
@@ -308,26 +293,10 @@ struct Preset {
         engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;
         engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);
 
-        engine.m_texture_load_cap = (std::max)(1.0f, texture_load_cap);
-
-        engine.m_spin_enabled = spin_enabled;
-        engine.m_spin_gain = (std::max)(0.0f, spin_gain);
-        engine.m_slide_texture_enabled = slide_enabled;
-        engine.m_slide_texture_gain = (std::max)(0.0f, slide_gain);
-        engine.m_slide_freq_scale = (std::max)(0.1f, slide_freq);
-        engine.m_road_texture_enabled = road_enabled;
-        engine.m_road_texture_gain = (std::max)(0.0f, road_gain);
-        engine.m_vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));
-
         engine.m_soft_lock_enabled = soft_lock_enabled;
         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
 
-        engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
-        engine.m_bottoming_enabled = bottoming_enabled;
-        engine.m_bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
-        engine.m_bottoming_method = bottoming_method;
-        engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
         engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, stationary_damping));
 
@@ -357,17 +326,9 @@ struct Preset {
         grip_estimation.Validate();
         slope_detection.Validate();
         braking.Validate();
-        texture_load_cap = (std::max)(1.0f, texture_load_cap);
-        bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
-        spin_gain = (std::max)(0.0f, spin_gain);
-        slide_gain = (std::max)(0.0f, slide_gain);
-        slide_freq = (std::max)(0.1f, slide_freq);
-        road_gain = (std::max)(0.0f, road_gain);
-        vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));
+        vibration.Validate();
         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
-        spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
-        scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         gyro_gain = (std::max)(0.0f, gyro_gain);
 
         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
@@ -394,6 +355,7 @@ struct Preset {
         grip_estimation = engine.m_grip_estimation;
         slope_detection = engine.m_slope_detection;
         braking = engine.m_braking;
+        vibration = engine.m_vibration;
 
         // FFB Safety (Issue #316)
         safety_window_duration = engine.m_safety.m_safety_window_duration;
@@ -405,26 +367,10 @@ struct Preset {
         stutter_safety_enabled = engine.m_safety.m_stutter_safety_enabled;
         stutter_threshold = engine.m_safety.m_stutter_threshold;
 
-        texture_load_cap = engine.m_texture_load_cap;  // NEW v0.6.25
-        
-        spin_enabled = engine.m_spin_enabled;
-        spin_gain = engine.m_spin_gain;
-        slide_enabled = engine.m_slide_texture_enabled;
-        slide_gain = engine.m_slide_texture_gain;
-        slide_freq = engine.m_slide_freq_scale;
-        road_enabled = engine.m_road_texture_enabled;
-        road_gain = engine.m_road_texture_gain;
-        vibration_gain = engine.m_vibration_gain;
-
         soft_lock_enabled = engine.m_soft_lock_enabled;
         soft_lock_stiffness = engine.m_soft_lock_stiffness;
         soft_lock_damping = engine.m_soft_lock_damping;
 
-        spin_freq_scale = engine.m_spin_freq_scale;
-        bottoming_enabled = engine.m_bottoming_enabled;
-        bottoming_gain = engine.m_bottoming_gain;
-        bottoming_method = engine.m_bottoming_method;
-        scrub_drag_gain = engine.m_scrub_drag_gain;
         gyro_gain = engine.m_gyro_gain;
         stationary_damping = engine.m_stationary_damping;
 
@@ -453,6 +399,7 @@ struct Preset {
         if (!grip_estimation.Equals(p.grip_estimation, eps)) return false;
         if (!slope_detection.Equals(p.slope_detection, eps)) return false;
         if (!braking.Equals(p.braking, eps)) return false;
+        if (!vibration.Equals(p.vibration, eps)) return false;
 
         // FFB Safety (Issue #316)
         if (!is_near(safety_window_duration, p.safety_window_duration, eps)) return false;
@@ -464,28 +411,10 @@ struct Preset {
         if (stutter_safety_enabled != p.stutter_safety_enabled) return false;
         if (!is_near(stutter_threshold, p.stutter_threshold, eps)) return false;
 
-        if (!is_near(texture_load_cap, p.texture_load_cap, eps)) return false;
-
-        if (spin_enabled != p.spin_enabled) return false;
-        if (!is_near(spin_gain, p.spin_gain, eps)) return false;
-        if (!is_near(spin_freq_scale, p.spin_freq_scale, eps)) return false;
-
-        if (slide_enabled != p.slide_enabled) return false;
-        if (!is_near(slide_gain, p.slide_gain, eps)) return false;
-        if (!is_near(slide_freq, p.slide_freq, eps)) return false;
-
-        if (road_enabled != p.road_enabled) return false;
-        if (!is_near(road_gain, p.road_gain, eps)) return false;
-        if (!is_near(vibration_gain, p.vibration_gain, eps)) return false;
-
         if (soft_lock_enabled != p.soft_lock_enabled) return false;
         if (!is_near(soft_lock_stiffness, p.soft_lock_stiffness, eps)) return false;
         if (!is_near(soft_lock_damping, p.soft_lock_damping, eps)) return false;
 
-        if (bottoming_enabled != p.bottoming_enabled) return false;
-        if (!is_near(bottoming_gain, p.bottoming_gain, eps)) return false;
-        if (bottoming_method != p.bottoming_method) return false;
-        if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(stationary_damping, p.stationary_damping, eps)) return false;
 

@@ -227,9 +227,9 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
     {
         FFBEngine engine;
         InitializeEngine(engine);
-        engine.m_bottoming_enabled = true;
-        engine.m_bottoming_gain = 1.0f;
-        engine.m_bottoming_method = 0;
+        engine.m_vibration.bottoming_enabled = true;
+        engine.m_vibration.bottoming_gain = 1.0f;
+        engine.m_vibration.bottoming_method = 0;
         data.mWheel[0].mRideHeight = 0.002f;
         data.mWheel[1].mRideHeight = 0.002f;
 
@@ -254,9 +254,9 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
     {
         FFBEngine engine;
         InitializeEngine(engine);
-        engine.m_bottoming_enabled = true;
-        engine.m_bottoming_gain = 1.0f;
-        engine.m_bottoming_method = 0;
+        engine.m_vibration.bottoming_enabled = true;
+        engine.m_vibration.bottoming_gain = 1.0f;
+        engine.m_vibration.bottoming_method = 0;
         FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
         FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
 
@@ -281,9 +281,9 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_general.auto_load_normalization_enabled = true; // ENABLED
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_gain = 1.0f;
-    engine.m_bottoming_method = 0;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_gain = 1.0f;
+    engine.m_vibration.bottoming_method = 0;
 
     // Feed high load to trigger peak follower update
     data.mWheel[0].mTireLoad = 8000.0;
@@ -325,8 +325,8 @@ TEST_CASE(test_mn_spin_detection_torque_drop, "Texture") {
 
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0f;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -378,8 +378,8 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
     {
         FFBEngine engine;
         InitializeEngine(engine);
-        engine.m_slide_texture_enabled = true;
-        engine.m_slide_texture_gain = 1.0f;
+        engine.m_vibration.slide_enabled = true;
+        engine.m_vibration.slide_gain = 1.0f;
 
         TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
         data.mDeltaTime = 0.01;
@@ -405,8 +405,8 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
     {
         FFBEngine engine;
         InitializeEngine(engine);
-        engine.m_slide_texture_enabled = true;
-        engine.m_slide_texture_gain = 1.0f;
+        engine.m_vibration.slide_enabled = true;
+        engine.m_vibration.slide_gain = 1.0f;
 
         TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
         data.mDeltaTime = 0.01;

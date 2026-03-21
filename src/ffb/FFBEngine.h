@@ -122,10 +122,9 @@ public:
     GripEstimationConfig m_grip_estimation;
     SlopeDetectionConfig m_slope_detection;
     BrakingConfig m_braking;
-    float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
+    VibrationConfig m_vibration;
 
     // Configurable Smoothing & Caps (v0.3.9)
-    float m_texture_load_cap = 1.5f; 
     bool m_invert_force = true;
     
     // v0.4.4 Features
@@ -136,21 +135,6 @@ public:
     float m_gyro_gain;
     float m_gyro_smoothing;
     float m_stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
-    
-    bool m_spin_enabled;
-    float m_spin_gain;
-
-    // Texture toggles
-    bool m_slide_texture_enabled;
-    float m_slide_texture_gain;
-    float m_slide_freq_scale;
-    
-    bool m_road_texture_enabled;
-    float m_road_texture_gain;
-    
-    // Bottoming Effect (v0.3.2)
-    bool m_bottoming_enabled = true;  
-    float m_bottoming_gain = 1.0f;    
 
     // Soft Lock (Issue #117)
     bool m_soft_lock_enabled = true;
@@ -283,18 +267,11 @@ public:
     double m_abs_phase = 0.0; 
     double m_bottoming_phase = 0.0;
     
-    // Phase Accumulators for Dynamic Oscillators (v0.6.20)
-    float m_spin_freq_scale = 1.0f;
-    
     // Internal state for Bottoming (Method B)
     double m_prev_susp_force[4] = {0.0, 0.0, 0.0, 0.0};
 
     // Seeding state (Issue #379)
     bool m_derivatives_seeded = false;
-
-    // New Settings (v0.4.5)
-    int m_bottoming_method = 0; 
-    float m_scrub_drag_gain; 
 
     // Smoothing State
     double m_sop_lat_g_smoothed = 0.0;

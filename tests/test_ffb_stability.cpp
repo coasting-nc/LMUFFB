@@ -72,7 +72,7 @@ TEST_CASE(test_engine_robustness_to_static_telemetry, "Stability") {
     InitializeEngine(engine);
 
     // Disable any remaining oscillators that might cause non-constant force
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
     data.mDeltaTime = 0.0025;

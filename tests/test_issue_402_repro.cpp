@@ -10,10 +10,10 @@ TEST_CASE(test_road_texture_time_domain_independence, "Texture") {
     InitializeEngine(engine_100hz);
     InitializeEngine(engine_400hz);
 
-    engine_100hz.m_road_texture_enabled = true;
-    engine_100hz.m_road_texture_gain = 1.0f;
-    engine_400hz.m_road_texture_enabled = true;
-    engine_400hz.m_road_texture_gain = 1.0f;
+    engine_100hz.m_vibration.road_enabled = true;
+    engine_100hz.m_vibration.road_gain = 1.0f;
+    engine_400hz.m_vibration.road_enabled = true;
+    engine_400hz.m_vibration.road_gain = 1.0f;
 
     // Use a class with known seed load (GT3 -> 4500N)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);

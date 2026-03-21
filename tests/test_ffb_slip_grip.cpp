@@ -237,11 +237,11 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     std::memset(&data, 0, sizeof(data));
     
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
-    engine.m_slide_texture_enabled = true;
-    engine.m_slide_texture_gain = 1.0;
+    engine.m_vibration.slide_enabled = true;
+    engine.m_vibration.slide_gain = 1.0;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
-    engine.m_bottoming_enabled = false;
+    engine.m_vibration.bottoming_enabled = false;
     
     data.mWheel[0].mLateralPatchVel = 5.1; // Changed to avoid exact zero in sawtooth
     data.mWheel[1].mLateralPatchVel = 5.1;
@@ -314,8 +314,8 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
     
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     data.mLocalVel.z = 10.0;
-    engine.m_slide_texture_enabled = true;
-    engine.m_slide_texture_gain = 1.0;
+    engine.m_vibration.slide_enabled = true;
+    engine.m_vibration.slide_gain = 1.0;
     
     data.mWheel[0].mTireLoad = 4000.0;
     data.mWheel[1].mTireLoad = 4000.0;

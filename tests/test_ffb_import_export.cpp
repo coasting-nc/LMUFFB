@@ -16,8 +16,8 @@ TEST_CASE(test_preset_export_import, "Config") {
     Preset p(test_preset_name);
     p.general.gain = 0.75f;
     p.rear_axle.sop_effect = 1.25f;
-    p.road_enabled = true;
-    p.road_gain = 0.5f;
+    p.vibration.road_enabled = true;
+    p.vibration.road_gain = 0.5f;
 
     Config::presets.push_back(p);
     int export_idx = (int)Config::presets.size() - 1;
@@ -56,8 +56,8 @@ TEST_CASE(test_preset_export_import, "Config") {
     ASSERT_TRUE(imported_p.name.find("ExportTestPreset") != std::string::npos);
     ASSERT_NEAR(imported_p.general.gain, 0.75f, 0.001f);
     ASSERT_NEAR(imported_p.rear_axle.sop_effect, 1.25f, 0.001f);
-    ASSERT_TRUE(imported_p.road_enabled);
-    ASSERT_NEAR(imported_p.road_gain, 0.5f, 0.001f);
+    ASSERT_TRUE(imported_p.vibration.road_enabled);
+    ASSERT_NEAR(imported_p.vibration.road_gain, 0.5f, 0.001f);
 
     // Clean up
     if (std::filesystem::exists(export_filename)) std::filesystem::remove(export_filename);

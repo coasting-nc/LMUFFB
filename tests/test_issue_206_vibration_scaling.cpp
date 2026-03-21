@@ -7,18 +7,18 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     InitializeEngine(engine);
 
     // 1. Setup baseline: All vibration effects enabled
-    engine.m_road_texture_enabled = true;
-    engine.m_road_texture_gain = 1.0f;
-    engine.m_slide_texture_enabled = true;
-    engine.m_slide_texture_gain = 1.0f;
+    engine.m_vibration.road_enabled = true;
+    engine.m_vibration.road_gain = 1.0f;
+    engine.m_vibration.slide_enabled = true;
+    engine.m_vibration.slide_gain = 1.0f;
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0f;
     engine.m_braking.abs_pulse_enabled = true;
     engine.m_braking.abs_gain = 1.0f;
-    engine.m_spin_enabled = true;
-    engine.m_spin_gain = 1.0f;
-    engine.m_bottoming_enabled = true;
-    engine.m_bottoming_gain = 1.0f;
+    engine.m_vibration.spin_enabled = true;
+    engine.m_vibration.spin_gain = 1.0f;
+    engine.m_vibration.bottoming_enabled = true;
+    engine.m_vibration.bottoming_gain = 1.0f;
     engine.m_soft_lock_enabled = true;
 
     // Trigger soft lock condition (steering beyond limit)
@@ -44,19 +44,19 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     tel.mWheel[0].mRideHeight = 0.001f; // < 2mm
 
     // Case 1: Vibration Gain = 1.0 (Baseline)
-    engine.m_vibration_gain = 1.0f;
+    engine.m_vibration.vibration_gain = 1.0f;
     double force_100 = engine.calculate_force(&tel);
 
     // Case 2: Vibration Gain = 0.5 (Half)
-    engine.m_vibration_gain = 0.5f;
+    engine.m_vibration.vibration_gain = 0.5f;
     double force_50 = engine.calculate_force(&tel);
 
     // Case 3: Vibration Gain = 2.0 (Double)
-    engine.m_vibration_gain = 2.0f;
+    engine.m_vibration.vibration_gain = 2.0f;
     double force_200 = engine.calculate_force(&tel);
 
     // Case 4: Vibration Gain = 0.0 (Off)
-    engine.m_vibration_gain = 0.0f;
+    engine.m_vibration.vibration_gain = 0.0f;
     double force_0 = engine.calculate_force(&tel);
 
     // Increase wheelbase max Nm to avoid clipping for scaling verification
@@ -109,14 +109,14 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
-    engine.m_scrub_drag_gain = 0.0f;
+    engine.m_vibration.scrub_drag_gain = 0.0f;
 
     // Run again with zero structural
-    engine.m_vibration_gain = 1.0f;
+    engine.m_vibration.vibration_gain = 1.0f;
     double f100 = engine.calculate_force(&tel);
-    engine.m_vibration_gain = 0.5f;
+    engine.m_vibration.vibration_gain = 0.5f;
     double f50 = engine.calculate_force(&tel);
-    engine.m_vibration_gain = 0.0f;
+    engine.m_vibration.vibration_gain = 0.0f;
     double f0 = engine.calculate_force(&tel);
 
     batch = engine.GetDebugBatch();

@@ -125,7 +125,7 @@ TEST_CASE(test_issue_355_bottoming_impulse_normalization, "Physics") {
     InitializeEngine(engine);
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetBottomingMethod(engine, 1);
-    engine.m_bottoming_gain = 1.0f;
+    engine.m_vibration.bottoming_gain = 1.0f;
     engine.m_speed_gate_lower = -1.0f;
     engine.m_speed_gate_upper = -0.5f;
 
@@ -157,7 +157,7 @@ TEST_CASE(test_issue_355_bottoming_safety_fallback, "Physics") {
     InitializeEngine(engine);
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
-    engine.m_bottoming_gain = 1.0f;
+    engine.m_vibration.bottoming_gain = 1.0f;
     engine.m_speed_gate_lower = -1.0f;
     engine.m_speed_gate_upper = -0.5f;
 

@@ -185,12 +185,12 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     ASSERT_NEAR(p.rear_axle.rear_align_effect, 0.0f, 0.001f);      // Rear align disabled
     ASSERT_NEAR(p.rear_axle.sop_yaw_gain, 0.0f, 0.001f);           // Yaw kick disabled
     ASSERT_NEAR(p.gyro_gain, 0.0f, 0.001f);              // Gyro damping disabled
-    ASSERT_NEAR(p.scrub_drag_gain, 0.0f, 0.001f);        // Scrub drag disabled
+    ASSERT_NEAR(p.vibration.scrub_drag_gain, 0.0f, 0.001f);        // Scrub drag disabled
     
     // VERIFY: All textures are DISABLED
-    ASSERT_TRUE(p.slide_enabled == false);               // Slide texture disabled
-    ASSERT_TRUE(p.road_enabled == false);                // Road texture disabled
-    ASSERT_TRUE(p.spin_enabled == false);                // Spin texture disabled
+    ASSERT_TRUE(p.vibration.slide_enabled == false);               // Slide texture disabled
+    ASSERT_TRUE(p.vibration.road_enabled == false);                // Road texture disabled
+    ASSERT_TRUE(p.vibration.spin_enabled == false);                // Spin texture disabled
     ASSERT_TRUE(p.braking.lockup_enabled == false);              // Lockup vibration disabled
     ASSERT_TRUE(p.braking.abs_pulse_enabled == false);           // ABS pulse disabled
     
