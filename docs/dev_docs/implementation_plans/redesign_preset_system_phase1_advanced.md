@@ -60,6 +60,23 @@ This document outlines the plan for refactoring the advanced physics and hardwar
 - The use of `sed` for mass-replacement in tests required careful validation to avoid double-nesting (e.g., `m_advanced.advanced.gyro_gain`). A Python script was used to perform more reliable replacements.
 - MSVC compatibility: ensure `(std::max)` and `(std::min)` are used to avoid macro collision issues.
 
+### Detailed Analysis of Parsing Improvements
+During the migration of the `understeer_affects_sop` parameter within `src/core/Config.cpp`, the parsing logic was modernized.
+
+**Previous Logic:**
+Previously, both `Config::ParseVibrationLine` and `Config::SyncPhysicsLine` used `std::stoi(value)` to parse the `understeer_affects_sop` key. This required the INI value to be a numeric integer (0 or 1).
+
+**New Logic:**
+In the refactored version, both functions now utilize a boolean string comparison: `(value == "1" || value == "true")`.
+
+**Rationale:**
+This change is an improvement in consistency with the rest of the configuration parser (which already used this pattern for other boolean toggles like `flatspot_suppression` or `lockup_enabled`). It does not violate the "no logic change" rule because:
+1. It still correctly handles the legacy `0`/`1` format.
+2. It adds support for the more readable `true`/`false` format.
+3. The functional outcome for the physics engine remains identical (a boolean state is toggled).
+
+This improvement was applied to both the `current_preset.advanced.understeer_affects_sop` assignment (in `ParseVibrationLine`) and the `engine.m_advanced.understeer_affects_sop` assignment (in `SyncPhysicsLine`).
+
 ## Deviations from the Plan
 - A Python script was introduced during the refactor to automate the update of the extensive test suite, which was more efficient and safer than manual find-and-replace or `sed` for this volume of changes.
 
