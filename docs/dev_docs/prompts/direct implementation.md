@@ -18,7 +18,7 @@ Before changing any production code, you must create a new test file (`tests/tes
 2. **Round-Trip Test:** Create a `Preset` with wild `LoadForcesConfig` values, call `Apply(engine)`, extract it back with `UpdateFromEngine(engine)`, and `ASSERT_TRUE` that the original and extracted presets are `Equals()`.
 3. **Validation Test:** Create a `Preset` with malicious out-of-bounds `LoadForcesConfig` values. Call `Apply()`, and assert that the engine clamped them to the safe ranges defined in `LoadForcesConfig::Validate()`.
 
-**Documentation Requiremendocs\dev_docs\prompts\direct implementation.mdt:**
+**Documentation Requirement:**
 Document your work by creating `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_load_forces.md`. 
 Describe what you did; periodically update this document as you progress through the work for the patch.
 Include also these sections: encountered issues, deviations from the plan, and suggestions for the future. 
@@ -31,3 +31,17 @@ See also the implementation notes that were created in previous iterations:
 **⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
 1. **Scope:** Work ONLY on `LoadForcesConfig`. Do not touch `BrakingConfig`, `VibrationConfig`, etc.
 2. **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation, testing, and review process autonomously until the task is complete, all 580+ tests pass, and the code is perfect.
+
+**⚠️ MANDATORY CHECKPOINTING & RECOVERY PROTOCOL:**
+To prevent losing work due to file corruption and resetting your workspace, you **MUST** use version control to create incremental checkpoints. 
+
+1. **Micro-Commits:** You must commit your work at every stable step. Do not wait until the entire task is finished. 
+   * *Checkpoint 1:* Commit immediately after writing the 3 new safety tests (even if they don't compile yet).
+   * *Checkpoint 2:* Commit immediately after defining the `LoadForcesConfig` struct in the header files.
+   * *Checkpoint 3:* Commit after updating `Preset` and `FFBEngine` and fixing the compiler errors.
+   * *Checkpoint 4:* Commit after all 580+ tests pass.
+2. **Pushing/Submitting:** Push your branch or submit your intermediate patch after every successful checkpoint so your progress is permanently saved.
+3. **Recovery (DO NOT START FROM SCRATCH):** If you corrupt a file with your editing tools, or if you get stuck in a loop of compiler errors that you cannot resolve, **DO NOT delete your files or reset the entire workspace.** 
+   * If a single file is corrupted, use `git checkout -- <filename>` to restore just that file.
+   * If the whole step is broken, use `git reset --hard HEAD` to revert to your last successful micro-commit. 
+   * Analyze what went wrong, and try the step again from the last checkpoint.
