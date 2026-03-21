@@ -50,7 +50,8 @@ This document outlines the plan for refactoring the vibration-related configurat
 - All 24 `RefactorSafety` tests pass, confirming the structural refactor preserved physics and synchronization logic.
 
 ## Deviations from the Plan
-(To be updated)
+- None. The incremental refactoring followed the Strangler Fig pattern as intended.
 
 ## Suggestions for the Future
-(To be updated)
+- Move `stationary_damping` into `VibrationConfig` in a future iteration, as it is logically a vibration/texture related parameter, although currently kept in `FFBEngine` loose variables for specific gating reasons.
+- Proceed to Phase 2 (TOML integration) once all logical categories have been refactored into grouped structs.
