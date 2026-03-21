@@ -402,4 +402,37 @@ struct AdvancedConfig {
     }
 };
 
+struct SafetyConfig {
+    float window_duration = 0.0f;
+    float gain_reduction = 0.3f;
+    float smoothing_tau = 0.2f;
+    float spike_detection_threshold = 500.0f;
+    float immediate_spike_threshold = 1500.0f;
+    float slew_full_scale_time_s = 1.0f;
+    bool stutter_safety_enabled = false;
+    float stutter_threshold = 1.5f;
+
+    bool Equals(const SafetyConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return is_near(window_duration, o.window_duration) &&
+               is_near(gain_reduction, o.gain_reduction) &&
+               is_near(smoothing_tau, o.smoothing_tau) &&
+               is_near(spike_detection_threshold, o.spike_detection_threshold) &&
+               is_near(immediate_spike_threshold, o.immediate_spike_threshold) &&
+               is_near(slew_full_scale_time_s, o.slew_full_scale_time_s) &&
+               stutter_safety_enabled == o.stutter_safety_enabled &&
+               is_near(stutter_threshold, o.stutter_threshold);
+    }
+
+    void Validate() {
+        window_duration = (std::max)(0.0f, window_duration);
+        gain_reduction = (std::max)(0.0f, (std::min)(1.0f, gain_reduction));
+        smoothing_tau = (std::max)(0.001f, smoothing_tau);
+        spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);
+        immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);
+        slew_full_scale_time_s = (std::max)(0.01f, slew_full_scale_time_s);
+        stutter_threshold = (std::max)(1.01f, stutter_threshold);
+    }
+};
+
 #endif // FFBCONFIG_H
