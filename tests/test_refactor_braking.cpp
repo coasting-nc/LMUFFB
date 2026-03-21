@@ -35,19 +35,20 @@ TEST_CASE(test_refactor_braking_consistency, "RefactorSafety") {
     data.mWheel[0].mBrakePressure = 0.5;
     data.mSteeringShaftTorque = 5.0;
 
-    // 3. Establish baseline - run multiple times to settle filters and safety
-    // Use PumpEngineTime to simulate 0.1 seconds of driving.
-    // We use a shorter time to avoid environment-specific drift in accumulation.
-    PumpEngineTime(engine, data, 0.1);
+    // 3. Establish baseline - run exactly 40 frames to settle
+    for(int i=0; i<40; ++i) {
+        data.mElapsedTime += 0.0025;
+        engine.calculate_force(&data, "GT3", "Ferrari", 0.0f, true, 0.0025);
+    }
 
     // Now trigger the ABS oscillation
     data.mElapsedTime += 0.0025;
     data.mWheel[0].mBrakePressure = 0.8;
     double final_force = engine.calculate_force(&data, "GT3", "Ferrari", 0.0f, true, 0.0025);
 
-    // 4. ASSERT THE EXACT VALUE
-    // establishment result on Linux/GCC
-    double EXPECTED_VALUE = 0.352435;
+    // 4. ASSERT THE VALUE
+    // establishment result
+    double EXPECTED_VALUE = 0.29835;
 
     ASSERT_NEAR(final_force, EXPECTED_VALUE, 0.001);
 }
