@@ -31,6 +31,7 @@ See also the implementation notes that were created in previous iterations:
 * `docs\dev_docs\implementation_plans\redesign_preset_system_phase1_rear_axle.md`
 * `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_load_forces.md`
 * `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_grip_estimation.md`
+* `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_slope_detection.md`
 
 You must also increase the app version in `VERSION` file (by the smallest increment possible), and add an entry to `CHANGELOG_DEV.md` file.
 
