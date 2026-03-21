@@ -16,8 +16,8 @@ TEST_CASE(test_gyro_damping_target_coverage, "Coverage") {
     ctx.dt = 0.0025;
     ctx.car_speed = 50.0;
     
-    engine.m_gyro_gain = 1.0f;
-    engine.m_gyro_smoothing = 0.1f;
+    engine.m_advanced.gyro_gain = 1.0f;
+    engine.m_advanced.gyro_smoothing = 0.1f;
     
     // Path 1: Default range (range <= 0.0f)
     data.mPhysicalSteeringWheelRange = 0.0f;
@@ -31,7 +31,7 @@ TEST_CASE(test_gyro_damping_target_coverage, "Coverage") {
     ASSERT_TRUE(std::abs(ctx.gyro_force) > 0.001);
     
     // Path 3: Minimal smoothing (tau < 0.0001)
-    engine.m_gyro_smoothing = 0.0f;
+    engine.m_advanced.gyro_smoothing = 0.0f;
     FFBEngineTestAccess::CallCalculateGyroDamping(engine, &data, ctx);
     ASSERT_TRUE(std::abs(ctx.gyro_force) > 0.001);
 }
@@ -91,7 +91,7 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     InitializeEngine(engine);
     
     // Force some gains so snapshots have non-zero results
-    engine.m_gyro_gain = 1.0f;
+    engine.m_advanced.gyro_gain = 1.0f;
     engine.m_braking.abs_gain = 1.0f;
     engine.m_general.gain = 1.0f;
     

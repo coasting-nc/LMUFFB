@@ -20,7 +20,7 @@ TEST_CASE(test_issue_241_rectification_fix, "YawGyro") {
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_load_forces.lat_load_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0); // Speed = 20.0 (> 5.0 cutoff)

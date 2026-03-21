@@ -10,12 +10,12 @@ void test_soft_lock_stationary_not_allowed() {
     InitializeEngine(engine);
 
     // Disable stationary damping for this test to avoid interference with defaults
-    engine.m_stationary_damping = 0.0f;
+    engine.m_advanced.stationary_damping = 0.0f;
 
     // Enable soft lock
-    engine.m_soft_lock_enabled = true;
-    engine.m_soft_lock_stiffness = 20.0f;
-    engine.m_soft_lock_damping = 0.0f;
+    engine.m_advanced.soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_stiffness = 20.0f;
+    engine.m_advanced.soft_lock_damping = 0.0f;
     engine.m_general.wheelbase_max_nm = 100.0f;
     engine.m_general.target_rim_nm = 100.0f;
     engine.m_general.gain = 1.0f;
@@ -26,8 +26,8 @@ void test_soft_lock_stationary_not_allowed() {
     TelemInfoV01 data = CreateBasicTestTelemetry(speed, 0.0);
 
     // Ensure speed gate is at default
-    engine.m_speed_gate_lower = 3.0f;
-    engine.m_speed_gate_upper = 6.0f;
+    engine.m_advanced.speed_gate_lower = 3.0f;
+    engine.m_advanced.speed_gate_upper = 6.0f;
 
     // Normalization setup
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);

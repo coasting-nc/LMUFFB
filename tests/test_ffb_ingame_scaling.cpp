@@ -14,7 +14,7 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     engine.m_rear_axle.oversteer_boost = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_vibration.road_gain = 0.0f;
     engine.m_vibration.slide_gain = 0.0f;
     engine.m_vibration.spin_gain = 0.0f;
@@ -22,7 +22,7 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     engine.m_braking.abs_gain = 0.0f;
     engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_vibration.bottoming_gain = 0.0f;
-    engine.m_soft_lock_enabled = false;
+    engine.m_advanced.soft_lock_enabled = false;
     engine.m_general.min_force = 0.0f;
     engine.m_invert_force = false;
 

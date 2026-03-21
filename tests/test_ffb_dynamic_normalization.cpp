@@ -195,8 +195,8 @@ TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_load_forces.long_load_effect = 0.0f;
     engine.m_front_axle.steering_shaft_smoothing = 0.0f;
-    engine.m_speed_gate_lower = 1.0f;
-    engine.m_speed_gate_upper = 5.0f;
+    engine.m_advanced.speed_gate_lower = 1.0f;
+    engine.m_advanced.speed_gate_upper = 5.0f;
     engine.m_vibration.road_enabled = true;
 
     // Settle rolling average and last torque

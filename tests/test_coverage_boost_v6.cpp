@@ -390,7 +390,7 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
         engine.m_front_axle.torque_source = 1; // In-Game
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_soft_lock_enabled = true;
+        engine.m_advanced.soft_lock_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
         engine.m_front_axle.flatspot_suppression = true;
@@ -763,7 +763,7 @@ TEST_CASE(test_config_branches_v6, "System") {
 
     // 6. Test save with many settings changed
     engine.m_general.gain = 1.1f;
-    engine.m_soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_enabled = true;
     Config::Save(engine, "test_save_v6.ini");
 
     // 7. Test save failure

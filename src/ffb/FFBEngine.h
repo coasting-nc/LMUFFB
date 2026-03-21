@@ -123,39 +123,10 @@ public:
     SlopeDetectionConfig m_slope_detection;
     BrakingConfig m_braking;
     VibrationConfig m_vibration;
+    AdvancedConfig m_advanced;
 
     // Configurable Smoothing & Caps (v0.3.9)
     bool m_invert_force = true;
-    
-    // v0.4.4 Features
-    
-    // Base Force Debugging (v0.4.13)
-
-    // New Effects (v0.2)
-    float m_gyro_gain;
-    float m_gyro_smoothing;
-    float m_stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
-
-    // Soft Lock (Issue #117)
-    bool m_soft_lock_enabled = true;
-    float m_soft_lock_stiffness = 20.0f;
-    float m_soft_lock_damping = 0.5f;
-
-    // v0.4.41: Signal Filtering Settings
-    
-    // Static Notch Filter (v0.4.43)
-
-    // v0.6.23: User-Adjustable Speed Gate
-    float m_speed_gate_lower = 1.0f; 
-    float m_speed_gate_upper = 5.0f; 
-
-    // REST API Fallback (Issue #221)
-    bool m_rest_api_enabled = false;
-    int m_rest_api_port = 6397;
-
-    // v0.6.23: Additional Advanced Physics (Reserved for future use)
-    float m_road_fallback_scale = 0.05f;
-    bool m_understeer_affects_sop = false;
     
     // Signal Diagnostics
     double m_debug_freq = 0.0; 

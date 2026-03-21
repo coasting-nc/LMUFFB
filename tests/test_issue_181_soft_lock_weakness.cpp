@@ -23,9 +23,9 @@ TEST_CASE(test_soft_lock_normalization_consistency, "Regression") {
 
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_soft_lock_enabled = true;
-    engine.m_soft_lock_stiffness = 100.0f; // 100%
-    engine.m_soft_lock_damping = 0.0f;
+    engine.m_advanced.soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_stiffness = 100.0f; // 100%
+    engine.m_advanced.soft_lock_damping = 0.0f;
     engine.m_general.wheelbase_max_nm = 15.0f;
     engine.m_general.target_rim_nm = 10.0f;
     engine.m_general.gain = 1.0f;

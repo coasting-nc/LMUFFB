@@ -428,7 +428,7 @@ TEST_CASE(test_rest_api_fallback_and_range_warning, "Diagnostics") {
     engine.calculate_force(&data, "GT3", "911");
     
     // Trigger invalid range warning
-    // This will hit the branch: if (seeded && m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f)
+    // This will hit the branch: if (seeded && m_advanced.rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f)
     // and if (!m_warned_invalid_range)
     engine.calculate_force(&data, "GT3", "911");
 }

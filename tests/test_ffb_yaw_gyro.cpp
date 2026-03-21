@@ -69,8 +69,8 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup
-    engine.m_gyro_gain = 1.0f;
-    engine.m_gyro_smoothing = 0.1f;
+    engine.m_advanced.gyro_gain = 1.0f;
+    engine.m_advanced.gyro_smoothing = 0.1f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Reference torque for normalization
     engine.m_general.gain = 1.0f;
     
@@ -174,7 +174,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine.m_vibration.bottoming_enabled = false;
     engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
     data.mWheel[0].mRideHeight = 0.1;
@@ -238,7 +238,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine2.m_vibration.bottoming_enabled = false;
     engine2.m_vibration.scrub_drag_gain = 0.0f;
     engine2.m_rear_axle.rear_align_effect = 0.0f;
-    engine2.m_gyro_gain = 0.0f;
+    engine2.m_advanced.gyro_gain = 0.0f;
     
     TelemInfoV01 data2;
     std::memset(&data2, 0, sizeof(data2));
@@ -292,7 +292,7 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     engine.m_vibration.bottoming_enabled = false;
     engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     
     data.mWheel[0].mRideHeight = 0.1;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
@@ -370,7 +370,7 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     engine.m_vibration.bottoming_enabled = false;
     engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     
     data.mWheel[0].mRideHeight = 0.1;
     data.mWheel[1].mRideHeight = 0.1;
@@ -469,7 +469,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     engine.m_vibration.bottoming_enabled = false;
     engine.m_vibration.scrub_drag_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_invert_force = false;
     engine.m_rear_axle.yaw_kick_threshold = 0.2f;
     engine.m_rear_axle.yaw_accel_smoothing = 0.0f; // Fast response
@@ -698,8 +698,8 @@ TEST_CASE(test_gyro_stability, "YawGyro") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    engine.m_gyro_gain = 1.0;
-    engine.m_gyro_smoothing = -1.0; // Malicious input (should be clamped to 0.0 internally) 
+    engine.m_advanced.gyro_gain = 1.0;
+    engine.m_advanced.gyro_smoothing = -1.0; // Malicious input (should be clamped to 0.0 internally)
     
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = 20.0;

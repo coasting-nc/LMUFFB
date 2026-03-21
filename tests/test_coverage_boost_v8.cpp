@@ -253,8 +253,8 @@ TEST_CASE(test_ffb_engine_significant_soft_lock_allowed_branch, "Safety") {
     // Case 1: Allowed = false, but significant soft lock
     // We need to make sure calculate_force is called with allowed=false
     // but soft_lock_force > 0.5
-    engine.m_soft_lock_enabled = true;
-    engine.m_soft_lock_stiffness = 20.0f;
+    engine.m_advanced.soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_stiffness = 20.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; // Spring force will be high
     engine.m_general.min_force = 0.1f;
     

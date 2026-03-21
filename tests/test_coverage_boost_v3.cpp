@@ -23,7 +23,7 @@ TEST_CASE(test_engine_signal_conditioning_thresholds, "Physics") {
     ctx.car_speed = 1.0; // Below idle_speed_threshold (default 3.0)
 
     // Trigger idle_speed_threshold < 3.0 branch
-    engine.m_speed_gate_upper = 2.0f;
+    engine.m_advanced.speed_gate_upper = 2.0f;
     engine.apply_signal_conditioning(1.0, &data, ctx);
 
     // Trigger wheel_freq <= 1.0 branch
@@ -54,7 +54,7 @@ TEST_CASE(test_engine_disabled_effects, "Physics") {
     engine.m_vibration.slide_enabled = false;
     engine.m_vibration.road_enabled = false;
     engine.m_vibration.bottoming_enabled = false;
-    engine.m_soft_lock_enabled = false;
+    engine.m_advanced.soft_lock_enabled = false;
 
     engine.calculate_force(&data, "GT3", "911", 0.0f);
 }

@@ -79,8 +79,8 @@ bool Config::ParseSystemLine(const std::string& key, const std::string& value, P
         needs_save = true;
         return true;
     }
-    if (key == "rest_api_fallback_enabled") { current_preset.rest_api_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "rest_api_port") { current_preset.rest_api_port = std::stoi(value); return true; }
+    if (key == "rest_api_fallback_enabled") { current_preset.advanced.rest_api_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "rest_api_port") { current_preset.advanced.rest_api_port = std::stoi(value); return true; }
     return false;
 }
 
@@ -125,9 +125,9 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "power_yaw_gamma") { current_preset.rear_axle.power_yaw_gamma = std::stof(value); return true; }
     if (key == "power_yaw_punch") { current_preset.rear_axle.power_yaw_punch = std::stof(value); return true; }
     if (key == "yaw_accel_smoothing") { current_preset.rear_axle.yaw_accel_smoothing = std::stof(value); return true; }
-    if (key == "gyro_gain") { current_preset.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
-    if (key == "stationary_damping") { current_preset.stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
-    if (key == "gyro_smoothing_factor") { current_preset.gyro_smoothing = std::stof(value); return true; }
+    if (key == "gyro_gain") { current_preset.advanced.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "stationary_damping") { current_preset.advanced.stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "gyro_smoothing_factor") { current_preset.advanced.gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { current_preset.grip_estimation.optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { current_preset.grip_estimation.optimal_slip_ratio = std::stof(value); return true; }
     if (key == "slope_detection_enabled") { current_preset.slope_detection.enabled = (value == "1"); return true; }
@@ -189,13 +189,13 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
     if (key == "bottoming_method") { current_preset.vibration.bottoming_method = std::stoi(value); return true; }
     if (key == "dynamic_normalization_enabled") { current_preset.general.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { current_preset.general.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "soft_lock_enabled") { current_preset.soft_lock_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "soft_lock_stiffness") { current_preset.soft_lock_stiffness = std::stof(value); return true; }
-    if (key == "soft_lock_damping") { current_preset.soft_lock_damping = std::stof(value); return true; }
-    if (key == "speed_gate_lower") { current_preset.speed_gate_lower = std::stof(value); return true; }
-    if (key == "speed_gate_upper") { current_preset.speed_gate_upper = std::stof(value); return true; }
-    if (key == "road_fallback_scale") { current_preset.road_fallback_scale = std::stof(value); return true; }
-    if (key == "understeer_affects_sop") { current_preset.understeer_affects_sop = std::stoi(value); return true; }
+    if (key == "soft_lock_enabled") { current_preset.advanced.soft_lock_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "soft_lock_stiffness") { current_preset.advanced.soft_lock_stiffness = std::stof(value); return true; }
+    if (key == "soft_lock_damping") { current_preset.advanced.soft_lock_damping = std::stof(value); return true; }
+    if (key == "speed_gate_lower") { current_preset.advanced.speed_gate_lower = std::stof(value); return true; }
+    if (key == "speed_gate_upper") { current_preset.advanced.speed_gate_upper = std::stof(value); return true; }
+    if (key == "road_fallback_scale") { current_preset.advanced.road_fallback_scale = std::stof(value); return true; }
+    if (key == "understeer_affects_sop") { current_preset.advanced.understeer_affects_sop = (value == "1" || value == "true"); return true; }
     return false;
 }
 
@@ -243,8 +243,8 @@ bool Config::SyncSystemLine(const std::string& key, const std::string& value, FF
         needs_save = true;
         return true;
     }
-    if (key == "rest_api_fallback_enabled") { engine.m_rest_api_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "rest_api_port") { engine.m_rest_api_port = std::stoi(value); return true; }
+    if (key == "rest_api_fallback_enabled") { engine.m_advanced.rest_api_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "rest_api_port") { engine.m_advanced.rest_api_port = std::stoi(value); return true; }
     return false;
 }
 
@@ -297,9 +297,9 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "power_yaw_gamma") { engine.m_rear_axle.power_yaw_gamma = std::stof(value); return true; }
     if (key == "power_yaw_punch") { engine.m_rear_axle.power_yaw_punch = std::stof(value); return true; }
     if (key == "yaw_accel_smoothing") { engine.m_rear_axle.yaw_accel_smoothing = std::stof(value); return true; }
-    if (key == "gyro_gain") { engine.m_gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
-    if (key == "stationary_damping") { engine.m_stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
-    if (key == "gyro_smoothing_factor") { engine.m_gyro_smoothing = std::stof(value); return true; }
+    if (key == "gyro_gain") { engine.m_advanced.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "stationary_damping") { engine.m_advanced.stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
+    if (key == "gyro_smoothing_factor") { engine.m_advanced.gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { engine.m_grip_estimation.optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { engine.m_grip_estimation.optimal_slip_ratio = std::stof(value); return true; }
     if (key == "slope_detection_enabled") { engine.m_slope_detection.enabled = (value == "1"); return true; }
@@ -318,10 +318,10 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "slip_angle_smoothing") { engine.m_grip_estimation.slip_angle_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { engine.m_grip_estimation.chassis_inertia_smoothing = std::stof(value); return true; }
     if (key == "load_sensitivity_enabled") { engine.m_grip_estimation.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "speed_gate_lower") { engine.m_speed_gate_lower = std::stof(value); return true; }
-    if (key == "speed_gate_upper") { engine.m_speed_gate_upper = std::stof(value); return true; }
-    if (key == "road_fallback_scale") { engine.m_road_fallback_scale = std::stof(value); return true; }
-    if (key == "understeer_affects_sop") { engine.m_understeer_affects_sop = std::stoi(value); return true; }
+    if (key == "speed_gate_lower") { engine.m_advanced.speed_gate_lower = std::stof(value); return true; }
+    if (key == "speed_gate_upper") { engine.m_advanced.speed_gate_upper = std::stof(value); return true; }
+    if (key == "road_fallback_scale") { engine.m_advanced.road_fallback_scale = std::stof(value); return true; }
+    if (key == "understeer_affects_sop") { engine.m_advanced.understeer_affects_sop = (value == "1" || value == "true"); return true; }
     return false;
 }
 
@@ -363,9 +363,9 @@ bool Config::SyncVibrationLine(const std::string& key, const std::string& value,
     if (key == "bottoming_gain") { engine.m_vibration.bottoming_gain = std::stof(value); return true; }
     if (key == "dynamic_normalization_enabled") { engine.m_general.dynamic_normalization_enabled = (value == "1" || value == "true"); return true; }
     if (key == "auto_load_normalization_enabled") { engine.m_general.auto_load_normalization_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "soft_lock_enabled") { engine.m_soft_lock_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "soft_lock_stiffness") { engine.m_soft_lock_stiffness = std::stof(value); return true; }
-    if (key == "soft_lock_damping") { engine.m_soft_lock_damping = std::stof(value); return true; }
+    if (key == "soft_lock_enabled") { engine.m_advanced.soft_lock_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "soft_lock_stiffness") { engine.m_advanced.soft_lock_stiffness = std::stof(value); return true; }
+    if (key == "soft_lock_damping") { engine.m_advanced.soft_lock_damping = std::stof(value); return true; }
     if (key == "scrub_drag_gain") { engine.m_vibration.scrub_drag_gain = std::stof(value); return true; }
     if (key == "bottoming_method") { engine.m_vibration.bottoming_method = std::stoi(value); return true; }
     return false;
@@ -428,11 +428,11 @@ void Config::LoadPresets() {
         p.rear_axle.sop_yaw_gain = 0.386555f;
         p.rear_axle.yaw_kick_threshold = 1.68f;
         p.rear_axle.yaw_accel_smoothing = 0.005f;
-        p.gyro_gain = 0.0336134f;
-        p.gyro_smoothing = 0.0f;
+        p.advanced.gyro_gain = 0.0336134f;
+        p.advanced.gyro_smoothing = 0.0f;
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.0f;
-        p.understeer_affects_sop = false;
+        p.advanced.understeer_affects_sop = false;
         p.grip_estimation.slip_angle_smoothing = 0.0f;
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.10f;   // CHANGED from 0.06f
@@ -456,7 +456,7 @@ void Config::LoadPresets() {
         p.vibration.slide_freq = 1.0f;
         p.vibration.road_enabled = true;
         p.vibration.road_gain = 2.0f;
-        p.road_fallback_scale = 0.05f;
+        p.advanced.road_fallback_scale = 0.05f;
         p.vibration.spin_enabled = true;
         p.vibration.spin_gain = 0.5f;
         p.vibration.spin_freq_scale = 1.0f;
@@ -464,8 +464,8 @@ void Config::LoadPresets() {
         p.vibration.bottoming_enabled = true;
         p.vibration.bottoming_gain = 1.0f;
         p.vibration.bottoming_method = 0;
-        p.speed_gate_lower = 0.0f;
-        p.speed_gate_upper = 0.277778f;
+        p.advanced.speed_gate_lower = 0.0f;
+        p.advanced.speed_gate_upper = 0.277778f;
         presets.push_back(p);
     }
     
@@ -513,11 +513,11 @@ void Config::LoadPresets() {
         p.rear_axle.power_yaw_gamma = 0.2f;
         p.rear_axle.power_yaw_punch = 0.0f;
         p.rear_axle.yaw_accel_smoothing = 0.001f;
-        p.gyro_gain = 0.0f;
-        p.gyro_smoothing = 0.0f;
+        p.advanced.gyro_gain = 0.0f;
+        p.advanced.gyro_smoothing = 0.0f;
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.0f;
-        p.understeer_affects_sop = false;
+        p.advanced.understeer_affects_sop = false;
         p.slope_detection.enabled = false;
         p.slope_detection.sg_window = 15;
         p.slope_detection.sensitivity = 0.5f;
@@ -555,12 +555,12 @@ void Config::LoadPresets() {
         p.vibration.road_enabled = false;
         p.vibration.road_gain = 0.0f;
         p.vibration.vibration_gain = 1.0f;
-        p.road_fallback_scale = 0.05f;
+        p.advanced.road_fallback_scale = 0.05f;
         p.general.dynamic_normalization_enabled = false;
         p.general.auto_load_normalization_enabled = false;
-        p.soft_lock_enabled = false;
-        p.soft_lock_stiffness = 20.0f;
-        p.soft_lock_damping = 0.5f;
+        p.advanced.soft_lock_enabled = false;
+        p.advanced.soft_lock_stiffness = 20.0f;
+        p.advanced.soft_lock_damping = 0.5f;
         p.vibration.spin_enabled = false;
         p.vibration.spin_gain = 0.5f;
         p.vibration.spin_freq_scale = 1.0f;
@@ -568,8 +568,8 @@ void Config::LoadPresets() {
         p.vibration.bottoming_enabled = true;
         p.vibration.bottoming_gain = 1.0f;
         p.vibration.bottoming_method = 0;
-        p.rest_api_enabled = true;
-        p.rest_api_port = 6397;
+        p.advanced.rest_api_enabled = true;
+        p.advanced.rest_api_port = 6397;
         p.safety_window_duration = 0.0f;
         p.safety_gain_reduction = 0.3f;
         p.safety_smoothing_tau = 0.2f;
@@ -578,8 +578,8 @@ void Config::LoadPresets() {
         p.safety_slew_full_scale_time_s = 1.0f;
         p.stutter_safety_enabled = false;
         p.stutter_threshold = 1.5f;
-        p.speed_gate_lower = 1.0f;
-        p.speed_gate_upper = 5.0f;
+        p.advanced.speed_gate_lower = 1.0f;
+        p.advanced.speed_gate_upper = 5.0f;
         presets.push_back(p);
     }
 
@@ -605,11 +605,11 @@ void Config::LoadPresets() {
         p.rear_axle.sop_yaw_gain = 0.333f;
         p.rear_axle.yaw_kick_threshold = 0.0f;
         p.rear_axle.yaw_accel_smoothing = 0.001f;
-        p.gyro_gain = 0.0f;
-        p.gyro_smoothing = 0.0f;
+        p.advanced.gyro_gain = 0.0f;
+        p.advanced.gyro_smoothing = 0.0f;
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.98f;
-        p.understeer_affects_sop = false;
+        p.advanced.understeer_affects_sop = false;
         p.grip_estimation.slip_angle_smoothing = 0.002f;
         p.grip_estimation.chassis_inertia_smoothing = 0.012f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
@@ -633,7 +633,7 @@ void Config::LoadPresets() {
         p.vibration.slide_freq = 1.47f;
         p.vibration.road_enabled = true;
         p.vibration.road_gain = 0.0f;
-        p.road_fallback_scale = 0.05f;
+        p.advanced.road_fallback_scale = 0.05f;
         p.vibration.spin_enabled = true;
         p.vibration.spin_gain = 0.462185f;
         p.vibration.spin_freq_scale = 1.8f;
@@ -641,8 +641,8 @@ void Config::LoadPresets() {
         p.vibration.bottoming_enabled = true;
         p.vibration.bottoming_gain = 1.0f;
         p.vibration.bottoming_method = 1;
-        p.speed_gate_lower = 1.0f;
-        p.speed_gate_upper = 5.0f;
+        p.advanced.speed_gate_lower = 1.0f;
+        p.advanced.speed_gate_upper = 5.0f;
         presets.push_back(p);
     }
     
@@ -668,11 +668,11 @@ void Config::LoadPresets() {
         p.rear_axle.sop_yaw_gain = 0.333f;
         p.rear_axle.yaw_kick_threshold = 0.0f;
         p.rear_axle.yaw_accel_smoothing = 0.003f;
-        p.gyro_gain = 0.0f;
-        p.gyro_smoothing = 0.003f;
+        p.advanced.gyro_gain = 0.0f;
+        p.advanced.gyro_smoothing = 0.003f;
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.59f;
-        p.understeer_affects_sop = false;
+        p.advanced.understeer_affects_sop = false;
         p.grip_estimation.slip_angle_smoothing = 0.003f;
         p.grip_estimation.chassis_inertia_smoothing = 0.019f;
         p.grip_estimation.optimal_slip_angle = 0.12f;
@@ -696,7 +696,7 @@ void Config::LoadPresets() {
         p.vibration.slide_freq = 1.47f;
         p.vibration.road_enabled = true;
         p.vibration.road_gain = 0.0f;
-        p.road_fallback_scale = 0.05f;
+        p.advanced.road_fallback_scale = 0.05f;
         p.vibration.spin_enabled = true;
         p.vibration.spin_gain = 0.462185f;
         p.vibration.spin_freq_scale = 1.8f;
@@ -704,8 +704,8 @@ void Config::LoadPresets() {
         p.vibration.bottoming_enabled = true;
         p.vibration.bottoming_gain = 1.0f;
         p.vibration.bottoming_method = 1;
-        p.speed_gate_lower = 1.0f;
-        p.speed_gate_upper = 5.0f;
+        p.advanced.speed_gate_lower = 1.0f;
+        p.advanced.speed_gate_upper = 5.0f;
         presets.push_back(p);
     }
     
@@ -731,11 +731,11 @@ void Config::LoadPresets() {
         p.rear_axle.sop_yaw_gain = 0.0f;
         p.rear_axle.yaw_kick_threshold = 0.0f;
         p.rear_axle.yaw_accel_smoothing = 0.015f;
-        p.gyro_gain = 0.0f;
-        p.gyro_smoothing = 0.0f;
+        p.advanced.gyro_gain = 0.0f;
+        p.advanced.gyro_smoothing = 0.0f;
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 0.89f;
-        p.understeer_affects_sop = false;
+        p.advanced.understeer_affects_sop = false;
         p.grip_estimation.slip_angle_smoothing = 0.002f;
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
@@ -759,7 +759,7 @@ void Config::LoadPresets() {
         p.vibration.slide_freq = 1.47f;
         p.vibration.road_enabled = true;
         p.vibration.road_gain = 0.0f;
-        p.road_fallback_scale = 0.05f;
+        p.advanced.road_fallback_scale = 0.05f;
         p.vibration.spin_enabled = true;
         p.vibration.spin_gain = 0.462185f;
         p.vibration.spin_freq_scale = 1.8f;
@@ -767,8 +767,8 @@ void Config::LoadPresets() {
         p.vibration.bottoming_enabled = true;
         p.vibration.bottoming_gain = 1.0f;
         p.vibration.bottoming_method = 1;
-        p.speed_gate_lower = 1.0f;
-        p.speed_gate_upper = 5.0f;
+        p.advanced.speed_gate_lower = 1.0f;
+        p.advanced.speed_gate_upper = 5.0f;
         presets.push_back(p);
     }
     
@@ -795,11 +795,11 @@ void Config::LoadPresets() {
         p.rear_axle.sop_yaw_gain = 0.333f;  // ONLY DIFFERENCE: Added yaw kick
         p.rear_axle.yaw_kick_threshold = 0.0f;
         p.rear_axle.yaw_accel_smoothing = 0.003f;
-        p.gyro_gain = 0.0f;
-        p.gyro_smoothing = 0.0f;
+        p.advanced.gyro_gain = 0.0f;
+        p.advanced.gyro_smoothing = 0.0f;
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 0.89f;
-        p.understeer_affects_sop = false;
+        p.advanced.understeer_affects_sop = false;
         p.grip_estimation.slip_angle_smoothing = 0.002f;
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
@@ -823,7 +823,7 @@ void Config::LoadPresets() {
         p.vibration.slide_freq = 1.47f;
         p.vibration.road_enabled = true;
         p.vibration.road_gain = 0.0f;
-        p.road_fallback_scale = 0.05f;
+        p.advanced.road_fallback_scale = 0.05f;
         p.vibration.spin_enabled = true;
         p.vibration.spin_gain = 0.462185f;
         p.vibration.spin_freq_scale = 1.8f;
@@ -831,8 +831,8 @@ void Config::LoadPresets() {
         p.vibration.bottoming_enabled = true;
         p.vibration.bottoming_gain = 1.0f;
         p.vibration.bottoming_method = 1;
-        p.speed_gate_lower = 1.0f;
-        p.speed_gate_upper = 5.0f;
+        p.advanced.speed_gate_lower = 1.0f;
+        p.advanced.speed_gate_upper = 5.0f;
         presets.push_back(p);
     }
     
@@ -1288,12 +1288,12 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "power_yaw_gamma=" << p.rear_axle.power_yaw_gamma << "\n";
     file << "power_yaw_punch=" << p.rear_axle.power_yaw_punch << "\n";
     file << "yaw_accel_smoothing=" << p.rear_axle.yaw_accel_smoothing << "\n";
-    file << "gyro_gain=" << p.gyro_gain << "\n";
-    file << "stationary_damping=" << p.stationary_damping << "\n";
-    file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
+    file << "gyro_gain=" << p.advanced.gyro_gain << "\n";
+    file << "stationary_damping=" << p.advanced.stationary_damping << "\n";
+    file << "gyro_smoothing_factor=" << p.advanced.gyro_smoothing << "\n";
     file << "sop_smoothing_factor=" << p.rear_axle.sop_smoothing_factor << "\n";
     file << "sop_scale=" << p.rear_axle.sop_scale << "\n";
-    file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";
+    file << "understeer_affects_sop=" << p.advanced.understeer_affects_sop << "\n";
     file << "slope_detection_enabled=" << p.slope_detection.enabled << "\n";
     file << "slope_sg_window=" << p.slope_detection.sg_window << "\n";
     file << "slope_sensitivity=" << p.slope_detection.sensitivity << "\n";
@@ -1336,12 +1336,12 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "road_enabled=" << (p.vibration.road_enabled ? "1" : "0") << "\n";
     file << "road_gain=" << p.vibration.road_gain << "\n";
     file << "vibration_gain=" << p.vibration.vibration_gain << "\n";
-    file << "road_fallback_scale=" << p.road_fallback_scale << "\n";
+    file << "road_fallback_scale=" << p.advanced.road_fallback_scale << "\n";
     file << "dynamic_normalization_enabled=" << (p.general.dynamic_normalization_enabled ? "1" : "0") << "\n";
     file << "auto_load_normalization_enabled=" << (p.general.auto_load_normalization_enabled ? "1" : "0") << "\n";
-    file << "soft_lock_enabled=" << (p.soft_lock_enabled ? "1" : "0") << "\n";
-    file << "soft_lock_stiffness=" << p.soft_lock_stiffness << "\n";
-    file << "soft_lock_damping=" << p.soft_lock_damping << "\n";
+    file << "soft_lock_enabled=" << (p.advanced.soft_lock_enabled ? "1" : "0") << "\n";
+    file << "soft_lock_stiffness=" << p.advanced.soft_lock_stiffness << "\n";
+    file << "soft_lock_damping=" << p.advanced.soft_lock_damping << "\n";
     file << "spin_enabled=" << (p.vibration.spin_enabled ? "1" : "0") << "\n";
     file << "spin_gain=" << p.vibration.spin_gain << "\n";
     file << "spin_freq_scale=" << p.vibration.spin_freq_scale << "\n";
@@ -1349,8 +1349,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "bottoming_enabled=" << (p.vibration.bottoming_enabled ? "1" : "0") << "\n";
     file << "bottoming_gain=" << p.vibration.bottoming_gain << "\n";
     file << "bottoming_method=" << p.vibration.bottoming_method << "\n";
-    file << "rest_api_fallback_enabled=" << (p.rest_api_enabled ? "1" : "0") << "\n";
-    file << "rest_api_port=" << p.rest_api_port << "\n";
+    file << "rest_api_fallback_enabled=" << (p.advanced.rest_api_enabled ? "1" : "0") << "\n";
+    file << "rest_api_port=" << p.advanced.rest_api_port << "\n";
 
     file << "safety_window_duration=" << p.safety_window_duration << "\n";
     file << "safety_gain_reduction=" << p.safety_gain_reduction << "\n";
@@ -1361,8 +1361,8 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "stutter_safety_enabled=" << (p.stutter_safety_enabled ? "1" : "0") << "\n";
     file << "stutter_threshold=" << p.stutter_threshold << "\n";
 
-    file << "speed_gate_lower=" << p.speed_gate_lower << "\n";
-    file << "speed_gate_upper=" << p.speed_gate_upper << "\n";
+    file << "speed_gate_lower=" << p.advanced.speed_gate_lower << "\n";
+    file << "speed_gate_upper=" << p.advanced.speed_gate_upper << "\n";
 }
 
 void Config::ExportPreset(int index, const std::string& filename) {
@@ -1591,9 +1591,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "gain=" << engine.m_general.gain << "\n";
         file << "dynamic_normalization_enabled=" << engine.m_general.dynamic_normalization_enabled << "\n";
         file << "auto_load_normalization_enabled=" << engine.m_general.auto_load_normalization_enabled << "\n";
-        file << "soft_lock_enabled=" << engine.m_soft_lock_enabled << "\n";
-        file << "soft_lock_stiffness=" << engine.m_soft_lock_stiffness << "\n";
-        file << "soft_lock_damping=" << engine.m_soft_lock_damping << "\n";
+        file << "soft_lock_enabled=" << engine.m_advanced.soft_lock_enabled << "\n";
+        file << "soft_lock_stiffness=" << engine.m_advanced.soft_lock_stiffness << "\n";
+        file << "soft_lock_damping=" << engine.m_advanced.soft_lock_damping << "\n";
         file << "wheelbase_max_nm=" << engine.m_general.wheelbase_max_nm << "\n";
         file << "target_rim_nm=" << engine.m_general.target_rim_nm << "\n";
         file << "min_force=" << engine.m_general.min_force << "\n";
@@ -1640,12 +1640,12 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "power_yaw_gamma=" << engine.m_rear_axle.power_yaw_gamma << "\n";
         file << "power_yaw_punch=" << engine.m_rear_axle.power_yaw_punch << "\n";
         file << "yaw_accel_smoothing=" << engine.m_rear_axle.yaw_accel_smoothing << "\n";
-        file << "gyro_gain=" << engine.m_gyro_gain << "\n";
-        file << "stationary_damping=" << engine.m_stationary_damping << "\n";
-        file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
-        file << "sop_smoothing_factor=" << engine.m_rear_axle.sop_smoothing_factor << "\n";
-        file << "sop_scale=" << engine.m_rear_axle.sop_scale << "\n";
-        file << "understeer_affects_sop=" << engine.m_understeer_affects_sop << "\n";
+    file << "gyro_gain=" << engine.m_advanced.gyro_gain << "\n";
+    file << "stationary_damping=" << engine.m_advanced.stationary_damping << "\n";
+    file << "gyro_smoothing_factor=" << engine.m_advanced.gyro_smoothing << "\n";
+    file << "sop_smoothing_factor=" << engine.m_rear_axle.sop_smoothing_factor << "\n";
+    file << "sop_scale=" << engine.m_rear_axle.sop_scale << "\n";
+    file << "understeer_affects_sop=" << (engine.m_advanced.understeer_affects_sop ? "1" : "0") << "\n";
 
         file << "\n; --- Physics (Grip & Slip Angle) ---\n";
         file << "slip_angle_smoothing=" << engine.m_grip_estimation.slip_angle_smoothing << "\n";
@@ -1691,7 +1691,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "road_enabled=" << engine.m_vibration.road_enabled << "\n";
         file << "road_gain=" << engine.m_vibration.road_gain << "\n";
         file << "vibration_gain=" << engine.m_vibration.vibration_gain << "\n";
-        file << "road_fallback_scale=" << engine.m_road_fallback_scale << "\n";
+    file << "road_fallback_scale=" << engine.m_advanced.road_fallback_scale << "\n";
         file << "spin_enabled=" << engine.m_vibration.spin_enabled << "\n";
         file << "spin_gain=" << engine.m_vibration.spin_gain << "\n";
         file << "spin_freq_scale=" << engine.m_vibration.spin_freq_scale << "\n";
@@ -1699,8 +1699,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "bottoming_enabled=" << (engine.m_vibration.bottoming_enabled ? "1" : "0") << "\n";
         file << "bottoming_gain=" << engine.m_vibration.bottoming_gain << "\n";
         file << "bottoming_method=" << engine.m_vibration.bottoming_method << "\n";
-        file << "rest_api_fallback_enabled=" << engine.m_rest_api_enabled << "\n";
-        file << "rest_api_port=" << engine.m_rest_api_port << "\n";
+    file << "rest_api_fallback_enabled=" << engine.m_advanced.rest_api_enabled << "\n";
+    file << "rest_api_port=" << engine.m_advanced.rest_api_port << "\n";
 
         file << "safety_window_duration=" << engine.m_safety.m_safety_window_duration << "\n";
         file << "safety_gain_reduction=" << engine.m_safety.m_safety_gain_reduction << "\n";
@@ -1712,8 +1712,8 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "stutter_threshold=" << engine.m_safety.m_stutter_threshold << "\n";
 
         file << "\n; --- Advanced Settings ---\n";
-        file << "speed_gate_lower=" << engine.m_speed_gate_lower << "\n";
-        file << "speed_gate_upper=" << engine.m_speed_gate_upper << "\n";
+    file << "speed_gate_lower=" << engine.m_advanced.speed_gate_lower << "\n";
+    file << "speed_gate_upper=" << engine.m_advanced.speed_gate_upper << "\n";
 
         file << "\n[StaticLoads]\n";
         {
@@ -1816,11 +1816,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_general.Validate();
     engine.m_front_axle.Validate();
     engine.m_rear_axle.Validate();
-    engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
-
-    engine.m_gyro_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_gyro_gain));
-    engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, engine.m_stationary_damping));
-    engine.m_vibration.scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_vibration.scrub_drag_gain));
+    engine.m_vibration.Validate();
+    engine.m_advanced.Validate();
 
     if (engine.m_grip_estimation.optimal_slip_angle < 0.01f) {
         Logger::Get().Log("[Config] Invalid optimal_slip_angle (%.2f), resetting to default 0.10", engine.m_grip_estimation.optimal_slip_angle);
@@ -1943,9 +1940,6 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_vibration.spin_gain < 0.0f || engine.m_vibration.spin_gain > 2.0f) {
         engine.m_vibration.spin_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_vibration.spin_gain));
     }
-    engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
-    engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);
-    engine.m_rest_api_port = (std::max)(1, engine.m_rest_api_port);
 
     // FFB Safety Validation
     engine.m_safety.m_safety_window_duration = (std::max)(0.0f, engine.m_safety.m_safety_window_duration);

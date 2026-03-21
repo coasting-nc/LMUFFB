@@ -359,4 +359,47 @@ struct VibrationConfig {
     }
 };
 
+struct AdvancedConfig {
+    float gyro_gain = 0.0f;
+    float gyro_smoothing = 0.0f;
+    float stationary_damping = 1.0f;
+    bool soft_lock_enabled = true;
+    float soft_lock_stiffness = 20.0f;
+    float soft_lock_damping = 0.5f;
+    float speed_gate_lower = 1.0f;
+    float speed_gate_upper = 5.0f;
+    bool rest_api_enabled = false;
+    int rest_api_port = 6397;
+    float road_fallback_scale = 0.05f;
+    bool understeer_affects_sop = false;
+
+    bool Equals(const AdvancedConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return is_near(gyro_gain, o.gyro_gain) &&
+               is_near(gyro_smoothing, o.gyro_smoothing) &&
+               is_near(stationary_damping, o.stationary_damping) &&
+               soft_lock_enabled == o.soft_lock_enabled &&
+               is_near(soft_lock_stiffness, o.soft_lock_stiffness) &&
+               is_near(soft_lock_damping, o.soft_lock_damping) &&
+               is_near(speed_gate_lower, o.speed_gate_lower) &&
+               is_near(speed_gate_upper, o.speed_gate_upper) &&
+               rest_api_enabled == o.rest_api_enabled &&
+               rest_api_port == o.rest_api_port &&
+               is_near(road_fallback_scale, o.road_fallback_scale) &&
+               understeer_affects_sop == o.understeer_affects_sop;
+    }
+
+    void Validate() {
+        gyro_gain = (std::max)(0.0f, (std::min)(1.0f, gyro_gain));
+        gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
+        stationary_damping = (std::max)(0.0f, (std::min)(1.0f, stationary_damping));
+        soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
+        soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
+        speed_gate_lower = (std::max)(0.0f, speed_gate_lower);
+        speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
+        rest_api_port = (std::max)(1, rest_api_port);
+        road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
+    }
+};
+
 #endif // FFBCONFIG_H

@@ -134,7 +134,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_grip_estimation.slip_angle_smoothing = 0.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
     engine.m_rear_axle.yaw_accel_smoothing = 0.0f;
-    engine.m_gyro_smoothing = 0.0f;
+    engine.m_advanced.gyro_smoothing = 0.0f;
     engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f;
     engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
@@ -146,7 +146,7 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_rear_axle.oversteer_boost = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     
     engine.m_vibration.slide_enabled = false;
     engine.m_vibration.road_enabled = false;
@@ -158,8 +158,8 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_general.min_force = 0.0f;
     
     // v0.6.25: Disable speed gate by default for legacy tests (avoids muting physics at 0 speed)
-    engine.m_speed_gate_lower = -10.0f;
-    engine.m_speed_gate_upper = -5.0f;
+    engine.m_advanced.speed_gate_lower = -10.0f;
+    engine.m_advanced.speed_gate_upper = -5.0f;
 
     // v0.7.67: Fix for Issue #152 Normalization - Ensure consistent scaling for legacy tests
     // v0.7.109: Initialize structural peaks to match target

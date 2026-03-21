@@ -64,7 +64,7 @@ TEST_CASE(test_gui_interaction_v2, "GUI") {
 
     // 3. Diverse UI states
     {
-        engine.m_soft_lock_enabled = true;
+        engine.m_advanced.soft_lock_enabled = true;
         engine.m_braking.abs_pulse_enabled = true;
         engine.m_braking.lockup_enabled = true;
         engine.m_vibration.spin_enabled = true;

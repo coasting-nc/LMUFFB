@@ -63,8 +63,8 @@ TEST_CASE(test_issue_185_fix_soft_lock, "Internal") {
 
     // Trigger Soft Lock: 10% excess -> stiffness 20.0 * 0.1 * 50 = 100 Nm.
     data.mUnfilteredSteering = 1.1;
-    engine.m_soft_lock_enabled = true;
-    engine.m_soft_lock_stiffness = 20.0f;
+    engine.m_advanced.soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_stiffness = 20.0f;
 
     double force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, allowed);
     double abs_force = std::abs(force);
@@ -85,8 +85,8 @@ TEST_CASE(test_issue_235_garage_noise, "Internal") {
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 10.0f;
     engine.m_general.target_rim_nm = 10.0f;
-    engine.m_soft_lock_enabled = true;
-    engine.m_soft_lock_stiffness = 20.0f;
+    engine.m_advanced.soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_stiffness = 20.0f;
 
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 10.0);
     FFBEngineTestAccess::SetSmoothedStructuralMult(engine, 1.0 / 10.0);

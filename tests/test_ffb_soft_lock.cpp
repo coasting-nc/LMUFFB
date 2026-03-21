@@ -17,9 +17,9 @@ void test_soft_lock() {
         FFBEngine engine;
         InitializeEngine(engine);
         TelemInfoV01 data = CreateBasicTestTelemetry();
-        engine.m_soft_lock_enabled = true;
-        engine.m_soft_lock_stiffness = 20.0f;
-        engine.m_soft_lock_damping = 0.0f;
+        engine.m_advanced.soft_lock_enabled = true;
+        engine.m_advanced.soft_lock_stiffness = 20.0f;
+        engine.m_advanced.soft_lock_damping = 0.0f;
         engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
         engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
@@ -55,9 +55,9 @@ void test_soft_lock() {
         FFBEngine engine;
         InitializeEngine(engine);
         TelemInfoV01 data = CreateBasicTestTelemetry();
-        engine.m_soft_lock_enabled = true;
-        engine.m_soft_lock_stiffness = 20.0f;
-        engine.m_soft_lock_damping = 1.0f; // High damping
+        engine.m_advanced.soft_lock_enabled = true;
+        engine.m_advanced.soft_lock_stiffness = 20.0f;
+        engine.m_advanced.soft_lock_damping = 1.0f; // High damping
         engine.m_general.wheelbase_max_nm = 15.0f; engine.m_general.target_rim_nm = 10.0f;
         engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
@@ -75,8 +75,8 @@ void test_soft_lock() {
         FFBEngine engine;
         InitializeEngine(engine);
         TelemInfoV01 data = CreateBasicTestTelemetry();
-        engine.m_soft_lock_enabled = false;
-        engine.m_soft_lock_stiffness = 20.0f;
+        engine.m_advanced.soft_lock_enabled = false;
+        engine.m_advanced.soft_lock_stiffness = 20.0f;
         engine.m_front_axle.steering_shaft_gain = 0.0f;
         ASSERT_NEAR(run_step(engine, data, 1.1), 0.0, 0.001);
     }
@@ -85,9 +85,9 @@ void test_soft_lock() {
         FFBEngine engine;
         InitializeEngine(engine);
         TelemInfoV01 data = CreateBasicTestTelemetry();
-        engine.m_soft_lock_enabled = true;
-        engine.m_soft_lock_stiffness = 0.0f;
-        engine.m_soft_lock_damping = 0.1f; // Use larger damping for easier test
+        engine.m_advanced.soft_lock_enabled = true;
+        engine.m_advanced.soft_lock_stiffness = 0.0f;
+        engine.m_advanced.soft_lock_damping = 0.1f; // Use larger damping for easier test
         engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
         engine.m_general.gain = 1.0f;
         engine.m_invert_force = false;
@@ -112,7 +112,7 @@ void test_soft_lock() {
         // di_texture = -388.494 / 100 = -3.88 -> -1.0
         ASSERT_NEAR(force, -1.0, 0.01);
 
-        engine.m_soft_lock_damping = 0.0001f;
+        engine.m_advanced.soft_lock_damping = 0.0001f;
         // damping_nm = 188.494 * 0.0001 * 100 * 0.1 = 0.188494 Nm
         // total_nm = -(200 + 0.188) = -200.188
         // di_texture = -2.00 -> -1.0

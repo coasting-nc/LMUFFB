@@ -39,7 +39,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
 
     // Idle Smoothing
     double effective_shaft_smoothing = (double)m_front_axle.steering_shaft_smoothing;
-    double idle_speed_threshold = (double)m_speed_gate_upper;
+    double idle_speed_threshold = (double)m_advanced.speed_gate_upper;
     if (idle_speed_threshold < (double)IDLE_SPEED_MIN_M_S) idle_speed_threshold = (double)IDLE_SPEED_MIN_M_S;
     if (ctx.car_speed < idle_speed_threshold) {
         double idle_blend = (idle_speed_threshold - ctx.car_speed) / idle_speed_threshold;
@@ -405,8 +405,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     m_smoothed_structural_mult += alpha_gain * (target_structural_mult - m_smoothed_structural_mult);
 
     // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
-    if (seeded && m_rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
-        RestApiProvider::Get().RequestSteeringRange(m_rest_api_port);
+    if (seeded && m_advanced.rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
+        RestApiProvider::Get().RequestSteeringRange(m_advanced.rest_api_port);
     }
     
     // --- 1. INITIALIZE CONTEXT ---
@@ -429,7 +429,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     if (upsampled_data->mPhysicalSteeringWheelRange <= 0.0f) {
         if (!m_metadata.HasWarnedInvalidRange()) {
             float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
-            if (m_rest_api_enabled && fallback > 0.0f) {
+            if (m_advanced.rest_api_enabled && fallback > 0.0f) {
                 Logger::Get().LogFile("[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: %.1f deg", fallback);
             } else {
                 Logger::Get().LogFile("[WARNING] Invalid PhysicalSteeringWheelRange (<=0) for %s. Soft Lock and Steering UI may be incorrect.", upsampled_data->mVehicleName);
@@ -616,8 +616,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Speed Gate - v0.7.2 Smoothstep S-curve
     ctx.speed_gate = smoothstep(
-        (double)m_speed_gate_lower, 
-        (double)m_speed_gate_upper, 
+        (double)m_advanced.speed_gate_lower,
+        (double)m_advanced.speed_gate_upper,
         ctx.car_speed
     );
 
@@ -830,7 +830,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     float range_deg = sm_range_rad * (180.0f / (float)PI);
 
     // Fallback to REST API if enabled and SM range is invalid (Issue #221)
-    if (m_rest_api_enabled && sm_range_rad <= 0.0f) {
+    if (m_advanced.rest_api_enabled && sm_range_rad <= 0.0f) {
         float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
         if (fallback > 0.0f) {
             range_deg = fallback;
@@ -1387,7 +1387,7 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationC
     float range = data->mPhysicalSteeringWheelRange;
 
     // Fallback to REST API if enabled and SM range is invalid (Issue #221)
-    if (m_rest_api_enabled && range <= 0.0f) {
+    if (m_advanced.rest_api_enabled && range <= 0.0f) {
         float fallback_deg = RestApiProvider::Get().GetFallbackRangeDeg();
         if (fallback_deg > 0.0f) {
             range = fallback_deg * ((float)PI / 180.0f);
@@ -1400,19 +1400,19 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationC
     m_prev_steering_angle = steer_angle;
     
     // 2. Alpha Smoothing
-    double tau_gyro = (double)m_gyro_smoothing;
+    double tau_gyro = (double)m_advanced.gyro_smoothing;
     if (tau_gyro < MIN_TAU_S) tau_gyro = MIN_TAU_S;
     double alpha_gyro = ctx.dt / (tau_gyro + ctx.dt);
     m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
     
     // 3. DRIVING GYRO (Scales UP with speed. If m_gyro_gain is 0, this is 0.0)
-    double driving_gyro = m_gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
+    double driving_gyro = m_advanced.gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
     ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * driving_gyro;
 
     // 4. STATIONARY DAMPING (Scales DOWN with speed. If m_stationary_damping is 0, this is 0.0)
     // ctx.speed_gate is 0.0 at 0km/h, and 1.0 at the upper threshold (e.g., 18km/h)
     double stationary_blend = 1.0 - ctx.speed_gate;
-    ctx.stationary_damping_force = -1.0 * m_steering_velocity_smoothed * m_stationary_damping * stationary_blend;
+    ctx.stationary_damping_force = -1.0 * m_steering_velocity_smoothed * m_advanced.stationary_damping * stationary_blend;
 }
 
 // Helper: Calculate ABS Pulse (v0.7.53)

@@ -36,6 +36,7 @@ struct Preset {
     SlopeDetectionConfig slope_detection;
     BrakingConfig braking;
     VibrationConfig vibration;
+    AdvancedConfig advanced;
 
     // FFB Safety (Issue #316)
     float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
@@ -46,27 +47,6 @@ struct Preset {
     float safety_slew_full_scale_time_s = FFBEngine::DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S;
     bool stutter_safety_enabled = FFBEngine::DEFAULT_STUTTER_SAFETY_ENABLED;
     float stutter_threshold = FFBEngine::DEFAULT_STUTTER_THRESHOLD;
-
-    bool soft_lock_enabled = true;
-    float soft_lock_stiffness = 20.0f;
-    float soft_lock_damping = 0.5f;
-    
-    float gyro_gain = 0.0f;
-    float stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
-    
-    // NEW: Advanced Smoothing (v0.5.8)
-    float gyro_smoothing = 0.0f;
-
-    // v0.6.23 New Settings with HIGHER DEFAULTS
-    float speed_gate_lower = 1.0f; // 3.6 km/h
-    float speed_gate_upper = 5.0f; // 18.0 km/h (Fixes idle shake)
-    
-    // Reserved for future implementation (v0.6.23+)
-    float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
-    bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
-
-    bool rest_api_enabled = false;
-    int rest_api_port = 6397;
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}
@@ -118,9 +98,9 @@ struct Preset {
     Preset& SetDynamicNormalization(bool enabled) { general.dynamic_normalization_enabled = enabled; return *this; }
 
     Preset& SetSoftLock(bool enabled, float stiffness, float damping) {
-        soft_lock_enabled = enabled;
-        soft_lock_stiffness = stiffness;
-        soft_lock_damping = damping;
+        advanced.soft_lock_enabled = enabled;
+        advanced.soft_lock_stiffness = stiffness;
+        advanced.soft_lock_damping = damping;
         return *this;
     }
     
@@ -140,8 +120,8 @@ struct Preset {
     Preset& SetRearAlign(float v) { rear_axle.rear_align_effect = v; return *this; }
     Preset& SetKerbStrikeRejection(float v) { rear_axle.kerb_strike_rejection = v; return *this; }
     Preset& SetSoPYaw(float v) { rear_axle.sop_yaw_gain = v; return *this; }
-    Preset& SetGyro(float v) { gyro_gain = v; return *this; }
-    Preset& SetStationaryDamping(float v) { stationary_damping = v; return *this; }
+    Preset& SetGyro(float v) { advanced.gyro_gain = v; return *this; }
+    Preset& SetStationaryDamping(float v) { advanced.stationary_damping = v; return *this; }
     
     Preset& SetShaftGain(float v) { front_axle.steering_shaft_gain = v; return *this; }
     Preset& SetInGameGain(float v) { front_axle.ingame_ffb_gain = v; return *this; }
@@ -180,7 +160,7 @@ struct Preset {
         return *this;
     }
 
-    Preset& SetSpeedGate(float lower, float upper) { speed_gate_lower = lower; speed_gate_upper = upper; return *this; }
+    Preset& SetSpeedGate(float lower, float upper) { advanced.speed_gate_lower = lower; advanced.speed_gate_upper = upper; return *this; }
 
     Preset& SetOptimalSlip(float angle, float ratio) {
         grip_estimation.optimal_slip_angle = angle;
@@ -189,7 +169,7 @@ struct Preset {
     }
     Preset& SetShaftSmoothing(float v) { front_axle.steering_shaft_smoothing = v; return *this; }
     
-    Preset& SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }
+    Preset& SetGyroSmoothing(float v) { advanced.gyro_smoothing = v; return *this; }
     Preset& SetYawSmoothing(float v) { rear_axle.yaw_accel_smoothing = v; return *this; }
     Preset& SetChassisSmoothing(float v) { grip_estimation.chassis_inertia_smoothing = v; return *this; }
     
@@ -217,8 +197,8 @@ struct Preset {
     }
 
     Preset& SetRestApiFallback(bool enabled, int port = 6397) {
-        rest_api_enabled = enabled;
-        rest_api_port = port;
+        advanced.rest_api_enabled = enabled;
+        advanced.rest_api_port = port;
         return *this;
     }
 
@@ -283,6 +263,9 @@ struct Preset {
         engine.m_vibration = this->vibration;
         engine.m_vibration.Validate();
 
+        engine.m_advanced = this->advanced;
+        engine.m_advanced.Validate();
+
         // FFB Safety (Issue #316)
         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
         engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
@@ -292,24 +275,6 @@ struct Preset {
         engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);
         engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;
         engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);
-
-        engine.m_soft_lock_enabled = soft_lock_enabled;
-        engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
-        engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
-
-        engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
-        engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, stationary_damping));
-
-        engine.m_speed_gate_lower = (std::max)(0.0f, speed_gate_lower);
-        engine.m_speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
-        
-        // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
-        engine.m_gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
-        engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
-        engine.m_understeer_affects_sop = understeer_affects_sop;
-        
-        engine.m_rest_api_enabled = rest_api_enabled;
-        engine.m_rest_api_port = (std::max)(1, rest_api_port);
 
         // Stage 1 & 2 Normalization (Issue #152 & #153)
         // Initialize session peak from target rim torque to provide a sane starting point.
@@ -327,14 +292,7 @@ struct Preset {
         slope_detection.Validate();
         braking.Validate();
         vibration.Validate();
-        soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
-        soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
-        gyro_gain = (std::max)(0.0f, gyro_gain);
-
-        speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
-        gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
-        road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
-        rest_api_port = (std::max)(1, rest_api_port);
+        advanced.Validate();
 
         // FFB Safety (Issue #316)
         safety_window_duration = (std::max)(0.0f, safety_window_duration);
@@ -356,6 +314,7 @@ struct Preset {
         slope_detection = engine.m_slope_detection;
         braking = engine.m_braking;
         vibration = engine.m_vibration;
+        advanced = engine.m_advanced;
 
         // FFB Safety (Issue #316)
         safety_window_duration = engine.m_safety.m_safety_window_duration;
@@ -366,24 +325,6 @@ struct Preset {
         safety_slew_full_scale_time_s = engine.m_safety.m_safety_slew_full_scale_time_s;
         stutter_safety_enabled = engine.m_safety.m_stutter_safety_enabled;
         stutter_threshold = engine.m_safety.m_stutter_threshold;
-
-        soft_lock_enabled = engine.m_soft_lock_enabled;
-        soft_lock_stiffness = engine.m_soft_lock_stiffness;
-        soft_lock_damping = engine.m_soft_lock_damping;
-
-        gyro_gain = engine.m_gyro_gain;
-        stationary_damping = engine.m_stationary_damping;
-
-        speed_gate_lower = engine.m_speed_gate_lower;
-        speed_gate_upper = engine.m_speed_gate_upper;
-
-        // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
-        gyro_smoothing = engine.m_gyro_smoothing;
-        road_fallback_scale = engine.m_road_fallback_scale;
-        understeer_affects_sop = engine.m_understeer_affects_sop;
-
-        rest_api_enabled = engine.m_rest_api_enabled;
-        rest_api_port = engine.m_rest_api_port;
 
         app_version = LMUFFB_VERSION;
     }
@@ -400,6 +341,7 @@ struct Preset {
         if (!slope_detection.Equals(p.slope_detection, eps)) return false;
         if (!braking.Equals(p.braking, eps)) return false;
         if (!vibration.Equals(p.vibration, eps)) return false;
+        if (!advanced.Equals(p.advanced, eps)) return false;
 
         // FFB Safety (Issue #316)
         if (!is_near(safety_window_duration, p.safety_window_duration, eps)) return false;
@@ -410,24 +352,6 @@ struct Preset {
         if (!is_near(safety_slew_full_scale_time_s, p.safety_slew_full_scale_time_s, eps)) return false;
         if (stutter_safety_enabled != p.stutter_safety_enabled) return false;
         if (!is_near(stutter_threshold, p.stutter_threshold, eps)) return false;
-
-        if (soft_lock_enabled != p.soft_lock_enabled) return false;
-        if (!is_near(soft_lock_stiffness, p.soft_lock_stiffness, eps)) return false;
-        if (!is_near(soft_lock_damping, p.soft_lock_damping, eps)) return false;
-
-        if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
-        if (!is_near(stationary_damping, p.stationary_damping, eps)) return false;
-
-        if (!is_near(gyro_smoothing, p.gyro_smoothing, eps)) return false;
-
-        if (!is_near(speed_gate_lower, p.speed_gate_lower, eps)) return false;
-        if (!is_near(speed_gate_upper, p.speed_gate_upper, eps)) return false;
-
-        if (!is_near(road_fallback_scale, p.road_fallback_scale, eps)) return false;
-        if (understeer_affects_sop != p.understeer_affects_sop) return false;
-
-        if (rest_api_enabled != p.rest_api_enabled) return false;
-        if (rest_api_port != p.rest_api_port) return false;
 
         return true;
     }

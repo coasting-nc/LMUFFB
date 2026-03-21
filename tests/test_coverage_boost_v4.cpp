@@ -179,9 +179,9 @@ TEST_CASE(test_engine_calculate_force_not_allowed, "Physics") {
     InitializeEngine(engine);
 
     // When allowed=false, most forces should be zeroed except Soft Lock
-    engine.m_soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_enabled = true;
     data.mUnfilteredSteering = 1.1f; // Trigger soft lock
-    engine.m_soft_lock_stiffness = 10.0f;
+    engine.m_advanced.soft_lock_stiffness = 10.0f;
 
     double force = engine.calculate_force(&data, "GT3", "911", 0.0f, false);
     ASSERT_TRUE(std::abs(force) > 0.0); // Soft lock force should still be present
@@ -223,8 +223,8 @@ TEST_CASE(test_engine_extra_branches, "Physics") {
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
 
     // 4. Speed gate branches
-    engine.m_speed_gate_lower = 10.0f;
-    engine.m_speed_gate_upper = 5.0f; // Invalid: upper < lower
+    engine.m_advanced.speed_gate_lower = 10.0f;
+    engine.m_advanced.speed_gate_upper = 5.0f; // Invalid: upper < lower
     engine.calculate_force(&data, "GT3", "911", 0.1f);
 
     // 5. Logging branch in calculate_force

@@ -406,8 +406,8 @@ public:
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_braking.abs_pulse_enabled = val; }
     static void SetLastLogTime(FFBEngine& e, std::chrono::steady_clock::time_point t) { e.last_log_time = t; }
     static ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
-    static void SetRestApiEnabled(FFBEngine& e, bool val) { e.m_rest_api_enabled = val; }
-    static void SetRestApiPort(FFBEngine& e, int val) { e.m_rest_api_port = val; }
+    static void SetRestApiEnabled(FFBEngine& e, bool val) { e.m_advanced.rest_api_enabled = val; }
+    static void SetRestApiPort(FFBEngine& e, int val) { e.m_advanced.rest_api_port = val; }
     
     static void SetWasAllowed(FFBEngine& e, bool val) { e.m_was_allowed = val; }
     static bool GetWasAllowed(const FFBEngine& e) { return e.m_was_allowed; }
@@ -429,7 +429,7 @@ public:
     static void SetSteering100HzReconstruction(FFBEngine& e, int val) { e.m_front_axle.steering_100hz_reconstruction = val; }
     static void SetInvertForce(FFBEngine& e, bool val) { e.m_invert_force = val; }
     static void SetMinForce(FFBEngine& e, float val) { e.m_general.min_force = val; }
-    static void SetSoftLockEnabled(FFBEngine& e, bool val) { e.m_soft_lock_enabled = val; }
+    static void SetSoftLockEnabled(FFBEngine& e, bool val) { e.m_advanced.soft_lock_enabled = val; }
     static void SetLockupEnabled(FFBEngine& e, bool val) { e.m_braking.lockup_enabled = val; }
     static void CallCalculateSlideTexture(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
         e.calculate_slide_texture(data, ctx);

@@ -4,10 +4,10 @@ using namespace FFBEngineTests;
 
 TEST_CASE(test_stationary_damping_default, "Physics") {
     FFBEngine engine;
-    ASSERT_NEAR(engine.m_stationary_damping, 1.0f, 0.0001f);
+    ASSERT_NEAR(engine.m_advanced.stationary_damping, 1.0f, 0.0001f);
 
     Preset p;
-    ASSERT_NEAR(p.stationary_damping, 1.0f, 0.0001f);
+    ASSERT_NEAR(p.advanced.stationary_damping, 1.0f, 0.0001f);
 }
 
 TEST_CASE(test_stationary_damping_at_zero_speed, "Physics") {
@@ -15,10 +15,10 @@ TEST_CASE(test_stationary_damping_at_zero_speed, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0); // 0 km/h
     InitializeEngine(engine);
 
-    engine.m_stationary_damping = 1.0f;
-    engine.m_gyro_gain = 0.0f;
-    engine.m_speed_gate_lower = 1.0f; // 3.6 km/h
-    engine.m_speed_gate_upper = 5.0f; // 18.0 km/h
+    engine.m_advanced.stationary_damping = 1.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
+    engine.m_advanced.speed_gate_lower = 1.0f; // 3.6 km/h
+    engine.m_advanced.speed_gate_upper = 5.0f; // 18.0 km/h
 
     // Setup steering velocity: 1.0 rad/s
     // steering_velocity = (steer_angle - m_prev_steering_angle) / dt
@@ -55,9 +55,9 @@ TEST_CASE(test_stationary_damping_fades_at_speed, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(50.0); // 50 m/s (~180 km/h)
     InitializeEngine(engine);
 
-    engine.m_stationary_damping = 1.0f;
-    engine.m_speed_gate_lower = 1.0f;
-    engine.m_speed_gate_upper = 5.0f;
+    engine.m_advanced.stationary_damping = 1.0f;
+    engine.m_advanced.speed_gate_lower = 1.0f;
+    engine.m_advanced.speed_gate_upper = 5.0f;
 
     data.mUnfilteredSteering = 0.0;
     engine.calculate_force(&data, "GT3", "Ferrari 296 GT3", 0.0f, true);
@@ -82,12 +82,12 @@ TEST_CASE(test_stationary_damping_active_in_menus, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0); // 0 km/h
     InitializeEngine(engine);
 
-    engine.m_stationary_damping = 1.0f;
+    engine.m_advanced.stationary_damping = 1.0f;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 10.0f;
     engine.m_general.target_rim_nm = 10.0f;
-    engine.m_speed_gate_lower = 1.0f; // 3.6 km/h
-    engine.m_speed_gate_upper = 5.0f; // 18.0 km/h
+    engine.m_advanced.speed_gate_lower = 1.0f; // 3.6 km/h
+    engine.m_advanced.speed_gate_upper = 5.0f; // 18.0 km/h
 
     data.mUnfilteredSteering = 0.0;
     // First frame seeds

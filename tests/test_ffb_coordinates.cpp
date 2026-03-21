@@ -24,7 +24,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     engine.m_braking.lockup_enabled = false;
     engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
@@ -94,7 +94,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     engine.m_braking.lockup_enabled = false;
     engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
@@ -192,7 +192,7 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     engine.m_braking.lockup_enabled = false;
     engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
@@ -466,7 +466,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     engine.m_braking.lockup_enabled = false;
     engine.m_vibration.spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
