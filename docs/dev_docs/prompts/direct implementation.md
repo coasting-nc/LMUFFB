@@ -18,9 +18,10 @@ Before changing any production code, you must create a new test file (`tests/tes
 2. **Round-Trip Test:** Create a `Preset` with wild `LoadForcesConfig` values, call `Apply(engine)`, extract it back with `UpdateFromEngine(engine)`, and `ASSERT_TRUE` that the original and extracted presets are `Equals()`.
 3. **Validation Test:** Create a `Preset` with malicious out-of-bounds `LoadForcesConfig` values. Call `Apply()`, and assert that the engine clamped them to the safe ranges defined in `LoadForcesConfig::Validate()`.
 
-**Documentation Requirement:**
+**Documentation Requiremendocs\dev_docs\prompts\direct implementation.mdt:**
 Document your work by creating `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_load_forces.md`. 
-Include these sections: encountered issues, deviations from the plan, and suggestions for the future. 
+Describe what you did; periodically update this document as you progress through the work for the patch.
+Include also these sections: encountered issues, deviations from the plan, and suggestions for the future. 
 Document deviations and build issues. Note any specific issues encountered during the Build/Test loop. In the implementation notes also discuss any issues raised by the code reviews and how you addressed them; also discuss there any discrepancies between you and the code reviews (e.g., the code review said the patch would not build, but it does).
 See also the implementation notes that were created in previous iterations: 
 * `docs\dev_docs\implementation_plans\redesign_preset_system_phase1_general.md`
