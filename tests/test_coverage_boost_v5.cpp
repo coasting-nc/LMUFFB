@@ -304,8 +304,8 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(slip_smoothing, 0.5f);
     TEST_FIELD_NE(general.min_force, 0.5f);
     TEST_FIELD_NE(rear_axle.oversteer_boost, 0.5f);
-    TEST_FIELD_NE(long_load_effect, 0.5f);
-    TEST_FIELD_NE(long_load_smoothing, 0.5f);
+    TEST_FIELD_NE(load_forces.long_load_effect, 0.5f);
+    TEST_FIELD_NE(load_forces.long_load_smoothing, 0.5f);
     TEST_FIELD_NE(grip_smoothing_steady, 0.5f);
     TEST_FIELD_NE(grip_smoothing_fast, 0.5f);
     TEST_FIELD_NE(grip_smoothing_sensitivity, 0.5f);

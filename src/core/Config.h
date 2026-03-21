@@ -31,12 +31,8 @@ struct Preset {
     GeneralConfig general;
     FrontAxleConfig front_axle;
     RearAxleConfig rear_axle;
-    float lateral_load = 0.0f; // New v0.7.121
-    int lat_load_transform = 0; // New v0.7.154 (Issue #282)
+    LoadForcesConfig load_forces;
     float slip_smoothing = 0.002f;
-    float long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
-    float long_load_smoothing = 0.15f; // Renamed from dynamic_weight_smoothing (#301)
-    int long_load_transform = 0; // New #301
 
     // FFB Safety (Issue #316)
     float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
@@ -147,9 +143,9 @@ struct Preset {
     Preset& SetSmoothing(float v) { rear_axle.sop_smoothing_factor = v; return *this; }
     Preset& SetMinForce(float v) { general.min_force = v; return *this; }
     Preset& SetOversteer(float v) { rear_axle.oversteer_boost = v; return *this; }
-    Preset& SetLongitudinalLoad(float v) { long_load_effect = v; return *this; }
-    Preset& SetLongitudinalLoadSmoothing(float v) { long_load_smoothing = v; return *this; }
-    Preset& SetLongitudinalLoadTransform(int v) { long_load_transform = v; return *this; }
+    Preset& SetLongitudinalLoad(float v) { load_forces.long_load_effect = v; return *this; }
+    Preset& SetLongitudinalLoadSmoothing(float v) { load_forces.long_load_smoothing = v; return *this; }
+    Preset& SetLongitudinalLoadTransform(int v) { load_forces.long_load_transform = v; return *this; }
     Preset& SetGripSmoothing(float steady, float fast, float sens) {
         grip_smoothing_steady = steady;
         grip_smoothing_fast = fast;
@@ -334,12 +330,10 @@ struct Preset {
         engine.m_rear_axle = this->rear_axle;
         engine.m_rear_axle.Validate();
 
-        engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
-        engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(lat_load_transform, 0, 3));
+        engine.m_load_forces = this->load_forces;
+        engine.m_load_forces.Validate();
+
         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
-        engine.m_long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
-        engine.m_long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
-        engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(long_load_transform, 0, 3));
         engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
         engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
         engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
@@ -440,12 +434,8 @@ struct Preset {
         general.Validate();
         front_axle.Validate();
         rear_axle.Validate();
-        lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
-        lat_load_transform = std::clamp(lat_load_transform, 0, 3);
+        load_forces.Validate();
         slip_smoothing = (std::max)(0.0001f, slip_smoothing);
-        long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
-        long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
-        long_load_transform = std::clamp(long_load_transform, 0, 3);
         grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
         grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
         grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
@@ -505,12 +495,8 @@ struct Preset {
         general = engine.m_general;
         front_axle = engine.m_front_axle;
         rear_axle = engine.m_rear_axle;
-        lateral_load = engine.m_lat_load_effect;
-        lat_load_transform = static_cast<int>(engine.m_lat_load_transform);
+        load_forces = engine.m_load_forces;
         slip_smoothing = engine.m_slip_angle_smoothing;
-        long_load_effect = engine.m_long_load_effect;
-        long_load_smoothing = engine.m_long_load_smoothing;
-        long_load_transform = static_cast<int>(engine.m_long_load_transform);
         grip_smoothing_steady = engine.m_grip_smoothing_steady;
         grip_smoothing_fast = engine.m_grip_smoothing_fast;
         grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;
@@ -608,12 +594,8 @@ struct Preset {
         if (!general.Equals(p.general, eps)) return false;
         if (!front_axle.Equals(p.front_axle, eps)) return false;
         if (!rear_axle.Equals(p.rear_axle, eps)) return false;
-        if (!is_near(lateral_load, p.lateral_load, eps)) return false;
-        if (lat_load_transform != p.lat_load_transform) return false;
+        if (!load_forces.Equals(p.load_forces, eps)) return false;
         if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
-        if (!is_near(long_load_effect, p.long_load_effect, eps)) return false;
-        if (!is_near(long_load_smoothing, p.long_load_smoothing, eps)) return false;
-        if (long_load_transform != p.long_load_transform) return false;
         if (!is_near(grip_smoothing_steady, p.grip_smoothing_steady, eps)) return false;
         if (!is_near(grip_smoothing_fast, p.grip_smoothing_fast, eps)) return false;
         if (!is_near(grip_smoothing_sensitivity, p.grip_smoothing_sensitivity, eps)) return false;

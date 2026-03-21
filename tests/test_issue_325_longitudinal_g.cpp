@@ -11,11 +11,11 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
     InitializeEngine(engine);
 
     // Setup: 100% effect gain
-    engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 0.0f; // Instant
+    engine.m_load_forces.long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_smoothing = 0.0f; // Instant
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_long_load_transform = LoadTransform::LINEAR;
+    engine.m_load_forces.long_load_transform = (int)LoadTransform::LINEAR;
     engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 1G Braking (+Z is rearward/deceleration)
@@ -54,11 +54,11 @@ TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 0.0f;
+    engine.m_load_forces.long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_long_load_transform = LoadTransform::LINEAR;
+    engine.m_load_forces.long_load_transform = (int)LoadTransform::LINEAR;
     engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 3G Braking
@@ -91,11 +91,11 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 0.0f;
+    engine.m_load_forces.long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_long_load_transform = LoadTransform::CUBIC;
+    engine.m_load_forces.long_load_transform = (int)LoadTransform::CUBIC;
     engine.m_chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 0.5G Braking (4.905 m/s2)
@@ -133,8 +133,8 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_long_load_effect = 1.0f;
-    engine.m_long_load_smoothing = 0.0f;
+    engine.m_load_forces.long_load_effect = 1.0f;
+    engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
 

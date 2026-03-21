@@ -118,14 +118,10 @@ public:
     GeneralConfig m_general;
     FrontAxleConfig m_front_axle;
     RearAxleConfig m_rear_axle;
+    LoadForcesConfig m_load_forces;
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
-    float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
-    LoadTransform m_lat_load_transform = LoadTransform::LINEAR; // New v0.7.154 (Issue #282)
-    float m_long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
-    LoadTransform m_long_load_transform = LoadTransform::LINEAR; // New #301
 
     // Smoothing Settings (v0.7.47)
-    float m_long_load_smoothing; // Renamed from dynamic_weight_smoothing (#301)
     float m_grip_smoothing_steady;
     float m_grip_smoothing_fast;
     float m_grip_smoothing_sensitivity;

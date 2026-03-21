@@ -662,7 +662,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double long_load_factor = 1.0;
 
     // Apply if enabled (Uses chassis G-force, completely immune to aero and missing telemetry)
-    if (m_long_load_effect > 0.0) {
+    if (m_load_forces.long_load_effect > 0.0) {
         // Use Derived Longitudinal Acceleration (Z-axis) to isolate weight transfer.
         // LMU Coordinate System: +Z is rearward (deceleration/braking). -Z is forward (acceleration).
         // Normalize: 1G braking = +1.0, 1G acceleration = -1.0
@@ -672,12 +672,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         const double MAX_G_RANGE = 5.0;
         double long_load_norm = std::clamp(long_g, -MAX_G_RANGE, MAX_G_RANGE);
 
-        if (m_long_load_transform != LoadTransform::LINEAR) {
+        if (m_load_forces.long_load_transform != (int)LoadTransform::LINEAR) {
             // 1. Map the [-5.0, 5.0] range into the [-1.0, 1.0] domain required by the polynomials
             double x = long_load_norm / MAX_G_RANGE;
 
             // 2. Apply the mathematical transformation safely
-            switch (m_long_load_transform) {
+            switch (static_cast<LoadTransform>(m_load_forces.long_load_transform)) {
                 case LoadTransform::CUBIC:     x = apply_load_transform_cubic(x); break;
                 case LoadTransform::QUADRATIC: x = apply_load_transform_quadratic(x); break;
                 case LoadTransform::HERMITE:   x = apply_load_transform_hermite(x); break;
@@ -689,12 +689,12 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         }
 
         // Blend: 1.0 + (Ratio * Gain)
-        long_load_factor = 1.0 + long_load_norm * (double)m_long_load_effect;
+        long_load_factor = 1.0 + long_load_norm * (double)m_load_forces.long_load_effect;
         long_load_factor = std::clamp(long_load_factor, LONG_LOAD_MIN, LONG_LOAD_MAX);
     }
 
     // Apply Smoothing to Longitudinal Load (v0.7.47)
-    double dw_alpha = ctx.dt / ((double)m_long_load_smoothing + ctx.dt + EPSILON_DIV);
+    double dw_alpha = ctx.dt / ((double)m_load_forces.long_load_smoothing + ctx.dt + EPSILON_DIV);
     dw_alpha = (std::max)(0.0, (std::min)(1.0, dw_alpha));
     m_long_load_smoothed += dw_alpha * (long_load_factor - m_long_load_smoothed);
     long_load_factor = m_long_load_smoothed;
@@ -1154,7 +1154,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
 
     // Apply Transformation (Issue #282)
-    switch (m_lat_load_transform) {
+    switch (static_cast<LoadTransform>(m_load_forces.lat_load_transform)) {
         case LoadTransform::CUBIC:
             lat_load_norm = apply_load_transform_cubic(lat_load_norm);
             break;
@@ -1184,7 +1184,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     ctx.sop_unboosted_force = sop_base; // Store for snapshot
 
     // Independent Lateral Load Force (Issue #282)
-    ctx.lat_load_force = (m_sop_load_smoothed * (double)m_lat_load_effect) * (double)m_rear_axle.sop_scale;
+    ctx.lat_load_force = (m_sop_load_smoothed * (double)m_load_forces.lat_load_effect) * (double)m_rear_axle.sop_scale;
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip

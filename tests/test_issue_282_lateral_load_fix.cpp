@@ -9,7 +9,7 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_rear_axle.sop_effect = 0.0f;
-    engine.m_lat_load_effect = 1.0f;
+    engine.m_load_forces.lat_load_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f; // No smoothing for direct verification
 
@@ -17,7 +17,7 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     data.mLocalAccel.x = 0.0;
 
     auto get_lat_load_force = [&](LoadTransform transform, double fl_load, double fr_load) {
-        engine.m_lat_load_transform = transform;
+        engine.m_load_forces.lat_load_transform = static_cast<int>(transform);
         data.mWheel[0].mTireLoad = fl_load;
         data.mWheel[1].mTireLoad = fr_load;
         data.mWheel[2].mTireLoad = 4000.0; // Fixed rear
@@ -58,7 +58,7 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     // Verify limit (x = 1.0)
     // left = 8000+8000=16000. right=0. total=16000. x=1.0.
     auto get_lat_load_force_extreme = [&](LoadTransform transform) {
-        engine.m_lat_load_transform = transform;
+        engine.m_load_forces.lat_load_transform = static_cast<int>(transform);
         data.mWheel[0].mTireLoad = 8000.0;
         data.mWheel[1].mTireLoad = 0.0;
         data.mWheel[2].mTireLoad = 8000.0;
@@ -76,7 +76,7 @@ TEST_CASE_TAGGED(test_issue_282_sign_inversion, "CorePhysics", (std::vector<std:
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_rear_axle.sop_effect = 1.0f;
-    engine.m_lat_load_effect = 1.0f;
+    engine.m_load_forces.lat_load_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
@@ -105,7 +105,7 @@ TEST_CASE_TAGGED(test_issue_282_decoupling, "CorePhysics", (std::vector<std::str
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_rear_axle.sop_effect = 1.0f;
-    engine.m_lat_load_effect = 1.0f;
+    engine.m_load_forces.lat_load_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 

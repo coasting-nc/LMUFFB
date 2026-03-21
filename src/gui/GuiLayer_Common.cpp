@@ -624,25 +624,25 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Load Forces", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        FloatSetting("Lateral Load", &engine.m_lat_load_effect, 0.0f, 10.0f, FormatDecoupled(engine.m_lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+        FloatSetting("Lateral Load", &engine.m_load_forces.lat_load_effect, 0.0f, 10.0f, FormatDecoupled(engine.m_load_forces.lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
 
         const char* load_transforms[] = { "Linear (Raw)", "Cubic (Smooth)", "Quadratic (Broad)", "Hermite (Locked Center)" };
-        int lat_transform = static_cast<int>(engine.m_lat_load_transform);
+        int lat_transform = engine.m_load_forces.lat_load_transform;
         if (GuiWidgets::Combo("  Lateral Transform", &lat_transform, load_transforms, 4, "Mathematical transformation to soften the lateral load limits and remove 'notchiness'.").changed) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-            engine.m_lat_load_transform = static_cast<LoadTransform>(lat_transform);
+            engine.m_load_forces.lat_load_transform = lat_transform;
             Config::Save(engine);
         }
 
         ImGui::Spacing();
 
-        FloatSetting("Longitudinal G-Force", &engine.m_long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_long_load_effect), Tooltips::DYNAMIC_WEIGHT);
-        FloatSetting("  G-Force Smoothing", &engine.m_long_load_smoothing, 0.000f, 0.500f, "%.3f s", Tooltips::WEIGHT_SMOOTHING);
+        FloatSetting("Longitudinal G-Force", &engine.m_load_forces.long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_load_forces.long_load_effect), Tooltips::DYNAMIC_WEIGHT);
+        FloatSetting("  G-Force Smoothing", &engine.m_load_forces.long_load_smoothing, 0.000f, 0.500f, "%.3f s", Tooltips::WEIGHT_SMOOTHING);
 
-        int long_transform = static_cast<int>(engine.m_long_load_transform);
+        int long_transform = engine.m_load_forces.long_load_transform;
         if (GuiWidgets::Combo("  G-Force Transform", &long_transform, load_transforms, 4, "Mathematical transformation to soften the longitudinal load limits and remove 'notchiness'.").changed) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-            engine.m_long_load_transform = static_cast<LoadTransform>(long_transform);
+            engine.m_load_forces.long_load_transform = long_transform;
             Config::Save(engine);
         }
 

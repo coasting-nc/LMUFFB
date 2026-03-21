@@ -464,7 +464,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine.m_chassis_inertia_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(engine.m_gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(engine.m_front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
-        ASSERT_TRUE(engine.m_long_load_smoothing == reference_defaults.long_load_smoothing);
+        ASSERT_TRUE(engine.m_load_forces.long_load_smoothing == reference_defaults.load_forces.long_load_smoothing);
         ASSERT_TRUE(engine.m_grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
         ASSERT_TRUE(engine.m_grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
         ASSERT_TRUE(engine.m_grip_smoothing_sensitivity == reference_defaults.grip_smoothing_sensitivity);
@@ -497,7 +497,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(default_preset.chassis_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(default_preset.gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(default_preset.front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
-        ASSERT_TRUE(default_preset.long_load_smoothing == reference_defaults.long_load_smoothing);
+        ASSERT_TRUE(default_preset.load_forces.long_load_smoothing == reference_defaults.load_forces.long_load_smoothing);
         ASSERT_TRUE(default_preset.grip_smoothing_steady == reference_defaults.grip_smoothing_steady);
         ASSERT_TRUE(default_preset.grip_smoothing_fast == reference_defaults.grip_smoothing_fast);
         ASSERT_TRUE(default_preset.grip_smoothing_sensitivity == reference_defaults.grip_smoothing_sensitivity);
@@ -542,7 +542,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine1.m_chassis_inertia_smoothing == engine2.m_chassis_inertia_smoothing);
         ASSERT_TRUE(engine1.m_gyro_smoothing == engine2.m_gyro_smoothing);
         ASSERT_TRUE(engine1.m_front_axle.steering_shaft_smoothing == engine2.m_front_axle.steering_shaft_smoothing);
-        ASSERT_TRUE(engine1.m_long_load_smoothing == engine2.m_long_load_smoothing);
+        ASSERT_TRUE(engine1.m_load_forces.long_load_smoothing == engine2.m_load_forces.long_load_smoothing);
         ASSERT_TRUE(engine1.m_grip_smoothing_steady == engine2.m_grip_smoothing_steady);
         ASSERT_TRUE(engine1.m_grip_smoothing_fast == engine2.m_grip_smoothing_fast);
         ASSERT_TRUE(engine1.m_grip_smoothing_sensitivity == engine2.m_grip_smoothing_sensitivity);

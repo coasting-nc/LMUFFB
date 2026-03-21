@@ -9,7 +9,7 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_rear_axle.sop_effect = 0.0f;
-    engine.m_lat_load_effect = 1.0f;
+    engine.m_load_forces.lat_load_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
@@ -65,7 +65,7 @@ TEST_CASE_TAGGED(test_issue_306_sign_convention, "CorePhysics", (std::vector<std
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_rear_axle.sop_effect = 1.0f;
-    engine.m_lat_load_effect = 1.0f;
+    engine.m_load_forces.lat_load_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
@@ -163,7 +163,7 @@ TEST_CASE_TAGGED(test_issue_306_suspension_fallback_4_wheel, "CorePhysics", (std
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_rear_axle.sop_effect = 0.0f;
-    engine.m_lat_load_effect = 1.0f;
+    engine.m_load_forces.lat_load_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 

@@ -154,4 +154,29 @@ struct RearAxleConfig {
     }
 };
 
+struct LoadForcesConfig {
+    float lat_load_effect = 0.0f;
+    int lat_load_transform = 0; // Cast to LoadTransform enum in engine
+    float long_load_effect = 0.0f;
+    float long_load_smoothing = 0.15f;
+    int long_load_transform = 0; // Cast to LoadTransform enum in engine
+
+    bool Equals(const LoadForcesConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return is_near(lat_load_effect, o.lat_load_effect) &&
+               lat_load_transform == o.lat_load_transform &&
+               is_near(long_load_effect, o.long_load_effect) &&
+               is_near(long_load_smoothing, o.long_load_smoothing) &&
+               long_load_transform == o.long_load_transform;
+    }
+
+    void Validate() {
+        lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lat_load_effect));
+        lat_load_transform = (std::max)(0, (std::min)(3, lat_load_transform));
+        long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
+        long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
+        long_load_transform = (std::max)(0, (std::min)(3, long_load_transform));
+    }
+};
+
 #endif // FFBCONFIG_H
