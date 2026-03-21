@@ -10,20 +10,20 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup: Isolate SoP effect
-    engine.m_sop_effect = 1.0f;
-    engine.m_sop_scale = 10.0f;
-    engine.m_sop_smoothing_factor = 0.0f; // Disable smoothing for instant response (v0.7.147)
+    engine.m_rear_axle.sop_effect = 1.0f;
+    engine.m_rear_axle.sop_scale = 10.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // Disable smoothing for instant response (v0.7.147)
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
-    engine.m_sop_yaw_gain = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
@@ -83,17 +83,17 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup: Isolate Rear Aligning Torque
-    engine.m_rear_align_effect = 1.0f;
+    engine.m_rear_axle.rear_align_effect = 1.0f;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
-    engine.m_sop_yaw_gain = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
@@ -184,14 +184,14 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     engine.m_road_texture_enabled = true;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
-    engine.m_sop_yaw_gain = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
@@ -339,11 +339,11 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     
-    engine.m_sop_effect = 1.0f;          // Lateral G
-    engine.m_rear_align_effect = 1.0f;   // Rear Slip
-    engine.m_sop_yaw_gain = 1.0f;        // Yaw Accel
+    engine.m_rear_axle.sop_effect = 1.0f;          // Lateral G
+    engine.m_rear_axle.rear_align_effect = 1.0f;   // Rear Slip
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;        // Yaw Accel
     engine.m_scrub_drag_gain = 1.0f;     // Front Slip
-    engine.m_sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
     engine.m_invert_force = false;
     
     // Disable others to isolate lateral logic
@@ -452,11 +452,11 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     // This was caused by inverted rear aligning torque creating positive feedback.
     
     // Setup: Enable all effects that were problematic
-    engine.m_rear_align_effect = 1.0f;
+    engine.m_rear_axle.rear_align_effect = 1.0f;
     engine.m_scrub_drag_gain = 1.0f;
-    engine.m_sop_effect = 1.0f;
-    engine.m_sop_scale = 10.0f;
-    engine.m_sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
+    engine.m_rear_axle.sop_effect = 1.0f;
+    engine.m_rear_axle.sop_scale = 10.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // Instant response (v0.7.147)
     engine.m_road_texture_enabled = true;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
@@ -465,7 +465,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     engine.m_bottoming_enabled = false;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
-    engine.m_sop_yaw_gain = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
@@ -562,7 +562,7 @@ TEST_CASE(test_regression_phase_explosion, "Coordinates") {
     engine.m_spin_enabled = true;
     engine.m_spin_gain = 1.0f;
     
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
 
     // Slide Condition: avg_lat_vel > 0.5
     data.mWheel[0].mLateralPatchVel = 5.0; 

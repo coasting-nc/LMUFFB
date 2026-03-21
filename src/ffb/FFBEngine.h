@@ -117,8 +117,8 @@ public:
     // Settings (GUI Sliders)
     GeneralConfig m_general;
     FrontAxleConfig m_front_axle;
+    RearAxleConfig m_rear_axle;
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
-    float m_sop_effect;
     float m_lat_load_effect = 0.0f; // New v0.7.121 (Issue #213 add, not replace)
     LoadTransform m_lat_load_transform = LoadTransform::LINEAR; // New v0.7.154 (Issue #282)
     float m_long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
@@ -131,10 +131,8 @@ public:
     float m_grip_smoothing_sensitivity;
 
     // Configurable Smoothing & Caps (v0.3.9)
-    float m_sop_smoothing_factor;
     float m_texture_load_cap = 1.5f; 
     float m_brake_load_cap = 1.5f;   
-    float m_sop_scale;
     bool m_invert_force = true;
     
     // v0.4.4 Features
@@ -142,14 +140,9 @@ public:
     // Base Force Debugging (v0.4.13)
 
     // New Effects (v0.2)
-    float m_oversteer_boost;
-    float m_rear_align_effect;
-    float m_kerb_strike_rejection = 0.0f; // NEW: Kerb strike rejection slider
-    float m_sop_yaw_gain;
     float m_gyro_gain;
     float m_gyro_smoothing;
     float m_stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
-    float m_yaw_accel_smoothing;
     float m_chassis_inertia_smoothing;
     
     bool m_lockup_enabled;
@@ -194,21 +187,6 @@ public:
     // v0.4.41: Signal Filtering Settings
     
     // Static Notch Filter (v0.4.43)
-    float m_yaw_kick_threshold = 0.2f; 
-
-    // Unloaded Yaw Kick (Braking/Lift-off) - v0.7.164 (Issue #322)
-    float m_unloaded_yaw_gain = 0.0f;
-    float m_unloaded_yaw_threshold = 0.2f;
-    float m_unloaded_yaw_sens = 1.0f;
-    float m_unloaded_yaw_gamma = 0.5f;
-    float m_unloaded_yaw_punch = 0.05f;
-
-    // Power Yaw Kick (Acceleration) - v0.7.164 (Issue #322)
-    float m_power_yaw_gain = 0.0f;
-    float m_power_yaw_threshold = 0.2f;
-    float m_power_slip_threshold = 0.10f;
-    float m_power_yaw_gamma = 0.5f;
-    float m_power_yaw_punch = 0.05f;
 
     // v0.6.23: User-Adjustable Speed Gate
     float m_speed_gate_lower = 1.0f; 

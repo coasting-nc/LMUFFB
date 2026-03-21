@@ -206,11 +206,9 @@ struct SessionInfo {
     // Key settings snapshot
     GeneralConfig general;
     FrontAxleConfig front_axle;
-    float sop_effect;
+    RearAxleConfig rear_axle;
     float lat_load_effect; // v0.7.152
     float long_load_effect;
-    float sop_scale;       // v0.7.152
-    float sop_smoothing;   // v0.7.152
     float optimal_slip_angle; // v0.7.173
     float optimal_slip_ratio; // v0.7.173
     bool slope_enabled;
@@ -427,11 +425,11 @@ private:
         m_file << "# ========================\n";
         m_file << "# Gain: " << info.general.gain << "\n";
         m_file << "# Understeer Effect: " << info.front_axle.understeer_effect << "\n";
-        m_file << "# SoP Effect: " << info.sop_effect << "\n";
+        m_file << "# SoP Effect: " << info.rear_axle.sop_effect << "\n";
         m_file << "# Lateral Load Effect: " << info.lat_load_effect << "\n";
         m_file << "# Long Load Effect: " << info.long_load_effect << "\n";
-        m_file << "# SoP Scale: " << info.sop_scale << "\n";
-        m_file << "# SoP Smoothing: " << info.sop_smoothing << "\n";
+        m_file << "# SoP Scale: " << info.rear_axle.sop_scale << "\n";
+        m_file << "# SoP Smoothing: " << info.rear_axle.sop_smoothing_factor << "\n";
         m_file << "# Optimal Slip Angle: " << info.optimal_slip_angle << "\n";
         m_file << "# Optimal Slip Ratio: " << info.optimal_slip_ratio << "\n";
         m_file << "# Slope Detection: " << (info.slope_enabled ? "Enabled" : "Disabled") << "\n";

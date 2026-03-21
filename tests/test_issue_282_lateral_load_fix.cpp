@@ -8,10 +8,10 @@ using namespace FFBEngineTests;
 TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std::string>{"Physics", "Issue282"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f; // No smoothing for direct verification
+    engine.m_rear_axle.sop_scale = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // No smoothing for direct verification
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 0.0;
@@ -75,10 +75,10 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
 TEST_CASE_TAGGED(test_issue_282_sign_inversion, "CorePhysics", (std::vector<std::string>{"Physics", "Issue282"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_sop_effect = 1.0f;
+    engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
@@ -104,10 +104,10 @@ TEST_CASE_TAGGED(test_issue_282_sign_inversion, "CorePhysics", (std::vector<std:
 TEST_CASE_TAGGED(test_issue_282_decoupling, "CorePhysics", (std::vector<std::string>{"Physics", "Issue282"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_sop_effect = 1.0f;
+    engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 9.81;
@@ -115,12 +115,12 @@ TEST_CASE_TAGGED(test_issue_282_decoupling, "CorePhysics", (std::vector<std::str
     data.mWheel[1].mTireLoad = 2000.0;
 
     // Case 1: No boost
-    engine.m_oversteer_boost = 0.0f;
+    engine.m_rear_axle.oversteer_boost = 0.0f;
     engine.calculate_force(&data);
     float lat_load_1 = engine.GetDebugBatch().back().lat_load_force;
 
     // Case 2: High boost
-    engine.m_oversteer_boost = 2.0f;
+    engine.m_rear_axle.oversteer_boost = 2.0f;
     // We need to ensure we have front grip < rear grip or vice versa if boost logic depends on it,
     // but the point is lat_load_force should NOT be affected by the boost multiplier regardless.
     // In calculate_sop_lateral, sop_base is boosted, lat_load_force is NOT.

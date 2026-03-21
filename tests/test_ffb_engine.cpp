@@ -220,8 +220,8 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     InitializeEngine(engine);
 
     // Configure engine for test
-    engine.m_rear_align_effect = 1.0f;
-    engine.m_kerb_strike_rejection = 1.0f; // 100% rejection
+    engine.m_rear_axle.rear_align_effect = 1.0f;
+    engine.m_rear_axle.kerb_strike_rejection = 1.0f; // 100% rejection
     engine.m_invert_force = false;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 100.0f;
@@ -287,7 +287,7 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     ASSERT_TRUE(detected);
 
     // 5. Physics Saturation Verification (Always On)
-    engine.m_kerb_strike_rejection = 0.0f; // Disable rejection
+    engine.m_rear_axle.kerb_strike_rejection = 0.0f; // Disable rejection
     FFBEngineTestAccess::SetKerbTimer(engine, 0.0);
     data.mWheel[2].mTireLoad = 50000.0; // 10x static load!
     data.mWheel[3].mTireLoad = 50000.0;

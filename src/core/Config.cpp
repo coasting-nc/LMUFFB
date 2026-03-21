@@ -98,33 +98,33 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "torque_source") { current_preset.front_axle.torque_source = std::stoi(value); return true; }
     if (key == "steering_100hz_reconstruction") { current_preset.front_axle.steering_100hz_reconstruction = std::stoi(value); return true; }
     if (key == "torque_passthrough") { current_preset.front_axle.torque_passthrough = (value == "1" || value == "true"); return true; }
-    if (key == "sop") { current_preset.sop = std::stof(value); return true; }
+    if (key == "sop") { current_preset.rear_axle.sop_effect = std::stof(value); return true; }
     if (key == "lateral_load_effect") { current_preset.lateral_load = std::stof(value); return true; }
     if (key == "lat_load_transform") { current_preset.lat_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
-    if (key == "sop_scale") { current_preset.sop_scale = std::stof(value); return true; }
-    if (key == "sop_smoothing_factor") { current_preset.sop_smoothing = std::stof(value); return true; }
-    if (key == "oversteer_boost") { current_preset.oversteer_boost = std::stof(value); return true; }
+    if (key == "sop_scale") { current_preset.rear_axle.sop_scale = std::stof(value); return true; }
+    if (key == "sop_smoothing_factor") { current_preset.rear_axle.sop_smoothing_factor = std::stof(value); return true; }
+    if (key == "oversteer_boost") { current_preset.rear_axle.oversteer_boost = std::stof(value); return true; }
     if (key == "long_load_effect" || key == "dynamic_weight_gain") { current_preset.long_load_effect = std::stof(value); return true; }
     if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { current_preset.long_load_smoothing = std::stof(value); return true; }
     if (key == "long_load_transform") { current_preset.long_load_transform = std::clamp(std::stoi(value), 0, 3); return true; }
     if (key == "grip_smoothing_steady") { current_preset.grip_smoothing_steady = std::stof(value); return true; }
     if (key == "grip_smoothing_fast") { current_preset.grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { current_preset.grip_smoothing_sensitivity = std::stof(value); return true; }
-    if (key == "rear_align_effect") { current_preset.rear_align_effect = std::stof(value); return true; }
-    if (key == "kerb_strike_rejection") { current_preset.kerb_strike_rejection = std::stof(value); return true; }
-    if (key == "sop_yaw_gain") { current_preset.sop_yaw_gain = std::stof(value); return true; }
-    if (key == "yaw_kick_threshold") { current_preset.yaw_kick_threshold = std::stof(value); return true; }
-    if (key == "unloaded_yaw_gain") { current_preset.unloaded_yaw_gain = std::stof(value); return true; }
-    if (key == "unloaded_yaw_threshold") { current_preset.unloaded_yaw_threshold = std::stof(value); return true; }
-    if (key == "unloaded_yaw_sens") { current_preset.unloaded_yaw_sens = std::stof(value); return true; }
-    if (key == "unloaded_yaw_gamma") { current_preset.unloaded_yaw_gamma = std::stof(value); return true; }
-    if (key == "unloaded_yaw_punch") { current_preset.unloaded_yaw_punch = std::stof(value); return true; }
-    if (key == "power_yaw_gain") { current_preset.power_yaw_gain = std::stof(value); return true; }
-    if (key == "power_yaw_threshold") { current_preset.power_yaw_threshold = std::stof(value); return true; }
-    if (key == "power_slip_threshold") { current_preset.power_slip_threshold = std::stof(value); return true; }
-    if (key == "power_yaw_gamma") { current_preset.power_yaw_gamma = std::stof(value); return true; }
-    if (key == "power_yaw_punch") { current_preset.power_yaw_punch = std::stof(value); return true; }
-    if (key == "yaw_accel_smoothing") { current_preset.yaw_smoothing = std::stof(value); return true; }
+    if (key == "rear_align_effect") { current_preset.rear_axle.rear_align_effect = std::stof(value); return true; }
+    if (key == "kerb_strike_rejection") { current_preset.rear_axle.kerb_strike_rejection = std::stof(value); return true; }
+    if (key == "sop_yaw_gain") { current_preset.rear_axle.sop_yaw_gain = std::stof(value); return true; }
+    if (key == "yaw_kick_threshold") { current_preset.rear_axle.yaw_kick_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gain") { current_preset.rear_axle.unloaded_yaw_gain = std::stof(value); return true; }
+    if (key == "unloaded_yaw_threshold") { current_preset.rear_axle.unloaded_yaw_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_sens") { current_preset.rear_axle.unloaded_yaw_sens = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gamma") { current_preset.rear_axle.unloaded_yaw_gamma = std::stof(value); return true; }
+    if (key == "unloaded_yaw_punch") { current_preset.rear_axle.unloaded_yaw_punch = std::stof(value); return true; }
+    if (key == "power_yaw_gain") { current_preset.rear_axle.power_yaw_gain = std::stof(value); return true; }
+    if (key == "power_yaw_threshold") { current_preset.rear_axle.power_yaw_threshold = std::stof(value); return true; }
+    if (key == "power_slip_threshold") { current_preset.rear_axle.power_slip_threshold = std::stof(value); return true; }
+    if (key == "power_yaw_gamma") { current_preset.rear_axle.power_yaw_gamma = std::stof(value); return true; }
+    if (key == "power_yaw_punch") { current_preset.rear_axle.power_yaw_punch = std::stof(value); return true; }
+    if (key == "yaw_accel_smoothing") { current_preset.rear_axle.yaw_accel_smoothing = std::stof(value); return true; }
     if (key == "gyro_gain") { current_preset.gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "stationary_damping") { current_preset.stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { current_preset.gyro_smoothing = std::stof(value); return true; }
@@ -262,41 +262,41 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "torque_source") { engine.m_front_axle.torque_source = std::stoi(value); return true; }
     if (key == "steering_100hz_reconstruction") { engine.m_front_axle.steering_100hz_reconstruction = std::stoi(value); return true; }
     if (key == "torque_passthrough") { engine.m_front_axle.torque_passthrough = (value == "1" || value == "true"); return true; }
-    if (key == "sop") { engine.m_sop_effect = std::stof(value); return true; }
+    if (key == "sop") { engine.m_rear_axle.sop_effect = std::stof(value); return true; }
     if (key == "lateral_load_effect") { engine.m_lat_load_effect = std::stof(value); return true; }
     if (key == "lat_load_transform") { engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3)); return true; }
-    if (key == "sop_scale") { engine.m_sop_scale = std::stof(value); return true; }
+    if (key == "sop_scale") { engine.m_rear_axle.sop_scale = std::stof(value); return true; }
     if (key == "sop_smoothing_factor" || key == "smoothing") {
         float val = std::stof(value);
         if (IsVersionLessEqual(config_version, "0.7.146")) {
             val = 0.0f;
             needs_save = true;
         }
-        engine.m_sop_smoothing_factor = val;
+        engine.m_rear_axle.sop_smoothing_factor = val;
         return true;
     }
-    if (key == "oversteer_boost") { engine.m_oversteer_boost = std::stof(value); return true; }
+    if (key == "oversteer_boost") { engine.m_rear_axle.oversteer_boost = std::stof(value); return true; }
     if (key == "long_load_effect" || key == "dynamic_weight_gain") { engine.m_long_load_effect = std::stof(value); return true; }
     if (key == "long_load_smoothing" || key == "dynamic_weight_smoothing") { engine.m_long_load_smoothing = std::stof(value); return true; }
     if (key == "long_load_transform") { engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(std::stoi(value), 0, 3)); return true; }
     if (key == "grip_smoothing_steady") { engine.m_grip_smoothing_steady = std::stof(value); return true; }
     if (key == "grip_smoothing_fast") { engine.m_grip_smoothing_fast = std::stof(value); return true; }
     if (key == "grip_smoothing_sensitivity") { engine.m_grip_smoothing_sensitivity = std::stof(value); return true; }
-    if (key == "rear_align_effect") { engine.m_rear_align_effect = std::stof(value); return true; }
-    if (key == "kerb_strike_rejection") { engine.m_kerb_strike_rejection = std::stof(value); return true; }
-    if (key == "sop_yaw_gain") { engine.m_sop_yaw_gain = std::stof(value); return true; }
-    if (key == "yaw_kick_threshold") { engine.m_yaw_kick_threshold = std::stof(value); return true; }
-    if (key == "unloaded_yaw_gain") { engine.m_unloaded_yaw_gain = std::stof(value); return true; }
-    if (key == "unloaded_yaw_threshold") { engine.m_unloaded_yaw_threshold = std::stof(value); return true; }
-    if (key == "unloaded_yaw_sens") { engine.m_unloaded_yaw_sens = std::stof(value); return true; }
-    if (key == "unloaded_yaw_gamma") { engine.m_unloaded_yaw_gamma = std::stof(value); return true; }
-    if (key == "unloaded_yaw_punch") { engine.m_unloaded_yaw_punch = std::stof(value); return true; }
-    if (key == "power_yaw_gain") { engine.m_power_yaw_gain = std::stof(value); return true; }
-    if (key == "power_yaw_threshold") { engine.m_power_yaw_threshold = std::stof(value); return true; }
-    if (key == "power_slip_threshold") { engine.m_power_slip_threshold = std::stof(value); return true; }
-    if (key == "power_yaw_gamma") { engine.m_power_yaw_gamma = std::stof(value); return true; }
-    if (key == "power_yaw_punch") { engine.m_power_yaw_punch = std::stof(value); return true; }
-    if (key == "yaw_accel_smoothing") { engine.m_yaw_accel_smoothing = std::stof(value); return true; }
+    if (key == "rear_align_effect") { engine.m_rear_axle.rear_align_effect = std::stof(value); return true; }
+    if (key == "kerb_strike_rejection") { engine.m_rear_axle.kerb_strike_rejection = std::stof(value); return true; }
+    if (key == "sop_yaw_gain") { engine.m_rear_axle.sop_yaw_gain = std::stof(value); return true; }
+    if (key == "yaw_kick_threshold") { engine.m_rear_axle.yaw_kick_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gain") { engine.m_rear_axle.unloaded_yaw_gain = std::stof(value); return true; }
+    if (key == "unloaded_yaw_threshold") { engine.m_rear_axle.unloaded_yaw_threshold = std::stof(value); return true; }
+    if (key == "unloaded_yaw_sens") { engine.m_rear_axle.unloaded_yaw_sens = std::stof(value); return true; }
+    if (key == "unloaded_yaw_gamma") { engine.m_rear_axle.unloaded_yaw_gamma = std::stof(value); return true; }
+    if (key == "unloaded_yaw_punch") { engine.m_rear_axle.unloaded_yaw_punch = std::stof(value); return true; }
+    if (key == "power_yaw_gain") { engine.m_rear_axle.power_yaw_gain = std::stof(value); return true; }
+    if (key == "power_yaw_threshold") { engine.m_rear_axle.power_yaw_threshold = std::stof(value); return true; }
+    if (key == "power_slip_threshold") { engine.m_rear_axle.power_slip_threshold = std::stof(value); return true; }
+    if (key == "power_yaw_gamma") { engine.m_rear_axle.power_yaw_gamma = std::stof(value); return true; }
+    if (key == "power_yaw_punch") { engine.m_rear_axle.power_yaw_punch = std::stof(value); return true; }
+    if (key == "yaw_accel_smoothing") { engine.m_rear_axle.yaw_accel_smoothing = std::stof(value); return true; }
     if (key == "gyro_gain") { engine.m_gyro_gain = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "stationary_damping") { engine.m_stationary_damping = (std::min)(1.0f, std::stof(value)); return true; }
     if (key == "gyro_smoothing_factor") { engine.m_gyro_smoothing = std::stof(value); return true; }
@@ -422,16 +422,16 @@ void Config::LoadPresets() {
         p.front_axle.static_notch_enabled = false;
         p.front_axle.static_notch_freq = 11.0f;
         p.front_axle.static_notch_width = 2.0f;
-        p.oversteer_boost = 2.40336f;
-        p.sop = 0.425003f;
-        p.rear_align_effect = 0.966383f;
-        p.sop_yaw_gain = 0.386555f;
-        p.yaw_kick_threshold = 1.68f;
-        p.yaw_smoothing = 0.005f;
+        p.rear_axle.oversteer_boost = 2.40336f;
+        p.rear_axle.sop_effect = 0.425003f;
+        p.rear_axle.rear_align_effect = 0.966383f;
+        p.rear_axle.sop_yaw_gain = 0.386555f;
+        p.rear_axle.yaw_kick_threshold = 1.68f;
+        p.rear_axle.yaw_accel_smoothing = 0.005f;
         p.gyro_gain = 0.0336134f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 0.0f;
-        p.sop_scale = 1.0f;
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+        p.rear_axle.sop_scale = 1.0f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.0f;
         p.chassis_smoothing = 0.0f;
@@ -489,34 +489,34 @@ void Config::LoadPresets() {
         p.front_axle.static_notch_enabled = false;
         p.front_axle.static_notch_freq = 11.0f;
         p.front_axle.static_notch_width = 2.0f;
-        p.oversteer_boost = 0.0f;
+        p.rear_axle.oversteer_boost = 0.0f;
         p.long_load_effect = 2.68722f;
         p.long_load_smoothing = 0.15f;
         p.long_load_transform = 0;
         p.grip_smoothing_steady = 0.05f;
         p.grip_smoothing_fast = 0.005f;
         p.grip_smoothing_sensitivity = 0.1f;
-        p.sop = 0.0f;
+        p.rear_axle.sop_effect = 0.0f;
         p.lateral_load = 2.81938f;
         p.lat_load_transform = 2;
-        p.rear_align_effect = 0.828194f;
-        p.sop_yaw_gain = 0.418502f;
-        p.yaw_kick_threshold = 1.01f;
-        p.unloaded_yaw_gain = 1.0f;
-        p.unloaded_yaw_threshold = 0.0f;
-        p.unloaded_yaw_sens = 0.1f;
-        p.unloaded_yaw_gamma = 0.1f;
-        p.unloaded_yaw_punch = 0.0f;
-        p.power_yaw_gain = 1.0f;
-        p.power_yaw_threshold = 0.0f;
-        p.power_slip_threshold = 0.0618062f;
-        p.power_yaw_gamma = 0.2f;
-        p.power_yaw_punch = 0.0f;
-        p.yaw_smoothing = 0.001f;
+        p.rear_axle.rear_align_effect = 0.828194f;
+        p.rear_axle.sop_yaw_gain = 0.418502f;
+        p.rear_axle.yaw_kick_threshold = 1.01f;
+        p.rear_axle.unloaded_yaw_gain = 1.0f;
+        p.rear_axle.unloaded_yaw_threshold = 0.0f;
+        p.rear_axle.unloaded_yaw_sens = 0.1f;
+        p.rear_axle.unloaded_yaw_gamma = 0.1f;
+        p.rear_axle.unloaded_yaw_punch = 0.0f;
+        p.rear_axle.power_yaw_gain = 1.0f;
+        p.rear_axle.power_yaw_threshold = 0.0f;
+        p.rear_axle.power_slip_threshold = 0.0618062f;
+        p.rear_axle.power_yaw_gamma = 0.2f;
+        p.rear_axle.power_yaw_punch = 0.0f;
+        p.rear_axle.yaw_accel_smoothing = 0.001f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 0.0f;
-        p.sop_scale = 1.0f;
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+        p.rear_axle.sop_scale = 1.0f;
         p.understeer_affects_sop = false;
         p.slope_detection_enabled = false;
         p.slope_sg_window = 15;
@@ -599,16 +599,16 @@ void Config::LoadPresets() {
         p.front_axle.static_notch_enabled = false;
         p.front_axle.static_notch_freq = 11.0f;
         p.front_axle.static_notch_width = 2.0f;
-        p.oversteer_boost = 2.52101f;
-        p.sop = 1.666f;
-        p.rear_align_effect = 0.666f;
-        p.sop_yaw_gain = 0.333f;
-        p.yaw_kick_threshold = 0.0f;
-        p.yaw_smoothing = 0.001f;
+        p.rear_axle.oversteer_boost = 2.52101f;
+        p.rear_axle.sop_effect = 1.666f;
+        p.rear_axle.rear_align_effect = 0.666f;
+        p.rear_axle.sop_yaw_gain = 0.333f;
+        p.rear_axle.yaw_kick_threshold = 0.0f;
+        p.rear_axle.yaw_accel_smoothing = 0.001f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 0.0f;
-        p.sop_scale = 1.98f;
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+        p.rear_axle.sop_scale = 1.98f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.002f;
         p.chassis_smoothing = 0.012f;
@@ -662,16 +662,16 @@ void Config::LoadPresets() {
         p.front_axle.static_notch_enabled = false;
         p.front_axle.static_notch_freq = 11.0f;
         p.front_axle.static_notch_width = 2.0f;
-        p.oversteer_boost = 2.52101f;
-        p.sop = 1.666f;
-        p.rear_align_effect = 0.666f;
-        p.sop_yaw_gain = 0.333f;
-        p.yaw_kick_threshold = 0.0f;
-        p.yaw_smoothing = 0.003f;
+        p.rear_axle.oversteer_boost = 2.52101f;
+        p.rear_axle.sop_effect = 1.666f;
+        p.rear_axle.rear_align_effect = 0.666f;
+        p.rear_axle.sop_yaw_gain = 0.333f;
+        p.rear_axle.yaw_kick_threshold = 0.0f;
+        p.rear_axle.yaw_accel_smoothing = 0.003f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.003f;
-        p.sop_smoothing = 0.0f;
-        p.sop_scale = 1.59f;
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+        p.rear_axle.sop_scale = 1.59f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.003f;
         p.chassis_smoothing = 0.019f;
@@ -725,16 +725,16 @@ void Config::LoadPresets() {
         p.front_axle.static_notch_enabled = false;
         p.front_axle.static_notch_freq = 11.0f;
         p.front_axle.static_notch_width = 2.0f;
-        p.oversteer_boost = 0.0f;
-        p.sop = 0.0f;
-        p.rear_align_effect = 0.29f;
-        p.sop_yaw_gain = 0.0f;
-        p.yaw_kick_threshold = 0.0f;
-        p.yaw_smoothing = 0.015f;
+        p.rear_axle.oversteer_boost = 0.0f;
+        p.rear_axle.sop_effect = 0.0f;
+        p.rear_axle.rear_align_effect = 0.29f;
+        p.rear_axle.sop_yaw_gain = 0.0f;
+        p.rear_axle.yaw_kick_threshold = 0.0f;
+        p.rear_axle.yaw_accel_smoothing = 0.015f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 0.0f;
-        p.sop_scale = 0.89f;
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+        p.rear_axle.sop_scale = 0.89f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.002f;
         p.chassis_smoothing = 0.0f;
@@ -789,16 +789,16 @@ void Config::LoadPresets() {
         p.front_axle.static_notch_enabled = false;
         p.front_axle.static_notch_freq = 11.0f;
         p.front_axle.static_notch_width = 2.0f;
-        p.oversteer_boost = 0.0f;
-        p.sop = 0.0f;
-        p.rear_align_effect = 0.29f;
-        p.sop_yaw_gain = 0.333f;  // ONLY DIFFERENCE: Added yaw kick
-        p.yaw_kick_threshold = 0.0f;
-        p.yaw_smoothing = 0.003f;
+        p.rear_axle.oversteer_boost = 0.0f;
+        p.rear_axle.sop_effect = 0.0f;
+        p.rear_axle.rear_align_effect = 0.29f;
+        p.rear_axle.sop_yaw_gain = 0.333f;  // ONLY DIFFERENCE: Added yaw kick
+        p.rear_axle.yaw_kick_threshold = 0.0f;
+        p.rear_axle.yaw_accel_smoothing = 0.003f;
         p.gyro_gain = 0.0f;
         p.gyro_smoothing = 0.0f;
-        p.sop_smoothing = 0.0f;
-        p.sop_scale = 0.89f;
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+        p.rear_axle.sop_scale = 0.89f;
         p.understeer_affects_sop = false;
         p.slip_smoothing = 0.002f;
         p.chassis_smoothing = 0.0f;
@@ -1153,7 +1153,7 @@ void Config::LoadPresets() {
 
                 // MIGRATION: If version is missing or old, update it
                 if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
-                    current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
+                    current_preset.rear_axle.sop_smoothing_factor = 0.0f; // Issue #37: Reset to Raw for migration
                     needs_save = true;
                     if (current_preset_version.empty()) {
                         current_preset.app_version = LMUFFB_VERSION;
@@ -1208,7 +1208,7 @@ void Config::LoadPresets() {
 
         // MIGRATION: If version is missing or old, update it
         if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
-            current_preset.sop_smoothing = 0.0f; // Issue #37: Reset to Raw for migration
+            current_preset.rear_axle.sop_smoothing_factor = 0.0f; // Issue #37: Reset to Raw for migration
             needs_save = true;
             if (current_preset_version.empty()) {
                 current_preset.app_version = LMUFFB_VERSION;
@@ -1263,36 +1263,36 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "static_notch_freq=" << p.front_axle.static_notch_freq << "\n";
     file << "static_notch_width=" << p.front_axle.static_notch_width << "\n";
 
-    file << "oversteer_boost=" << p.oversteer_boost << "\n";
+    file << "oversteer_boost=" << p.rear_axle.oversteer_boost << "\n";
     file << "long_load_effect=" << p.long_load_effect << "\n";
     file << "long_load_smoothing=" << p.long_load_smoothing << "\n";
     file << "long_load_transform=" << p.long_load_transform << "\n";
     file << "grip_smoothing_steady=" << p.grip_smoothing_steady << "\n";
     file << "grip_smoothing_fast=" << p.grip_smoothing_fast << "\n";
     file << "grip_smoothing_sensitivity=" << p.grip_smoothing_sensitivity << "\n";
-    file << "sop=" << p.sop << "\n";
+    file << "sop=" << p.rear_axle.sop_effect << "\n";
     file << "lateral_load_effect=" << p.lateral_load << "\n";
     file << "lat_load_transform=" << p.lat_load_transform << "\n";
-    file << "rear_align_effect=" << p.rear_align_effect << "\n";
-    file << "kerb_strike_rejection=" << p.kerb_strike_rejection << "\n";
-    file << "sop_yaw_gain=" << p.sop_yaw_gain << "\n";
-    file << "yaw_kick_threshold=" << p.yaw_kick_threshold << "\n";
-    file << "unloaded_yaw_gain=" << p.unloaded_yaw_gain << "\n";
-    file << "unloaded_yaw_threshold=" << p.unloaded_yaw_threshold << "\n";
-    file << "unloaded_yaw_sens=" << p.unloaded_yaw_sens << "\n";
-    file << "unloaded_yaw_gamma=" << p.unloaded_yaw_gamma << "\n";
-    file << "unloaded_yaw_punch=" << p.unloaded_yaw_punch << "\n";
-    file << "power_yaw_gain=" << p.power_yaw_gain << "\n";
-    file << "power_yaw_threshold=" << p.power_yaw_threshold << "\n";
-    file << "power_slip_threshold=" << p.power_slip_threshold << "\n";
-    file << "power_yaw_gamma=" << p.power_yaw_gamma << "\n";
-    file << "power_yaw_punch=" << p.power_yaw_punch << "\n";
-    file << "yaw_accel_smoothing=" << p.yaw_smoothing << "\n";
+    file << "rear_align_effect=" << p.rear_axle.rear_align_effect << "\n";
+    file << "kerb_strike_rejection=" << p.rear_axle.kerb_strike_rejection << "\n";
+    file << "sop_yaw_gain=" << p.rear_axle.sop_yaw_gain << "\n";
+    file << "yaw_kick_threshold=" << p.rear_axle.yaw_kick_threshold << "\n";
+    file << "unloaded_yaw_gain=" << p.rear_axle.unloaded_yaw_gain << "\n";
+    file << "unloaded_yaw_threshold=" << p.rear_axle.unloaded_yaw_threshold << "\n";
+    file << "unloaded_yaw_sens=" << p.rear_axle.unloaded_yaw_sens << "\n";
+    file << "unloaded_yaw_gamma=" << p.rear_axle.unloaded_yaw_gamma << "\n";
+    file << "unloaded_yaw_punch=" << p.rear_axle.unloaded_yaw_punch << "\n";
+    file << "power_yaw_gain=" << p.rear_axle.power_yaw_gain << "\n";
+    file << "power_yaw_threshold=" << p.rear_axle.power_yaw_threshold << "\n";
+    file << "power_slip_threshold=" << p.rear_axle.power_slip_threshold << "\n";
+    file << "power_yaw_gamma=" << p.rear_axle.power_yaw_gamma << "\n";
+    file << "power_yaw_punch=" << p.rear_axle.power_yaw_punch << "\n";
+    file << "yaw_accel_smoothing=" << p.rear_axle.yaw_accel_smoothing << "\n";
     file << "gyro_gain=" << p.gyro_gain << "\n";
     file << "stationary_damping=" << p.stationary_damping << "\n";
     file << "gyro_smoothing_factor=" << p.gyro_smoothing << "\n";
-    file << "sop_smoothing_factor=" << p.sop_smoothing << "\n";
-    file << "sop_scale=" << p.sop_scale << "\n";
+    file << "sop_smoothing_factor=" << p.rear_axle.sop_smoothing_factor << "\n";
+    file << "sop_scale=" << p.rear_axle.sop_scale << "\n";
     file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";
     file << "slope_detection_enabled=" << p.slope_detection_enabled << "\n";
     file << "slope_sg_window=" << p.slope_sg_window << "\n";
@@ -1435,7 +1435,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
 
         // Migration for imported preset (Issue #37)
         if (current_preset_version.empty() || IsVersionLessEqual(current_preset_version, "0.7.146")) {
-            current_preset.sop_smoothing = 0.0f;
+            current_preset.rear_axle.sop_smoothing_factor = 0.0f;
             current_preset.app_version = LMUFFB_VERSION;
             Logger::Get().LogFile("[Config] Reset SoP Smoothing for imported legacy preset '%s'", current_preset.name.c_str());
         }
@@ -1615,36 +1615,36 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "static_notch_width=" << engine.m_front_axle.static_notch_width << "\n";
 
         file << "\n; --- Rear Axle (Oversteer) ---\n";
-        file << "oversteer_boost=" << engine.m_oversteer_boost << "\n";
+        file << "oversteer_boost=" << engine.m_rear_axle.oversteer_boost << "\n";
         file << "long_load_effect=" << engine.m_long_load_effect << "\n";
         file << "long_load_smoothing=" << engine.m_long_load_smoothing << "\n";
         file << "long_load_transform=" << static_cast<int>(engine.m_long_load_transform) << "\n";
         file << "grip_smoothing_steady=" << engine.m_grip_smoothing_steady << "\n";
         file << "grip_smoothing_fast=" << engine.m_grip_smoothing_fast << "\n";
         file << "grip_smoothing_sensitivity=" << engine.m_grip_smoothing_sensitivity << "\n";
-        file << "sop=" << engine.m_sop_effect << "\n";
+        file << "sop=" << engine.m_rear_axle.sop_effect << "\n";
         file << "lateral_load_effect=" << engine.m_lat_load_effect << "\n";
         file << "lat_load_transform=" << static_cast<int>(engine.m_lat_load_transform) << "\n";
-        file << "rear_align_effect=" << engine.m_rear_align_effect << "\n";
-        file << "kerb_strike_rejection=" << engine.m_kerb_strike_rejection << "\n";
-        file << "sop_yaw_gain=" << engine.m_sop_yaw_gain << "\n";
-        file << "yaw_kick_threshold=" << engine.m_yaw_kick_threshold << "\n";
-        file << "unloaded_yaw_gain=" << engine.m_unloaded_yaw_gain << "\n";
-        file << "unloaded_yaw_threshold=" << engine.m_unloaded_yaw_threshold << "\n";
-        file << "unloaded_yaw_sens=" << engine.m_unloaded_yaw_sens << "\n";
-        file << "unloaded_yaw_gamma=" << engine.m_unloaded_yaw_gamma << "\n";
-        file << "unloaded_yaw_punch=" << engine.m_unloaded_yaw_punch << "\n";
-        file << "power_yaw_gain=" << engine.m_power_yaw_gain << "\n";
-        file << "power_yaw_threshold=" << engine.m_power_yaw_threshold << "\n";
-        file << "power_slip_threshold=" << engine.m_power_slip_threshold << "\n";
-        file << "power_yaw_gamma=" << engine.m_power_yaw_gamma << "\n";
-        file << "power_yaw_punch=" << engine.m_power_yaw_punch << "\n";
-        file << "yaw_accel_smoothing=" << engine.m_yaw_accel_smoothing << "\n";
+        file << "rear_align_effect=" << engine.m_rear_axle.rear_align_effect << "\n";
+        file << "kerb_strike_rejection=" << engine.m_rear_axle.kerb_strike_rejection << "\n";
+        file << "sop_yaw_gain=" << engine.m_rear_axle.sop_yaw_gain << "\n";
+        file << "yaw_kick_threshold=" << engine.m_rear_axle.yaw_kick_threshold << "\n";
+        file << "unloaded_yaw_gain=" << engine.m_rear_axle.unloaded_yaw_gain << "\n";
+        file << "unloaded_yaw_threshold=" << engine.m_rear_axle.unloaded_yaw_threshold << "\n";
+        file << "unloaded_yaw_sens=" << engine.m_rear_axle.unloaded_yaw_sens << "\n";
+        file << "unloaded_yaw_gamma=" << engine.m_rear_axle.unloaded_yaw_gamma << "\n";
+        file << "unloaded_yaw_punch=" << engine.m_rear_axle.unloaded_yaw_punch << "\n";
+        file << "power_yaw_gain=" << engine.m_rear_axle.power_yaw_gain << "\n";
+        file << "power_yaw_threshold=" << engine.m_rear_axle.power_yaw_threshold << "\n";
+        file << "power_slip_threshold=" << engine.m_rear_axle.power_slip_threshold << "\n";
+        file << "power_yaw_gamma=" << engine.m_rear_axle.power_yaw_gamma << "\n";
+        file << "power_yaw_punch=" << engine.m_rear_axle.power_yaw_punch << "\n";
+        file << "yaw_accel_smoothing=" << engine.m_rear_axle.yaw_accel_smoothing << "\n";
         file << "gyro_gain=" << engine.m_gyro_gain << "\n";
-    file << "stationary_damping=" << engine.m_stationary_damping << "\n";
+        file << "stationary_damping=" << engine.m_stationary_damping << "\n";
         file << "gyro_smoothing_factor=" << engine.m_gyro_smoothing << "\n";
-        file << "sop_smoothing_factor=" << engine.m_sop_smoothing_factor << "\n";
-        file << "sop_scale=" << engine.m_sop_scale << "\n";
+        file << "sop_smoothing_factor=" << engine.m_rear_axle.sop_smoothing_factor << "\n";
+        file << "sop_scale=" << engine.m_rear_axle.sop_scale << "\n";
         file << "understeer_affects_sop=" << engine.m_understeer_affects_sop << "\n";
 
         file << "\n; --- Physics (Grip & Slip Angle) ---\n";
@@ -1815,7 +1815,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
 
     engine.m_general.Validate();
     engine.m_front_axle.Validate();
-    engine.m_sop_scale = (std::max)(0.01f, engine.m_sop_scale);
+    engine.m_rear_axle.Validate();
     engine.m_slip_angle_smoothing = (std::max)(0.0001f, engine.m_slip_angle_smoothing);
     engine.m_speed_gate_upper = (std::max)(0.1f, engine.m_speed_gate_upper);
 
@@ -1927,11 +1927,11 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     if (engine.m_lockup_rear_boost < 1.0f || engine.m_lockup_rear_boost > 10.0f) {
         engine.m_lockup_rear_boost = (std::max)(1.0f, (std::min)(10.0f, engine.m_lockup_rear_boost));
     }
-    if (engine.m_oversteer_boost < 0.0f || engine.m_oversteer_boost > 4.0f) {
-        engine.m_oversteer_boost = (std::max)(0.0f, (std::min)(4.0f, engine.m_oversteer_boost));
+    if (engine.m_rear_axle.oversteer_boost < 0.0f || engine.m_rear_axle.oversteer_boost > 4.0f) {
+        engine.m_rear_axle.oversteer_boost = (std::max)(0.0f, (std::min)(4.0f, engine.m_rear_axle.oversteer_boost));
     }
-    if (engine.m_sop_yaw_gain < 0.0f || engine.m_sop_yaw_gain > 1.0f) {
-         engine.m_sop_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_sop_yaw_gain));
+    if (engine.m_rear_axle.sop_yaw_gain < 0.0f || engine.m_rear_axle.sop_yaw_gain > 1.0f) {
+         engine.m_rear_axle.sop_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, engine.m_rear_axle.sop_yaw_gain));
     }
     if (engine.m_slide_texture_gain < 0.0f || engine.m_slide_texture_gain > 2.0f) {
         engine.m_slide_texture_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_slide_texture_gain));
@@ -1941,15 +1941,6 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
     if (engine.m_spin_gain < 0.0f || engine.m_spin_gain > 2.0f) {
         engine.m_spin_gain = (std::max)(0.0f, (std::min)(2.0f, engine.m_spin_gain));
-    }
-    if (engine.m_rear_align_effect < 0.0f || engine.m_rear_align_effect > 2.0f) {
-        engine.m_rear_align_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_rear_align_effect));
-    }
-    if (engine.m_kerb_strike_rejection < 0.0f || engine.m_kerb_strike_rejection > 1.0f) {
-        engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, engine.m_kerb_strike_rejection));
-    }
-    if (engine.m_sop_effect < 0.0f || engine.m_sop_effect > 2.0f) {
-        engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, engine.m_sop_effect));
     }
     engine.m_soft_lock_stiffness = (std::max)(0.0f, engine.m_soft_lock_stiffness);
     engine.m_soft_lock_damping = (std::max)(0.0f, engine.m_soft_lock_damping);

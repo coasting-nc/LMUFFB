@@ -9,9 +9,9 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vect
     InitializeEngine(engine);
 
     // Setup both effects
-    engine.m_sop_effect = 1.0f;       // Lateral G
+    engine.m_rear_axle.sop_effect = 1.0f;       // Lateral G
     engine.m_lat_load_effect = 1.0f;  // Lateral Load
-    engine.m_sop_scale = 1.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f;
     engine.m_general.target_rim_nm = 20.0f;
 
@@ -57,13 +57,13 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
     data.mWheel[1].mTireLoad = 2000.0;
 
     // Case 1: ONLY Lateral G
-    engine.m_sop_effect = 1.0f;
+    engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_lat_load_effect = 0.0f;
     for (int i = 0; i < 50; i++) engine.calculate_force(&data);
     float force_g = engine.GetDebugBatch().back().sop_force;
 
     // Case 2: ONLY Lateral Load
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 1.0f;
     data.mWheel[2].mTireLoad = 4000.0;
     data.mWheel[3].mTireLoad = 4000.0;
@@ -82,9 +82,9 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
 TEST_CASE_TAGGED(test_issue_213_lateral_load_suspension_fallback, "CorePhysics", (std::vector<std::string>{"Physics", "Issue213"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
     engine.calculate_force(nullptr, "GT3", "Test Car");
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
@@ -122,9 +122,9 @@ TEST_CASE_TAGGED(test_issue_213_orientation_matrix, "CorePhysics", (std::vector<
     InitializeEngine(engine);
 
     // Enable both effects to ensure they pull together
-    engine.m_sop_effect = 1.0f;
+    engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
     engine.m_general.gain = 1.0f;
     engine.m_invert_force = true; // Match app default (Pull away from centripetal)
 

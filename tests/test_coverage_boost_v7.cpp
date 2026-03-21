@@ -322,9 +322,9 @@ TEST_CASE(test_dynamic_normalization_branches, "Physics") {
 TEST_CASE(test_yaw_kicks_branches, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_unloaded_yaw_gain = 1.0f;
-    engine.m_power_yaw_gain = 1.0f;
-    engine.m_sop_scale = 1.0f;
+    engine.m_rear_axle.unloaded_yaw_gain = 1.0f;
+    engine.m_rear_axle.power_yaw_gain = 1.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     FFBCalculationContext ctx;

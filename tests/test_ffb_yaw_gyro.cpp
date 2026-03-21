@@ -10,9 +10,9 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value for test expectations
-    engine.m_sop_effect = 0.0f; // Disable Base SoP
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value for test expectations
+    engine.m_rear_axle.sop_effect = 0.0f; // Disable Base SoP
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Reference torque for normalization
     engine.m_general.gain = 1.0f;
     // Disable other effects
@@ -22,7 +22,7 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_invert_force = false;
     
     // v0.4.18 UPDATE: With Low Pass Filter (alpha=0.1), the yaw acceleration
@@ -76,14 +76,14 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     
     // Disable other effects to isolate gyro damping
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
-    engine.m_sop_yaw_gain = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
     
     // Setup test data
     data.mLocalVel.z = 50.0; // Car speed (50 m/s)
@@ -162,9 +162,9 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup: Isolate Yaw Kick effect
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Legacy value
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0225f; // v0.5.8: Legacy value
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
@@ -173,7 +173,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
@@ -227,8 +227,8 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     // The smoothed value should remain close to 0 (averaging out the noise)
     FFBEngine engine2;
     InitializeEngine(engine2); // v0.5.12: Initialize with T300 defaults
-    engine2.m_sop_yaw_gain = 1.0f;
-    engine2.m_sop_effect = 0.0f;
+    engine2.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine2.m_rear_axle.sop_effect = 0.0f;
     engine2.m_general.wheelbase_max_nm = 20.0f; engine2.m_general.target_rim_nm = 20.0f;
     engine2.m_general.gain = 1.0f;
     engine2.m_front_axle.understeer_effect = 0.0f;
@@ -237,7 +237,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine2.m_slide_texture_enabled = false;
     engine2.m_bottoming_enabled = false;
     engine2.m_scrub_drag_gain = 0.0f;
-    engine2.m_rear_align_effect = 0.0f;
+    engine2.m_rear_axle.rear_align_effect = 0.0f;
     engine2.m_gyro_gain = 0.0f;
     
     TelemInfoV01 data2;
@@ -279,9 +279,9 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0225f; // v0.5.8: Explicitly set legacy value
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
     engine.m_invert_force = false;
@@ -291,7 +291,7 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     
     data.mWheel[0].mRideHeight = 0.1;
@@ -357,11 +357,11 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup: Enable BOTH Yaw Kick and Slide Rumble (the problematic combination)
-    engine.m_sop_yaw_gain = 1.0f;  // Yaw Kick enabled
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;  // Yaw Kick enabled
     engine.m_slide_texture_enabled = true;  // Slide Rumble enabled
     engine.m_slide_texture_gain = 1.0f;
     
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
@@ -369,7 +369,7 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     engine.m_spin_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     
     data.mWheel[0].mRideHeight = 0.1;
@@ -458,8 +458,8 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     data.mDeltaTime = 0.0025;
     
     // Setup: Isolate Yaw Kick effect
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
@@ -468,11 +468,11 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
     engine.m_scrub_drag_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_invert_force = false;
-    engine.m_yaw_kick_threshold = 0.2f;
-    engine.m_yaw_accel_smoothing = 0.0f; // Fast response
+    engine.m_rear_axle.yaw_kick_threshold = 0.2f;
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0f; // Fast response
     
     // Test Case 1: Idle Noise - Below Deadzone Threshold (0.2 rad/s^2)
     std::cout << "  Case 1: Idle Noise (YawAccel = 0.1, below threshold)" << std::endl;
@@ -481,7 +481,7 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
     data.mLocalRot.y = 0.1 * 0.0025; // Below 0.2 threshold
     
     // Ensure all effects that could mask are off
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_general.min_force = 0.0f;
     
@@ -535,8 +535,8 @@ TEST_CASE(test_yaw_kick_signal_conditioning, "YawGyro") {
         } else {
             FAIL_TEST("Valid kick not detected correctly. Got " << force_valid << "." << std::endl
                 << "DEBUG: m_yaw_accel_smoothed: " << FFBEngineTestAccess::GetYawAccelSmoothed(engine) << std::endl
-                << "DEBUG: m_yaw_kick_threshold: " << engine.m_yaw_kick_threshold << std::endl
-                << "DEBUG: m_sop_yaw_gain: " << engine.m_sop_yaw_gain);
+                << "DEBUG: m_rear_axle.yaw_kick_threshold: " << engine.m_rear_axle.yaw_kick_threshold << std::endl
+                << "DEBUG: m_rear_axle.sop_yaw_gain: " << engine.m_rear_axle.sop_yaw_gain);
         }
 }
 
@@ -546,9 +546,9 @@ TEST_CASE(test_yaw_kick_threshold, "YawGyro") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_kick_threshold = 5.0f;
-    engine.m_yaw_accel_smoothing = 0.0001f; // Fast response for test
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.yaw_kick_threshold = 5.0f;
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0001f; // Fast response for test
     
     // Case 1: Yaw Accel below threshold (2.0 < 5.0)
     data.mDeltaTime = 0.0025;
@@ -586,11 +586,11 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_accel_smoothing = 0.0001f; // Fast response for testing
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0001f; // Fast response for testing
     
     // Edge Case 1: Zero Threshold (0.0) - All signals pass through
-    engine.m_yaw_kick_threshold = 0.0f;
+    engine.m_rear_axle.yaw_kick_threshold = 0.0f;
     
     // Use a reasonable signal (not tiny) to test threshold behavior
     data.mDeltaTime = 0.0025;
@@ -607,7 +607,7 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     ASSERT_TRUE(std::abs(force_tiny) > 0.001); // With zero threshold, signals pass
     
     // Edge Case 2: Maximum Threshold (10.0) - Only extreme signals pass
-    engine.m_yaw_kick_threshold = 10.0f;
+    engine.m_rear_axle.yaw_kick_threshold = 10.0f;
     
     // Reset smoothing state
     FFBEngineTestAccess::ResetYawDerivedState(engine);
@@ -642,7 +642,7 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     ASSERT_NEAR(force_above_max, -0.25, 0.01);
     
     // Edge Case 3: Negative yaw acceleration (should use absolute value)
-    engine.m_yaw_kick_threshold = 5.0f;
+    engine.m_rear_axle.yaw_kick_threshold = 5.0f;
     engine.m_yaw_accel_smoothed = 0.0; // Reset
     
     // Negative value with magnitude above threshold
@@ -677,7 +677,7 @@ TEST_CASE(test_yaw_kick_edge_cases, "YawGyro") {
     
     // Edge Case 4: Interaction with low-speed cutoff
     // Low speed cutoff (< 5.0 m/s) should override threshold
-    engine.m_yaw_kick_threshold = 0.0f; // Zero threshold (all pass)
+    engine.m_rear_axle.yaw_kick_threshold = 0.0f; // Zero threshold (all pass)
     FFBEngineTestAccess::ResetYawDerivedState(engine); // Reset
     data.mLocalRot.y = 0.0;
     engine.calculate_force(&data); // Seed
@@ -723,7 +723,7 @@ TEST_CASE(test_sop_yaw_kick_direction, "YawGyro") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    engine.m_sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_invert_force = false;

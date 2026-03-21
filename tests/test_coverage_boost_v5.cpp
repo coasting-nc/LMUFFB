@@ -298,12 +298,12 @@ TEST_CASE(test_preset_equals_branches, "System") {
 
     TEST_FIELD_NE(general.gain, 0.5f);
     TEST_FIELD_NE(front_axle.understeer_effect, 0.5f);
-    TEST_FIELD_NE(sop, 0.5f);
-    TEST_FIELD_NE(sop_scale, 0.5f);
-    TEST_FIELD_NE(sop_smoothing, 0.5f);
+    TEST_FIELD_NE(rear_axle.sop_effect, 0.5f);
+    TEST_FIELD_NE(rear_axle.sop_scale, 0.5f);
+    TEST_FIELD_NE(rear_axle.sop_smoothing_factor, 0.5f);
     TEST_FIELD_NE(slip_smoothing, 0.5f);
     TEST_FIELD_NE(general.min_force, 0.5f);
-    TEST_FIELD_NE(oversteer_boost, 0.5f);
+    TEST_FIELD_NE(rear_axle.oversteer_boost, 0.5f);
     TEST_FIELD_NE(long_load_effect, 0.5f);
     TEST_FIELD_NE(long_load_smoothing, 0.5f);
     TEST_FIELD_NE(grip_smoothing_steady, 0.5f);
@@ -338,8 +338,8 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(lockup_freq_scale, 0.5f);
     TEST_FIELD_NE(bottoming_method, 1);
     TEST_FIELD_NE(scrub_drag_gain, 0.5f);
-    TEST_FIELD_NE(rear_align_effect, 0.5f);
-    TEST_FIELD_NE(sop_yaw_gain, 0.5f);
+    TEST_FIELD_NE(rear_axle.rear_align_effect, 0.5f);
+    TEST_FIELD_NE(rear_axle.sop_yaw_gain, 0.5f);
     TEST_FIELD_NE(gyro_gain, 0.5f);
     TEST_FIELD_NE(front_axle.steering_shaft_gain, 0.5f);
     TEST_FIELD_NE(front_axle.ingame_ffb_gain, 0.5f);
@@ -349,7 +349,7 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(optimal_slip_ratio, 0.5f);
     TEST_FIELD_NE(front_axle.steering_shaft_smoothing, 0.5f);
     TEST_FIELD_NE(gyro_smoothing, 0.5f);
-    TEST_FIELD_NE(yaw_smoothing, 0.5f);
+    TEST_FIELD_NE(rear_axle.yaw_accel_smoothing, 0.5f);
     TEST_FIELD_NE(chassis_smoothing, 0.5f);
     TEST_FIELD_NE(front_axle.flatspot_suppression, !p2.front_axle.flatspot_suppression);
     TEST_FIELD_NE(front_axle.notch_q, 0.5f);
@@ -357,7 +357,7 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(front_axle.static_notch_enabled, !p2.front_axle.static_notch_enabled);
     TEST_FIELD_NE(front_axle.static_notch_freq, 0.5f);
     TEST_FIELD_NE(front_axle.static_notch_width, 0.5f);
-    TEST_FIELD_NE(yaw_kick_threshold, 0.5f);
+    TEST_FIELD_NE(rear_axle.yaw_kick_threshold, 0.5f);
     TEST_FIELD_NE(speed_gate_lower, 0.5f);
     TEST_FIELD_NE(speed_gate_upper, 0.5f);
     TEST_FIELD_NE(road_fallback_scale, 0.5f);

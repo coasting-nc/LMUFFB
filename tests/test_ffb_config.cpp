@@ -7,14 +7,14 @@ TEST_CASE(test_config_persistence, "Config") {
     FFBEngine engine;
     InitializeEngine(engine);
     engine.m_general.gain = 1.23f;
-    engine.m_sop_effect = 0.45f;
+    engine.m_rear_axle.sop_effect = 0.45f;
     engine.m_road_texture_enabled = true;
     Config::Save(engine, "test_config.ini");
     FFBEngine engine_load;
     InitializeEngine(engine_load);
     Config::Load(engine_load, "test_config.ini");
     ASSERT_NEAR(engine_load.m_general.gain, 1.23f, 0.01);
-    ASSERT_NEAR(engine_load.m_sop_effect, 0.45f, 0.01);
+    ASSERT_NEAR(engine_load.m_rear_axle.sop_effect, 0.45f, 0.01);
     ASSERT_TRUE(engine_load.m_road_texture_enabled);
 }
 
@@ -126,7 +126,7 @@ TEST_CASE(test_presets, "Config") {
     if(idx != -1) {
         Config::ApplyPreset(idx, engine);
         ASSERT_NEAR(engine.m_general.gain, 1.0f, 0.01);
-        ASSERT_NEAR(engine.m_sop_effect, 0.08f, 0.01);
+        ASSERT_NEAR(engine.m_rear_axle.sop_effect, 0.08f, 0.01);
     } else {
         FAIL_TEST("Preset 'Test: SoP Only' not found");
     }
@@ -266,8 +266,8 @@ TEST_CASE(test_preset_initialization, "Config") {
                 std::cout << "[FAIL] T300: Optimized understeer (" << preset.front_axle.understeer_effect << ") != " << t300_understeer << std::endl;
                 fields_ok = false;
             }
-            if (std::abs(preset.sop - t300_sop) > 0.001f) {
-                std::cout << "[FAIL] T300: Optimized SoP (" << preset.sop << ") != " << t300_sop << std::endl;
+            if (std::abs(preset.rear_axle.sop_effect - t300_sop) > 0.001f) {
+                std::cout << "[FAIL] T300: Optimized SoP (" << preset.rear_axle.sop_effect << ") != " << t300_sop << std::endl;
                 fields_ok = false;
             }
             if (preset.front_axle.steering_shaft_smoothing != t300_shaft_smooth) {
@@ -378,16 +378,16 @@ TEST_CASE(test_config_safety_clamping, "Config") {
         std::cout << "[FAIL] spin_gain not clamped. Got: " << engine.m_spin_gain << " Expected: 2.0" << std::endl;
         all_clamped = false;
     }
-    if (engine.m_rear_align_effect != 2.0f) {
-        std::cout << "[FAIL] rear_align_effect not clamped. Got: " << engine.m_rear_align_effect << " Expected: 2.0" << std::endl;
+    if (engine.m_rear_axle.rear_align_effect != 2.0f) {
+        std::cout << "[FAIL] rear_align_effect not clamped. Got: " << engine.m_rear_axle.rear_align_effect << " Expected: 2.0" << std::endl;
         all_clamped = false;
     }
-    if (engine.m_sop_yaw_gain != 1.0f) {
-        std::cout << "[FAIL] sop_yaw_gain not clamped. Got: " << engine.m_sop_yaw_gain << " Expected: 1.0" << std::endl;
+    if (engine.m_rear_axle.sop_yaw_gain != 1.0f) {
+        std::cout << "[FAIL] sop_yaw_gain not clamped. Got: " << engine.m_rear_axle.sop_yaw_gain << " Expected: 1.0" << std::endl;
         all_clamped = false;
     }
-    if (engine.m_sop_effect != 2.0f) {
-        std::cout << "[FAIL] sop not clamped. Got: " << engine.m_sop_effect << " Expected: 2.0" << std::endl;
+    if (engine.m_rear_axle.sop_effect != 2.0f) {
+        std::cout << "[FAIL] sop not clamped. Got: " << engine.m_rear_axle.sop_effect << " Expected: 2.0" << std::endl;
         all_clamped = false;
     }
     

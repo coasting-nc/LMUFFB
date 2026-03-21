@@ -13,7 +13,7 @@ TEST_CASE(test_direct_torque_scaling, "Issue142") {
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f; // Disable modulation for scaling test
     engine.m_long_load_effect = 0.0f;
-    engine.m_sop_effect = 0.0f; // Disable other effects
+    engine.m_rear_axle.sop_effect = 0.0f; // Disable other effects
     engine.m_road_texture_enabled = false;
 
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.0);

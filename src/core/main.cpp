@@ -157,11 +157,9 @@ void FFBThread() {
                             info.driver_name = "Auto";
                             info.general = g_engine.m_general;
                             info.front_axle = g_engine.m_front_axle;
-                            info.sop_effect = g_engine.m_sop_effect;
+                            info.rear_axle = g_engine.m_rear_axle;
                             info.lat_load_effect = g_engine.m_lat_load_effect;
                             info.long_load_effect = g_engine.m_long_load_effect;
-                            info.sop_scale = g_engine.m_sop_scale;
-                            info.sop_smoothing = g_engine.m_sop_smoothing_factor;
                             info.optimal_slip_angle = g_engine.m_optimal_slip_angle;
                             info.optimal_slip_ratio = g_engine.m_optimal_slip_ratio;
                             info.slope_enabled = g_engine.m_slope_detection_enabled;

@@ -11,8 +11,8 @@ TEST_CASE(test_issue_309_load_fallback_accuracy, "Physics") {
 
     // Enable Lateral Load effect to check if it uses the correct load
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f; // No smoothing to get direct results
+    engine.m_rear_axle.sop_scale = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f; // No smoothing to get direct results
 
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));

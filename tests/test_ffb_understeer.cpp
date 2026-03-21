@@ -180,10 +180,10 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     ASSERT_TRUE(p.front_axle.understeer_effect > 0.0f && p.front_axle.understeer_effect <= 2.0f);
     
     // VERIFY: All other effects are DISABLED
-    ASSERT_NEAR(p.sop, 0.0f, 0.001f);                    // SoP disabled
-    ASSERT_NEAR(p.oversteer_boost, 0.0f, 0.001f);        // Oversteer boost disabled
-    ASSERT_NEAR(p.rear_align_effect, 0.0f, 0.001f);      // Rear align disabled
-    ASSERT_NEAR(p.sop_yaw_gain, 0.0f, 0.001f);           // Yaw kick disabled
+    ASSERT_NEAR(p.rear_axle.sop_effect, 0.0f, 0.001f);                    // SoP disabled
+    ASSERT_NEAR(p.rear_axle.oversteer_boost, 0.0f, 0.001f);        // Oversteer boost disabled
+    ASSERT_NEAR(p.rear_axle.rear_align_effect, 0.0f, 0.001f);      // Rear align disabled
+    ASSERT_NEAR(p.rear_axle.sop_yaw_gain, 0.0f, 0.001f);           // Yaw kick disabled
     ASSERT_NEAR(p.gyro_gain, 0.0f, 0.001f);              // Gyro damping disabled
     ASSERT_NEAR(p.scrub_drag_gain, 0.0f, 0.001f);        // Scrub drag disabled
     

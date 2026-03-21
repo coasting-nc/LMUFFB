@@ -11,7 +11,7 @@ TEST_CASE(test_progressive_lockup, "LockupBraking") {
     
     engine.m_lockup_enabled = true;
     engine.m_lockup_gain = 1.0;
-    engine.m_sop_effect = 0.0;
+    engine.m_rear_axle.sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     
     data.mSteeringShaftTorque = 0.0;

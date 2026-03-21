@@ -446,21 +446,21 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         Preset::ApplyDefaultsToEngine(engine);
 
         ASSERT_TRUE(engine.m_front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
-        ASSERT_TRUE(engine.m_sop_effect == reference_defaults.sop);
-        ASSERT_TRUE(engine.m_oversteer_boost == reference_defaults.oversteer_boost);
+        ASSERT_TRUE(engine.m_rear_axle.sop_effect == reference_defaults.rear_axle.sop_effect);
+        ASSERT_TRUE(engine.m_rear_axle.oversteer_boost == reference_defaults.rear_axle.oversteer_boost);
         ASSERT_TRUE(engine.m_lockup_enabled == reference_defaults.lockup_enabled);
         ASSERT_TRUE(engine.m_lockup_gain == reference_defaults.lockup_gain);
         ASSERT_TRUE(engine.m_slide_texture_enabled == reference_defaults.slide_enabled);
         ASSERT_TRUE(engine.m_slide_texture_gain == reference_defaults.slide_gain);
         ASSERT_TRUE(engine.m_slide_freq_scale == reference_defaults.slide_freq);
         ASSERT_TRUE(engine.m_scrub_drag_gain == reference_defaults.scrub_drag_gain);
-        ASSERT_TRUE(engine.m_rear_align_effect == reference_defaults.rear_align_effect);
-        ASSERT_TRUE(engine.m_sop_yaw_gain == reference_defaults.sop_yaw_gain);
+        ASSERT_TRUE(engine.m_rear_axle.rear_align_effect == reference_defaults.rear_axle.rear_align_effect);
+        ASSERT_TRUE(engine.m_rear_axle.sop_yaw_gain == reference_defaults.rear_axle.sop_yaw_gain);
         ASSERT_TRUE(engine.m_gyro_gain == reference_defaults.gyro_gain);
         ASSERT_TRUE(engine.m_optimal_slip_angle == reference_defaults.optimal_slip_angle);
         ASSERT_TRUE(engine.m_slip_angle_smoothing == reference_defaults.slip_smoothing);
-        ASSERT_TRUE(engine.m_sop_smoothing_factor == reference_defaults.sop_smoothing);
-        ASSERT_TRUE(engine.m_yaw_accel_smoothing == reference_defaults.yaw_smoothing);
+        ASSERT_TRUE(engine.m_rear_axle.sop_smoothing_factor == reference_defaults.rear_axle.sop_smoothing_factor);
+        ASSERT_TRUE(engine.m_rear_axle.yaw_accel_smoothing == reference_defaults.rear_axle.yaw_accel_smoothing);
         ASSERT_TRUE(engine.m_chassis_inertia_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(engine.m_gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(engine.m_front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
@@ -479,21 +479,21 @@ TEST_CASE(test_defaults_consistency, "Logic") {
 
         const Preset& default_preset = Config::presets[0];
         ASSERT_TRUE(default_preset.front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
-        ASSERT_TRUE(default_preset.sop == reference_defaults.sop);
-        ASSERT_TRUE(default_preset.oversteer_boost == reference_defaults.oversteer_boost);
+        ASSERT_TRUE(default_preset.rear_axle.sop_effect == reference_defaults.rear_axle.sop_effect);
+        ASSERT_TRUE(default_preset.rear_axle.oversteer_boost == reference_defaults.rear_axle.oversteer_boost);
         ASSERT_TRUE(default_preset.lockup_enabled == reference_defaults.lockup_enabled);
         ASSERT_TRUE(default_preset.lockup_gain == reference_defaults.lockup_gain);
         ASSERT_TRUE(default_preset.slide_enabled == reference_defaults.slide_enabled);
         ASSERT_TRUE(default_preset.slide_gain == reference_defaults.slide_gain);
         ASSERT_TRUE(default_preset.slide_freq == reference_defaults.slide_freq);
         ASSERT_TRUE(default_preset.scrub_drag_gain == reference_defaults.scrub_drag_gain);
-        ASSERT_TRUE(default_preset.rear_align_effect == reference_defaults.rear_align_effect);
-        ASSERT_TRUE(default_preset.sop_yaw_gain == reference_defaults.sop_yaw_gain);
+        ASSERT_TRUE(default_preset.rear_axle.rear_align_effect == reference_defaults.rear_axle.rear_align_effect);
+        ASSERT_TRUE(default_preset.rear_axle.sop_yaw_gain == reference_defaults.rear_axle.sop_yaw_gain);
         ASSERT_TRUE(default_preset.gyro_gain == reference_defaults.gyro_gain);
         ASSERT_TRUE(default_preset.optimal_slip_angle == reference_defaults.optimal_slip_angle);
         ASSERT_TRUE(default_preset.slip_smoothing == reference_defaults.slip_smoothing);
-        ASSERT_TRUE(default_preset.sop_smoothing == reference_defaults.sop_smoothing);
-        ASSERT_TRUE(default_preset.yaw_smoothing == reference_defaults.yaw_smoothing);
+        ASSERT_TRUE(default_preset.rear_axle.sop_smoothing_factor == reference_defaults.rear_axle.sop_smoothing_factor);
+        ASSERT_TRUE(default_preset.rear_axle.yaw_accel_smoothing == reference_defaults.rear_axle.yaw_accel_smoothing);
         ASSERT_TRUE(default_preset.chassis_smoothing == reference_defaults.chassis_smoothing);
         ASSERT_TRUE(default_preset.gyro_smoothing == reference_defaults.gyro_smoothing);
         ASSERT_TRUE(default_preset.front_axle.steering_shaft_smoothing == reference_defaults.front_axle.steering_shaft_smoothing);
@@ -512,12 +512,12 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         const Preset& t300_preset = Config::presets[1];
 
         ASSERT_TRUE(t300_preset.front_axle.understeer_effect == 0.5f);
-        ASSERT_TRUE(abs(t300_preset.sop - 0.425003f) < 0.0001f);
+        ASSERT_TRUE(abs(t300_preset.rear_axle.sop_effect - 0.425003f) < 0.0001f);
         ASSERT_TRUE(t300_preset.lockup_freq_scale == 1.02f);
         ASSERT_TRUE(t300_preset.scrub_drag_gain == 0.0462185f);
 
         ASSERT_TRUE(default_preset.front_axle.understeer_effect != t300_preset.front_axle.understeer_effect);
-        ASSERT_TRUE(default_preset.sop != t300_preset.sop);
+        ASSERT_TRUE(default_preset.rear_axle.sop_effect != t300_preset.rear_axle.sop_effect);
     }
 
     // Test 5: Preset application consistency
@@ -527,18 +527,18 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         Config::ApplyPreset(0, engine2); // Apply "Default"
 
         ASSERT_TRUE(engine1.m_front_axle.understeer_effect == engine2.m_front_axle.understeer_effect);
-        ASSERT_TRUE(engine1.m_sop_effect == engine2.m_sop_effect);
-        ASSERT_TRUE(engine1.m_oversteer_boost == engine2.m_oversteer_boost);
+        ASSERT_TRUE(engine1.m_rear_axle.sop_effect == engine2.m_rear_axle.sop_effect);
+        ASSERT_TRUE(engine1.m_rear_axle.oversteer_boost == engine2.m_rear_axle.oversteer_boost);
         ASSERT_TRUE(engine1.m_lockup_gain == engine2.m_lockup_gain);
         ASSERT_TRUE(engine1.m_slide_texture_gain == engine2.m_slide_texture_gain);
         ASSERT_TRUE(engine1.m_scrub_drag_gain == engine2.m_scrub_drag_gain);
-        ASSERT_TRUE(engine1.m_rear_align_effect == engine2.m_rear_align_effect);
-        ASSERT_TRUE(engine1.m_sop_yaw_gain == engine2.m_sop_yaw_gain);
+        ASSERT_TRUE(engine1.m_rear_axle.rear_align_effect == engine2.m_rear_axle.rear_align_effect);
+        ASSERT_TRUE(engine1.m_rear_axle.sop_yaw_gain == engine2.m_rear_axle.sop_yaw_gain);
         ASSERT_TRUE(engine1.m_gyro_gain == engine2.m_gyro_gain);
         ASSERT_TRUE(engine1.m_optimal_slip_angle == engine2.m_optimal_slip_angle);
         ASSERT_TRUE(engine1.m_slip_angle_smoothing == engine2.m_slip_angle_smoothing);
-        ASSERT_TRUE(engine1.m_sop_smoothing_factor == engine2.m_sop_smoothing_factor);
-        ASSERT_TRUE(engine1.m_yaw_accel_smoothing == engine2.m_yaw_accel_smoothing);
+        ASSERT_TRUE(engine1.m_rear_axle.sop_smoothing_factor == engine2.m_rear_axle.sop_smoothing_factor);
+        ASSERT_TRUE(engine1.m_rear_axle.yaw_accel_smoothing == engine2.m_rear_axle.yaw_accel_smoothing);
         ASSERT_TRUE(engine1.m_chassis_inertia_smoothing == engine2.m_chassis_inertia_smoothing);
         ASSERT_TRUE(engine1.m_gyro_smoothing == engine2.m_gyro_smoothing);
         ASSERT_TRUE(engine1.m_front_axle.steering_shaft_smoothing == engine2.m_front_axle.steering_shaft_smoothing);
@@ -555,7 +555,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         Preset::ApplyDefaultsToEngine(engine);
         Config::Load(engine, nonexistent_file);
         ASSERT_TRUE(engine.m_front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
-        ASSERT_TRUE(engine.m_sop_effect == reference_defaults.sop);
+        ASSERT_TRUE(engine.m_rear_axle.sop_effect == reference_defaults.rear_axle.sop_effect);
         ASSERT_TRUE(engine.m_lockup_gain == reference_defaults.lockup_gain);
     }
 
@@ -626,7 +626,7 @@ TEST_CASE(test_sop_smoothing_migration, "Logic") {
 
     FFBEngine engine;
     // Initial state check (should be default 0.0)
-    ASSERT_TRUE(engine.m_sop_smoothing_factor == 0.0f);
+    ASSERT_TRUE(engine.m_rear_axle.sop_smoothing_factor == 0.0f);
 
     // 2. Load the legacy config
     Config::presets.clear();
@@ -634,14 +634,14 @@ TEST_CASE(test_sop_smoothing_migration, "Logic") {
     Config::LoadPresets();               // Loads presets from Config::m_config_path
 
     // 3. Verify that main config was reset to 0.0
-    ASSERT_TRUE(engine.m_sop_smoothing_factor == 0.0f);
+    ASSERT_TRUE(engine.m_rear_axle.sop_smoothing_factor == 0.0f);
 
     // 4. Verify that the user preset was reset to 0.0
     bool found = false;
     for (const auto& p : Config::presets) {
         if (p.name == "UserPreset") {
             found = true;
-            ASSERT_TRUE(p.sop_smoothing == 0.0f);
+            ASSERT_TRUE(p.rear_axle.sop_smoothing_factor == 0.0f);
             break;
         }
     }

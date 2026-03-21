@@ -17,10 +17,10 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
 
     // Disable other effects
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
