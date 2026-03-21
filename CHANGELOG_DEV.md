@@ -7,6 +7,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.215]
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 8)**
+  - **Grouped Data Structures**: Introduced `VibrationConfig` struct to centralize all high-frequency texture and vibration parameters.
+  - **FFBEngine & Preset Refinement**: Migrated 14 parameters including `vibration_gain`, `texture_load_cap`, `slide_enabled`, `slide_gain`, `slide_freq`, `road_enabled`, `road_gain`, `spin_enabled`, `spin_gain`, `spin_freq_scale`, `scrub_drag_gain`, `bottoming_enabled`, `bottoming_gain`, and `bottoming_method` into the new grouped structure.
+  - **Implementation Sync**: Updated `FFBEngine.cpp`, `Config.cpp`, `GuiLayer_Common.cpp`, and numerous tests to use nested configuration paths.
+  - **Single Source of Truth**: Updated default presets and initialization logic to align with the new data model.
+
+### Testing
+- **New Safety Suite**: Added `tests/test_refactor_vibration.cpp` verifying physics consistency, round-trip synchronization, and validation clamping.
+- **Regression Guard**: Updated the entire test suite (590+ cases) to ensure compatibility with the structural refactor.
+- Verified 100% pass rate: **595/595 test cases, 2813 assertions, 0 failures**.
+
+---
+
 ## [0.7.214]
 
 ### Refactored
