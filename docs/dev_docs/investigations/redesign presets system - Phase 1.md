@@ -597,3 +597,80 @@ struct BrakingConfig {
     float lockup_bump_reject = 0.1f;
     float brake_load_cap = 2.0f;
     float lockup
+};
+```
+
+### 8. `VibrationConfig`
+This category handles all the high-frequency texture generation (except for braking).
+**Variables to move:**
+*   `vibration_gain`
+*   `texture_load_cap`
+*   `slide_enabled` (in engine: `m_slide_texture_enabled`)
+*   `slide_gain` (in engine: `m_slide_texture_gain`)
+*   `slide_freq` (in engine: `m_slide_freq_scale`)
+*   `road_enabled` (in engine: `m_road_texture_enabled`)
+*   `road_gain` (in engine: `m_road_texture_gain`)
+*   `spin_enabled` (in engine: `m_spin_enabled`)
+*   `spin_gain` (in engine: `m_spin_gain`)
+*   `spin_freq_scale` (in engine: `m_spin_freq_scale`)
+*   `scrub_drag_gain` (in engine: `m_scrub_drag_gain`)
+*   `bottoming_enabled` (in engine: `m_bottoming_enabled`)
+*   `bottoming_gain` (in engine: `m_bottoming_gain`)
+*   `bottoming_method` (in engine: `m_bottoming_method`)
+
+### 9. `AdvancedConfig`
+This category handles secondary physics effects, hardware limits, and API fallbacks.
+**Variables to move:**
+*   `gyro_gain` (in engine: `m_gyro_gain`)
+*   `gyro_smoothing` (in engine: `m_gyro_smoothing`)
+*   `stationary_damping` (in engine: `m_stationary_damping`)
+*   `soft_lock_enabled` (in engine: `m_soft_lock_enabled`)
+*   `soft_lock_stiffness` (in engine: `m_soft_lock_stiffness`)
+*   `soft_lock_damping` (in engine: `m_soft_lock_damping`)
+*   `speed_gate_lower` (in engine: `m_speed_gate_lower`)
+*   `speed_gate_upper` (in engine: `m_speed_gate_upper`)
+*   `rest_api_enabled` (in engine: `m_rest_api_enabled`)
+*   `rest_api_port` (in engine: `m_rest_api_port`)
+*   `road_fallback_scale` (in engine: `m_road_fallback_scale`)
+*   `understeer_affects_sop` (in engine: `m_understeer_affects_sop`)
+
+### 10. `SafetyConfig`
+This category handles the spike detection and stutter mitigation. 
+*Note: In `FFBEngine`, these variables currently live inside the `FFBSafetyMonitor m_safety` object. In `Preset`, they are currently loose variables. You will group them into `SafetyConfig` inside the preset, and then pass them to `engine.m_safety` during `Apply()`.*
+**Variables to move:**
+*   `safety_window_duration`
+*   `safety_gain_reduction`
+*   `safety_smoothing_tau`
+*   `spike_detection_threshold`
+*   `immediate_spike_threshold`
+*   `safety_slew_full_scale_time_s`
+*   `stutter_safety_enabled`
+*   `stutter_threshold`
+
+---
+
+### Are there any other variables left behind?
+
+You might notice a few other variables in `Config.h` and `Preset` that we haven't touched. **Do not put these in the physics structs.** They are already exactly where they belong:
+
+**1. Preset Metadata:**
+*   `name`
+*   `is_builtin`
+*   `app_version`
+*(These belong directly to the `Preset` struct, as they describe the file itself, not the physics).*
+
+**2. Global App & Window Settings (in `Config` class):**
+*   `m_always_on_top`
+*   `m_auto_start_logging`
+*   `m_log_path`
+*   `win_pos_x`, `win_pos_y`, `win_w_small`, etc.
+*   `m_last_device_guid`
+*   `m_last_preset_name`
+*(These are application state variables. They are not part of a physics preset. When you move to Phase 2, you will read/write these directly from the root of the `config.toml` file).*
+
+**3. Internal Engine State (in `FFBEngine` class):**
+*   `m_session_peak_torque`
+*   `m_slope_current`
+*   `m_missing_load_frames`
+*   `m_prev_slip_angle`
+*(These are live mathematical states calculated during gameplay. They are not configuration parameters, so they stay exactly where they are).*

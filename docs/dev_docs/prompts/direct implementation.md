@@ -8,17 +8,18 @@ Note that the refactoring for these logical categories has already been performe
 * `LoadForcesConfig`
 * `GripEstimationConfig`
 * `SlopeDetectionConfig`
+* `BrakingConfig`
 
-Your task is to implement the **`BrakingConfig`** category. 
+Your task is to implement the **`VibrationConfig`** category. 
 
 **⚠️ CRITICAL REFACTORING RULE:**
 You are performing a structural refactor. You must **NOT** change any default values (e.g., in `Config.cpp` or `FFBEngine.h`), you must **NOT** alter any physics logic, and you must **NOT** modify the assertions of existing tests to make them pass. If an existing test fails, your refactor broke the state machine or initialization logic. Fix your refactor, do not change the test.
 
 **Test-Driven Development (TDD) Requirement:**
 Before changing any production code, you must create a new test file (`tests/test_refactor_<name of logical category>.cpp`) and write 3 specific safety tests:
-1. **Consistency Test:** Hardcode a specific telemetry state and specific `BrakingConfig` values. Run this test on the *current* codebase to get the exact `final_force` output, hardcode that expected value into the test, and `ASSERT_NEAR` against it.
-2. **Round-Trip Test:** Create a `Preset` with wild `BrakingConfig` values, call `Apply(engine)`, extract it back with `UpdateFromEngine(engine)`, and `ASSERT_TRUE` that the original and extracted presets are `Equals()`.
-3. **Validation Test:** Create a `Preset` with malicious out-of-bounds `BrakingConfig` values. Call `Apply()`, and assert that the engine clamped them to the safe ranges defined in `BrakingConfig::Validate()`.
+1. **Consistency Test:** Hardcode a specific telemetry state and specific `VibrationConfig` values. Run this test on the *current* codebase to get the exact `final_force` output, hardcode that expected value into the test, and `ASSERT_NEAR` against it.
+2. **Round-Trip Test:** Create a `Preset` with wild `VibrationConfig` values, call `Apply(engine)`, extract it back with `UpdateFromEngine(engine)`, and `ASSERT_TRUE` that the original and extracted presets are `Equals()`.
+3. **Validation Test:** Create a `Preset` with malicious out-of-bounds `VibrationConfig` values. Call `Apply()`, and assert that the engine clamped them to the safe ranges defined in `VibrationConfig::Validate()`.
 
 **Documentation Requirement:**
 Document your work by creating `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_<name of logical category>.md`. 
@@ -32,11 +33,13 @@ See also the implementation notes that were created in previous iterations:
 * `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_load_forces.md`
 * `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_grip_estimation.md`
 * `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_slope_detection.md`
+* `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_braking.md`
+
 
 You must also increase the app version in `VERSION` file (by the smallest increment possible), and add an entry to `CHANGELOG_DEV.md` file.
 
 **⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
-1. **Scope:** Work ONLY on `BrakingConfig`. Do not work on other logical categories (those will be worked on in future iterations).
+1. **Scope:** Work ONLY on `VibrationConfig`. Do not work on other logical categories (those will be worked on in future iterations).
 2. **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation, testing, and review process autonomously until the task is complete, all 580+ tests pass, and the code is perfect.
 
 Before starting your work, build and run all tests, to confirm that they all pass before you start. This is to verify that if there is any test failure later on, it is due to your changes and not due to some pre-existing issue.
