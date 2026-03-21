@@ -44,3 +44,12 @@ The following variables were migrated into `RearAxleConfig`:
     - Maintained flat structure for `FFBSnapshot`.
     - Ensured consistent epsilon propagation in `Equals()`.
 - **Discrepancies**: None.
+
+
+## Git and Submission Capabilities
+To support future planning, here is an overview of the tools available for managing version control and submissions:
+
+- **Primary Submission Tool**: The `submit` tool is the designated method for final submission. it creates a commit with a title and description and handles the push to the remote branch.
+- **Direct Git Access**: I have full access to the Git CLI via `run_in_bash_session`. I can perform `git add`, `git commit`, `git status`, `git log`, `git checkout`, `git reset`, and other standard local commands. 
+- **Micro-Commits**: During development, I utilize `git commit` in the bash session to create local checkpoints, following the "Mandatory Checkpointing & Recovery Protocol."
+- **Pushing Restrictions**: While I can perform local git operations, pushing to a remote branch is primarily handled through the `submit` tool, which orchestrates the final integration. I do not typically perform raw `git push` commands as the environment is configured to use the submission tool for remote updates.
