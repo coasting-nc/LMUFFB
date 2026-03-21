@@ -60,7 +60,7 @@ TEST_CASE(test_long_load_scaling, "Physics") {
     data.mSteeringShaftTorque = 5.0;
 
     // Freeze chassis inertia to use our input directly
-    engine.m_chassis_inertia_smoothing = 1000.0f;
+    engine.m_grip_estimation.chassis_inertia_smoothing = 1000.0f;
     engine.m_accel_z_smoothed = 9.81;
 
     // Issue #397: Flush the 10ms transient ramp
@@ -127,7 +127,7 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     engine.m_load_forces.long_load_effect = 1.0f;
     engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_invert_force = false;
-    engine.m_chassis_inertia_smoothing = 1000.0f;
+    engine.m_grip_estimation.chassis_inertia_smoothing = 1000.0f;
 
     // Use high scaling to see Nm directly
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
@@ -172,7 +172,7 @@ TEST_CASE(test_long_load_multiplier_behavior, "Physics") {
     engine.m_load_forces.long_load_effect = 1.0f;
     engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_invert_force = false;
-    engine.m_chassis_inertia_smoothing = 1000.0f;
+    engine.m_grip_estimation.chassis_inertia_smoothing = 1000.0f;
 
     // Use high scaling to see Nm directly
     FFBEngineTestAccess::SetSessionPeakTorque(engine, 100.0);
@@ -226,7 +226,7 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 100.0f;
     engine.m_general.target_rim_nm = 100.0f;
-    engine.m_optimal_slip_angle = 0.1f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.1f;
 
     // Seed static load
     FFBEngineTestAccess::SetStaticRearLoad(engine, 5000.0);

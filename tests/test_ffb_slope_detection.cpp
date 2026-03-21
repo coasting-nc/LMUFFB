@@ -104,7 +104,7 @@ TEST_CASE(test_slope_vs_static_comparison, "SlopeDetection") {
     FFBEngine engine_static;
     InitializeEngine(engine_static);
     engine_static.m_slope_detection_enabled = false;
-    engine_static.m_optimal_slip_angle = 0.10f;
+    engine_static.m_grip_estimation.optimal_slip_angle = 0.10f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.12); // 12% slip
     data.mDeltaTime = 0.01;
@@ -327,7 +327,7 @@ TEST_CASE(test_slope_detection_no_boost_during_oversteer, "SlopeDetection") {
     engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 10.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
-    engine.m_optimal_slip_angle = 0.05f; // Rear grip will drop past 0.05 slip
+    engine.m_grip_estimation.optimal_slip_angle = 0.05f; // Rear grip will drop past 0.05 slip
     
     // Setup telemetry to create oversteer scenario (front grip > rear grip)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
@@ -360,7 +360,7 @@ TEST_CASE(test_lat_g_boost_works_without_slope_detection, "SlopeDetection") {
     engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 10.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
-    engine.m_optimal_slip_angle = 0.05f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.05f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.06); // Slip 0.06
     data.mLocalAccel.x = 1.5 * 9.81;

@@ -32,7 +32,7 @@ struct Preset {
     FrontAxleConfig front_axle;
     RearAxleConfig rear_axle;
     LoadForcesConfig load_forces;
-    float slip_smoothing = 0.002f;
+    GripEstimationConfig grip_estimation;
 
     // FFB Safety (Issue #316)
     float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
@@ -44,10 +44,6 @@ struct Preset {
     bool stutter_safety_enabled = FFBEngine::DEFAULT_STUTTER_SAFETY_ENABLED;
     float stutter_threshold = FFBEngine::DEFAULT_STUTTER_THRESHOLD;
 
-    float grip_smoothing_steady = 0.05f;    // v0.7.47
-    float grip_smoothing_fast = 0.005f;     // v0.7.47
-    float grip_smoothing_sensitivity = 0.1f; // v0.7.47
-    
     bool lockup_enabled = true;
     float lockup_gain = 0.37479f;
     float lockup_start_pct = 1.0f;  // New v0.5.11
@@ -88,13 +84,8 @@ struct Preset {
     float gyro_gain = 0.0f;
     float stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
     
-    // NEW: Grip & Smoothing (v0.5.7)
-    float optimal_slip_angle = 0.1f;
-    float optimal_slip_ratio = 0.12f;
-    
     // NEW: Advanced Smoothing (v0.5.8)
     float gyro_smoothing = 0.0f;
-    float chassis_smoothing = 0.0f;
 
     // v0.6.23 New Settings with HIGHER DEFAULTS
     float speed_gate_lower = 1.0f; // 3.6 km/h
@@ -103,7 +94,6 @@ struct Preset {
     // Reserved for future implementation (v0.6.23+)
     float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
-    bool load_sensitivity_enabled = true;   // Issue #392
 
     // ===== SLOPE DETECTION (v0.7.0 â†’ v0.7.1 defaults) =====
     bool slope_detection_enabled = false;
@@ -147,12 +137,12 @@ struct Preset {
     Preset& SetLongitudinalLoadSmoothing(float v) { load_forces.long_load_smoothing = v; return *this; }
     Preset& SetLongitudinalLoadTransform(int v) { load_forces.long_load_transform = v; return *this; }
     Preset& SetGripSmoothing(float steady, float fast, float sens) {
-        grip_smoothing_steady = steady;
-        grip_smoothing_fast = fast;
-        grip_smoothing_sensitivity = sens;
+        grip_estimation.grip_smoothing_steady = steady;
+        grip_estimation.grip_smoothing_fast = fast;
+        grip_estimation.grip_smoothing_sensitivity = sens;
         return *this;
     }
-    Preset& SetSlipSmoothing(float v) { slip_smoothing = v; return *this; }
+    Preset& SetSlipSmoothing(float v) { grip_estimation.slip_angle_smoothing = v; return *this; }
     
     Preset& SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { 
         lockup_enabled = enabled; 
@@ -245,15 +235,15 @@ struct Preset {
     Preset& SetSpeedGate(float lower, float upper) { speed_gate_lower = lower; speed_gate_upper = upper; return *this; }
 
     Preset& SetOptimalSlip(float angle, float ratio) {
-        optimal_slip_angle = angle;
-        optimal_slip_ratio = ratio;
+        grip_estimation.optimal_slip_angle = angle;
+        grip_estimation.optimal_slip_ratio = ratio;
         return *this;
     }
     Preset& SetShaftSmoothing(float v) { front_axle.steering_shaft_smoothing = v; return *this; }
     
     Preset& SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }
     Preset& SetYawSmoothing(float v) { rear_axle.yaw_accel_smoothing = v; return *this; }
-    Preset& SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }
+    Preset& SetChassisSmoothing(float v) { grip_estimation.chassis_inertia_smoothing = v; return *this; }
     
     Preset& SetSlopeDetection(bool enabled, int window = 15, float min_thresh = -0.3f, float max_thresh = -2.0f, float tau = 0.04f) {
         slope_detection_enabled = enabled;
@@ -333,10 +323,8 @@ struct Preset {
         engine.m_load_forces = this->load_forces;
         engine.m_load_forces.Validate();
 
-        engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
-        engine.m_grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
-        engine.m_grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
-        engine.m_grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
+        engine.m_grip_estimation = this->grip_estimation;
+        engine.m_grip_estimation.Validate();
 
         // FFB Safety (Issue #316)
         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
@@ -389,13 +377,9 @@ struct Preset {
         engine.m_speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         
         // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
-        engine.m_optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle); // Critical for grip division
-        engine.m_optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio); // Critical for grip division
         engine.m_gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
-        engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);
         engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         engine.m_understeer_affects_sop = understeer_affects_sop;
-        engine.m_load_sensitivity_enabled = load_sensitivity_enabled;
         
         // Slope Detection (v0.7.0)
         engine.m_slope_detection_enabled = slope_detection_enabled;
@@ -435,10 +419,7 @@ struct Preset {
         front_axle.Validate();
         rear_axle.Validate();
         load_forces.Validate();
-        slip_smoothing = (std::max)(0.0001f, slip_smoothing);
-        grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
-        grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
-        grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
+        grip_estimation.Validate();
         lockup_gain = (std::max)(0.0f, lockup_gain);
         lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
         lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
@@ -464,10 +445,7 @@ struct Preset {
         gyro_gain = (std::max)(0.0f, gyro_gain);
 
         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
-        optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);
-        optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);
         gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
-        chassis_smoothing = (std::max)(0.0f, chassis_smoothing);
         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
         if (slope_sg_window % 2 == 0) slope_sg_window++;
@@ -496,10 +474,7 @@ struct Preset {
         front_axle = engine.m_front_axle;
         rear_axle = engine.m_rear_axle;
         load_forces = engine.m_load_forces;
-        slip_smoothing = engine.m_slip_angle_smoothing;
-        grip_smoothing_steady = engine.m_grip_smoothing_steady;
-        grip_smoothing_fast = engine.m_grip_smoothing_fast;
-        grip_smoothing_sensitivity = engine.m_grip_smoothing_sensitivity;
+        grip_estimation = engine.m_grip_estimation;
 
         // FFB Safety (Issue #316)
         safety_window_duration = engine.m_safety.m_safety_window_duration;
@@ -551,13 +526,9 @@ struct Preset {
         speed_gate_upper = engine.m_speed_gate_upper;
 
         // NEW: Grip & Smoothing (v0.5.7/v0.5.8)
-        optimal_slip_angle = engine.m_optimal_slip_angle;
-        optimal_slip_ratio = engine.m_optimal_slip_ratio;
         gyro_smoothing = engine.m_gyro_smoothing;
-        chassis_smoothing = engine.m_chassis_inertia_smoothing;
         road_fallback_scale = engine.m_road_fallback_scale;
         understeer_affects_sop = engine.m_understeer_affects_sop;
-        load_sensitivity_enabled = engine.m_load_sensitivity_enabled;
 
         // Slope Detection (v0.7.0)
         slope_detection_enabled = engine.m_slope_detection_enabled;
@@ -595,10 +566,7 @@ struct Preset {
         if (!front_axle.Equals(p.front_axle, eps)) return false;
         if (!rear_axle.Equals(p.rear_axle, eps)) return false;
         if (!load_forces.Equals(p.load_forces, eps)) return false;
-        if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
-        if (!is_near(grip_smoothing_steady, p.grip_smoothing_steady, eps)) return false;
-        if (!is_near(grip_smoothing_fast, p.grip_smoothing_fast, eps)) return false;
-        if (!is_near(grip_smoothing_sensitivity, p.grip_smoothing_sensitivity, eps)) return false;
+        if (!grip_estimation.Equals(p.grip_estimation, eps)) return false;
 
         // FFB Safety (Issue #316)
         if (!is_near(safety_window_duration, p.safety_window_duration, eps)) return false;
@@ -649,17 +617,13 @@ struct Preset {
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(stationary_damping, p.stationary_damping, eps)) return false;
 
-        if (!is_near(optimal_slip_angle, p.optimal_slip_angle, eps)) return false;
-        if (!is_near(optimal_slip_ratio, p.optimal_slip_ratio, eps)) return false;
         if (!is_near(gyro_smoothing, p.gyro_smoothing, eps)) return false;
-        if (!is_near(chassis_smoothing, p.chassis_smoothing, eps)) return false;
 
         if (!is_near(speed_gate_lower, p.speed_gate_lower, eps)) return false;
         if (!is_near(speed_gate_upper, p.speed_gate_upper, eps)) return false;
 
         if (!is_near(road_fallback_scale, p.road_fallback_scale, eps)) return false;
         if (understeer_affects_sop != p.understeer_affects_sop) return false;
-        if (load_sensitivity_enabled != p.load_sensitivity_enabled) return false;
 
         if (slope_detection_enabled != p.slope_detection_enabled) return false;
         if (slope_sg_window != p.slope_sg_window) return false;

@@ -719,7 +719,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
 
-        FloatSetting("Grip Smoothing", &engine.m_grip_smoothing_steady, 0.000f, 0.100f, "%.3f s",
+        FloatSetting("Grip Smoothing", &engine.m_grip_estimation.grip_smoothing_steady, 0.000f, 0.100f, "%.3f s",
             Tooltips::GRIP_SMOOTHING);
 
         FloatSetting("  SoP Scale", &engine.m_rear_axle.sop_scale, 0.0f, 20.0f, "%.2f", Tooltips::SOP_SCALE);
@@ -732,29 +732,29 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Grip & Slip Angle Estimation", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        if (GuiWidgets::Checkbox("Enable Dynamic Load Sensitivity", &engine.m_load_sensitivity_enabled, Tooltips::LOAD_SENSITIVITY_ENABLE).deactivated) {
+        if (GuiWidgets::Checkbox("Enable Dynamic Load Sensitivity", &engine.m_grip_estimation.load_sensitivity_enabled, Tooltips::LOAD_SENSITIVITY_ENABLE).deactivated) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
             Config::Save(engine);
         }
 
-        FloatSetting("Slip Angle Smoothing", &engine.m_slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
+        FloatSetting("Slip Angle Smoothing", &engine.m_grip_estimation.slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::SLIP_ANGLE_SMOOTHING,
             [&]() {
-                int ms = (int)std::lround(engine.m_slip_angle_smoothing * 1000.0f);
+                int ms = (int)std::lround(engine.m_grip_estimation.slip_angle_smoothing * 1000.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
 
-        FloatSetting("Chassis Inertia (Load)", &engine.m_chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s",
+        FloatSetting("Chassis Inertia (Load)", &engine.m_grip_estimation.chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s",
             Tooltips::CHASSIS_INERTIA,
             [&]() {
-                int ms = (int)std::lround(engine.m_chassis_inertia_smoothing * 1000.0f);
+                int ms = (int)std::lround(engine.m_grip_estimation.chassis_inertia_smoothing * 1000.0f);
                 ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
             });
 
-        FloatSetting("Optimal Slip Angle", &engine.m_optimal_slip_angle, 0.040f, 0.200f, "%.3f rad",
+        FloatSetting("Optimal Slip Angle", &engine.m_grip_estimation.optimal_slip_angle, 0.040f, 0.200f, "%.3f rad",
             Tooltips::OPTIMAL_SLIP_ANGLE);
-        FloatSetting("Optimal Slip Ratio", &engine.m_optimal_slip_ratio, 0.04f, 0.20f, "%.3f",
+        FloatSetting("Optimal Slip Ratio", &engine.m_grip_estimation.optimal_slip_ratio, 0.04f, 0.20f, "%.3f",
             Tooltips::OPTIMAL_SLIP_RATIO);
 
         ImGui::Separator();

@@ -307,25 +307,25 @@ TEST_CASE(test_config_safety_validation_v057, "Config") {
     std::cout << "\nTest: Config Safety Validation (v0.5.7)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_optimal_slip_angle = 0.0f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.0f;
     Config::Save(engine, "tmp_invalid.ini");
     Config::Load(engine, "tmp_invalid.ini");
     // Test: Invalid optimal_slip_ratio (0.0) reset
-    engine.m_optimal_slip_ratio = 0.0f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.0f;
     Config::Save(engine, "tmp_invalid.ini");
     Config::Load(engine, "tmp_invalid.ini");
-    ASSERT_NEAR(engine.m_optimal_slip_ratio, 0.12f, 0.01);
+    ASSERT_NEAR(engine.m_grip_estimation.optimal_slip_ratio, 0.12f, 0.01);
 
     // Test: Very small values (<0.01) correctly reset
-    engine.m_optimal_slip_angle = 0.005f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.005f;
     Config::Save(engine, "tmp_invalid.ini");
     Config::Load(engine, "tmp_invalid.ini");
-    ASSERT_NEAR(engine.m_optimal_slip_angle, 0.10f, 0.01);
+    ASSERT_NEAR(engine.m_grip_estimation.optimal_slip_angle, 0.10f, 0.01);
 
-    engine.m_optimal_slip_ratio = 0.005f;
+    engine.m_grip_estimation.optimal_slip_ratio = 0.005f;
     Config::Save(engine, "tmp_invalid.ini");
     Config::Load(engine, "tmp_invalid.ini");
-    ASSERT_NEAR(engine.m_optimal_slip_ratio, 0.12f, 0.01);
+    ASSERT_NEAR(engine.m_grip_estimation.optimal_slip_ratio, 0.12f, 0.01);
 }
 
 TEST_CASE(test_config_safety_clamping, "Config") {

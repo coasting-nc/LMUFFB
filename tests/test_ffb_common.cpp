@@ -131,15 +131,15 @@ void InitializeEngine(FFBEngine& engine) {
     // v0.6.31: Zero out all auxiliary effects for clean physics testing by default.
     // Individual tests can re-enable what they need.
     engine.m_front_axle.steering_shaft_smoothing = 0.0f;
-    engine.m_slip_angle_smoothing = 0.0f;
+    engine.m_grip_estimation.slip_angle_smoothing = 0.0f;
     engine.m_rear_axle.sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
     engine.m_rear_axle.yaw_accel_smoothing = 0.0f;
     engine.m_gyro_smoothing = 0.0f;
-    engine.m_chassis_inertia_smoothing = 0.0f;
+    engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f;
     engine.m_load_forces.long_load_smoothing = 0.0f;
-    engine.m_grip_smoothing_steady = 0.0f;
-    engine.m_grip_smoothing_fast = 0.0f;
-    engine.m_grip_smoothing_sensitivity = 1.0f;
+    engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
+    engine.m_grip_estimation.grip_smoothing_sensitivity = 1.0f;
     
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_load_forces.lat_load_effect = 0.0f; // New v0.7.121

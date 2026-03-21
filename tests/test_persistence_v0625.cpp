@@ -395,15 +395,15 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     Preset::ApplyDefaultsToEngine(engine_defaults);
     
     // These fields triggered "Invalid X, resetting to default" warnings when missing
-    ASSERT_TRUE(engine_defaults.m_optimal_slip_angle >= 0.01f);
-    ASSERT_TRUE(engine_defaults.m_optimal_slip_ratio >= 0.01f);
+    ASSERT_TRUE(engine_defaults.m_grip_estimation.optimal_slip_angle >= 0.01f);
+    ASSERT_TRUE(engine_defaults.m_grip_estimation.optimal_slip_ratio >= 0.01f);
     
     // Additional smoothing fields (v0.5.7 - v0.5.8)
     // Note: 0.0 is valid for these, we just check they're not uninitialized garbage
     ASSERT_TRUE(engine_defaults.m_front_axle.steering_shaft_smoothing >= 0.0f);
     ASSERT_TRUE(engine_defaults.m_gyro_smoothing >= 0.0f);
     ASSERT_TRUE(engine_defaults.m_rear_axle.yaw_accel_smoothing >= 0.0f);
-    ASSERT_TRUE(engine_defaults.m_chassis_inertia_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_grip_estimation.chassis_inertia_smoothing >= 0.0f);
     
     // Slope detection fields (v0.7.0)
     ASSERT_TRUE(engine_defaults.m_slope_sg_window >= 5);
@@ -419,12 +419,12 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     custom_preset.general.gain = 0.77f;
     custom_preset.front_axle.understeer_effect = 0.88f;
     custom_preset.rear_axle.sop_effect = 1.11f;
-    custom_preset.optimal_slip_angle = 0.15f;
-    custom_preset.optimal_slip_ratio = 0.18f;
+    custom_preset.grip_estimation.optimal_slip_angle = 0.15f;
+    custom_preset.grip_estimation.optimal_slip_ratio = 0.18f;
     custom_preset.front_axle.steering_shaft_smoothing = 0.025f;
     custom_preset.gyro_smoothing = 0.015f;
     custom_preset.rear_axle.yaw_accel_smoothing = 0.005f;
-    custom_preset.chassis_smoothing = 0.035f;
+    custom_preset.grip_estimation.chassis_inertia_smoothing = 0.035f;
     custom_preset.road_fallback_scale = 0.12f;
     custom_preset.understeer_affects_sop = true;
     
@@ -442,12 +442,12 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_NEAR(engine_apply.m_general.gain, 0.77f, 0.001f);
     ASSERT_NEAR(engine_apply.m_front_axle.understeer_effect, 0.88f, 0.001f);
     ASSERT_NEAR(engine_apply.m_rear_axle.sop_effect, 1.11f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_optimal_slip_angle, 0.15f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_optimal_slip_ratio, 0.18f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_grip_estimation.optimal_slip_angle, 0.15f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_grip_estimation.optimal_slip_ratio, 0.18f, 0.001f);
     ASSERT_NEAR(engine_apply.m_front_axle.steering_shaft_smoothing, 0.025f, 0.001f);
     ASSERT_NEAR(engine_apply.m_gyro_smoothing, 0.015f, 0.001f);
     ASSERT_NEAR(engine_apply.m_rear_axle.yaw_accel_smoothing, 0.005f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_chassis_inertia_smoothing, 0.035f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_grip_estimation.chassis_inertia_smoothing, 0.035f, 0.001f);
     ASSERT_NEAR(engine_apply.m_road_fallback_scale, 0.12f, 0.001f);
     ASSERT_EQ(engine_apply.m_understeer_affects_sop, true);
     
@@ -467,12 +467,12 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     // Set custom values directly on engine
     engine_source.m_general.gain = 0.55f;
     engine_source.m_front_axle.understeer_effect = 0.66f;
-    engine_source.m_optimal_slip_angle = 0.22f;
-    engine_source.m_optimal_slip_ratio = 0.25f;
+    engine_source.m_grip_estimation.optimal_slip_angle = 0.22f;
+    engine_source.m_grip_estimation.optimal_slip_ratio = 0.25f;
     engine_source.m_front_axle.steering_shaft_smoothing = 0.033f;
     engine_source.m_gyro_smoothing = 0.044f;
     engine_source.m_rear_axle.yaw_accel_smoothing = 0.011f;
-    engine_source.m_chassis_inertia_smoothing = 0.055f;
+    engine_source.m_grip_estimation.chassis_inertia_smoothing = 0.055f;
     engine_source.m_road_fallback_scale = 0.09f;
     engine_source.m_understeer_affects_sop = true;
     
@@ -489,12 +489,12 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     // Verify UpdateFromEngine() worked
     ASSERT_NEAR(captured_preset.general.gain, 0.55f, 0.001f);
     ASSERT_NEAR(captured_preset.front_axle.understeer_effect, 0.66f, 0.001f);
-    ASSERT_NEAR(captured_preset.optimal_slip_angle, 0.22f, 0.001f);
-    ASSERT_NEAR(captured_preset.optimal_slip_ratio, 0.25f, 0.001f);
+    ASSERT_NEAR(captured_preset.grip_estimation.optimal_slip_angle, 0.22f, 0.001f);
+    ASSERT_NEAR(captured_preset.grip_estimation.optimal_slip_ratio, 0.25f, 0.001f);
     ASSERT_NEAR(captured_preset.front_axle.steering_shaft_smoothing, 0.033f, 0.001f);
     ASSERT_NEAR(captured_preset.gyro_smoothing, 0.044f, 0.001f);
     ASSERT_NEAR(captured_preset.rear_axle.yaw_accel_smoothing, 0.011f, 0.001f);
-    ASSERT_NEAR(captured_preset.chassis_smoothing, 0.055f, 0.001f);
+    ASSERT_NEAR(captured_preset.grip_estimation.chassis_inertia_smoothing, 0.055f, 0.001f);
     ASSERT_NEAR(captured_preset.road_fallback_scale, 0.09f, 0.001f);
     ASSERT_EQ(captured_preset.understeer_affects_sop, true);
     
@@ -512,7 +512,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     FFBEngine engine_roundtrip;
     captured_preset.Apply(engine_roundtrip);
     
-    ASSERT_NEAR(engine_roundtrip.m_optimal_slip_angle, 0.22f, 0.001f);
+    ASSERT_NEAR(engine_roundtrip.m_grip_estimation.optimal_slip_angle, 0.22f, 0.001f);
     ASSERT_NEAR(engine_roundtrip.m_slope_sensitivity, 3.0f, 0.001f);
     
     std::cout << "  [PASS] Round-trip Apply->UpdateFromEngine->Apply preserves data" << std::endl;

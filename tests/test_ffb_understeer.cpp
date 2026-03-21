@@ -7,7 +7,7 @@ TEST_CASE(test_optimal_slip_buffer_zone, "Understeer") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     engine.m_front_axle.understeer_effect = 1.0f; // New scale
     
     // Simulate telemetry with slip_angle = 0.06 rad (60% of 0.10)
@@ -31,7 +31,7 @@ TEST_CASE(test_progressive_loss_curve, "Understeer") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     engine.m_front_axle.understeer_effect = 1.0f;  // Proportional
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.10); // 1.0x optimal
@@ -71,7 +71,7 @@ TEST_CASE(test_grip_floor_clamp, "Understeer") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.05f; 
+    engine.m_grip_estimation.optimal_slip_angle = 0.05f;
     engine.m_front_axle.understeer_effect = 1.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 10.0); // Infinite slip
@@ -91,7 +91,7 @@ TEST_CASE(test_understeer_output_clamp, "Understeer") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     engine.m_front_axle.understeer_effect = 2.0f; // Max effective
     
     // Slip = 0.20 -> excess = 1.0 (approx). 
@@ -120,7 +120,7 @@ TEST_CASE(test_understeer_effect_scaling, "Understeer") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_optimal_slip_angle = 0.10f;
+    engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.12); // ~30% loss
     data.mSteeringShaftTorque = 20.0;
     
@@ -195,8 +195,8 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     ASSERT_TRUE(p.abs_pulse_enabled == false);           // ABS pulse disabled
     
     // VERIFY: Critical physics parameters are set correctly
-    ASSERT_NEAR(p.optimal_slip_angle, 0.10f, 0.001f);    // Optimal slip angle threshold
-    ASSERT_NEAR(p.optimal_slip_ratio, 0.12f, 0.001f);    // Optimal slip ratio threshold
+    ASSERT_NEAR(p.grip_estimation.optimal_slip_angle, 0.10f, 0.001f);    // Optimal slip angle threshold
+    ASSERT_NEAR(p.grip_estimation.optimal_slip_ratio, 0.12f, 0.001f);    // Optimal slip ratio threshold
     
     // VERIFY: Speed gate is disabled (0.0 = no gating)
     ASSERT_NEAR(p.speed_gate_lower, 0.0f, 0.001f);       // Speed gate disabled

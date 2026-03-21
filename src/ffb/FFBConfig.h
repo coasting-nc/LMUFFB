@@ -179,4 +179,38 @@ struct LoadForcesConfig {
     }
 };
 
+struct GripEstimationConfig {
+    float optimal_slip_angle = 0.1f;
+    float optimal_slip_ratio = 0.12f;
+    float slip_angle_smoothing = 0.002f;
+    float chassis_inertia_smoothing = 0.0f;
+    bool load_sensitivity_enabled = true;
+
+    float grip_smoothing_steady = 0.05f;
+    float grip_smoothing_fast = 0.005f;
+    float grip_smoothing_sensitivity = 0.1f;
+
+    bool Equals(const GripEstimationConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return is_near(optimal_slip_angle, o.optimal_slip_angle) &&
+               is_near(optimal_slip_ratio, o.optimal_slip_ratio) &&
+               is_near(slip_angle_smoothing, o.slip_angle_smoothing) &&
+               is_near(chassis_inertia_smoothing, o.chassis_inertia_smoothing) &&
+               load_sensitivity_enabled == o.load_sensitivity_enabled &&
+               is_near(grip_smoothing_steady, o.grip_smoothing_steady) &&
+               is_near(grip_smoothing_fast, o.grip_smoothing_fast) &&
+               is_near(grip_smoothing_sensitivity, o.grip_smoothing_sensitivity);
+    }
+
+    void Validate() {
+        optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);
+        optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);
+        slip_angle_smoothing = (std::max)(0.0001f, slip_angle_smoothing);
+        chassis_inertia_smoothing = (std::max)(0.0f, chassis_inertia_smoothing);
+        grip_smoothing_steady = (std::max)(0.0f, grip_smoothing_steady);
+        grip_smoothing_fast = (std::max)(0.0f, grip_smoothing_fast);
+        grip_smoothing_sensitivity = (std::max)(0.001f, grip_smoothing_sensitivity);
+    }
+};
+
 #endif // FFBCONFIG_H
