@@ -151,6 +151,7 @@ set(TEST_SOURCES
     test_refactor_rear_axle.cpp
     test_refactor_load_forces.cpp
     test_refactor_grip_estimation.cpp
+    test_refactor_slope_detection.cpp
     ../src/core/main.cpp
 )
 

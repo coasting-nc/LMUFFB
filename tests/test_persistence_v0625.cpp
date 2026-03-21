@@ -406,9 +406,9 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_TRUE(engine_defaults.m_grip_estimation.chassis_inertia_smoothing >= 0.0f);
     
     // Slope detection fields (v0.7.0)
-    ASSERT_TRUE(engine_defaults.m_slope_sg_window >= 5);
-    ASSERT_TRUE(engine_defaults.m_slope_sensitivity >= 0.1f);
-    ASSERT_TRUE(engine_defaults.m_slope_smoothing_tau >= 0.001f);
+    ASSERT_TRUE(engine_defaults.m_slope_detection.sg_window >= 5);
+    ASSERT_TRUE(engine_defaults.m_slope_detection.sensitivity >= 0.1f);
+    ASSERT_TRUE(engine_defaults.m_slope_detection.smoothing_tau >= 0.001f);
     
     std::cout << "  [PASS] ApplyDefaultsToEngine initializes critical fields" << std::endl;
     
@@ -429,11 +429,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     custom_preset.understeer_affects_sop = true;
     
     // Slope detection (v0.7.0)
-    custom_preset.slope_detection_enabled = true;
-    custom_preset.slope_sg_window = 21;
-    custom_preset.slope_sensitivity = 2.5f;
-    custom_preset.slope_min_threshold = -0.2f;
-    custom_preset.slope_smoothing_tau = 0.05f;
+    custom_preset.slope_detection.enabled = true;
+    custom_preset.slope_detection.sg_window = 21;
+    custom_preset.slope_detection.sensitivity = 2.5f;
+    custom_preset.slope_detection.min_threshold = -0.2f;
+    custom_preset.slope_detection.smoothing_tau = 0.05f;
     
     FFBEngine engine_apply;
     custom_preset.Apply(engine_apply);
@@ -452,11 +452,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_EQ(engine_apply.m_understeer_affects_sop, true);
     
     // Slope detection (v0.7.0)
-    ASSERT_EQ(engine_apply.m_slope_detection_enabled, true);
-    ASSERT_EQ(engine_apply.m_slope_sg_window, 21);
-    ASSERT_NEAR(engine_apply.m_slope_sensitivity, 2.5f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_slope_min_threshold, -0.2f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_slope_smoothing_tau, 0.05f, 0.001f);
+    ASSERT_EQ(engine_apply.m_slope_detection.enabled, true);
+    ASSERT_EQ(engine_apply.m_slope_detection.sg_window, 21);
+    ASSERT_NEAR(engine_apply.m_slope_detection.sensitivity, 2.5f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_slope_detection.min_threshold, -0.2f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_slope_detection.smoothing_tau, 0.05f, 0.001f);
     
     std::cout << "  [PASS] Apply() transfers all Preset fields to FFBEngine" << std::endl;
     
@@ -477,11 +477,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     engine_source.m_understeer_affects_sop = true;
     
     // Slope detection (v0.7.0)
-    engine_source.m_slope_detection_enabled = true;
-    engine_source.m_slope_sg_window = 31;
-    engine_source.m_slope_sensitivity = 3.0f;
-    engine_source.m_slope_min_threshold = -0.3f;
-    engine_source.m_slope_smoothing_tau = 0.08f;
+    engine_source.m_slope_detection.enabled = true;
+    engine_source.m_slope_detection.sg_window = 31;
+    engine_source.m_slope_detection.sensitivity = 3.0f;
+    engine_source.m_slope_detection.min_threshold = -0.3f;
+    engine_source.m_slope_detection.smoothing_tau = 0.08f;
     
     Preset captured_preset;
     captured_preset.UpdateFromEngine(engine_source);
@@ -499,11 +499,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_EQ(captured_preset.understeer_affects_sop, true);
     
     // Slope detection (v0.7.0)
-    ASSERT_EQ(captured_preset.slope_detection_enabled, true);
-    ASSERT_EQ(captured_preset.slope_sg_window, 31);
-    ASSERT_NEAR(captured_preset.slope_sensitivity, 3.0f, 0.001f);
-    ASSERT_NEAR(captured_preset.slope_min_threshold, -0.3f, 0.001f);
-    ASSERT_NEAR(captured_preset.slope_smoothing_tau, 0.08f, 0.001f);
+    ASSERT_EQ(captured_preset.slope_detection.enabled, true);
+    ASSERT_EQ(captured_preset.slope_detection.sg_window, 31);
+    ASSERT_NEAR(captured_preset.slope_detection.sensitivity, 3.0f, 0.001f);
+    ASSERT_NEAR(captured_preset.slope_detection.min_threshold, -0.3f, 0.001f);
+    ASSERT_NEAR(captured_preset.slope_detection.smoothing_tau, 0.08f, 0.001f);
     
     std::cout << "  [PASS] UpdateFromEngine() captures all FFBEngine fields" << std::endl;
     
@@ -513,7 +513,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     captured_preset.Apply(engine_roundtrip);
     
     ASSERT_NEAR(engine_roundtrip.m_grip_estimation.optimal_slip_angle, 0.22f, 0.001f);
-    ASSERT_NEAR(engine_roundtrip.m_slope_sensitivity, 3.0f, 0.001f);
+    ASSERT_NEAR(engine_roundtrip.m_slope_detection.sensitivity, 3.0f, 0.001f);
     
     std::cout << "  [PASS] Round-trip Apply->UpdateFromEngine->Apply preserves data" << std::endl;
 }

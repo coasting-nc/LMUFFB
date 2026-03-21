@@ -363,19 +363,19 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(road_fallback_scale, 0.5f);
     TEST_FIELD_NE(understeer_affects_sop, !p2.understeer_affects_sop);
     TEST_FIELD_NE(grip_estimation.load_sensitivity_enabled, !p2.grip_estimation.load_sensitivity_enabled);
-    TEST_FIELD_NE(slope_detection_enabled, !p2.slope_detection_enabled);
-    TEST_FIELD_NE(slope_sg_window, 21);
-    TEST_FIELD_NE(slope_sensitivity, 0.5f);
-    TEST_FIELD_NE(slope_smoothing_tau, 0.5f);
-    TEST_FIELD_NE(slope_alpha_threshold, 0.5f);
-    TEST_FIELD_NE(slope_decay_rate, 0.5f);
-    TEST_FIELD_NE(slope_confidence_enabled, !p2.slope_confidence_enabled);
-    TEST_FIELD_NE(slope_min_threshold, 0.5f);
-    TEST_FIELD_NE(slope_max_threshold, 0.5f);
-    TEST_FIELD_NE(slope_g_slew_limit, 0.5f);
-    TEST_FIELD_NE(slope_use_torque, !p2.slope_use_torque);
-    TEST_FIELD_NE(slope_torque_sensitivity, 0.5f);
-    TEST_FIELD_NE(slope_confidence_max_rate, 0.5f);
+    TEST_FIELD_NE(slope_detection.enabled, !p2.slope_detection.enabled);
+    TEST_FIELD_NE(slope_detection.sg_window, 21);
+    TEST_FIELD_NE(slope_detection.sensitivity, 0.5f);
+    TEST_FIELD_NE(slope_detection.smoothing_tau, 0.5f);
+    TEST_FIELD_NE(slope_detection.alpha_threshold, 0.5f);
+    TEST_FIELD_NE(slope_detection.decay_rate, 0.5f);
+    TEST_FIELD_NE(slope_detection.confidence_enabled, !p2.slope_detection.confidence_enabled);
+    TEST_FIELD_NE(slope_detection.min_threshold, 0.5f);
+    TEST_FIELD_NE(slope_detection.max_threshold, 0.5f);
+    TEST_FIELD_NE(slope_detection.g_slew_limit, 0.5f);
+    TEST_FIELD_NE(slope_detection.use_torque, !p2.slope_detection.use_torque);
+    TEST_FIELD_NE(slope_detection.torque_sensitivity, 0.5f);
+    TEST_FIELD_NE(slope_detection.confidence_max_rate, 0.5f);
 
     std::cout << "[PASS] Preset Equals exhaustive check" << std::endl;
 }

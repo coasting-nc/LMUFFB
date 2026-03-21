@@ -74,14 +74,14 @@ TEST_CASE(test_config_invalid_validation, "Config") {
         std::remove(f);
     }
 
-    // 2. slope_sg_window validation (min 5, max 41, must be odd)
+    // 2. slope_detection.sg_window validation (min 5, max 41, must be odd)
     {
         const char* f = "tmp_invalid_slope_win.ini";
         std::ofstream ofs(f);
         ofs << "slope_sg_window=4\n"; // Should be clamped to 5
         ofs.close();
         Config::Load(engine, f);
-        ASSERT_EQ(engine.m_slope_sg_window, 5);
+        ASSERT_EQ(engine.m_slope_detection.sg_window, 5);
         std::remove(f);
     }
     {
@@ -90,7 +90,7 @@ TEST_CASE(test_config_invalid_validation, "Config") {
         ofs << "slope_sg_window=10\n"; // Should be made odd -> 11
         ofs.close();
         Config::Load(engine, f);
-        ASSERT_EQ(engine.m_slope_sg_window, 11);
+        ASSERT_EQ(engine.m_slope_detection.sg_window, 11);
         std::remove(f);
     }
 }
@@ -320,7 +320,7 @@ TEST_CASE(test_gui_diverse_engine_states, "GUI") {
     std::filesystem::remove_all(log_dir);
 
     // Slope detection ON
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     GuiLayerTestAccess::DrawTuningWindow(engine);
 
     ImGui::EndFrame();

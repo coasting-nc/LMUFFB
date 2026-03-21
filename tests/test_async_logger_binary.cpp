@@ -24,11 +24,11 @@ TEST_CASE(test_async_logger_binary_integrity, "Logging") {
     info.general.gain = 1.0f;
     info.front_axle.understeer_effect = 0.5f;
     info.rear_axle.sop_effect = 0.5f;
-    info.slope_enabled = true;
-    info.slope_sensitivity = 0.5f;
-    info.slope_threshold = -0.3f;
-    info.slope_alpha_threshold = 0.01f;
-    info.slope_decay_rate = 0.1f;
+    info.slope_detection.enabled = true;
+    info.slope_detection.sensitivity = 0.5f;
+    info.slope_detection.min_threshold = -0.3f;
+    info.slope_detection.alpha_threshold = 0.01f;
+    info.slope_detection.decay_rate = 0.1f;
     info.front_axle.torque_passthrough = false;
 
     logger.EnableCompression(false);

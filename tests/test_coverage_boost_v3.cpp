@@ -166,14 +166,14 @@ TEST_CASE(test_config_exhaustive_keys, "Config") {
         ofs << "gyro_gain=0.5\nflatspot_suppression=1\nnotch_q=2.0\n";
         ofs << "flatspot_strength=1.0\nstatic_notch_enabled=1\nstatic_notch_freq=15.0\n";
         ofs << "static_notch_width=2.0\nyaw_kick_threshold=0.1\noptimal_slip_angle=0.1\n";
-        ofs << "optimal_slip_ratio=0.12\nslope_detection_enabled=1\nslope_sg_window=15\n";
-        ofs << "slope_sensitivity=1.0\nslope_negative_threshold=-0.5\nslope_smoothing_tau=0.05\n";
-        ofs << "slope_min_threshold=-0.3\nslope_max_threshold=-2.0\nslope_alpha_threshold=0.02\n";
-        ofs << "slope_decay_rate=5.0\nslope_confidence_enabled=1\nsteering_shaft_smoothing=0.01\n";
+        ofs << "optimal_slip_ratio=0.12\nslope_detection.enabled=1\nslope_detection.sg_window=15\n";
+        ofs << "slope_detection.sensitivity=1.0\nslope_negative_threshold=-0.5\nslope_detection.smoothing_tau=0.05\n";
+        ofs << "slope_detection.min_threshold=-0.3\nslope_detection.max_threshold=-2.0\nslope_detection.alpha_threshold=0.02\n";
+        ofs << "slope_detection.decay_rate=5.0\nslope_detection.confidence_enabled=1\nsteering_shaft_smoothing=0.01\n";
         ofs << "gyro_smoothing_factor=0.01\nyaw_accel_smoothing=0.01\nchassis_inertia_smoothing=0.01\n";
         ofs << "speed_gate_lower=1.0\nspeed_gate_upper=5.0\nroad_fallback_scale=0.05\n";
-        ofs << "understeer_affects_sop=0\nslope_g_slew_limit=50.0\nslope_use_torque=1\n";
-        ofs << "slope_torque_sensitivity=0.5\nslope_confidence_max_rate=0.1\n";
+        ofs << "understeer_affects_sop=0\nslope_detection.g_slew_limit=50.0\nslope_detection.use_torque=1\n";
+        ofs << "slope_detection.torque_sensitivity=0.5\nslope_detection.confidence_max_rate=0.1\n";
         ofs.close();
 
         Config::Load(engine, "exhaustive_config.ini");

@@ -266,7 +266,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
     engine.m_soft_lock_enabled = true;
     engine.m_front_axle.flatspot_suppression = true;
     engine.m_front_axle.static_notch_enabled = true;
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     engine.m_lockup_enabled = true;
     engine.m_abs_pulse_enabled = true;
     engine.m_slide_texture_enabled = true;

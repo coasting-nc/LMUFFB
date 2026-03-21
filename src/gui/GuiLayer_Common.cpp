@@ -761,12 +761,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Slope Detection (Experimental)");
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        bool prev_slope_enabled = engine.m_slope_detection_enabled;
-        GuiWidgets::Result slope_res = GuiWidgets::Checkbox("Enable Slope Detection", &engine.m_slope_detection_enabled,
+        bool prev_slope_enabled = engine.m_slope_detection.enabled;
+        GuiWidgets::Result slope_res = GuiWidgets::Checkbox("Enable Slope Detection", &engine.m_slope_detection.enabled,
             Tooltips::SLOPE_DETECTION_ENABLE);
 
         if (slope_res.changed) {
-            if (!prev_slope_enabled && engine.m_slope_detection_enabled) {
+            if (!prev_slope_enabled && engine.m_slope_detection.enabled) {
                 engine.m_slope_buffer_count = 0;
                 engine.m_slope_buffer_index = 0;
                 engine.m_slope_smoothed_output = 1.0;
@@ -776,17 +776,17 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Config::Save(engine);
         }
 
-        if (engine.m_slope_detection_enabled && engine.m_rear_axle.oversteer_boost > 0.01f) {
+        if (engine.m_slope_detection.enabled && engine.m_rear_axle.oversteer_boost > 0.01f) {
             ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f),
                 "Note: Lateral G Boost (Slide) is auto-disabled when Slope Detection is ON.");
             ImGui::NextColumn(); ImGui::NextColumn();
         }
 
-        if (engine.m_slope_detection_enabled) {
-            int window = engine.m_slope_sg_window;
+        if (engine.m_slope_detection.enabled) {
+            int window = engine.m_slope_detection.sg_window;
             if (ImGui::SliderInt("  Filter Window", &window, 5, 41)) {
                 if (window % 2 == 0) window++;
-                engine.m_slope_sg_window = window;
+                engine.m_slope_detection.sg_window = window;
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("%s", Tooltips::SLOPE_FILTER_WINDOW);
@@ -794,25 +794,25 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
 
             ImGui::SameLine();
-            float latency_ms = (static_cast<float>(engine.m_slope_sg_window) / 2.0f) * 2.5f;
+            float latency_ms = (static_cast<float>(engine.m_slope_detection.sg_window) / 2.0f) * 2.5f;
             ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
             ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
             ImGui::NextColumn(); ImGui::NextColumn();
 
-            FloatSetting("  Sensitivity", &engine.m_slope_sensitivity, 0.1f, 5.0f, "%.1fx",
+            FloatSetting("  Sensitivity", &engine.m_slope_detection.sensitivity, 0.1f, 5.0f, "%.1fx",
                 Tooltips::SLOPE_SENSITIVITY);
 
             if (ImGui::TreeNode("Advanced Slope Settings")) {
                 ImGui::NextColumn(); ImGui::NextColumn();
-                FloatSetting("  Slope Threshold", &engine.m_slope_min_threshold, -1.0f, 0.0f, "%.2f", Tooltips::SLOPE_THRESHOLD);
-                FloatSetting("  Output Smoothing", &engine.m_slope_smoothing_tau, 0.005f, 0.100f, "%.3f s", Tooltips::SLOPE_OUTPUT_SMOOTHING);
+                FloatSetting("  Slope Threshold", &engine.m_slope_detection.min_threshold, -1.0f, 0.0f, "%.2f", Tooltips::SLOPE_THRESHOLD);
+                FloatSetting("  Output Smoothing", &engine.m_slope_detection.smoothing_tau, 0.005f, 0.100f, "%.3f s", Tooltips::SLOPE_OUTPUT_SMOOTHING);
 
                 ImGui::Separator();
                 ImGui::Text("Stability Fixes (v0.7.3)");
                 ImGui::NextColumn(); ImGui::NextColumn();
-                FloatSetting("  Alpha Threshold", &engine.m_slope_alpha_threshold, 0.001f, 0.100f, "%.3f", Tooltips::SLOPE_ALPHA_THRESHOLD);
-                FloatSetting("  Decay Rate", &engine.m_slope_decay_rate, 0.5f, 20.0f, "%.1f", Tooltips::SLOPE_DECAY_RATE);
-                BoolSetting("  Confidence Gate", &engine.m_slope_confidence_enabled, Tooltips::SLOPE_CONFIDENCE_GATE);
+                FloatSetting("  Alpha Threshold", &engine.m_slope_detection.alpha_threshold, 0.001f, 0.100f, "%.3f", Tooltips::SLOPE_ALPHA_THRESHOLD);
+                FloatSetting("  Decay Rate", &engine.m_slope_detection.decay_rate, 0.5f, 20.0f, "%.1f", Tooltips::SLOPE_DECAY_RATE);
+                BoolSetting("  Confidence Gate", &engine.m_slope_detection.confidence_enabled, Tooltips::SLOPE_CONFIDENCE_GATE);
 
                 ImGui::TreePop();
             } else {
@@ -1236,7 +1236,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
         PlotWithStats("Front Slip Ratio", plot_calc_slip_ratio, -1.0f, 1.0f);
         PlotWithStats("Front Slip Angle", plot_calc_slip_angle_smoothed, 0.0f, 1.0f);
         PlotWithStats("Rear Slip Angle", plot_calc_rear_slip_angle_smoothed, 0.0f, 1.0f);
-        if (engine.m_slope_detection_enabled) PlotWithStats("Slope", plot_slope_current, -5.0f, 5.0f);
+        if (engine.m_slope_detection.enabled) PlotWithStats("Slope", plot_slope_current, -5.0f, 5.0f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Forces]");
         PlotWithStats("Calc Rear Lat Force", plot_calc_rear_lat_force, -5000.0f, 5000.0f);

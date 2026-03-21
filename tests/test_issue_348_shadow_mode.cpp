@@ -8,8 +8,8 @@ TEST_CASE(test_issue_348_slope_shadow_mode, "SlopeDetection") {
     InitializeEngine(engine);
 
     // Enable slope detection
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_sg_window = 9;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.sg_window = 9;
 
     // Simulate unencrypted telemetry (high grip value)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);

@@ -6,7 +6,7 @@ TEST_CASE(test_slope_singularity_rejection, "SlopeFix") {
     std::cout << "\nTest: Slope Singularity Rejection (Projected Slope)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
 
     // Setup telemetry where SlipAngle is constant (dAlpha ~ 0)
     // but LateralG has a spike (dG >> 0)
@@ -36,8 +36,8 @@ TEST_CASE(test_slope_steady_state_hold, "SlopeFix") {
     std::cout << "\nTest: Slope Steady State Hold" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.02f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -83,7 +83,7 @@ TEST_CASE(test_input_smoothing, "SlopeFix") {
     std::cout << "\nTest: Slope Input Smoothing" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.0025; // 400Hz

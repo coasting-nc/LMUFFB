@@ -189,7 +189,7 @@ TEST_CASE(test_coverage_slope_grip_fusion, "Coverage") {
     
     // We need to trigger the torque fusion branch:
     // double loss_percent_torque = 0.0;
-    // bool use_torque_fusion = (m_slope_use_torque && data != nullptr);
+    // bool use_torque_fusion = (m_slope_detection.use_torque && data != nullptr);
     
     FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 0.5, 0.1, 0.01, &data);
     // This simply ensures the lines are executed

@@ -120,6 +120,7 @@ public:
     RearAxleConfig m_rear_axle;
     LoadForcesConfig m_load_forces;
     GripEstimationConfig m_grip_estimation;
+    SlopeDetectionConfig m_slope_detection;
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
 
     // Configurable Smoothing & Caps (v0.3.9)
@@ -185,28 +186,6 @@ public:
     float m_road_fallback_scale = 0.05f;
     bool m_understeer_affects_sop = false;
     
-    // ===== SLOPE DETECTION (v0.7.0 -> v0.7.3 stability fixes) =====
-    bool m_slope_detection_enabled = false;
-    int m_slope_sg_window = 15;
-    float m_slope_sensitivity = 0.5f;            
-
-    float m_slope_smoothing_tau = 0.04f;         
-
-    // NEW v0.7.3: Stability fixes
-    float m_slope_alpha_threshold = 0.02f;    
-    float m_slope_decay_rate = 5.0f;          
-    bool m_slope_confidence_enabled = true;   
-    float m_slope_confidence_max_rate = 0.10f; 
-
-    // NEW v0.7.11: Min/Max Threshold System
-    float m_slope_min_threshold = -0.3f;   
-    float m_slope_max_threshold = -2.0f;   
-
-    // NEW v0.7.40: Advanced Features
-    float m_slope_g_slew_limit = 50.0f;
-    bool m_slope_use_torque = true;
-    float m_slope_torque_sensitivity = 0.5f;
-
     // Signal Diagnostics
     double m_debug_freq = 0.0; 
     double m_theoretical_freq = 0.0; 

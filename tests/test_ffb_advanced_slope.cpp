@@ -6,8 +6,8 @@ TEST_CASE(test_slew_rate_limiter, "AdvancedSlope") {
     std::cout << "\nTest: Slew Rate Limiter (Curb Rejection) [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_g_slew_limit = 10.0f; // 10 G/s limit
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.g_slew_limit = 10.0f; // 10 G/s limit
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
 
@@ -46,9 +46,9 @@ TEST_CASE(test_torque_slope_anticipation, "AdvancedSlope") {
     std::cout << "\nTest: Torque Slope Anticipation (Pneumatic Trail)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_use_torque = true;
-    engine.m_slope_sg_window = 9;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.use_torque = true;
+    engine.m_slope_detection.sg_window = 9;
 
     double dt = 0.01;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);

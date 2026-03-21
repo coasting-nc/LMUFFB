@@ -162,11 +162,7 @@ void FFBThread() {
                             info.long_load_effect = g_engine.m_load_forces.long_load_effect;
                             info.optimal_slip_angle = g_engine.m_grip_estimation.optimal_slip_angle;
                             info.optimal_slip_ratio = g_engine.m_grip_estimation.optimal_slip_ratio;
-                            info.slope_enabled = g_engine.m_slope_detection_enabled;
-                            info.slope_sensitivity = g_engine.m_slope_sensitivity;
-                            info.slope_threshold = (float)g_engine.m_slope_min_threshold;
-                            info.slope_alpha_threshold = g_engine.m_slope_alpha_threshold;
-                            info.slope_decay_rate = g_engine.m_slope_decay_rate;
+                            info.slope_detection = g_engine.m_slope_detection;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }

@@ -130,19 +130,19 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "gyro_smoothing_factor") { current_preset.gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { current_preset.grip_estimation.optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { current_preset.grip_estimation.optimal_slip_ratio = std::stof(value); return true; }
-    if (key == "slope_detection_enabled") { current_preset.slope_detection_enabled = (value == "1"); return true; }
-    if (key == "slope_sg_window") { current_preset.slope_sg_window = std::stoi(value); return true; }
-    if (key == "slope_sensitivity") { current_preset.slope_sensitivity = std::stof(value); return true; }
-    if (key == "slope_negative_threshold" || key == "slope_min_threshold") { current_preset.slope_min_threshold = std::stof(value); return true; }
-    if (key == "slope_smoothing_tau") { current_preset.slope_smoothing_tau = std::stof(value); return true; }
-    if (key == "slope_max_threshold") { current_preset.slope_max_threshold = std::stof(value); return true; }
-    if (key == "slope_alpha_threshold") { current_preset.slope_alpha_threshold = std::stof(value); return true; }
-    if (key == "slope_decay_rate") { current_preset.slope_decay_rate = std::stof(value); return true; }
-    if (key == "slope_confidence_enabled") { current_preset.slope_confidence_enabled = (value == "1"); return true; }
-    if (key == "slope_g_slew_limit") { current_preset.slope_g_slew_limit = std::stof(value); return true; }
-    if (key == "slope_use_torque") { current_preset.slope_use_torque = (value == "1"); return true; }
-    if (key == "slope_torque_sensitivity") { current_preset.slope_torque_sensitivity = std::stof(value); return true; }
-    if (key == "slope_confidence_max_rate") { current_preset.slope_confidence_max_rate = std::stof(value); return true; }
+    if (key == "slope_detection_enabled") { current_preset.slope_detection.enabled = (value == "1"); return true; }
+    if (key == "slope_sg_window") { current_preset.slope_detection.sg_window = std::stoi(value); return true; }
+    if (key == "slope_sensitivity") { current_preset.slope_detection.sensitivity = std::stof(value); return true; }
+    if (key == "slope_negative_threshold" || key == "slope_min_threshold") { current_preset.slope_detection.min_threshold = std::stof(value); return true; }
+    if (key == "slope_smoothing_tau") { current_preset.slope_detection.smoothing_tau = std::stof(value); return true; }
+    if (key == "slope_max_threshold") { current_preset.slope_detection.max_threshold = std::stof(value); return true; }
+    if (key == "slope_alpha_threshold") { current_preset.slope_detection.alpha_threshold = std::stof(value); return true; }
+    if (key == "slope_decay_rate") { current_preset.slope_detection.decay_rate = std::stof(value); return true; }
+    if (key == "slope_confidence_enabled") { current_preset.slope_detection.confidence_enabled = (value == "1"); return true; }
+    if (key == "slope_g_slew_limit") { current_preset.slope_detection.g_slew_limit = std::stof(value); return true; }
+    if (key == "slope_use_torque") { current_preset.slope_detection.use_torque = (value == "1"); return true; }
+    if (key == "slope_torque_sensitivity") { current_preset.slope_detection.torque_sensitivity = std::stof(value); return true; }
+    if (key == "slope_confidence_max_rate") { current_preset.slope_detection.confidence_max_rate = std::stof(value); return true; }
     if (key == "slip_angle_smoothing") { current_preset.grip_estimation.slip_angle_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { current_preset.grip_estimation.chassis_inertia_smoothing = std::stof(value); return true; }
     if (key == "load_sensitivity_enabled") { current_preset.grip_estimation.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
@@ -302,19 +302,19 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "gyro_smoothing_factor") { engine.m_gyro_smoothing = std::stof(value); return true; }
     if (key == "optimal_slip_angle") { engine.m_grip_estimation.optimal_slip_angle = std::stof(value); return true; }
     if (key == "optimal_slip_ratio") { engine.m_grip_estimation.optimal_slip_ratio = std::stof(value); return true; }
-    if (key == "slope_detection_enabled") { engine.m_slope_detection_enabled = (value == "1"); return true; }
-    if (key == "slope_sg_window") { engine.m_slope_sg_window = std::stoi(value); return true; }
-    if (key == "slope_sensitivity") { engine.m_slope_sensitivity = std::stof(value); return true; }
-    if (key == "slope_negative_threshold" || key == "slope_min_threshold") { engine.m_slope_min_threshold = std::stof(value); return true; }
-    if (key == "slope_smoothing_tau") { engine.m_slope_smoothing_tau = std::stof(value); return true; }
-    if (key == "slope_max_threshold") { engine.m_slope_max_threshold = std::stof(value); return true; }
-    if (key == "slope_alpha_threshold") { engine.m_slope_alpha_threshold = std::stof(value); return true; }
-    if (key == "slope_decay_rate") { engine.m_slope_decay_rate = std::stof(value); return true; }
-    if (key == "slope_confidence_enabled") { engine.m_slope_confidence_enabled = (value == "1"); return true; }
-    if (key == "slope_g_slew_limit") { engine.m_slope_g_slew_limit = std::stof(value); return true; }
-    if (key == "slope_use_torque") { engine.m_slope_use_torque = (value == "1"); return true; }
-    if (key == "slope_torque_sensitivity") { engine.m_slope_torque_sensitivity = std::stof(value); return true; }
-    if (key == "slope_confidence_max_rate") { engine.m_slope_confidence_max_rate = std::stof(value); return true; }
+    if (key == "slope_detection_enabled") { engine.m_slope_detection.enabled = (value == "1"); return true; }
+    if (key == "slope_sg_window") { engine.m_slope_detection.sg_window = std::stoi(value); return true; }
+    if (key == "slope_sensitivity") { engine.m_slope_detection.sensitivity = std::stof(value); return true; }
+    if (key == "slope_negative_threshold" || key == "slope_min_threshold") { engine.m_slope_detection.min_threshold = std::stof(value); return true; }
+    if (key == "slope_smoothing_tau") { engine.m_slope_detection.smoothing_tau = std::stof(value); return true; }
+    if (key == "slope_max_threshold") { engine.m_slope_detection.max_threshold = std::stof(value); return true; }
+    if (key == "slope_alpha_threshold") { engine.m_slope_detection.alpha_threshold = std::stof(value); return true; }
+    if (key == "slope_decay_rate") { engine.m_slope_detection.decay_rate = std::stof(value); return true; }
+    if (key == "slope_confidence_enabled") { engine.m_slope_detection.confidence_enabled = (value == "1"); return true; }
+    if (key == "slope_g_slew_limit") { engine.m_slope_detection.g_slew_limit = std::stof(value); return true; }
+    if (key == "slope_use_torque") { engine.m_slope_detection.use_torque = (value == "1"); return true; }
+    if (key == "slope_torque_sensitivity") { engine.m_slope_detection.torque_sensitivity = std::stof(value); return true; }
+    if (key == "slope_confidence_max_rate") { engine.m_slope_detection.confidence_max_rate = std::stof(value); return true; }
     if (key == "slip_angle_smoothing") { engine.m_grip_estimation.slip_angle_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { engine.m_grip_estimation.chassis_inertia_smoothing = std::stof(value); return true; }
     if (key == "load_sensitivity_enabled") { engine.m_grip_estimation.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
@@ -518,19 +518,19 @@ void Config::LoadPresets() {
         p.rear_axle.sop_smoothing_factor = 0.0f;
         p.rear_axle.sop_scale = 1.0f;
         p.understeer_affects_sop = false;
-        p.slope_detection_enabled = false;
-        p.slope_sg_window = 15;
-        p.slope_sensitivity = 0.5f;
-        p.slope_smoothing_tau = 0.04f;
-        p.slope_min_threshold = -0.3f;
-        p.slope_max_threshold = -2.0f;
-        p.slope_alpha_threshold = 0.02f;
-        p.slope_decay_rate = 5.0f;
-        p.slope_confidence_enabled = true;
-        p.slope_g_slew_limit = 50.0f;
-        p.slope_use_torque = true;
-        p.slope_torque_sensitivity = 0.5f;
-        p.slope_confidence_max_rate = 0.1f;
+        p.slope_detection.enabled = false;
+        p.slope_detection.sg_window = 15;
+        p.slope_detection.sensitivity = 0.5f;
+        p.slope_detection.smoothing_tau = 0.04f;
+        p.slope_detection.min_threshold = -0.3f;
+        p.slope_detection.max_threshold = -2.0f;
+        p.slope_detection.alpha_threshold = 0.02f;
+        p.slope_detection.decay_rate = 5.0f;
+        p.slope_detection.confidence_enabled = true;
+        p.slope_detection.g_slew_limit = 50.0f;
+        p.slope_detection.use_torque = true;
+        p.slope_detection.torque_sensitivity = 0.5f;
+        p.slope_detection.confidence_max_rate = 0.1f;
         p.grip_estimation.slip_angle_smoothing = 0.002f;
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
@@ -1294,20 +1294,20 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "sop_smoothing_factor=" << p.rear_axle.sop_smoothing_factor << "\n";
     file << "sop_scale=" << p.rear_axle.sop_scale << "\n";
     file << "understeer_affects_sop=" << p.understeer_affects_sop << "\n";
-    file << "slope_detection_enabled=" << p.slope_detection_enabled << "\n";
-    file << "slope_sg_window=" << p.slope_sg_window << "\n";
-    file << "slope_sensitivity=" << p.slope_sensitivity << "\n";
+    file << "slope_detection_enabled=" << p.slope_detection.enabled << "\n";
+    file << "slope_sg_window=" << p.slope_detection.sg_window << "\n";
+    file << "slope_sensitivity=" << p.slope_detection.sensitivity << "\n";
 
-    file << "slope_smoothing_tau=" << p.slope_smoothing_tau << "\n";
-    file << "slope_min_threshold=" << p.slope_min_threshold << "\n";
-    file << "slope_max_threshold=" << p.slope_max_threshold << "\n";
-    file << "slope_alpha_threshold=" << p.slope_alpha_threshold << "\n";
-    file << "slope_decay_rate=" << p.slope_decay_rate << "\n";
-    file << "slope_confidence_enabled=" << p.slope_confidence_enabled << "\n";
-    file << "slope_g_slew_limit=" << p.slope_g_slew_limit << "\n";
-    file << "slope_use_torque=" << (p.slope_use_torque ? "1" : "0") << "\n";
-    file << "slope_torque_sensitivity=" << p.slope_torque_sensitivity << "\n";
-    file << "slope_confidence_max_rate=" << p.slope_confidence_max_rate << "\n";
+    file << "slope_smoothing_tau=" << p.slope_detection.smoothing_tau << "\n";
+    file << "slope_min_threshold=" << p.slope_detection.min_threshold << "\n";
+    file << "slope_max_threshold=" << p.slope_detection.max_threshold << "\n";
+    file << "slope_alpha_threshold=" << p.slope_detection.alpha_threshold << "\n";
+    file << "slope_decay_rate=" << p.slope_detection.decay_rate << "\n";
+    file << "slope_confidence_enabled=" << p.slope_detection.confidence_enabled << "\n";
+    file << "slope_g_slew_limit=" << p.slope_detection.g_slew_limit << "\n";
+    file << "slope_use_torque=" << (p.slope_detection.use_torque ? "1" : "0") << "\n";
+    file << "slope_torque_sensitivity=" << p.slope_detection.torque_sensitivity << "\n";
+    file << "slope_confidence_max_rate=" << p.slope_detection.confidence_max_rate << "\n";
 
     file << "slip_angle_smoothing=" << p.grip_estimation.slip_angle_smoothing << "\n";
     file << "chassis_inertia_smoothing=" << p.grip_estimation.chassis_inertia_smoothing << "\n";
@@ -1653,20 +1653,20 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "load_sensitivity_enabled=" << engine.m_grip_estimation.load_sensitivity_enabled << "\n";
         file << "optimal_slip_angle=" << engine.m_grip_estimation.optimal_slip_angle << "\n";
         file << "optimal_slip_ratio=" << engine.m_grip_estimation.optimal_slip_ratio << "\n";
-        file << "slope_detection_enabled=" << engine.m_slope_detection_enabled << "\n";
-        file << "slope_sg_window=" << engine.m_slope_sg_window << "\n";
-        file << "slope_sensitivity=" << engine.m_slope_sensitivity << "\n";
+        file << "slope_detection_enabled=" << engine.m_slope_detection.enabled << "\n";
+        file << "slope_sg_window=" << engine.m_slope_detection.sg_window << "\n";
+        file << "slope_sensitivity=" << engine.m_slope_detection.sensitivity << "\n";
 
-        file << "slope_smoothing_tau=" << engine.m_slope_smoothing_tau << "\n";
-        file << "slope_min_threshold=" << engine.m_slope_min_threshold << "\n";
-        file << "slope_max_threshold=" << engine.m_slope_max_threshold << "\n";
-        file << "slope_alpha_threshold=" << engine.m_slope_alpha_threshold << "\n";
-        file << "slope_decay_rate=" << engine.m_slope_decay_rate << "\n";
-        file << "slope_confidence_enabled=" << engine.m_slope_confidence_enabled << "\n";
-        file << "slope_g_slew_limit=" << engine.m_slope_g_slew_limit << "\n";
-        file << "slope_use_torque=" << (engine.m_slope_use_torque ? "1" : "0") << "\n";
-        file << "slope_torque_sensitivity=" << engine.m_slope_torque_sensitivity << "\n";
-        file << "slope_confidence_max_rate=" << engine.m_slope_confidence_max_rate << "\n";
+        file << "slope_smoothing_tau=" << engine.m_slope_detection.smoothing_tau << "\n";
+        file << "slope_min_threshold=" << engine.m_slope_detection.min_threshold << "\n";
+        file << "slope_max_threshold=" << engine.m_slope_detection.max_threshold << "\n";
+        file << "slope_alpha_threshold=" << engine.m_slope_detection.alpha_threshold << "\n";
+        file << "slope_decay_rate=" << engine.m_slope_detection.decay_rate << "\n";
+        file << "slope_confidence_enabled=" << engine.m_slope_detection.confidence_enabled << "\n";
+        file << "slope_g_slew_limit=" << engine.m_slope_detection.g_slew_limit << "\n";
+        file << "slope_use_torque=" << (engine.m_slope_detection.use_torque ? "1" : "0") << "\n";
+        file << "slope_torque_sensitivity=" << engine.m_slope_detection.torque_sensitivity << "\n";
+        file << "slope_confidence_max_rate=" << engine.m_slope_detection.confidence_max_rate << "\n";
 
         file << "\n; --- Braking & Lockup ---\n";
         file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
@@ -1836,50 +1836,50 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     engine.m_grip_estimation.Validate();
     
     // Slope Detection Validation
-    if (engine.m_slope_sg_window < 5) engine.m_slope_sg_window = 5;
-    if (engine.m_slope_sg_window > 41) engine.m_slope_sg_window = 41;
-    if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd
-    if (engine.m_slope_sensitivity < 0.1f) engine.m_slope_sensitivity = 0.1f;
-    if (engine.m_slope_sensitivity > 10.0f) engine.m_slope_sensitivity = 10.0f;
-    if (engine.m_slope_smoothing_tau < 0.001f) engine.m_slope_smoothing_tau = 0.04f;
+    if (engine.m_slope_detection.sg_window < 5) engine.m_slope_detection.sg_window = 5;
+    if (engine.m_slope_detection.sg_window > 41) engine.m_slope_detection.sg_window = 41;
+    if (engine.m_slope_detection.sg_window % 2 == 0) engine.m_slope_detection.sg_window++; // Must be odd
+    if (engine.m_slope_detection.sensitivity < 0.1f) engine.m_slope_detection.sensitivity = 0.1f;
+    if (engine.m_slope_detection.sensitivity > 10.0f) engine.m_slope_detection.sensitivity = 10.0f;
+    if (engine.m_slope_detection.smoothing_tau < 0.001f) engine.m_slope_detection.smoothing_tau = 0.04f;
     
-    if (engine.m_slope_alpha_threshold < 0.001f || engine.m_slope_alpha_threshold > 0.1f) {
-        Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_alpha_threshold);
-        Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_alpha_threshold);
-        engine.m_slope_alpha_threshold = 0.02f;
+    if (engine.m_slope_detection.alpha_threshold < 0.001f || engine.m_slope_detection.alpha_threshold > 0.1f) {
+        Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_detection.alpha_threshold);
+        Logger::Get().Log("[Config] Invalid slope_alpha_threshold (%.3f), resetting to 0.02f", engine.m_slope_detection.alpha_threshold);
+        engine.m_slope_detection.alpha_threshold = 0.02f;
     }
-    if (engine.m_slope_decay_rate < 0.1f || engine.m_slope_decay_rate > 20.0f) {
-        Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_decay_rate);
-        Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_decay_rate);
-        engine.m_slope_decay_rate = 5.0f;
+    if (engine.m_slope_detection.decay_rate < 0.1f || engine.m_slope_detection.decay_rate > 20.0f) {
+        Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_detection.decay_rate);
+        Logger::Get().Log("[Config] Invalid slope_decay_rate (%.2f), resetting to 5.0f", engine.m_slope_detection.decay_rate);
+        engine.m_slope_detection.decay_rate = 5.0f;
     }
 
     // Advanced Slope Validation (v0.7.40)
-    engine.m_slope_g_slew_limit = (std::max)(1.0f, (std::min)(1000.0f, engine.m_slope_g_slew_limit));
-    engine.m_slope_torque_sensitivity = (std::max)(0.01f, (std::min)(10.0f, engine.m_slope_torque_sensitivity));
-    engine.m_slope_confidence_max_rate = (std::max)(engine.m_slope_alpha_threshold + 0.01f, (std::min)(1.0f, engine.m_slope_confidence_max_rate));
+    engine.m_slope_detection.g_slew_limit = (std::max)(1.0f, (std::min)(1000.0f, engine.m_slope_detection.g_slew_limit));
+    engine.m_slope_detection.torque_sensitivity = (std::max)(0.01f, (std::min)(10.0f, engine.m_slope_detection.torque_sensitivity));
+    engine.m_slope_detection.confidence_max_rate = (std::max)(engine.m_slope_detection.alpha_threshold + 0.01f, (std::min)(1.0f, engine.m_slope_detection.confidence_max_rate));
 
     // Migration: v0.7.x sensitivity â†’ v0.7.11 thresholds
     // If loading old config with sensitivity but at default thresholds
-    if (engine.m_slope_min_threshold == -0.3f && 
-        engine.m_slope_max_threshold == -2.0f &&
-        engine.m_slope_sensitivity != 0.5f) {
+    if (engine.m_slope_detection.min_threshold == -0.3f &&
+        engine.m_slope_detection.max_threshold == -2.0f &&
+        engine.m_slope_detection.sensitivity != 0.5f) {
         
         // Old formula: factor = 1 - (excess * 0.1 * sens)
         // At factor=0.2 (floor): excess * 0.1 * sens = 0.8
         // excess = 0.8 / (0.1 * sens) = 8 / sens
         // max = min - excess = -0.3 - (8/sens)
-        double sens = (double)engine.m_slope_sensitivity;
+        double sens = (double)engine.m_slope_detection.sensitivity;
         if (sens > 0.01) {
-            engine.m_slope_max_threshold = (float)(engine.m_slope_min_threshold - (8.0 / sens));
-            Logger::Get().Log("[Config] Migrated slope_sensitivity %.2f to max_threshold %.2f", sens, engine.m_slope_max_threshold);
-            Logger::Get().Log("[Config] Migrated slope_sensitivity %.2f to max_threshold %.2f", sens, engine.m_slope_max_threshold);
+            engine.m_slope_detection.max_threshold = (float)(engine.m_slope_detection.min_threshold - (8.0 / sens));
+            Logger::Get().Log("[Config] Migrated slope_sensitivity %.2f to max_threshold %.2f", sens, engine.m_slope_detection.max_threshold);
+            Logger::Get().Log("[Config] Migrated slope_sensitivity %.2f to max_threshold %.2f", sens, engine.m_slope_detection.max_threshold);
         }
     }
 
     // Validation: max should be more negative than min
-    if (engine.m_slope_max_threshold > engine.m_slope_min_threshold) {
-        std::swap(engine.m_slope_min_threshold, engine.m_slope_max_threshold);
+    if (engine.m_slope_detection.max_threshold > engine.m_slope_detection.min_threshold) {
+        std::swap(engine.m_slope_detection.min_threshold, engine.m_slope_detection.max_threshold);
         Logger::Get().Log("[Config] Swapped slope thresholds (min should be > max)");
         Logger::Get().Log("[Config] Swapped slope thresholds (min should be > max)");
     }

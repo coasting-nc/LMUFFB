@@ -268,7 +268,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
             // for visualization/rear torque, even if we force grip to 1.0 here.        
             result.value = 1.0; 
         } else {
-            if (m_slope_detection_enabled && is_front && data) {
+            if (m_slope_detection.enabled && is_front && data) {
                 result.value = slope_grip_estimate;
             } else {
                 // --- REFINED: Load-Sensitive Continuous Friction Circle ---
@@ -418,7 +418,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // because the internal buffers are populated at the 400Hz engine tick rate.
     const double internal_dt = DEFAULT_CALC_DT;
 
-    double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_g_slew_limit, dt);
+    double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_detection.g_slew_limit, dt);
     // v0.7.198 FIX: Must update m_slope_lat_g_prev immediately after computing lat_g_slew
     // so the slew limiter always receives its own output as the next call's starting point.
     // Previously this assignment was either absent or placed later in the function (after the
@@ -450,8 +450,8 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
 
     // 3. Calculate G-based Derivatives (Savitzky-Golay)
     // v0.7.198: Always use fixed 400Hz dt for derivatives to ensure stable units (u/s).
-    double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
-    double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
+    double dG_dt = calculate_sg_derivative(m_slope_lat_g_buffer, m_slope_buffer_count, m_slope_detection.sg_window, internal_dt, m_slope_buffer_index);
+    double dAlpha_dt = calculate_sg_derivative(m_slope_slip_buffer, m_slope_buffer_count, m_slope_detection.sg_window, internal_dt, m_slope_buffer_index);
 
     m_slope_dG_dt = dG_dt;
     m_slope_dAlpha_dt = dAlpha_dt;
@@ -467,9 +467,9 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // to run the SG filter in "shadow" mode for diagnostics (Issue #348).
     // It is preserved here for readability and future guard logic; suppressing it would
     // require restructuring the call site instead.
-    bool shadow_mode = (m_slope_detection_enabled == false);
+    bool shadow_mode = (m_slope_detection.enabled == false);
     (void)shadow_mode; // Retained for documentation; see call site in calculate_axle_grip
-    if (std::abs(dAlpha_dt) > (double)m_slope_alpha_threshold) {
+    if (std::abs(dAlpha_dt) > (double)m_slope_detection.alpha_threshold) {
         m_slope_hold_timer = SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;
@@ -480,23 +480,23 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
         m_slope_hold_timer -= dt;
         if (m_slope_hold_timer <= 0.0) {
             m_slope_hold_timer = 0.0;
-            m_slope_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_current);
+            m_slope_current += (double)m_slope_detection.decay_rate * dt * (0.0 - m_slope_current);
             if (std::abs(m_slope_current) < 0.0001) m_slope_current = 0.0;
         }
     }
 
     // 5. Calculate Torque-based Slope (Pneumatic Trail Anticipation)
-    volatile bool can_calc_torque = (m_slope_use_torque && data != nullptr);
+    volatile bool can_calc_torque = (m_slope_detection.use_torque && data != nullptr);
     if (can_calc_torque) {
-        double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
-        double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_sg_window, internal_dt, m_slope_buffer_index);
+        double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_detection.sg_window, internal_dt, m_slope_buffer_index);
+        double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_detection.sg_window, internal_dt, m_slope_buffer_index);
 
-        if (std::abs(dSteer_dt) > (double)m_slope_alpha_threshold) { // Unified threshold for steering movement
+        if (std::abs(dSteer_dt) > (double)m_slope_detection.alpha_threshold) { // Unified threshold for steering movement
             m_debug_slope_torque_num = dTorque_dt * dSteer_dt;
             m_debug_slope_torque_den = (dSteer_dt * dSteer_dt) + 0.000001;
             m_slope_torque_current = std::clamp(m_debug_slope_torque_num / m_debug_slope_torque_den, -50.0, 50.0);
         } else {
-            m_slope_torque_current += (double)m_slope_decay_rate * dt * (0.0 - m_slope_torque_current);
+            m_slope_torque_current += (double)m_slope_detection.decay_rate * dt * (0.0 - m_slope_torque_current);
         }
     } else {
         m_slope_torque_current = 20.0; // Positive value means no grip loss detected
@@ -506,14 +506,14 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     double confidence = calculate_slope_confidence(dAlpha_dt);
 
     // 1. Calculate Grip Loss from G-Slope (Lateral Saturation)
-    double loss_percent_g = inverse_lerp((double)m_slope_min_threshold, (double)m_slope_max_threshold, m_slope_current);
+    double loss_percent_g = inverse_lerp((double)m_slope_detection.min_threshold, (double)m_slope_detection.max_threshold, m_slope_current);
 
     // 2. Calculate Grip Loss from Torque-Slope (Pneumatic Trail Drop)
     double loss_percent_torque = 0.0;
-    volatile bool use_torque_fusion = (m_slope_use_torque && data != nullptr);
+    volatile bool use_torque_fusion = (m_slope_detection.use_torque && data != nullptr);
     if (use_torque_fusion) {
         if (m_slope_torque_current < 0.0) {
-            loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_torque_sensitivity;
+            loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_detection.torque_sensitivity;
             loss_percent_torque = (std::max)(0.0, (std::min)(1.0, loss_percent_torque));
         }
     }
@@ -530,7 +530,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     current_grip_factor = (std::max)(0.2, (std::min)(1.0, current_grip_factor));
 
     // 5. Smoothing (v0.7.0)
-    double alpha = dt / ((double)m_slope_smoothing_tau + dt);
+    double alpha = dt / ((double)m_slope_detection.smoothing_tau + dt);
     alpha = (std::max)(0.001, (std::min)(1.0, alpha));
     m_slope_smoothed_output += alpha * (current_grip_factor - m_slope_smoothed_output);
 
@@ -540,11 +540,11 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
 // Helper: Calculate confidence factor for slope detection
 // Extracted to avoid code duplication between slope detection and logging
 double FFBEngine::calculate_slope_confidence(double dAlpha_dt) {
-    if (!m_slope_confidence_enabled) return 1.0;
+    if (!m_slope_detection.confidence_enabled) return 1.0;
 
     // v0.7.21 FIX: Use smoothstep confidence ramp [m_slope_alpha_threshold, m_slope_confidence_max_rate] rad/s
     // to reject singularity artifacts near zero.
-    return smoothstep((double)m_slope_alpha_threshold, (double)m_slope_confidence_max_rate, std::abs(dAlpha_dt));
+    return smoothstep((double)m_slope_detection.alpha_threshold, (double)m_slope_detection.confidence_max_rate, std::abs(dAlpha_dt));
 }
 
 // Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)
