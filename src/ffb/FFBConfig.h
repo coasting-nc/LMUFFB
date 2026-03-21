@@ -306,4 +306,57 @@ struct BrakingConfig {
     }
 };
 
+struct VibrationConfig {
+    float vibration_gain = 1.0f;
+    float texture_load_cap = 1.5f;
+
+    bool slide_enabled = false;
+    float slide_gain = 0.226562f;
+    float slide_freq = 1.0f;
+
+    bool road_enabled = true;
+    float road_gain = 0.0f;
+
+    bool spin_enabled = true;
+    float spin_gain = 0.5f;
+    float spin_freq_scale = 1.0f;
+
+    float scrub_drag_gain = 0.0f;
+
+    bool bottoming_enabled = true;
+    float bottoming_gain = 1.0f;
+    int bottoming_method = 0;
+
+    bool Equals(const VibrationConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return is_near(vibration_gain, o.vibration_gain) &&
+               is_near(texture_load_cap, o.texture_load_cap) &&
+               slide_enabled == o.slide_enabled &&
+               is_near(slide_gain, o.slide_gain) &&
+               is_near(slide_freq, o.slide_freq) &&
+               road_enabled == o.road_enabled &&
+               is_near(road_gain, o.road_gain) &&
+               spin_enabled == o.spin_enabled &&
+               is_near(spin_gain, o.spin_gain) &&
+               is_near(spin_freq_scale, o.spin_freq_scale) &&
+               is_near(scrub_drag_gain, o.scrub_drag_gain) &&
+               bottoming_enabled == o.bottoming_enabled &&
+               is_near(bottoming_gain, o.bottoming_gain) &&
+               bottoming_method == o.bottoming_method;
+    }
+
+    void Validate() {
+        vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));
+        texture_load_cap = (std::max)(1.0f, (std::min)(10.0f, texture_load_cap));
+        slide_gain = (std::max)(0.0f, (std::min)(2.0f, slide_gain));
+        slide_freq = (std::max)(0.1f, (std::min)(5.0f, slide_freq));
+        road_gain = (std::max)(0.0f, (std::min)(2.0f, road_gain));
+        spin_gain = (std::max)(0.0f, (std::min)(2.0f, spin_gain));
+        spin_freq_scale = (std::max)(0.1f, (std::min)(5.0f, spin_freq_scale));
+        scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, scrub_drag_gain));
+        bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
+        bottoming_method = (std::max)(0, (std::min)(1, bottoming_method));
+    }
+};
+
 #endif // FFBCONFIG_H
