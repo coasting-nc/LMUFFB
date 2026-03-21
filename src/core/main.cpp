@@ -163,6 +163,7 @@ void FFBThread() {
                             info.optimal_slip_angle = g_engine.m_grip_estimation.optimal_slip_angle;
                             info.optimal_slip_ratio = g_engine.m_grip_estimation.optimal_slip_ratio;
                             info.slope_detection = g_engine.m_slope_detection;
+                            info.braking = g_engine.m_braking;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }

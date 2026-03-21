@@ -359,7 +359,7 @@ TEST_CASE(test_lockup_predictive_branches, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
     FFBEngineTestAccess::SetLockupEnabled(engine, true);
-    engine.m_lockup_prediction_sens = 10.0f;
+    engine.m_braking.lockup_prediction_sens = 10.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.0);
     data.mUnfilteredBrake = 1.0f;

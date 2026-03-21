@@ -18,8 +18,8 @@ TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {
     engine.m_road_texture_gain = 0.0f;
     engine.m_slide_texture_gain = 0.0f;
     engine.m_spin_gain = 0.0f;
-    engine.m_lockup_gain = 0.0f;
-    engine.m_abs_gain = 0.0f;
+    engine.m_braking.lockup_gain = 0.0f;
+    engine.m_braking.abs_gain = 0.0f;
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_bottoming_gain = 0.0f;
     engine.m_soft_lock_enabled = false;

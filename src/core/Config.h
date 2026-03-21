@@ -34,6 +34,7 @@ struct Preset {
     LoadForcesConfig load_forces;
     GripEstimationConfig grip_estimation;
     SlopeDetectionConfig slope_detection;
+    BrakingConfig braking;
 
     // FFB Safety (Issue #316)
     float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
@@ -45,20 +46,7 @@ struct Preset {
     bool stutter_safety_enabled = FFBEngine::DEFAULT_STUTTER_SAFETY_ENABLED;
     float stutter_threshold = FFBEngine::DEFAULT_STUTTER_THRESHOLD;
 
-    bool lockup_enabled = true;
-    float lockup_gain = 0.37479f;
-    float lockup_start_pct = 1.0f;  // New v0.5.11
-    float lockup_full_pct = 5.0f;  // New v0.5.11
-    float lockup_rear_boost = 10.0f; // New v0.5.11
-    float lockup_gamma = 0.1f;           // New v0.6.0
-    float lockup_prediction_sens = 10.0f; // New v0.6.0
-    float lockup_bump_reject = 0.1f;     // New v0.6.0
-    float brake_load_cap = 2.0f;    // New v0.5.11
     float texture_load_cap = 1.5f;  // NEW v0.6.25
-    
-    bool abs_pulse_enabled = false;       // New v0.6.0
-    float abs_gain = 2.0f;               // New v0.6.0
-    float abs_freq = 25.5f;              // New v0.6.20
     
     bool spin_enabled = true;
     float spin_gain = 0.5f;
@@ -76,7 +64,6 @@ struct Preset {
     float soft_lock_stiffness = 20.0f;
     float soft_lock_damping = 0.5f;
     
-    float lockup_freq_scale = 1.02f;      // New v0.6.20
     bool bottoming_enabled = true;
     float bottoming_gain = 1.0f;
     int bottoming_method = 0;
@@ -124,14 +111,14 @@ struct Preset {
     Preset& SetSlipSmoothing(float v) { grip_estimation.slip_angle_smoothing = v; return *this; }
     
     Preset& SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { 
-        lockup_enabled = enabled; 
-        lockup_gain = g; 
-        lockup_start_pct = start;
-        lockup_full_pct = full;
-        lockup_rear_boost = boost;
+        braking.lockup_enabled = enabled;
+        braking.lockup_gain = g;
+        braking.lockup_start_pct = start;
+        braking.lockup_full_pct = full;
+        braking.lockup_rear_boost = boost;
         return *this; 
     }
-    Preset& SetBrakeCap(float v) { brake_load_cap = v; return *this; }
+    Preset& SetBrakeCap(float v) { braking.brake_load_cap = v; return *this; }
     Preset& SetSpin(bool enabled, float g, float scale = 1.0f) { 
         spin_enabled = enabled; 
         spin_gain = g; 
@@ -270,13 +257,13 @@ struct Preset {
     // When changing Config.h defaults, update these values to match.
     // Current: abs_f=25.5, lockup_f=1.02 (GT3 DD 15 Nm defaults - v0.6.35)
     Preset& SetAdvancedBraking(float gamma, float sens, float bump, bool abs, float abs_g, float abs_f = 25.5f, float lockup_f = 1.02f) {
-        lockup_gamma = gamma;
-        lockup_prediction_sens = sens;
-        lockup_bump_reject = bump;
-        abs_pulse_enabled = abs;
-        abs_gain = abs_g;
-        abs_freq = abs_f;
-        lockup_freq_scale = lockup_f;
+        braking.lockup_gamma = gamma;
+        braking.lockup_prediction_sens = sens;
+        braking.lockup_bump_reject = bump;
+        braking.abs_pulse_enabled = abs;
+        braking.abs_gain = abs_g;
+        braking.abs_freq = abs_f;
+        braking.lockup_freq_scale = lockup_f;
         return *this;
     }
 
@@ -308,6 +295,9 @@ struct Preset {
         engine.m_slope_detection = this->slope_detection;
         engine.m_slope_detection.Validate();
 
+        engine.m_braking = this->braking;
+        engine.m_braking.Validate();
+
         // FFB Safety (Issue #316)
         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
         engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
@@ -318,19 +308,7 @@ struct Preset {
         engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;
         engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);
 
-        engine.m_lockup_enabled = lockup_enabled;
-        engine.m_lockup_gain = (std::max)(0.0f, lockup_gain);
-        engine.m_lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
-        engine.m_lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
-        engine.m_lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);
-        engine.m_lockup_gamma = (std::max)(0.1f, lockup_gamma); // Critical: prevent pow(0, negative) crash
-        engine.m_lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);
-        engine.m_lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);
-        engine.m_brake_load_cap = (std::max)(1.0f, brake_load_cap);
         engine.m_texture_load_cap = (std::max)(1.0f, texture_load_cap);
-
-        engine.m_abs_pulse_enabled = abs_pulse_enabled;
-        engine.m_abs_gain = (std::max)(0.0f, abs_gain);
 
         engine.m_spin_enabled = spin_enabled;
         engine.m_spin_gain = (std::max)(0.0f, spin_gain);
@@ -345,8 +323,6 @@ struct Preset {
         engine.m_soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         engine.m_soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
 
-        engine.m_abs_freq_hz = (std::max)(1.0f, abs_freq);
-        engine.m_lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         engine.m_spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
         engine.m_bottoming_enabled = bottoming_enabled;
         engine.m_bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
@@ -380,16 +356,8 @@ struct Preset {
         load_forces.Validate();
         grip_estimation.Validate();
         slope_detection.Validate();
-        lockup_gain = (std::max)(0.0f, lockup_gain);
-        lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
-        lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
-        lockup_rear_boost = (std::max)(0.0f, lockup_rear_boost);
-        lockup_gamma = (std::max)(0.1f, lockup_gamma);
-        lockup_prediction_sens = (std::max)(1.0f, lockup_prediction_sens);
-        lockup_bump_reject = (std::max)(0.01f, lockup_bump_reject);
-        brake_load_cap = (std::max)(1.0f, brake_load_cap);
+        braking.Validate();
         texture_load_cap = (std::max)(1.0f, texture_load_cap);
-        abs_gain = (std::max)(0.0f, abs_gain);
         bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
         spin_gain = (std::max)(0.0f, spin_gain);
         slide_gain = (std::max)(0.0f, slide_gain);
@@ -398,8 +366,6 @@ struct Preset {
         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));
         soft_lock_stiffness = (std::max)(0.0f, soft_lock_stiffness);
         soft_lock_damping = (std::max)(0.0f, soft_lock_damping);
-        abs_freq = (std::max)(1.0f, abs_freq);
-        lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
         scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
         gyro_gain = (std::max)(0.0f, gyro_gain);
@@ -427,6 +393,7 @@ struct Preset {
         load_forces = engine.m_load_forces;
         grip_estimation = engine.m_grip_estimation;
         slope_detection = engine.m_slope_detection;
+        braking = engine.m_braking;
 
         // FFB Safety (Issue #316)
         safety_window_duration = engine.m_safety.m_safety_window_duration;
@@ -438,18 +405,7 @@ struct Preset {
         stutter_safety_enabled = engine.m_safety.m_stutter_safety_enabled;
         stutter_threshold = engine.m_safety.m_stutter_threshold;
 
-        lockup_enabled = engine.m_lockup_enabled;
-        lockup_gain = engine.m_lockup_gain;
-        lockup_start_pct = engine.m_lockup_start_pct;
-        lockup_full_pct = engine.m_lockup_full_pct;
-        lockup_rear_boost = engine.m_lockup_rear_boost;
-        lockup_gamma = engine.m_lockup_gamma;
-        lockup_prediction_sens = engine.m_lockup_prediction_sens;
-        lockup_bump_reject = engine.m_lockup_bump_reject;
-        brake_load_cap = engine.m_brake_load_cap;
         texture_load_cap = engine.m_texture_load_cap;  // NEW v0.6.25
-        abs_pulse_enabled = engine.m_abs_pulse_enabled;
-        abs_gain = engine.m_abs_gain;
         
         spin_enabled = engine.m_spin_enabled;
         spin_gain = engine.m_spin_gain;
@@ -464,8 +420,6 @@ struct Preset {
         soft_lock_stiffness = engine.m_soft_lock_stiffness;
         soft_lock_damping = engine.m_soft_lock_damping;
 
-        abs_freq = engine.m_abs_freq_hz;
-        lockup_freq_scale = engine.m_lockup_freq_scale;
         spin_freq_scale = engine.m_spin_freq_scale;
         bottoming_enabled = engine.m_bottoming_enabled;
         bottoming_gain = engine.m_bottoming_gain;
@@ -498,6 +452,7 @@ struct Preset {
         if (!load_forces.Equals(p.load_forces, eps)) return false;
         if (!grip_estimation.Equals(p.grip_estimation, eps)) return false;
         if (!slope_detection.Equals(p.slope_detection, eps)) return false;
+        if (!braking.Equals(p.braking, eps)) return false;
 
         // FFB Safety (Issue #316)
         if (!is_near(safety_window_duration, p.safety_window_duration, eps)) return false;
@@ -509,20 +464,7 @@ struct Preset {
         if (stutter_safety_enabled != p.stutter_safety_enabled) return false;
         if (!is_near(stutter_threshold, p.stutter_threshold, eps)) return false;
 
-        if (lockup_enabled != p.lockup_enabled) return false;
-        if (!is_near(lockup_gain, p.lockup_gain, eps)) return false;
-        if (!is_near(lockup_start_pct, p.lockup_start_pct, eps)) return false;
-        if (!is_near(lockup_full_pct, p.lockup_full_pct, eps)) return false;
-        if (!is_near(lockup_rear_boost, p.lockup_rear_boost, eps)) return false;
-        if (!is_near(lockup_gamma, p.lockup_gamma, eps)) return false;
-        if (!is_near(lockup_prediction_sens, p.lockup_prediction_sens, eps)) return false;
-        if (!is_near(lockup_bump_reject, p.lockup_bump_reject, eps)) return false;
-        if (!is_near(brake_load_cap, p.brake_load_cap, eps)) return false;
         if (!is_near(texture_load_cap, p.texture_load_cap, eps)) return false;
-
-        if (abs_pulse_enabled != p.abs_pulse_enabled) return false;
-        if (!is_near(abs_gain, p.abs_gain, eps)) return false;
-        if (!is_near(abs_freq, p.abs_freq, eps)) return false;
 
         if (spin_enabled != p.spin_enabled) return false;
         if (!is_near(spin_gain, p.spin_gain, eps)) return false;
@@ -540,7 +482,6 @@ struct Preset {
         if (!is_near(soft_lock_stiffness, p.soft_lock_stiffness, eps)) return false;
         if (!is_near(soft_lock_damping, p.soft_lock_damping, eps)) return false;
 
-        if (!is_near(lockup_freq_scale, p.lockup_freq_scale, eps)) return false;
         if (bottoming_enabled != p.bottoming_enabled) return false;
         if (!is_near(bottoming_gain, p.bottoming_gain, eps)) return false;
         if (bottoming_method != p.bottoming_method) return false;

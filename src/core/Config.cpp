@@ -150,19 +150,19 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
 }
 
 bool Config::ParseBrakingLine(const std::string& key, const std::string& value, Preset& current_preset) {
-    if (key == "lockup_enabled") { current_preset.lockup_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "lockup_gain") { current_preset.lockup_gain = std::stof(value); return true; }
-    if (key == "lockup_start_pct") { current_preset.lockup_start_pct = std::stof(value); return true; }
-    if (key == "lockup_full_pct") { current_preset.lockup_full_pct = std::stof(value); return true; }
-    if (key == "lockup_rear_boost") { current_preset.lockup_rear_boost = std::stof(value); return true; }
-    if (key == "lockup_gamma") { current_preset.lockup_gamma = std::stof(value); return true; }
-    if (key == "lockup_prediction_sens") { current_preset.lockup_prediction_sens = std::stof(value); return true; }
-    if (key == "lockup_bump_reject") { current_preset.lockup_bump_reject = std::stof(value); return true; }
-    if (key == "brake_load_cap") { current_preset.brake_load_cap = (std::min)(10.0f, std::stof(value)); return true; }
-    if (key == "abs_pulse_enabled") { current_preset.abs_pulse_enabled = std::stoi(value); return true; }
-    if (key == "abs_gain") { current_preset.abs_gain = std::stof(value); return true; }
-    if (key == "abs_freq") { current_preset.abs_freq = std::stof(value); return true; }
-    if (key == "lockup_freq_scale") { current_preset.lockup_freq_scale = std::stof(value); return true; }
+    if (key == "lockup_enabled") { current_preset.braking.lockup_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "lockup_gain") { current_preset.braking.lockup_gain = std::stof(value); return true; }
+    if (key == "lockup_start_pct") { current_preset.braking.lockup_start_pct = std::stof(value); return true; }
+    if (key == "lockup_full_pct") { current_preset.braking.lockup_full_pct = std::stof(value); return true; }
+    if (key == "lockup_rear_boost") { current_preset.braking.lockup_rear_boost = std::stof(value); return true; }
+    if (key == "lockup_gamma") { current_preset.braking.lockup_gamma = std::stof(value); return true; }
+    if (key == "lockup_prediction_sens") { current_preset.braking.lockup_prediction_sens = std::stof(value); return true; }
+    if (key == "lockup_bump_reject") { current_preset.braking.lockup_bump_reject = std::stof(value); return true; }
+    if (key == "brake_load_cap") { current_preset.braking.brake_load_cap = (std::min)(10.0f, std::stof(value)); return true; }
+    if (key == "abs_pulse_enabled") { current_preset.braking.abs_pulse_enabled = std::stoi(value); return true; }
+    if (key == "abs_gain") { current_preset.braking.abs_gain = std::stof(value); return true; }
+    if (key == "abs_freq") { current_preset.braking.abs_freq = std::stof(value); return true; }
+    if (key == "lockup_freq_scale") { current_preset.braking.lockup_freq_scale = std::stof(value); return true; }
     return false;
 }
 
@@ -326,19 +326,19 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
 }
 
 bool Config::SyncBrakingLine(const std::string& key, const std::string& value, FFBEngine& engine) {
-    if (key == "lockup_enabled") { engine.m_lockup_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "lockup_gain") { engine.m_lockup_gain = std::stof(value); return true; }
-    if (key == "lockup_start_pct") { engine.m_lockup_start_pct = std::stof(value); return true; }
-    if (key == "lockup_full_pct") { engine.m_lockup_full_pct = std::stof(value); return true; }
-    if (key == "lockup_rear_boost") { engine.m_lockup_rear_boost = std::stof(value); return true; }
-    if (key == "lockup_gamma") { engine.m_lockup_gamma = std::stof(value); return true; }
-    if (key == "lockup_prediction_sens") { engine.m_lockup_prediction_sens = std::stof(value); return true; }
-    if (key == "lockup_bump_reject") { engine.m_lockup_bump_reject = std::stof(value); return true; }
-    if (key == "brake_load_cap") { engine.m_brake_load_cap = std::stof(value); return true; }
-    if (key == "abs_pulse_enabled") { engine.m_abs_pulse_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "abs_gain") { engine.m_abs_gain = std::stof(value); return true; }
-    if (key == "abs_freq") { engine.m_abs_freq_hz = std::stof(value); return true; }
-    if (key == "lockup_freq_scale") { engine.m_lockup_freq_scale = std::stof(value); return true; }
+    if (key == "lockup_enabled") { engine.m_braking.lockup_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "lockup_gain") { engine.m_braking.lockup_gain = std::stof(value); return true; }
+    if (key == "lockup_start_pct") { engine.m_braking.lockup_start_pct = std::stof(value); return true; }
+    if (key == "lockup_full_pct") { engine.m_braking.lockup_full_pct = std::stof(value); return true; }
+    if (key == "lockup_rear_boost") { engine.m_braking.lockup_rear_boost = std::stof(value); return true; }
+    if (key == "lockup_gamma") { engine.m_braking.lockup_gamma = std::stof(value); return true; }
+    if (key == "lockup_prediction_sens") { engine.m_braking.lockup_prediction_sens = std::stof(value); return true; }
+    if (key == "lockup_bump_reject") { engine.m_braking.lockup_bump_reject = std::stof(value); return true; }
+    if (key == "brake_load_cap") { engine.m_braking.brake_load_cap = std::stof(value); return true; }
+    if (key == "abs_pulse_enabled") { engine.m_braking.abs_pulse_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "abs_gain") { engine.m_braking.abs_gain = std::stof(value); return true; }
+    if (key == "abs_freq") { engine.m_braking.abs_freq = std::stof(value); return true; }
+    if (key == "lockup_freq_scale") { engine.m_braking.lockup_freq_scale = std::stof(value); return true; }
     return false;
 }
 
@@ -437,19 +437,19 @@ void Config::LoadPresets() {
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.10f;   // CHANGED from 0.06f
         p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.lockup_enabled = true;
-        p.lockup_gain = 2.0f;
-        p.brake_load_cap = 10.0f;
-        p.lockup_freq_scale = 1.02f;
-        p.lockup_gamma = 0.1f;
-        p.lockup_start_pct = 1.0f;
-        p.lockup_full_pct = 5.0f;
-        p.lockup_prediction_sens = 10.0f;
-        p.lockup_bump_reject = 0.1f;
-        p.lockup_rear_boost = 10.0f;
-        p.abs_pulse_enabled = true;
-        p.abs_gain = 2.0f;
-        p.abs_freq = 20.0f;
+        p.braking.lockup_enabled = true;
+        p.braking.lockup_gain = 2.0f;
+        p.braking.brake_load_cap = 10.0f;
+        p.braking.lockup_freq_scale = 1.02f;
+        p.braking.lockup_gamma = 0.1f;
+        p.braking.lockup_start_pct = 1.0f;
+        p.braking.lockup_full_pct = 5.0f;
+        p.braking.lockup_prediction_sens = 10.0f;
+        p.braking.lockup_bump_reject = 0.1f;
+        p.braking.lockup_rear_boost = 10.0f;
+        p.braking.abs_pulse_enabled = true;
+        p.braking.abs_gain = 2.0f;
+        p.braking.abs_freq = 20.0f;
         p.texture_load_cap = 1.96f;
         p.slide_enabled = true;
         p.slide_gain = 0.235294f;
@@ -535,19 +535,19 @@ void Config::LoadPresets() {
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
         p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.lockup_enabled = true;
-        p.lockup_gain = 3.0f;
-        p.brake_load_cap = 10.0f;
-        p.lockup_freq_scale = 1.02f;
-        p.lockup_gamma = 0.1f;
-        p.lockup_start_pct = 1.0f;
-        p.lockup_full_pct = 5.0f;
-        p.lockup_prediction_sens = 10.0f;
-        p.lockup_bump_reject = 0.1f;
-        p.lockup_rear_boost = 10.0f;
-        p.abs_pulse_enabled = false;
-        p.abs_gain = 2.0f;
-        p.abs_freq = 25.5f;
+        p.braking.lockup_enabled = true;
+        p.braking.lockup_gain = 3.0f;
+        p.braking.brake_load_cap = 10.0f;
+        p.braking.lockup_freq_scale = 1.02f;
+        p.braking.lockup_gamma = 0.1f;
+        p.braking.lockup_start_pct = 1.0f;
+        p.braking.lockup_full_pct = 5.0f;
+        p.braking.lockup_prediction_sens = 10.0f;
+        p.braking.lockup_bump_reject = 0.1f;
+        p.braking.lockup_rear_boost = 10.0f;
+        p.braking.abs_pulse_enabled = false;
+        p.braking.abs_gain = 2.0f;
+        p.braking.abs_freq = 25.5f;
         p.texture_load_cap = 1.5f;
         p.slide_enabled = false;
         p.slide_gain = 0.226562f;
@@ -614,19 +614,19 @@ void Config::LoadPresets() {
         p.grip_estimation.chassis_inertia_smoothing = 0.012f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
         p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.lockup_enabled = true;
-        p.lockup_gain = 0.37479f;
-        p.brake_load_cap = 2.0f;
-        p.lockup_freq_scale = 1.0f;
-        p.lockup_gamma = 1.0f;
-        p.lockup_start_pct = 1.0f;
-        p.lockup_full_pct = 7.5f;
-        p.lockup_prediction_sens = 10.0f;
-        p.lockup_bump_reject = 0.1f;
-        p.lockup_rear_boost = 1.0f;
-        p.abs_pulse_enabled = false;
-        p.abs_gain = 2.1f;
-        p.abs_freq = 25.5f;
+        p.braking.lockup_enabled = true;
+        p.braking.lockup_gain = 0.37479f;
+        p.braking.brake_load_cap = 2.0f;
+        p.braking.lockup_freq_scale = 1.0f;
+        p.braking.lockup_gamma = 1.0f;
+        p.braking.lockup_start_pct = 1.0f;
+        p.braking.lockup_full_pct = 7.5f;
+        p.braking.lockup_prediction_sens = 10.0f;
+        p.braking.lockup_bump_reject = 0.1f;
+        p.braking.lockup_rear_boost = 1.0f;
+        p.braking.abs_pulse_enabled = false;
+        p.braking.abs_gain = 2.1f;
+        p.braking.abs_freq = 25.5f;
         p.texture_load_cap = 1.5f;
         p.slide_enabled = false;
         p.slide_gain = 0.226562f;
@@ -677,19 +677,19 @@ void Config::LoadPresets() {
         p.grip_estimation.chassis_inertia_smoothing = 0.019f;
         p.grip_estimation.optimal_slip_angle = 0.12f;
         p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.lockup_enabled = true;
-        p.lockup_gain = 0.37479f;
-        p.brake_load_cap = 2.0f;
-        p.lockup_freq_scale = 1.0f;
-        p.lockup_gamma = 1.0f;
-        p.lockup_start_pct = 1.0f;
-        p.lockup_full_pct = 7.5f;
-        p.lockup_prediction_sens = 10.0f;
-        p.lockup_bump_reject = 0.1f;
-        p.lockup_rear_boost = 1.0f;
-        p.abs_pulse_enabled = false;
-        p.abs_gain = 2.1f;
-        p.abs_freq = 25.5f;
+        p.braking.lockup_enabled = true;
+        p.braking.lockup_gain = 0.37479f;
+        p.braking.brake_load_cap = 2.0f;
+        p.braking.lockup_freq_scale = 1.0f;
+        p.braking.lockup_gamma = 1.0f;
+        p.braking.lockup_start_pct = 1.0f;
+        p.braking.lockup_full_pct = 7.5f;
+        p.braking.lockup_prediction_sens = 10.0f;
+        p.braking.lockup_bump_reject = 0.1f;
+        p.braking.lockup_rear_boost = 1.0f;
+        p.braking.abs_pulse_enabled = false;
+        p.braking.abs_gain = 2.1f;
+        p.braking.abs_freq = 25.5f;
         p.texture_load_cap = 1.5f;
         p.slide_enabled = false;
         p.slide_gain = 0.226562f;
@@ -740,19 +740,19 @@ void Config::LoadPresets() {
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
         p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.lockup_enabled = true;
-        p.lockup_gain = 0.977f;
-        p.brake_load_cap = 81.0f;
-        p.lockup_freq_scale = 1.0f;
-        p.lockup_gamma = 1.0f;
-        p.lockup_start_pct = 1.0f;
-        p.lockup_full_pct = 7.5f;
-        p.lockup_prediction_sens = 10.0f;
-        p.lockup_bump_reject = 0.1f;
-        p.lockup_rear_boost = 1.0f;
-        p.abs_pulse_enabled = false;
-        p.abs_gain = 2.1f;
-        p.abs_freq = 25.5f;
+        p.braking.lockup_enabled = true;
+        p.braking.lockup_gain = 0.977f;
+        p.braking.brake_load_cap = 81.0f;
+        p.braking.lockup_freq_scale = 1.0f;
+        p.braking.lockup_gamma = 1.0f;
+        p.braking.lockup_start_pct = 1.0f;
+        p.braking.lockup_full_pct = 7.5f;
+        p.braking.lockup_prediction_sens = 10.0f;
+        p.braking.lockup_bump_reject = 0.1f;
+        p.braking.lockup_rear_boost = 1.0f;
+        p.braking.abs_pulse_enabled = false;
+        p.braking.abs_gain = 2.1f;
+        p.braking.abs_freq = 25.5f;
         p.texture_load_cap = 1.5f;
         p.slide_enabled = false;
         p.slide_gain = 0.0f;
@@ -804,19 +804,19 @@ void Config::LoadPresets() {
         p.grip_estimation.chassis_inertia_smoothing = 0.0f;
         p.grip_estimation.optimal_slip_angle = 0.1f;
         p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.lockup_enabled = true;
-        p.lockup_gain = 0.977f;
-        p.brake_load_cap = 81.0f;
-        p.lockup_freq_scale = 1.0f;
-        p.lockup_gamma = 1.0f;
-        p.lockup_start_pct = 1.0f;
-        p.lockup_full_pct = 7.5f;
-        p.lockup_prediction_sens = 10.0f;
-        p.lockup_bump_reject = 0.1f;
-        p.lockup_rear_boost = 1.0f;
-        p.abs_pulse_enabled = false;
-        p.abs_gain = 2.1f;
-        p.abs_freq = 25.5f;
+        p.braking.lockup_enabled = true;
+        p.braking.lockup_gain = 0.977f;
+        p.braking.brake_load_cap = 81.0f;
+        p.braking.lockup_freq_scale = 1.0f;
+        p.braking.lockup_gamma = 1.0f;
+        p.braking.lockup_start_pct = 1.0f;
+        p.braking.lockup_full_pct = 7.5f;
+        p.braking.lockup_prediction_sens = 10.0f;
+        p.braking.lockup_bump_reject = 0.1f;
+        p.braking.lockup_rear_boost = 1.0f;
+        p.braking.abs_pulse_enabled = false;
+        p.braking.abs_gain = 2.1f;
+        p.braking.abs_freq = 25.5f;
         p.texture_load_cap = 1.5f;
         p.slide_enabled = false;
         p.slide_gain = 0.0f;
@@ -1315,19 +1315,19 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "optimal_slip_angle=" << p.grip_estimation.optimal_slip_angle << "\n";
     file << "optimal_slip_ratio=" << p.grip_estimation.optimal_slip_ratio << "\n";
 
-    file << "lockup_enabled=" << (p.lockup_enabled ? "1" : "0") << "\n";
-    file << "lockup_gain=" << p.lockup_gain << "\n";
-    file << "brake_load_cap=" << p.brake_load_cap << "\n";
-    file << "lockup_freq_scale=" << p.lockup_freq_scale << "\n";
-    file << "lockup_gamma=" << p.lockup_gamma << "\n";
-    file << "lockup_start_pct=" << p.lockup_start_pct << "\n";
-    file << "lockup_full_pct=" << p.lockup_full_pct << "\n";
-    file << "lockup_prediction_sens=" << p.lockup_prediction_sens << "\n";
-    file << "lockup_bump_reject=" << p.lockup_bump_reject << "\n";
-    file << "lockup_rear_boost=" << p.lockup_rear_boost << "\n";
-    file << "abs_pulse_enabled=" << (p.abs_pulse_enabled ? "1" : "0") << "\n";
-    file << "abs_gain=" << p.abs_gain << "\n";
-    file << "abs_freq=" << p.abs_freq << "\n";
+    file << "lockup_enabled=" << (p.braking.lockup_enabled ? "1" : "0") << "\n";
+    file << "lockup_gain=" << p.braking.lockup_gain << "\n";
+    file << "brake_load_cap=" << p.braking.brake_load_cap << "\n";
+    file << "lockup_freq_scale=" << p.braking.lockup_freq_scale << "\n";
+    file << "lockup_gamma=" << p.braking.lockup_gamma << "\n";
+    file << "lockup_start_pct=" << p.braking.lockup_start_pct << "\n";
+    file << "lockup_full_pct=" << p.braking.lockup_full_pct << "\n";
+    file << "lockup_prediction_sens=" << p.braking.lockup_prediction_sens << "\n";
+    file << "lockup_bump_reject=" << p.braking.lockup_bump_reject << "\n";
+    file << "lockup_rear_boost=" << p.braking.lockup_rear_boost << "\n";
+    file << "abs_pulse_enabled=" << (p.braking.abs_pulse_enabled ? "1" : "0") << "\n";
+    file << "abs_gain=" << p.braking.abs_gain << "\n";
+    file << "abs_freq=" << p.braking.abs_freq << "\n";
 
     file << "texture_load_cap=" << p.texture_load_cap << "\n";
     file << "slide_enabled=" << (p.slide_enabled ? "1" : "0") << "\n";
@@ -1669,19 +1669,19 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         file << "slope_confidence_max_rate=" << engine.m_slope_detection.confidence_max_rate << "\n";
 
         file << "\n; --- Braking & Lockup ---\n";
-        file << "lockup_enabled=" << engine.m_lockup_enabled << "\n";
-        file << "lockup_gain=" << engine.m_lockup_gain << "\n";
-        file << "brake_load_cap=" << engine.m_brake_load_cap << "\n";
-        file << "lockup_freq_scale=" << engine.m_lockup_freq_scale << "\n";
-        file << "lockup_gamma=" << engine.m_lockup_gamma << "\n";
-        file << "lockup_start_pct=" << engine.m_lockup_start_pct << "\n";
-        file << "lockup_full_pct=" << engine.m_lockup_full_pct << "\n";
-        file << "lockup_prediction_sens=" << engine.m_lockup_prediction_sens << "\n";
-        file << "lockup_bump_reject=" << engine.m_lockup_bump_reject << "\n";
-        file << "lockup_rear_boost=" << engine.m_lockup_rear_boost << "\n";
-        file << "abs_pulse_enabled=" << engine.m_abs_pulse_enabled << "\n";
-        file << "abs_gain=" << engine.m_abs_gain << "\n";
-        file << "abs_freq=" << engine.m_abs_freq_hz << "\n";
+        file << "lockup_enabled=" << engine.m_braking.lockup_enabled << "\n";
+        file << "lockup_gain=" << engine.m_braking.lockup_gain << "\n";
+        file << "brake_load_cap=" << engine.m_braking.brake_load_cap << "\n";
+        file << "lockup_freq_scale=" << engine.m_braking.lockup_freq_scale << "\n";
+        file << "lockup_gamma=" << engine.m_braking.lockup_gamma << "\n";
+        file << "lockup_start_pct=" << engine.m_braking.lockup_start_pct << "\n";
+        file << "lockup_full_pct=" << engine.m_braking.lockup_full_pct << "\n";
+        file << "lockup_prediction_sens=" << engine.m_braking.lockup_prediction_sens << "\n";
+        file << "lockup_bump_reject=" << engine.m_braking.lockup_bump_reject << "\n";
+        file << "lockup_rear_boost=" << engine.m_braking.lockup_rear_boost << "\n";
+        file << "abs_pulse_enabled=" << engine.m_braking.abs_pulse_enabled << "\n";
+        file << "abs_gain=" << engine.m_braking.abs_gain << "\n";
+        file << "abs_freq=" << engine.m_braking.abs_freq << "\n";
 
         file << "\n; --- Vibration Effects ---\n";
         file << "texture_load_cap=" << engine.m_texture_load_cap << "\n";
@@ -1885,25 +1885,25 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
     
     // v0.6.20: Safety Validation - Clamp Advanced Braking Parameters to Valid Ranges
-    if (engine.m_lockup_gamma < 0.1f || engine.m_lockup_gamma > 4.0f) {
-        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_lockup_gamma);
-        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_lockup_gamma);
-        engine.m_lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, engine.m_lockup_gamma));
+    if (engine.m_braking.lockup_gamma < 0.1f || engine.m_braking.lockup_gamma > 4.0f) {
+        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_braking.lockup_gamma);
+        Logger::Get().Log("[Config] Invalid lockup_gamma (%.2f), clamping to range [0.1, 4.0]", engine.m_braking.lockup_gamma);
+        engine.m_braking.lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, engine.m_braking.lockup_gamma));
     }
-    if (engine.m_lockup_prediction_sens < 10.0f || engine.m_lockup_prediction_sens > 100.0f) {
-        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_lockup_prediction_sens);
-        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_lockup_prediction_sens);
-        engine.m_lockup_prediction_sens = (std::max)(10.0f, (std::min)(100.0f, engine.m_lockup_prediction_sens));
+    if (engine.m_braking.lockup_prediction_sens < 10.0f || engine.m_braking.lockup_prediction_sens > 100.0f) {
+        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_braking.lockup_prediction_sens);
+        Logger::Get().Log("[Config] Invalid lockup_prediction_sens (%.2f), clamping to range [10.0, 100.0]", engine.m_braking.lockup_prediction_sens);
+        engine.m_braking.lockup_prediction_sens = (std::max)(10.0f, (std::min)(100.0f, engine.m_braking.lockup_prediction_sens));
     }
-    if (engine.m_lockup_bump_reject < 0.1f || engine.m_lockup_bump_reject > 5.0f) {
-        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_lockup_bump_reject);
-        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_lockup_bump_reject);
-        engine.m_lockup_bump_reject = (std::max)(0.1f, (std::min)(5.0f, engine.m_lockup_bump_reject));
+    if (engine.m_braking.lockup_bump_reject < 0.1f || engine.m_braking.lockup_bump_reject > 5.0f) {
+        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_braking.lockup_bump_reject);
+        Logger::Get().Log("[Config] Invalid lockup_bump_reject (%.2f), clamping to range [0.1, 5.0]", engine.m_braking.lockup_bump_reject);
+        engine.m_braking.lockup_bump_reject = (std::max)(0.1f, (std::min)(5.0f, engine.m_braking.lockup_bump_reject));
     }
-    if (engine.m_abs_gain < 0.0f || engine.m_abs_gain > 10.0f) {
-        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_abs_gain);
-        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_abs_gain);
-        engine.m_abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_abs_gain));
+    if (engine.m_braking.abs_gain < 0.0f || engine.m_braking.abs_gain > 10.0f) {
+        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_braking.abs_gain);
+        Logger::Get().Log("[Config] Invalid abs_gain (%.2f), clamping to range [0.0, 10.0]", engine.m_braking.abs_gain);
+        engine.m_braking.abs_gain = (std::max)(0.0f, (std::min)(10.0f, engine.m_braking.abs_gain));
     }
     // Issue #211: Legacy 100Nm hack scaling
     if (legacy_torque_hack && IsVersionLessEqual(config_version, "0.7.66")) {
@@ -1919,14 +1919,14 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         engine.m_front_axle.understeer_effect = engine.m_front_axle.understeer_effect / 100.0f;
         Logger::Get().Log("[Config] Migrated legacy understeer_effect: %.2f -> %.2f", old_val, engine.m_front_axle.understeer_effect);
     }
-    if (engine.m_lockup_gain < 0.0f || engine.m_lockup_gain > 3.0f) {
-        engine.m_lockup_gain = (std::max)(0.0f, (std::min)(3.0f, engine.m_lockup_gain));
+    if (engine.m_braking.lockup_gain < 0.0f || engine.m_braking.lockup_gain > 3.0f) {
+        engine.m_braking.lockup_gain = (std::max)(0.0f, (std::min)(3.0f, engine.m_braking.lockup_gain));
     }
-    if (engine.m_brake_load_cap < 1.0f || engine.m_brake_load_cap > 10.0f) {
-        engine.m_brake_load_cap = (std::max)(1.0f, (std::min)(10.0f, engine.m_brake_load_cap));
+    if (engine.m_braking.brake_load_cap < 1.0f || engine.m_braking.brake_load_cap > 10.0f) {
+        engine.m_braking.brake_load_cap = (std::max)(1.0f, (std::min)(10.0f, engine.m_braking.brake_load_cap));
     }
-    if (engine.m_lockup_rear_boost < 1.0f || engine.m_lockup_rear_boost > 10.0f) {
-        engine.m_lockup_rear_boost = (std::max)(1.0f, (std::min)(10.0f, engine.m_lockup_rear_boost));
+    if (engine.m_braking.lockup_rear_boost < 1.0f || engine.m_braking.lockup_rear_boost > 10.0f) {
+        engine.m_braking.lockup_rear_boost = (std::max)(1.0f, (std::min)(10.0f, engine.m_braking.lockup_rear_boost));
     }
     if (engine.m_rear_axle.oversteer_boost < 0.0f || engine.m_rear_axle.oversteer_boost > 4.0f) {
         engine.m_rear_axle.oversteer_boost = (std::max)(0.0f, (std::min)(4.0f, engine.m_rear_axle.oversteer_boost));

@@ -121,11 +121,11 @@ public:
     LoadForcesConfig m_load_forces;
     GripEstimationConfig m_grip_estimation;
     SlopeDetectionConfig m_slope_detection;
+    BrakingConfig m_braking;
     float m_vibration_gain = 1.0f; // Issue #206: Global vibration scaling
 
     // Configurable Smoothing & Caps (v0.3.9)
     float m_texture_load_cap = 1.5f; 
-    float m_brake_load_cap = 1.5f;   
     bool m_invert_force = true;
     
     // v0.4.4 Features
@@ -136,19 +136,6 @@ public:
     float m_gyro_gain;
     float m_gyro_smoothing;
     float m_stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
-    
-    bool m_lockup_enabled;
-    float m_lockup_gain;
-    // NEW Lockup Tuning (v0.5.11)
-    float m_lockup_start_pct = 5.0f;
-    float m_lockup_full_pct = 15.0f;
-    float m_lockup_rear_boost = 1.5f;
-    float m_lockup_gamma = 2.0f;           
-    float m_lockup_prediction_sens = 50.0f; 
-    float m_lockup_bump_reject = 1.0f;     
-    
-    bool m_abs_pulse_enabled = true;      
-    float m_abs_gain = 1.0f;               
     
     bool m_spin_enabled;
     float m_spin_gain;
@@ -297,8 +284,6 @@ public:
     double m_bottoming_phase = 0.0;
     
     // Phase Accumulators for Dynamic Oscillators (v0.6.20)
-    float m_abs_freq_hz = 20.0f;
-    float m_lockup_freq_scale = 1.0f;
     float m_spin_freq_scale = 1.0f;
     
     // Internal state for Bottoming (Method B)

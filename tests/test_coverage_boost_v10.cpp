@@ -62,8 +62,8 @@ TEST_CASE(test_ffb_engine_dt_and_slip_window_minimums, "Physics") {
     // 2. Slip Window Minimums (Line 1460)
     // Trigger lockup calculation with a very small window
     FFBEngineTestAccess::SetLockupEnabled(engine, true);
-    engine.m_lockup_full_pct = 15.0f;
-    engine.m_lockup_start_pct = 14.999f; // Window = 0.00001 < 0.01 (MIN_SLIP_WINDOW)
+    engine.m_braking.lockup_full_pct = 15.0f;
+    engine.m_braking.lockup_start_pct = 14.999f; // Window = 0.00001 < 0.01 (MIN_SLIP_WINDOW)
     
     data.mWheel[0].mBrakePressure = 1.0;
     data.mWheel[0].mLongitudinalPatchVel = 10.0; // Force slip

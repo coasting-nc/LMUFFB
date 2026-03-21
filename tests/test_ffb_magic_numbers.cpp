@@ -443,8 +443,8 @@ TEST_CASE(test_mn_abs_pulse_magnitude_scaler, "Texture") {
 
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_abs_pulse_enabled = true;
-    engine.m_abs_gain = 1.0f;
+    engine.m_braking.abs_pulse_enabled = true;
+    engine.m_braking.abs_gain = 1.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     // dt = 1/(4 Ã— 20Hz) = 0.0125s â†’ exactly Ï€/2 phase advance â†’ sin=1
