@@ -6,7 +6,9 @@ Note that the refactoring for these logical categories has already been performe
 * FrontAxleConfig
 * RearAxleConfig 
 
-Only work on the next logical category, make sure all tests pass, and then stop. 
+Your task is to work on the next logical category. You have to follow a TDD approach and first write new tests for the next logical category, make sure they pass, and then implement the changes. The tests you have to write are 3 specific safety tests (Consistency, Round-Trip, Validation).
+
+You have to work only on the next logical category (do not work on the remaining categories), make sure all tests pass, and then stop. 
 
 You also have to document your work by creating a .md document with implementation notes. 
 Include these sections: encountered issues, deviations from the plan, and suggestions for the future. 
