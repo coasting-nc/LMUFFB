@@ -153,6 +153,7 @@ set(TEST_SOURCES
     test_refactor_grip_estimation.cpp
     test_refactor_slope_detection.cpp
     test_refactor_braking.cpp
+    test_refactor_vibration.cpp
     ../src/core/main.cpp
 )
 
