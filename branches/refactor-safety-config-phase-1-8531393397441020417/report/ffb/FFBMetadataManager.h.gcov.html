@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - coverage_filtered.info - ffb/FFBMetadataManager.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">ffb</a> - FFBMetadataManager.h<span style="font-size: 80%;"> (source / <a href="FFBMetadataManager.h.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">coverage_filtered.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">7</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2026-03-21 19:24:59</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">7</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryLo">50.0&nbsp;%</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">3</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : #ifndef FFBMETADATA_MANAGER_H</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : #define FFBMETADATA_MANAGER_H</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : #include &lt;string&gt;</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : #include &lt;cstring&gt;</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : #include &lt;atomic&gt;</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : #include &lt;mutex&gt;</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : #include &quot;VehicleUtils.h&quot;</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : #include &quot;utils/StringUtils.h&quot;</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : #include &quot;io/lmu_sm_interface/LmuSharedMemoryWrapper.h&quot;</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : class FFBMetadataManager {</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : public:</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             :     static constexpr int STR_BUF_64 = 64;</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : </span>
+<span id="L16"><span class="lineNum">      16</span>   [<span class="tlaGBC" title="Branch 0 was taken 511 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 511 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC tlaBgGNC">        3577 :     FFBMetadataManager() = default;</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 511 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
+<span id="L17"><span class="lineNum">      17</span>                 :             : </span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :     // Updates metadata. Returns true if vehicle class/name changed (meaning FFB should seed/initialize)</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :     bool UpdateMetadata(const SharedMemoryObjectOut&amp; data);</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :     </span>
+<span id="L21"><span class="lineNum">      21</span>                 :             :     // Low-level update. </span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :     // NOTE: This is a hot-path method called from the FFB thread. </span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :     // It is protected by g_engine_mutex in FFBEngine.</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :     bool UpdateInternal(const char* vehicleClass, const char* vehicleName, const char* trackName);</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : </span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">         294 :     void ResetWarnings() { m_warned_invalid_range = false; }</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :     </span>
+<span id="L28"><span class="lineNum">      28</span>                 :             :     // API methods for FFBEngine</span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">         621 :     const char* GetVehicleName() const { return m_vehicle_name; }</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :     const char* GetTrackName() const { return m_track_name; }</span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">         276 :     const char* GetCurrentClassName() const { return m_current_class_name.c_str(); }</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">      262222 :     ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">       64233 :     bool HasWarnedInvalidRange() const { return m_warned_invalid_range; }</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">         513 :     void SetWarnedInvalidRange(bool val) { m_warned_invalid_range = val; }</span></span>
+<span id="L35"><span class="lineNum">      35</span>                 :             : </span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :     // Internal state (Kept public for legacy test compatibility as per Approach A)</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :     char m_vehicle_name[STR_BUF_64] = &quot;Unknown&quot;;</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :     char m_track_name[STR_BUF_64] = &quot;Unknown&quot;;</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :     std::string m_current_class_name = &quot;&quot;;</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :     ParsedVehicleClass m_current_vclass = ParsedVehicleClass::UNKNOWN;</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :     std::atomic&lt;bool&gt; m_warned_invalid_range{false};</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :     std::string m_last_handled_vehicle_name = &quot;&quot;;</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :     std::string m_last_logged_veh = &quot;&quot;;</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             : </span>
+<span id="L45"><span class="lineNum">      45</span>                 :             : private:</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :     std::mutex m_mutex;</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             : };</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             : </span>
+<span id="L49"><span class="lineNum">      49</span>                 :             : #endif // FFBMETADATA_MANAGER_H</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
