@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-21 17:57:56</td>
+            <td class="headerValue">2026-03-21 18:02:57</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -378,7 +378,60 @@
 <span id="L306"><span class="lineNum">     306</span>                 :<span class="tlaGNC">        1045 :     }</span></span>
 <span id="L307"><span class="lineNum">     307</span>                 :             : };</span>
 <span id="L308"><span class="lineNum">     308</span>                 :             : </span>
-<span id="L309"><span class="lineNum">     309</span>                 :             : #endif // FFBCONFIG_H</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : struct VibrationConfig {</span>
+<span id="L310"><span class="lineNum">     310</span>                 :             :     float vibration_gain = 1.0f;</span>
+<span id="L311"><span class="lineNum">     311</span>                 :             :     float texture_load_cap = 1.5f;</span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : </span>
+<span id="L313"><span class="lineNum">     313</span>                 :             :     bool slide_enabled = false;</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             :     float slide_gain = 0.226562f;</span>
+<span id="L315"><span class="lineNum">     315</span>                 :             :     float slide_freq = 1.0f;</span>
+<span id="L316"><span class="lineNum">     316</span>                 :             : </span>
+<span id="L317"><span class="lineNum">     317</span>                 :             :     bool road_enabled = true;</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             :     float road_gain = 0.0f;</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             : </span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :     bool spin_enabled = true;</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :     float spin_gain = 0.5f;</span>
+<span id="L322"><span class="lineNum">     322</span>                 :             :     float spin_freq_scale = 1.0f;</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             : </span>
+<span id="L324"><span class="lineNum">     324</span>                 :             :     float scrub_drag_gain = 0.0f;</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             : </span>
+<span id="L326"><span class="lineNum">     326</span>                 :             :     bool bottoming_enabled = true;</span>
+<span id="L327"><span class="lineNum">     327</span>                 :             :     float bottoming_gain = 1.0f;</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             :     int bottoming_method = 0;</span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : </span>
+<span id="L330"><span class="lineNum">     330</span>                 :             :     bool Equals(const VibrationConfig&amp; o, float eps = 0.0001f) const {</span>
+<span id="L331"><span class="lineNum">     331</span>                 :             :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span>
+<span id="L332"><span class="lineNum">     332</span>                 :             :         return is_near(vibration_gain, o.vibration_gain) &amp;&amp;</span>
+<span id="L333"><span class="lineNum">     333</span>                 :             :                is_near(texture_load_cap, o.texture_load_cap) &amp;&amp;</span>
+<span id="L334"><span class="lineNum">     334</span>                 :             :                slide_enabled == o.slide_enabled &amp;&amp;</span>
+<span id="L335"><span class="lineNum">     335</span>                 :             :                is_near(slide_gain, o.slide_gain) &amp;&amp;</span>
+<span id="L336"><span class="lineNum">     336</span>                 :             :                is_near(slide_freq, o.slide_freq) &amp;&amp;</span>
+<span id="L337"><span class="lineNum">     337</span>                 :             :                road_enabled == o.road_enabled &amp;&amp;</span>
+<span id="L338"><span class="lineNum">     338</span>                 :             :                is_near(road_gain, o.road_gain) &amp;&amp;</span>
+<span id="L339"><span class="lineNum">     339</span>                 :             :                spin_enabled == o.spin_enabled &amp;&amp;</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             :                is_near(spin_gain, o.spin_gain) &amp;&amp;</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             :                is_near(spin_freq_scale, o.spin_freq_scale) &amp;&amp;</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             :                is_near(scrub_drag_gain, o.scrub_drag_gain) &amp;&amp;</span>
+<span id="L343"><span class="lineNum">     343</span>                 :             :                bottoming_enabled == o.bottoming_enabled &amp;&amp;</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             :                is_near(bottoming_gain, o.bottoming_gain) &amp;&amp;</span>
+<span id="L345"><span class="lineNum">     345</span>                 :             :                bottoming_method == o.bottoming_method;</span>
+<span id="L346"><span class="lineNum">     346</span>                 :             :     }</span>
+<span id="L347"><span class="lineNum">     347</span>                 :             : </span>
+<span id="L348"><span class="lineNum">     348</span>                 :             :     void Validate() {</span>
+<span id="L349"><span class="lineNum">     349</span>                 :             :         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span>
+<span id="L350"><span class="lineNum">     350</span>                 :             :         texture_load_cap = (std::max)(1.0f, (std::min)(10.0f, texture_load_cap));</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             :         slide_gain = (std::max)(0.0f, (std::min)(2.0f, slide_gain));</span>
+<span id="L352"><span class="lineNum">     352</span>                 :             :         slide_freq = (std::max)(0.1f, (std::min)(5.0f, slide_freq));</span>
+<span id="L353"><span class="lineNum">     353</span>                 :             :         road_gain = (std::max)(0.0f, (std::min)(2.0f, road_gain));</span>
+<span id="L354"><span class="lineNum">     354</span>                 :             :         spin_gain = (std::max)(0.0f, (std::min)(2.0f, spin_gain));</span>
+<span id="L355"><span class="lineNum">     355</span>                 :             :         spin_freq_scale = (std::max)(0.1f, (std::min)(5.0f, spin_freq_scale));</span>
+<span id="L356"><span class="lineNum">     356</span>                 :             :         scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, scrub_drag_gain));</span>
+<span id="L357"><span class="lineNum">     357</span>                 :             :         bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             :         bottoming_method = (std::max)(0, (std::min)(1, bottoming_method));</span>
+<span id="L359"><span class="lineNum">     359</span>                 :             :     }</span>
+<span id="L360"><span class="lineNum">     360</span>                 :             : };</span>
+<span id="L361"><span class="lineNum">     361</span>                 :             : </span>
+<span id="L362"><span class="lineNum">     362</span>                 :             : #endif // FFBCONFIG_H</span>
         </pre>
               </td>
             </tr>
