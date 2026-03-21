@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - coverage_filtered.info - physics/SteeringUtils.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">physics</a> - SteeringUtils.cpp<span style="font-size: 80%;"> (source / <a href="SteeringUtils.cpp.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">coverage_filtered.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">96.3&nbsp;%</td>
+            <td class="headerCovTableEntry">27</td>
+            <td class="headerCovTableEntry">26</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2026-03-21 20:56:28</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryMed">78.6&nbsp;%</td>
+            <td class="headerCovTableEntry">28</td>
+            <td class="headerCovTableEntry">22</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : #include &quot;FFBEngine.h&quot;</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : #include &quot;Logger.h&quot;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : #include &lt;cmath&gt;</span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : #include &lt;algorithm&gt;</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : </span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : // ---------------------------------------------------------------------------</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : // Steering &amp; Wheel Mechanics methods have been moved from FFBEngine.cpp.</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : // This includes the Soft Lock logic which prevents the wheel from rotating</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : // beyond the car's physical steering rack limits.</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : // ---------------------------------------------------------------------------</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : // Helper: Calculate Soft Lock (v0.7.61 - Issue #117)</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : // Provides a progressive spring-damping force when the wheel exceeds 100% lock.</span>
+<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC tlaBgGNC">       67863 : void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx) {</span></span>
+<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">       67863 :     ctx.soft_lock_force = 0.0;</span></span>
+<span id="L16"><span class="lineNum">      16</span>         [<span class="tlaGBC" title="Branch 0 was taken 21 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 67842 times"> + </span>]:<span class="tlaGNC">       67863 :     if (!m_advanced.soft_lock_enabled) return;</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : </span>
+<span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">       67842 :     double steer = data-&gt;mUnfilteredSteering;</span></span>
+<span id="L19"><span class="lineNum">      19</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 67840 times"> + </span>]:<span class="tlaGNC">       67842 :     if (!std::isfinite(steer)) return;</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : </span>
+<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">       67840 :     double abs_steer = std::abs(steer);</span></span>
+<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 486 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 67354 times"> + </span>]:<span class="tlaGNC">       67840 :     if (abs_steer &gt; 1.0) {</span></span>
+<span id="L23"><span class="lineNum">      23</span>         [<span class="tlaGBC" title="Branch 0 was taken 14 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 472 times"> + </span>]:<span class="tlaGNC">         486 :         if (!m_safety.was_soft_locked) {</span></span>
+<span id="L24"><span class="lineNum">      24</span>   [<span class="tlaGBC" title="Branch 0 was taken 14 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 14 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          14 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Engaged: Steering %.1f%%&quot;, steer * 100.0);</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">          14 :             m_safety.was_soft_locked = true;</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :         }</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             : </span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">         486 :         double excess = abs_steer - 1.0;</span></span>
+<span id="L29"><span class="lineNum">      29</span>         [<span class="tlaGBC" title="Branch 0 was taken 485 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         486 :         double sign = (steer &gt; 0.0) ? 1.0 : -1.0;</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :             : </span>
+<span id="L31"><span class="lineNum">      31</span>                 :             :         // NEW: Steep Spring Ramp reaching hardware max torque quickly.</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :         // This ensures the soft lock feels like a solid wall that doesn't &quot;give&quot;</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :         // under pressure, even at zero velocity.</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :         // At stiffness 20 (default), reaches 100% force at 0.25% excess.</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :         // At stiffness 100 (max), reaches 100% force at 0.05% excess.</span>
+<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">         486 :         double stiffness = (double)(std::max)(1.0f, m_advanced.soft_lock_stiffness);</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">         486 :         double excess_for_max = 5.0 / (stiffness * 100.0);</span></span>
+<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">         486 :         double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)m_general.wheelbase_max_nm * 2.0;</span></span>
+<span id="L39"><span class="lineNum">      39</span>                 :             : </span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :         // Damping Force: opposes movement to prevent bouncing.</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :         // Scaled by hardware torque to remain relevant across all wheelbases.</span>
+<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">         486 :         double damping_nm = m_steering_velocity_smoothed * m_advanced.soft_lock_damping * (double)m_general.wheelbase_max_nm * 0.1;</span></span>
+<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">         486 :         damping_nm = std::clamp(damping_nm, -(double)m_general.wheelbase_max_nm * 0.5, (double)m_general.wheelbase_max_nm * 0.5);</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :             : </span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :         // Total Soft Lock force (opposing the steering direction)</span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">         486 :         ctx.soft_lock_force = -(spring_nm * sign + damping_nm);</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :             : </span>
+<span id="L48"><span class="lineNum">      48</span>   [<span class="tlaGBC" title="Branch 0 was taken 486 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 14 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 472 times"> + </span> :<span class="tlaGNC">         486 :         if (std::abs(ctx.soft_lock_force) &gt; 5.0 &amp;&amp; !m_safety.soft_lock_significant) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 14 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 472 times"> + </span>]
+<span id="L49"><span class="lineNum">      49</span>   [<span class="tlaGBC" title="Branch 0 was taken 14 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 14 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          14 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Significant Influence: %.1f Nm&quot;, ctx.soft_lock_force);</span></span>
+<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaGNC">          14 :             m_safety.soft_lock_significant = true;</span></span>
+<span id="L51"><span class="lineNum">      51</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 472 times"> + </span>]:<span class="tlaGNC">         472 :         } else if (std::abs(ctx.soft_lock_force) &lt; 4.0) {</span></span>
+<span id="L52"><span class="lineNum">      52</span>                 :<span class="tlaUNC tlaBgUNC">           0 :             m_safety.soft_lock_significant = false;</span></span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :         }</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :     } else {</span>
+<span id="L55"><span class="lineNum">      55</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 67353 times"> + </span>]:<span class="tlaGNC tlaBgGNC">       67354 :         if (m_safety.was_soft_locked) {</span></span>
+<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">           1 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Disengaged&quot;);</span></span>
+<span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaGNC">           1 :             m_safety.was_soft_locked = false;</span></span>
+<span id="L58"><span class="lineNum">      58</span>                 :             :         }</span>
+<span id="L59"><span class="lineNum">      59</span>                 :<span class="tlaGNC">       67354 :         m_safety.soft_lock_significant = false;</span></span>
+<span id="L60"><span class="lineNum">      60</span>                 :             :     }</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
