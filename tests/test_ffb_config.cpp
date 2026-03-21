@@ -396,8 +396,8 @@ TEST_CASE(test_config_safety_clamping, "Config") {
         std::cout << "[FAIL] scrub_drag_gain not clamped. Got: " << engine.m_vibration.scrub_drag_gain << " Expected: 1.0" << std::endl;
         all_clamped = false;
     }
-    if (engine.m_gyro_gain != 1.0f) {
-        std::cout << "[FAIL] gyro_gain not clamped. Got: " << engine.m_gyro_gain << " Expected: 1.0" << std::endl;
+    if (engine.m_advanced.gyro_gain != 1.0f) {
+        std::cout << "[FAIL] gyro_gain not clamped. Got: " << engine.m_advanced.gyro_gain << " Expected: 1.0" << std::endl;
         all_clamped = false;
     }
     

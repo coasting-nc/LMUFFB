@@ -45,8 +45,8 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     std::cout << "\nTest: Speed Gate Uses Smoothstep (v0.7.2)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_speed_gate_lower = 1.0f;
-    engine.m_speed_gate_upper = 5.0f;
+    engine.m_advanced.speed_gate_lower = 1.0f;
+    engine.m_advanced.speed_gate_upper = 5.0f;
     engine.m_vibration.road_enabled = true;
     engine.m_vibration.road_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
@@ -61,8 +61,8 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     auto get_peak_road_force = [&](TelemInfoV01& d) {
         // Reset state
         InitializeEngine(engine);
-        engine.m_speed_gate_lower = 1.0f;
-        engine.m_speed_gate_upper = 5.0f;
+        engine.m_advanced.speed_gate_lower = 1.0f;
+        engine.m_advanced.speed_gate_upper = 5.0f;
         engine.m_vibration.road_enabled = true;
         engine.m_vibration.road_gain = 1.0f;
 
@@ -100,8 +100,8 @@ TEST_CASE(test_smoothstep_stationary_silence_preserved, "SpeedGate") {
     std::cout << "\nTest: Smoothstep Stationary Silence (v0.7.2)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_speed_gate_lower = 1.0f;
-    engine.m_speed_gate_upper = 5.0f;
+    engine.m_advanced.speed_gate_lower = 1.0f;
+    engine.m_advanced.speed_gate_upper = 5.0f;
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0);
     data.mSteeringShaftTorque = 10.0;
     data.mLocalAccel.x = 5.0;
@@ -116,17 +116,17 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 4000.0);
     
     // Verify default upper threshold (Reset to expected for test)
-    engine.m_speed_gate_upper = 5.0f;
-    if (engine.m_speed_gate_upper == 5.0f) {
+    engine.m_advanced.speed_gate_upper = 5.0f;
+    if (engine.m_advanced.speed_gate_upper == 5.0f) {
         std::cout << "[PASS] Default upper threshold is 5.0 m/s (18 km/h)." << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Default upper threshold is " << engine.m_speed_gate_upper);
+        FAIL_TEST("Default upper threshold is " << engine.m_advanced.speed_gate_upper);
     }
 
     // Try custom thresholds
-    engine.m_speed_gate_lower = 2.0f;
-    engine.m_speed_gate_upper = 10.0f;
+    engine.m_advanced.speed_gate_lower = 2.0f;
+    engine.m_advanced.speed_gate_upper = 10.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(6.0); // Exactly halfway
     engine.m_vibration.road_enabled = true;

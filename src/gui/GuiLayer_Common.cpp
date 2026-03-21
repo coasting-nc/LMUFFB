@@ -480,7 +480,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::TextDisabled("Steering: %.1f° (%.0f)", m_latest_steering_angle, m_latest_steering_range);
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        BoolSetting("Steerlock from REST API", &engine.m_rest_api_enabled, Tooltips::REST_API_ENABLE);
+        BoolSetting("Steerlock from REST API", &engine.m_advanced.rest_api_enabled, Tooltips::REST_API_ENABLE);
 
         ImGui::Spacing();
         bool use_in_game_ffb = (engine.m_front_axle.torque_source == 1);
@@ -508,16 +508,16 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         char stat_damp_tooltip[512];
         StringUtils::SafeFormat(stat_damp_tooltip, sizeof(stat_damp_tooltip),
             "%s\n\nCurrently fades to 0%% at: %.1f km/h (See Advanced Settings -> Speed Gate).",
-            Tooltips::STATIONARY_DAMPING, (float)engine.m_speed_gate_upper * 3.6f);
+            Tooltips::STATIONARY_DAMPING, (float)engine.m_advanced.speed_gate_upper * 3.6f);
 
-        FloatSetting("Stationary Damping", &engine.m_stationary_damping, 0.0f, 1.0f, FormatPct(engine.m_stationary_damping), stat_damp_tooltip);
+        FloatSetting("Stationary Damping", &engine.m_advanced.stationary_damping, 0.0f, 1.0f, FormatPct(engine.m_advanced.stationary_damping), stat_damp_tooltip);
 
         if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
-            BoolSetting("Enable Soft Lock", &engine.m_soft_lock_enabled, Tooltips::SOFT_LOCK_ENABLE);
-            if (engine.m_soft_lock_enabled) {
-                FloatSetting("  Stiffness", &engine.m_soft_lock_stiffness, 0.0f, 100.0f, "%.1f", Tooltips::SOFT_LOCK_STIFFNESS);
-                FloatSetting("  Damping", &engine.m_soft_lock_damping, 0.0f, 5.0f, "%.2f", Tooltips::SOFT_LOCK_DAMPING);
+            BoolSetting("Enable Soft Lock", &engine.m_advanced.soft_lock_enabled, Tooltips::SOFT_LOCK_ENABLE);
+            if (engine.m_advanced.soft_lock_enabled) {
+                FloatSetting("  Stiffness", &engine.m_advanced.soft_lock_stiffness, 0.0f, 100.0f, "%.1f", Tooltips::SOFT_LOCK_STIFFNESS);
+                FloatSetting("  Damping", &engine.m_advanced.soft_lock_damping, 0.0f, 5.0f, "%.2f", Tooltips::SOFT_LOCK_DAMPING);
             }
             ImGui::TreePop();
             ImGui::Separator();
@@ -698,12 +698,12 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             ImGui::NextColumn(); ImGui::NextColumn();
         }
 
-        FloatSetting("Gyro Damping", &engine.m_gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
+        FloatSetting("Gyro Damping", &engine.m_advanced.gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_advanced.gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
 
-        FloatSetting("  Gyro Smooth", &engine.m_gyro_smoothing, 0.000f, 0.050f, "%.3f s",
+        FloatSetting("  Gyro Smooth", &engine.m_advanced.gyro_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::GYRO_SMOOTH,
             [&]() {
-                int ms = (int)std::lround(engine.m_gyro_smoothing * 1000.0f);
+                int ms = (int)std::lround(engine.m_advanced.gyro_smoothing * 1000.0f);
                 ImVec4 color = (ms <= 20) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms", ms);
             });
@@ -920,20 +920,20 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::Indent();
 
         if (ImGui::TreeNode("Stationary Vibration Gate")) {
-            float lower_kmh = engine.m_speed_gate_lower * 3.6f;
+            float lower_kmh = engine.m_advanced.speed_gate_lower * 3.6f;
             if (ImGui::SliderFloat("Mute Below", &lower_kmh, 0.0f, 20.0f, "%.1f km/h")) {
-                engine.m_speed_gate_lower = lower_kmh / 3.6f;
-                if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f)
-                    engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
+                engine.m_advanced.speed_gate_lower = lower_kmh / 3.6f;
+                if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f)
+                    engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::MUTE_BELOW);
             if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
 
-            float upper_kmh = engine.m_speed_gate_upper * 3.6f;
+            float upper_kmh = engine.m_advanced.speed_gate_upper * 3.6f;
             if (ImGui::SliderFloat("Full Above", &upper_kmh, 1.0f, 50.0f, "%.1f km/h")) {
-                engine.m_speed_gate_upper = upper_kmh / 3.6f;
-                if (engine.m_speed_gate_upper <= engine.m_speed_gate_lower + 0.1f)
-                    engine.m_speed_gate_upper = engine.m_speed_gate_lower + 0.5f;
+                engine.m_advanced.speed_gate_upper = upper_kmh / 3.6f;
+                if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f)
+                    engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::FULL_ABOVE);
             if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);

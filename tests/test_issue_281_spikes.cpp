@@ -16,8 +16,8 @@ void test_issue_281_transition_smoothing() {
     InitializeEngine(engine);
 
     // Setup: High torque wheelbase, Soft Lock enabled
-    engine.m_soft_lock_enabled = true;
-    engine.m_soft_lock_stiffness = 20.0f; // Standard stiffness
+    engine.m_advanced.soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_stiffness = 20.0f; // Standard stiffness
     engine.m_general.wheelbase_max_nm = 20.0f;     // 20Nm base
     engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;

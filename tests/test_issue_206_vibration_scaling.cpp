@@ -19,7 +19,7 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     engine.m_vibration.spin_gain = 1.0f;
     engine.m_vibration.bottoming_enabled = true;
     engine.m_vibration.bottoming_gain = 1.0f;
-    engine.m_soft_lock_enabled = true;
+    engine.m_advanced.soft_lock_enabled = true;
 
     // Trigger soft lock condition (steering beyond limit)
     TelemInfoV01 tel = CreateBasicTestTelemetry(50.0);
@@ -108,7 +108,7 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     engine.m_rear_axle.oversteer_boost = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_vibration.scrub_drag_gain = 0.0f;
 
     // Run again with zero structural

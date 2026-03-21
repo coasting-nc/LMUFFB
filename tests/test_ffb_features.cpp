@@ -9,8 +9,8 @@ TEST_CASE(test_stationary_gate, "Texture") {
     FFBEngine engine;
     InitializeEngine(engine);
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 4000.0);
-    engine.m_speed_gate_lower = 1.0f;
-    engine.m_speed_gate_upper = 5.0f;
+    engine.m_advanced.speed_gate_lower = 1.0f;
+    engine.m_advanced.speed_gate_upper = 5.0f;
     
     // Case 1: Stationary (0.0 m/s) -> Effects should be gated to 0.0
     {
@@ -31,7 +31,7 @@ TEST_CASE(test_stationary_gate, "Texture") {
         ASSERT_NEAR(force, 0.0, 0.0001);
     }
     
-    // Case 2: Moving slowly (0.5 m/s) -> Gate should be 0.0 (since 0.5 < m_speed_gate_lower)
+    // Case 2: Moving slowly (0.5 m/s) -> Gate should be 0.0 (since 0.5 < m_advanced.speed_gate_lower)
     {
         TelemInfoV01 data = CreateBasicTestTelemetry(0.5);
         engine.m_vibration.road_enabled = true;
@@ -42,7 +42,7 @@ TEST_CASE(test_stationary_gate, "Texture") {
         ASSERT_NEAR(force, 0.0, 0.0001);
     }
     
-    // Case 3: Moving at 5.0 m/s (m_speed_gate_upper) -> Gate should be 1.0
+    // Case 3: Moving at 5.0 m/s (m_advanced.speed_gate_upper) -> Gate should be 1.0
     {
         TelemInfoV01 data = CreateBasicTestTelemetry(5.0);
         engine.m_vibration.road_enabled = true;
@@ -151,8 +151,8 @@ TEST_CASE(test_stationary_silence, "Texture") {
     // Setup engine with defaults (Gate: 1.0m/s to 5.0m/s)
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_speed_gate_lower = 1.0f;
-    engine.m_speed_gate_upper = 5.0f;
+    engine.m_advanced.speed_gate_lower = 1.0f;
+    engine.m_advanced.speed_gate_upper = 5.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(0.0); // 0 Speed
     

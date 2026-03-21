@@ -19,7 +19,7 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_load_forces.lat_load_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_braking.lockup_enabled = false;
     engine.m_vibration.spin_enabled = false;

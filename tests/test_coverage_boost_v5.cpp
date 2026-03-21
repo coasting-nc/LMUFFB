@@ -330,9 +330,9 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(vibration.slide_freq, 0.5f);
     TEST_FIELD_NE(vibration.road_enabled, !p2.vibration.road_enabled);
     TEST_FIELD_NE(vibration.road_gain, 0.5f);
-    TEST_FIELD_NE(soft_lock_enabled, !p2.soft_lock_enabled);
-    TEST_FIELD_NE(soft_lock_stiffness, 0.5f);
-    TEST_FIELD_NE(soft_lock_damping, 0.5f);
+    TEST_FIELD_NE(advanced.soft_lock_enabled, !p2.advanced.soft_lock_enabled);
+    TEST_FIELD_NE(advanced.soft_lock_stiffness, 0.5f);
+    TEST_FIELD_NE(advanced.soft_lock_damping, 0.5f);
     TEST_FIELD_NE(general.wheelbase_max_nm, 100.0f);
     TEST_FIELD_NE(general.target_rim_nm, 100.0f);
     TEST_FIELD_NE(braking.lockup_freq_scale, 0.5f);
@@ -340,7 +340,7 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(vibration.scrub_drag_gain, 0.5f);
     TEST_FIELD_NE(rear_axle.rear_align_effect, 0.5f);
     TEST_FIELD_NE(rear_axle.sop_yaw_gain, 0.5f);
-    TEST_FIELD_NE(gyro_gain, 0.5f);
+    TEST_FIELD_NE(advanced.gyro_gain, 0.5f);
     TEST_FIELD_NE(front_axle.steering_shaft_gain, 0.5f);
     TEST_FIELD_NE(front_axle.ingame_ffb_gain, 0.5f);
     TEST_FIELD_NE(front_axle.torque_source, 1);
@@ -348,7 +348,7 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(grip_estimation.optimal_slip_angle, 0.5f);
     TEST_FIELD_NE(grip_estimation.optimal_slip_ratio, 0.5f);
     TEST_FIELD_NE(front_axle.steering_shaft_smoothing, 0.5f);
-    TEST_FIELD_NE(gyro_smoothing, 0.5f);
+    TEST_FIELD_NE(advanced.gyro_smoothing, 0.5f);
     TEST_FIELD_NE(rear_axle.yaw_accel_smoothing, 0.5f);
     TEST_FIELD_NE(grip_estimation.chassis_inertia_smoothing, 0.5f);
     TEST_FIELD_NE(front_axle.flatspot_suppression, !p2.front_axle.flatspot_suppression);
@@ -358,10 +358,10 @@ TEST_CASE(test_preset_equals_branches, "System") {
     TEST_FIELD_NE(front_axle.static_notch_freq, 0.5f);
     TEST_FIELD_NE(front_axle.static_notch_width, 0.5f);
     TEST_FIELD_NE(rear_axle.yaw_kick_threshold, 0.5f);
-    TEST_FIELD_NE(speed_gate_lower, 0.5f);
-    TEST_FIELD_NE(speed_gate_upper, 0.5f);
-    TEST_FIELD_NE(road_fallback_scale, 0.5f);
-    TEST_FIELD_NE(understeer_affects_sop, !p2.understeer_affects_sop);
+    TEST_FIELD_NE(advanced.speed_gate_lower, 0.5f);
+    TEST_FIELD_NE(advanced.speed_gate_upper, 0.5f);
+    TEST_FIELD_NE(advanced.road_fallback_scale, 0.5f);
+    TEST_FIELD_NE(advanced.understeer_affects_sop, !p2.advanced.understeer_affects_sop);
     TEST_FIELD_NE(grip_estimation.load_sensitivity_enabled, !p2.grip_estimation.load_sensitivity_enabled);
     TEST_FIELD_NE(slope_detection.enabled, !p2.slope_detection.enabled);
     TEST_FIELD_NE(slope_detection.sg_window, 21);

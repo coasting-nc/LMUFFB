@@ -38,9 +38,9 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_gyro_gain = 0.0f;
+    engine.m_advanced.gyro_gain = 0.0f;
     engine.m_vibration.scrub_drag_gain = 0.0f;
-    engine.m_soft_lock_enabled = false;
+    engine.m_advanced.soft_lock_enabled = false;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
 
     // Issue #397: Flush the 10ms transient ramp

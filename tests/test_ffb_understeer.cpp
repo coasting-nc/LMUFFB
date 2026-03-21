@@ -184,7 +184,7 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     ASSERT_NEAR(p.rear_axle.oversteer_boost, 0.0f, 0.001f);        // Oversteer boost disabled
     ASSERT_NEAR(p.rear_axle.rear_align_effect, 0.0f, 0.001f);      // Rear align disabled
     ASSERT_NEAR(p.rear_axle.sop_yaw_gain, 0.0f, 0.001f);           // Yaw kick disabled
-    ASSERT_NEAR(p.gyro_gain, 0.0f, 0.001f);              // Gyro damping disabled
+    ASSERT_NEAR(p.advanced.gyro_gain, 0.0f, 0.001f);              // Gyro damping disabled
     ASSERT_NEAR(p.vibration.scrub_drag_gain, 0.0f, 0.001f);        // Scrub drag disabled
     
     // VERIFY: All textures are DISABLED
@@ -199,8 +199,8 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     ASSERT_NEAR(p.grip_estimation.optimal_slip_ratio, 0.12f, 0.001f);    // Optimal slip ratio threshold
     
     // VERIFY: Speed gate is disabled (0.0 = no gating)
-    ASSERT_NEAR(p.speed_gate_lower, 0.0f, 0.001f);       // Speed gate disabled
-    ASSERT_NEAR(p.speed_gate_upper, 0.0f, 0.001f);       // Speed gate disabled
+    ASSERT_NEAR(p.advanced.speed_gate_lower, 0.0f, 0.001f);       // Speed gate disabled
+    ASSERT_NEAR(p.advanced.speed_gate_upper, 0.0f, 0.001f);       // Speed gate disabled
     
     std::cout << "[PASS] 'Test: Understeer Only' preset properly isolates understeer effect" << std::endl;
     g_tests_passed++;
@@ -218,23 +218,23 @@ TEST_CASE(test_all_presets_non_negative_speed_gate, "Understeer") {
         const Preset& p = Config::presets[i];
         
         // Check lower threshold
-        if (p.speed_gate_lower < 0.0f) {
+        if (p.advanced.speed_gate_lower < 0.0f) {
             FAIL_TEST("Preset '" << p.name << "' has negative speed_gate_lower: " 
-                      << p.speed_gate_lower << " m/s (" << (p.speed_gate_lower * 3.6f) << " km/h)");
+                      << p.advanced.speed_gate_lower << " m/s (" << (p.advanced.speed_gate_lower * 3.6f) << " km/h)");
             all_valid = false;
         }
         
         // Check upper threshold
-        if (p.speed_gate_upper < 0.0f) {
+        if (p.advanced.speed_gate_upper < 0.0f) {
             FAIL_TEST("Preset '" << p.name << "' has negative speed_gate_upper: " 
-                      << p.speed_gate_upper << " m/s (" << (p.speed_gate_upper * 3.6f) << " km/h)");
+                      << p.advanced.speed_gate_upper << " m/s (" << (p.advanced.speed_gate_upper * 3.6f) << " km/h)");
             all_valid = false;
         }
         
         // Verify upper >= lower (sanity check)
-        if (p.speed_gate_upper < p.speed_gate_lower) {
+        if (p.advanced.speed_gate_upper < p.advanced.speed_gate_lower) {
             FAIL_TEST("Preset '" << p.name << "' has speed_gate_upper < speed_gate_lower: " 
-                      << p.speed_gate_upper << " < " << p.speed_gate_lower);
+                      << p.advanced.speed_gate_upper << " < " << p.advanced.speed_gate_lower);
             all_valid = false;
         }
     }

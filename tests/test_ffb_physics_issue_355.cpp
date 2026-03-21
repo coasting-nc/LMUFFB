@@ -44,8 +44,8 @@ TEST_CASE(test_issue_355_lockup_grounding_robustness, "Physics") {
     engine.m_braking.lockup_start_pct = 5.0f;
     engine.m_braking.lockup_full_pct = 15.0f;
     engine.m_braking.lockup_freq_scale = 1.0f;
-    engine.m_speed_gate_lower = -1.0f;
-    engine.m_speed_gate_upper = -0.5f;
+    engine.m_advanced.speed_gate_lower = -1.0f;
+    engine.m_advanced.speed_gate_upper = -0.5f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
     data.mUnfilteredBrake = 1.0;
@@ -126,8 +126,8 @@ TEST_CASE(test_issue_355_bottoming_impulse_normalization, "Physics") {
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetBottomingMethod(engine, 1);
     engine.m_vibration.bottoming_gain = 1.0f;
-    engine.m_speed_gate_lower = -1.0f;
-    engine.m_speed_gate_upper = -0.5f;
+    engine.m_advanced.speed_gate_lower = -1.0f;
+    engine.m_advanced.speed_gate_upper = -0.5f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     FFBCalculationContext ctx;
@@ -158,8 +158,8 @@ TEST_CASE(test_issue_355_bottoming_safety_fallback, "Physics") {
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
     engine.m_vibration.bottoming_gain = 1.0f;
-    engine.m_speed_gate_lower = -1.0f;
-    engine.m_speed_gate_upper = -0.5f;
+    engine.m_advanced.speed_gate_lower = -1.0f;
+    engine.m_advanced.speed_gate_upper = -0.5f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     FFBCalculationContext ctx;

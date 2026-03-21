@@ -372,8 +372,8 @@ void FFBEngineTestAccess::test_unit_gyro_damping() {
     data.mUnfilteredSteering = 0.1; 
     engine.m_prev_steering_angle = 0.0;
 
-    engine.m_gyro_gain = 1.0;
-    engine.m_gyro_smoothing = 0.0001f; 
+    engine.m_advanced.gyro_gain = 1.0;
+    engine.m_advanced.gyro_smoothing = 0.0001f;
 
     engine.calculate_gyro_damping(&data, ctx);
 

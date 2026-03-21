@@ -71,8 +71,8 @@ TEST_CASE(test_speed_gate_persistence, "Persistence") {
     FFBEngine engine;
     Preset::ApplyDefaultsToEngine(engine);
     
-    engine.m_speed_gate_lower = 2.5f;
-    engine.m_speed_gate_upper = 7.0f;
+    engine.m_advanced.speed_gate_lower = 2.5f;
+    engine.m_advanced.speed_gate_upper = 7.0f;
     
     Config::Save(engine, "test_config_sg.ini");
     
@@ -83,8 +83,8 @@ TEST_CASE(test_speed_gate_persistence, "Persistence") {
     Preset::ApplyDefaultsToEngine(engine2);
     Config::Load(engine2, "test_config_sg.ini");
     
-    ASSERT_NEAR(engine2.m_speed_gate_lower, 2.5f, 0.001f);
-    ASSERT_NEAR(engine2.m_speed_gate_upper, 7.0f, 0.001f);
+    ASSERT_NEAR(engine2.m_advanced.speed_gate_lower, 2.5f, 0.001f);
+    ASSERT_NEAR(engine2.m_advanced.speed_gate_upper, 7.0f, 0.001f);
     
     std::remove("test_config_sg.ini");
 }
@@ -98,8 +98,8 @@ TEST_CASE(test_advanced_physics_persistence, "Persistence") {
     FFBEngine engine;
     Preset::ApplyDefaultsToEngine(engine);
     
-    engine.m_road_fallback_scale = 0.12f;
-    engine.m_understeer_affects_sop = true;
+    engine.m_advanced.road_fallback_scale = 0.12f;
+    engine.m_advanced.understeer_affects_sop = true;
     
     Config::Save(engine, "test_config_ap.ini");
     
@@ -110,8 +110,8 @@ TEST_CASE(test_advanced_physics_persistence, "Persistence") {
     Preset::ApplyDefaultsToEngine(engine2);
     Config::Load(engine2, "test_config_ap.ini");
     
-    ASSERT_NEAR(engine2.m_road_fallback_scale, 0.12f, 0.001f);
-    ASSERT_EQ(engine2.m_understeer_affects_sop, true);
+    ASSERT_NEAR(engine2.m_advanced.road_fallback_scale, 0.12f, 0.001f);
+    ASSERT_EQ(engine2.m_advanced.understeer_affects_sop, true);
     
     std::remove("test_config_ap.ini");
 }
@@ -126,10 +126,10 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
     Preset::ApplyDefaultsToEngine(engine);
     
     engine.m_vibration.texture_load_cap = 2.2f;
-    engine.m_speed_gate_lower = 3.0f;
-    engine.m_speed_gate_upper = 9.0f;
-    engine.m_road_fallback_scale = 0.08f;
-    engine.m_understeer_affects_sop = true;
+    engine.m_advanced.speed_gate_lower = 3.0f;
+    engine.m_advanced.speed_gate_upper = 9.0f;
+    engine.m_advanced.road_fallback_scale = 0.08f;
+    engine.m_advanced.understeer_affects_sop = true;
     
     Config::presets.clear();
     Config::AddUserPreset("AllFieldsTest", engine);
@@ -157,10 +157,10 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
     if (idx != -1) {
         Config::ApplyPreset(idx, engine2);
         ASSERT_NEAR(engine2.m_vibration.texture_load_cap, 2.2f, 0.001f);
-        ASSERT_NEAR(engine2.m_speed_gate_lower, 3.0f, 0.001f);
-        ASSERT_NEAR(engine2.m_speed_gate_upper, 9.0f, 0.001f);
-        ASSERT_NEAR(engine2.m_road_fallback_scale, 0.08f, 0.001f);
-        ASSERT_EQ(engine2.m_understeer_affects_sop, true);
+        ASSERT_NEAR(engine2.m_advanced.speed_gate_lower, 3.0f, 0.001f);
+        ASSERT_NEAR(engine2.m_advanced.speed_gate_upper, 9.0f, 0.001f);
+        ASSERT_NEAR(engine2.m_advanced.road_fallback_scale, 0.08f, 0.001f);
+        ASSERT_EQ(engine2.m_advanced.understeer_affects_sop, true);
     }
 }
 
@@ -321,10 +321,10 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     engine.m_rear_axle.sop_effect = 1.23f;
     engine.m_vibration.texture_load_cap = 2.1f;
     engine.m_braking.brake_load_cap = 6.6f;
-    engine.m_speed_gate_lower = 2.2f;
-    engine.m_speed_gate_upper = 8.8f;
-    engine.m_road_fallback_scale = 0.11f;
-    engine.m_understeer_affects_sop = true;
+    engine.m_advanced.speed_gate_lower = 2.2f;
+    engine.m_advanced.speed_gate_upper = 8.8f;
+    engine.m_advanced.road_fallback_scale = 0.11f;
+    engine.m_advanced.understeer_affects_sop = true;
     
     Config::Save(engine, "roundtrip.ini");
     
@@ -337,10 +337,10 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     ASSERT_NEAR(engine2.m_rear_axle.sop_effect, 1.23f, 0.001f);
     ASSERT_NEAR(engine2.m_vibration.texture_load_cap, 2.1f, 0.001f);
     ASSERT_NEAR(engine2.m_braking.brake_load_cap, 6.6f, 0.001f);
-    ASSERT_NEAR(engine2.m_speed_gate_lower, 2.2f, 0.001f);
-    ASSERT_NEAR(engine2.m_speed_gate_upper, 8.8f, 0.001f);
-    ASSERT_NEAR(engine2.m_road_fallback_scale, 0.11f, 0.001f);
-    ASSERT_EQ(engine2.m_understeer_affects_sop, true);
+    ASSERT_NEAR(engine2.m_advanced.speed_gate_lower, 2.2f, 0.001f);
+    ASSERT_NEAR(engine2.m_advanced.speed_gate_upper, 8.8f, 0.001f);
+    ASSERT_NEAR(engine2.m_advanced.road_fallback_scale, 0.11f, 0.001f);
+    ASSERT_EQ(engine2.m_advanced.understeer_affects_sop, true);
     
     Config::presets.clear();
     Config::AddUserPreset("RoundTrip", engine2);
@@ -365,10 +365,10 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
         ASSERT_NEAR(engine3.m_rear_axle.sop_effect, 1.23f, 0.001f);
         ASSERT_NEAR(engine3.m_vibration.texture_load_cap, 2.1f, 0.001f);
         ASSERT_NEAR(engine3.m_braking.brake_load_cap, 6.6f, 0.001f);
-        ASSERT_NEAR(engine3.m_speed_gate_lower, 2.2f, 0.001f);
-        ASSERT_NEAR(engine3.m_speed_gate_upper, 8.8f, 0.001f);
-        ASSERT_NEAR(engine3.m_road_fallback_scale, 0.11f, 0.001f);
-        ASSERT_EQ(engine3.m_understeer_affects_sop, true);
+        ASSERT_NEAR(engine3.m_advanced.speed_gate_lower, 2.2f, 0.001f);
+        ASSERT_NEAR(engine3.m_advanced.speed_gate_upper, 8.8f, 0.001f);
+        ASSERT_NEAR(engine3.m_advanced.road_fallback_scale, 0.11f, 0.001f);
+        ASSERT_EQ(engine3.m_advanced.understeer_affects_sop, true);
     }
     
     std::remove("roundtrip.ini");
@@ -401,7 +401,7 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     // Additional smoothing fields (v0.5.7 - v0.5.8)
     // Note: 0.0 is valid for these, we just check they're not uninitialized garbage
     ASSERT_TRUE(engine_defaults.m_front_axle.steering_shaft_smoothing >= 0.0f);
-    ASSERT_TRUE(engine_defaults.m_gyro_smoothing >= 0.0f);
+    ASSERT_TRUE(engine_defaults.m_advanced.gyro_smoothing >= 0.0f);
     ASSERT_TRUE(engine_defaults.m_rear_axle.yaw_accel_smoothing >= 0.0f);
     ASSERT_TRUE(engine_defaults.m_grip_estimation.chassis_inertia_smoothing >= 0.0f);
     
@@ -422,11 +422,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     custom_preset.grip_estimation.optimal_slip_angle = 0.15f;
     custom_preset.grip_estimation.optimal_slip_ratio = 0.18f;
     custom_preset.front_axle.steering_shaft_smoothing = 0.025f;
-    custom_preset.gyro_smoothing = 0.015f;
+    custom_preset.advanced.gyro_smoothing = 0.015f;
     custom_preset.rear_axle.yaw_accel_smoothing = 0.005f;
     custom_preset.grip_estimation.chassis_inertia_smoothing = 0.035f;
-    custom_preset.road_fallback_scale = 0.12f;
-    custom_preset.understeer_affects_sop = true;
+    custom_preset.advanced.road_fallback_scale = 0.12f;
+    custom_preset.advanced.understeer_affects_sop = true;
     
     // Slope detection (v0.7.0)
     custom_preset.slope_detection.enabled = true;
@@ -445,11 +445,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_NEAR(engine_apply.m_grip_estimation.optimal_slip_angle, 0.15f, 0.001f);
     ASSERT_NEAR(engine_apply.m_grip_estimation.optimal_slip_ratio, 0.18f, 0.001f);
     ASSERT_NEAR(engine_apply.m_front_axle.steering_shaft_smoothing, 0.025f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_gyro_smoothing, 0.015f, 0.001f);
+    ASSERT_NEAR(engine_apply.m_advanced.gyro_smoothing, 0.015f, 0.001f);
     ASSERT_NEAR(engine_apply.m_rear_axle.yaw_accel_smoothing, 0.005f, 0.001f);
     ASSERT_NEAR(engine_apply.m_grip_estimation.chassis_inertia_smoothing, 0.035f, 0.001f);
-    ASSERT_NEAR(engine_apply.m_road_fallback_scale, 0.12f, 0.001f);
-    ASSERT_EQ(engine_apply.m_understeer_affects_sop, true);
+    ASSERT_NEAR(engine_apply.m_advanced.road_fallback_scale, 0.12f, 0.001f);
+    ASSERT_EQ(engine_apply.m_advanced.understeer_affects_sop, true);
     
     // Slope detection (v0.7.0)
     ASSERT_EQ(engine_apply.m_slope_detection.enabled, true);
@@ -470,11 +470,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     engine_source.m_grip_estimation.optimal_slip_angle = 0.22f;
     engine_source.m_grip_estimation.optimal_slip_ratio = 0.25f;
     engine_source.m_front_axle.steering_shaft_smoothing = 0.033f;
-    engine_source.m_gyro_smoothing = 0.044f;
+    engine_source.m_advanced.gyro_smoothing = 0.044f;
     engine_source.m_rear_axle.yaw_accel_smoothing = 0.011f;
     engine_source.m_grip_estimation.chassis_inertia_smoothing = 0.055f;
-    engine_source.m_road_fallback_scale = 0.09f;
-    engine_source.m_understeer_affects_sop = true;
+    engine_source.m_advanced.road_fallback_scale = 0.09f;
+    engine_source.m_advanced.understeer_affects_sop = true;
     
     // Slope detection (v0.7.0)
     engine_source.m_slope_detection.enabled = true;
@@ -492,11 +492,11 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_NEAR(captured_preset.grip_estimation.optimal_slip_angle, 0.22f, 0.001f);
     ASSERT_NEAR(captured_preset.grip_estimation.optimal_slip_ratio, 0.25f, 0.001f);
     ASSERT_NEAR(captured_preset.front_axle.steering_shaft_smoothing, 0.033f, 0.001f);
-    ASSERT_NEAR(captured_preset.gyro_smoothing, 0.044f, 0.001f);
+    ASSERT_NEAR(captured_preset.advanced.gyro_smoothing, 0.044f, 0.001f);
     ASSERT_NEAR(captured_preset.rear_axle.yaw_accel_smoothing, 0.011f, 0.001f);
     ASSERT_NEAR(captured_preset.grip_estimation.chassis_inertia_smoothing, 0.055f, 0.001f);
-    ASSERT_NEAR(captured_preset.road_fallback_scale, 0.09f, 0.001f);
-    ASSERT_EQ(captured_preset.understeer_affects_sop, true);
+    ASSERT_NEAR(captured_preset.advanced.road_fallback_scale, 0.09f, 0.001f);
+    ASSERT_EQ(captured_preset.advanced.understeer_affects_sop, true);
     
     // Slope detection (v0.7.0)
     ASSERT_EQ(captured_preset.slope_detection.enabled, true);

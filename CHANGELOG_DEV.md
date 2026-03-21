@@ -7,6 +7,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.216]
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 9)**
+  - **Grouped Data Structures**: Introduced `AdvancedConfig` struct to centralize secondary physics effects and hardware fallbacks.
+  - **FFBEngine & Preset Refinement**: Migrated 12 parameters including `gyro_gain`, `gyro_smoothing`, `stationary_damping`, `soft_lock_enabled`, `soft_lock_stiffness`, `soft_lock_damping`, `speed_gate_lower`, `speed_gate_upper`, `rest_api_enabled`, `rest_api_port`, `road_fallback_scale`, and `understeer_affects_sop` into the new grouped structure.
+  - **Implementation Sync**: Updated `FFBEngine.cpp`, `Config.cpp`, `GuiLayer_Common.cpp`, `SteeringUtils.cpp`, and numerous tests to use nested configuration paths.
+
+### Testing
+- **New Safety Suite**: Added `tests/test_refactor_advanced.cpp` verifying physics consistency, round-trip synchronization, and validation clamping.
+- **Regression Guard**: Updated the entire test suite (590+ cases) to ensure compatibility with the structural refactor.
+- Verified 100% pass rate: **598/598 test cases, 2838 assertions, 0 failures**.
+
+---
+
 ## [0.7.215]
 
 ### Refactored
