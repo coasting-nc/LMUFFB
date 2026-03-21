@@ -82,11 +82,11 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    engine.m_sop_effect = 1.0;
-    engine.m_oversteer_boost = 1.0;
+    engine.m_rear_axle.sop_effect = 1.0;
+    engine.m_rear_axle.oversteer_boost = 1.0;
     engine.m_general.gain = 1.0;
-    engine.m_sop_scale = 10.0;
-    engine.m_rear_align_effect = 1.0f;
+    engine.m_rear_axle.sop_scale = 10.0;
+    engine.m_rear_axle.rear_align_effect = 1.0f;
     engine.m_invert_force = false;
     engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
     engine.m_slip_angle_smoothing = 0.0f; // Instant
@@ -139,9 +139,9 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    engine.m_rear_align_effect = 2.0f;
-    engine.m_oversteer_boost = 0.0f; 
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 2.0f;
+    engine.m_rear_axle.oversteer_boost = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_general.wheelbase_max_nm = 100.0f; engine.m_general.target_rim_nm = 100.0f;
     engine.m_slip_angle_smoothing = 0.0f;
     
@@ -186,10 +186,10 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
     std::memset(&data, 0, sizeof(data));
     
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
-    engine.m_sop_effect = 1.0;
-    engine.m_oversteer_boost = 1.0;
+    engine.m_rear_axle.sop_effect = 1.0;
+    engine.m_rear_axle.oversteer_boost = 1.0;
     engine.m_general.gain = 1.0;
-    engine.m_sop_scale = 10.0;
+    engine.m_rear_axle.sop_scale = 10.0;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     
     data.mLocalAccel.x = 9.81;
@@ -240,7 +240,7 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_bottoming_enabled = false;
     
     data.mWheel[0].mLateralPatchVel = 5.1; // Changed to avoid exact zero in sawtooth

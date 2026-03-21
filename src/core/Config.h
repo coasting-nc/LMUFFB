@@ -30,13 +30,10 @@ struct Preset {
     // Current defaults match: GT3 DD 15 Nm (Simagic Alpha) - v0.6.35
     GeneralConfig general;
     FrontAxleConfig front_axle;
-    float sop = 1.666f;
+    RearAxleConfig rear_axle;
     float lateral_load = 0.0f; // New v0.7.121
     int lat_load_transform = 0; // New v0.7.154 (Issue #282)
-    float sop_scale = 1.0f;
-    float sop_smoothing = 0.0f;
     float slip_smoothing = 0.002f;
-    float oversteer_boost = 2.52101f;
     float long_load_effect = 0.0f; // Renamed from dynamic_weight_gain (#301)
     float long_load_smoothing = 0.15f; // Renamed from dynamic_weight_smoothing (#301)
     int long_load_transform = 0; // New #301
@@ -92,9 +89,6 @@ struct Preset {
     int bottoming_method = 0;
     float scrub_drag_gain = 0.0f;
     
-    float rear_align_effect = 0.666f;
-    float kerb_strike_rejection = 0.0f; // NEW
-    float sop_yaw_gain = 0.333f;
     float gyro_gain = 0.0f;
     float stationary_damping = 1.0f; // New v0.7.206 (Issue #418)
     
@@ -104,25 +98,7 @@ struct Preset {
     
     // NEW: Advanced Smoothing (v0.5.8)
     float gyro_smoothing = 0.0f;
-    float yaw_smoothing = 0.001f;
     float chassis_smoothing = 0.0f;
-
-    // v0.4.41: Signal Filtering
-    float yaw_kick_threshold = 0.0f; // New v0.6.10
-
-    // Unloaded Yaw Kick (Braking/Lift-off) - v0.7.164 (Issue #322)
-    float unloaded_yaw_gain = 0.0f;
-    float unloaded_yaw_threshold = 0.2f;
-    float unloaded_yaw_sens = 1.0f;
-    float unloaded_yaw_gamma = 0.5f;
-    float unloaded_yaw_punch = 0.05f;
-
-    // Power Yaw Kick (Acceleration) - v0.7.164 (Issue #322)
-    float power_yaw_gain = 0.0f;
-    float power_yaw_threshold = 0.2f;
-    float power_slip_threshold = 0.10f;
-    float power_yaw_gamma = 0.5f;
-    float power_yaw_punch = 0.05f;
 
     // v0.6.23 New Settings with HIGHER DEFAULTS
     float speed_gate_lower = 1.0f; // 3.6 km/h
@@ -166,11 +142,11 @@ struct Preset {
     Preset& SetGain(float v) { general.gain = v; return *this; }
     Preset& SetUndersteer(float v) { front_axle.understeer_effect = v; return *this; }
     Preset& SetUndersteerGamma(float v) { front_axle.understeer_gamma = v; return *this; }
-    Preset& SetSoP(float v) { sop = v; return *this; }
-    Preset& SetSoPScale(float v) { sop_scale = v; return *this; }
-    Preset& SetSmoothing(float v) { sop_smoothing = v; return *this; }
+    Preset& SetSoP(float v) { rear_axle.sop_effect = v; return *this; }
+    Preset& SetSoPScale(float v) { rear_axle.sop_scale = v; return *this; }
+    Preset& SetSmoothing(float v) { rear_axle.sop_smoothing_factor = v; return *this; }
     Preset& SetMinForce(float v) { general.min_force = v; return *this; }
-    Preset& SetOversteer(float v) { oversteer_boost = v; return *this; }
+    Preset& SetOversteer(float v) { rear_axle.oversteer_boost = v; return *this; }
     Preset& SetLongitudinalLoad(float v) { long_load_effect = v; return *this; }
     Preset& SetLongitudinalLoadSmoothing(float v) { long_load_smoothing = v; return *this; }
     Preset& SetLongitudinalLoadTransform(int v) { long_load_transform = v; return *this; }
@@ -227,9 +203,9 @@ struct Preset {
         return *this;
     }
     Preset& SetScrub(float v) { scrub_drag_gain = v; return *this; }
-    Preset& SetRearAlign(float v) { rear_align_effect = v; return *this; }
-    Preset& SetKerbStrikeRejection(float v) { kerb_strike_rejection = v; return *this; }
-    Preset& SetSoPYaw(float v) { sop_yaw_gain = v; return *this; }
+    Preset& SetRearAlign(float v) { rear_axle.rear_align_effect = v; return *this; }
+    Preset& SetKerbStrikeRejection(float v) { rear_axle.kerb_strike_rejection = v; return *this; }
+    Preset& SetSoPYaw(float v) { rear_axle.sop_yaw_gain = v; return *this; }
     Preset& SetGyro(float v) { gyro_gain = v; return *this; }
     Preset& SetStationaryDamping(float v) { stationary_damping = v; return *this; }
     
@@ -250,23 +226,23 @@ struct Preset {
         front_axle.static_notch_width = width;
         return *this;
     }
-    Preset& SetYawKickThreshold(float v) { yaw_kick_threshold = v; return *this; }
+    Preset& SetYawKickThreshold(float v) { rear_axle.yaw_kick_threshold = v; return *this; }
 
     Preset& SetUnloadedYawKick(float gain, float threshold, float sens, float gamma, float punch) {
-        unloaded_yaw_gain = gain;
-        unloaded_yaw_threshold = threshold;
-        unloaded_yaw_sens = sens;
-        unloaded_yaw_gamma = gamma;
-        unloaded_yaw_punch = punch;
+        rear_axle.unloaded_yaw_gain = gain;
+        rear_axle.unloaded_yaw_threshold = threshold;
+        rear_axle.unloaded_yaw_sens = sens;
+        rear_axle.unloaded_yaw_gamma = gamma;
+        rear_axle.unloaded_yaw_punch = punch;
         return *this;
     }
 
     Preset& SetPowerYawKick(float gain, float threshold, float slip, float gamma, float punch) {
-        power_yaw_gain = gain;
-        power_yaw_threshold = threshold;
-        power_slip_threshold = slip;
-        power_yaw_gamma = gamma;
-        power_yaw_punch = punch;
+        rear_axle.power_yaw_gain = gain;
+        rear_axle.power_yaw_threshold = threshold;
+        rear_axle.power_slip_threshold = slip;
+        rear_axle.power_yaw_gamma = gamma;
+        rear_axle.power_yaw_punch = punch;
         return *this;
     }
 
@@ -280,7 +256,7 @@ struct Preset {
     Preset& SetShaftSmoothing(float v) { front_axle.steering_shaft_smoothing = v; return *this; }
     
     Preset& SetGyroSmoothing(float v) { gyro_smoothing = v; return *this; }
-    Preset& SetYawSmoothing(float v) { yaw_smoothing = v; return *this; }
+    Preset& SetYawSmoothing(float v) { rear_axle.yaw_accel_smoothing = v; return *this; }
     Preset& SetChassisSmoothing(float v) { chassis_smoothing = v; return *this; }
     
     Preset& SetSlopeDetection(bool enabled, int window = 15, float min_thresh = -0.3f, float max_thresh = -2.0f, float tau = 0.04f) {
@@ -355,13 +331,12 @@ struct Preset {
         engine.m_front_axle = this->front_axle;
         engine.m_front_axle.Validate();
 
-        engine.m_sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop));
+        engine.m_rear_axle = this->rear_axle;
+        engine.m_rear_axle.Validate();
+
         engine.m_lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
         engine.m_lat_load_transform = static_cast<LoadTransform>(std::clamp(lat_load_transform, 0, 3));
-        engine.m_sop_scale = (std::max)(0.01f, sop_scale);
-        engine.m_sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         engine.m_slip_angle_smoothing = (std::max)(0.0001f, slip_smoothing);
-        engine.m_oversteer_boost = (std::max)(0.0f, oversteer_boost);
         engine.m_long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
         engine.m_long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
         engine.m_long_load_transform = static_cast<LoadTransform>(std::clamp(long_load_transform, 0, 3));
@@ -413,25 +388,8 @@ struct Preset {
         engine.m_bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));
         engine.m_bottoming_method = bottoming_method;
         engine.m_scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
-        engine.m_rear_align_effect = (std::max)(0.0f, rear_align_effect);
-        engine.m_kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
-        engine.m_sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         engine.m_gyro_gain = (std::max)(0.0f, gyro_gain);
         engine.m_stationary_damping = (std::max)(0.0f, (std::min)(1.0f, stationary_damping));
-        engine.m_yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);
-
-        // v0.7.164 (Issue #322)
-        engine.m_unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);
-        engine.m_unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);
-        engine.m_unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);
-        engine.m_unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));
-        engine.m_unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));
-
-        engine.m_power_yaw_gain = (std::max)(0.0f, power_yaw_gain);
-        engine.m_power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);
-        engine.m_power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));
-        engine.m_power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));
-        engine.m_power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));
 
         engine.m_speed_gate_lower = (std::max)(0.0f, speed_gate_lower);
         engine.m_speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
@@ -440,7 +398,6 @@ struct Preset {
         engine.m_optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle); // Critical for grip division
         engine.m_optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio); // Critical for grip division
         engine.m_gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
-        engine.m_yaw_accel_smoothing = (std::max)(0.0f, yaw_smoothing);
         engine.m_chassis_inertia_smoothing = (std::max)(0.0f, chassis_smoothing);
         engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         engine.m_understeer_affects_sop = understeer_affects_sop;
@@ -482,13 +439,10 @@ struct Preset {
     void Validate() {
         general.Validate();
         front_axle.Validate();
-        sop = (std::max)(0.0f, (std::min)(2.0f, sop));
+        rear_axle.Validate();
         lateral_load = (std::max)(0.0f, (std::min)(2.0f, lateral_load));
         lat_load_transform = std::clamp(lat_load_transform, 0, 3);
-        sop_scale = (std::max)(0.01f, sop_scale);
-        sop_smoothing = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing));
         slip_smoothing = (std::max)(0.0001f, slip_smoothing);
-        oversteer_boost = (std::max)(0.0f, oversteer_boost);
         long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
         long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
         long_load_transform = std::clamp(long_load_transform, 0, 3);
@@ -517,28 +471,12 @@ struct Preset {
         lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
         spin_freq_scale = (std::max)(0.1f, spin_freq_scale);
         scrub_drag_gain = (std::max)(0.0f, scrub_drag_gain);
-        rear_align_effect = (std::max)(0.0f, rear_align_effect);
-        kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));
-        sop_yaw_gain = (std::max)(0.0f, sop_yaw_gain);
         gyro_gain = (std::max)(0.0f, gyro_gain);
-
-        // v0.7.164 (Issue #322)
-        unloaded_yaw_gain = (std::max)(0.0f, unloaded_yaw_gain);
-        unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);
-        unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);
-        unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));
-        unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));
-        power_yaw_gain = (std::max)(0.0f, power_yaw_gain);
-        power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);
-        power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));
-        power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));
-        power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));
 
         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         optimal_slip_angle = (std::max)(0.01f, optimal_slip_angle);
         optimal_slip_ratio = (std::max)(0.01f, optimal_slip_ratio);
         gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
-        yaw_smoothing = (std::max)(0.0f, yaw_smoothing);
         chassis_smoothing = (std::max)(0.0f, chassis_smoothing);
         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
@@ -566,13 +504,10 @@ struct Preset {
     void UpdateFromEngine(const FFBEngine& engine) {
         general = engine.m_general;
         front_axle = engine.m_front_axle;
-        sop = engine.m_sop_effect;
+        rear_axle = engine.m_rear_axle;
         lateral_load = engine.m_lat_load_effect;
         lat_load_transform = static_cast<int>(engine.m_lat_load_transform);
-        sop_scale = engine.m_sop_scale;
-        sop_smoothing = engine.m_sop_smoothing_factor;
         slip_smoothing = engine.m_slip_angle_smoothing;
-        oversteer_boost = engine.m_oversteer_boost;
         long_load_effect = engine.m_long_load_effect;
         long_load_smoothing = engine.m_long_load_smoothing;
         long_load_transform = static_cast<int>(engine.m_long_load_transform);
@@ -623,24 +558,8 @@ struct Preset {
         bottoming_gain = engine.m_bottoming_gain;
         bottoming_method = engine.m_bottoming_method;
         scrub_drag_gain = engine.m_scrub_drag_gain;
-        rear_align_effect = engine.m_rear_align_effect;
-        kerb_strike_rejection = engine.m_kerb_strike_rejection;
-        sop_yaw_gain = engine.m_sop_yaw_gain;
         gyro_gain = engine.m_gyro_gain;
         stationary_damping = engine.m_stationary_damping;
-        yaw_kick_threshold = engine.m_yaw_kick_threshold;
-
-        // v0.7.164 (Issue #322)
-        unloaded_yaw_gain = engine.m_unloaded_yaw_gain;
-        unloaded_yaw_threshold = engine.m_unloaded_yaw_threshold;
-        unloaded_yaw_sens = engine.m_unloaded_yaw_sens;
-        unloaded_yaw_gamma = engine.m_unloaded_yaw_gamma;
-        unloaded_yaw_punch = engine.m_unloaded_yaw_punch;
-        power_yaw_gain = engine.m_power_yaw_gain;
-        power_yaw_threshold = engine.m_power_yaw_threshold;
-        power_slip_threshold = engine.m_power_slip_threshold;
-        power_yaw_gamma = engine.m_power_yaw_gamma;
-        power_yaw_punch = engine.m_power_yaw_punch;
 
         speed_gate_lower = engine.m_speed_gate_lower;
         speed_gate_upper = engine.m_speed_gate_upper;
@@ -649,7 +568,6 @@ struct Preset {
         optimal_slip_angle = engine.m_optimal_slip_angle;
         optimal_slip_ratio = engine.m_optimal_slip_ratio;
         gyro_smoothing = engine.m_gyro_smoothing;
-        yaw_smoothing = engine.m_yaw_accel_smoothing;
         chassis_smoothing = engine.m_chassis_inertia_smoothing;
         road_fallback_scale = engine.m_road_fallback_scale;
         understeer_affects_sop = engine.m_understeer_affects_sop;
@@ -689,13 +607,10 @@ struct Preset {
 
         if (!general.Equals(p.general, eps)) return false;
         if (!front_axle.Equals(p.front_axle, eps)) return false;
-        if (!is_near(sop, p.sop, eps)) return false;
+        if (!rear_axle.Equals(p.rear_axle, eps)) return false;
         if (!is_near(lateral_load, p.lateral_load, eps)) return false;
         if (lat_load_transform != p.lat_load_transform) return false;
-        if (!is_near(sop_scale, p.sop_scale, eps)) return false;
-        if (!is_near(sop_smoothing, p.sop_smoothing, eps)) return false;
         if (!is_near(slip_smoothing, p.slip_smoothing, eps)) return false;
-        if (!is_near(oversteer_boost, p.oversteer_boost, eps)) return false;
         if (!is_near(long_load_effect, p.long_load_effect, eps)) return false;
         if (!is_near(long_load_smoothing, p.long_load_smoothing, eps)) return false;
         if (long_load_transform != p.long_load_transform) return false;
@@ -749,31 +664,13 @@ struct Preset {
         if (!is_near(bottoming_gain, p.bottoming_gain, eps)) return false;
         if (bottoming_method != p.bottoming_method) return false;
         if (!is_near(scrub_drag_gain, p.scrub_drag_gain, eps)) return false;
-        if (!is_near(rear_align_effect, p.rear_align_effect, eps)) return false;
-        if (!is_near(kerb_strike_rejection, p.kerb_strike_rejection, eps)) return false;
-        if (!is_near(sop_yaw_gain, p.sop_yaw_gain, eps)) return false;
         if (!is_near(gyro_gain, p.gyro_gain, eps)) return false;
         if (!is_near(stationary_damping, p.stationary_damping, eps)) return false;
 
         if (!is_near(optimal_slip_angle, p.optimal_slip_angle, eps)) return false;
         if (!is_near(optimal_slip_ratio, p.optimal_slip_ratio, eps)) return false;
         if (!is_near(gyro_smoothing, p.gyro_smoothing, eps)) return false;
-        if (!is_near(yaw_smoothing, p.yaw_smoothing, eps)) return false;
         if (!is_near(chassis_smoothing, p.chassis_smoothing, eps)) return false;
-
-        if (!is_near(yaw_kick_threshold, p.yaw_kick_threshold, eps)) return false;
-
-        // v0.7.164 (Issue #322)
-        if (!is_near(unloaded_yaw_gain, p.unloaded_yaw_gain, eps)) return false;
-        if (!is_near(unloaded_yaw_threshold, p.unloaded_yaw_threshold, eps)) return false;
-        if (!is_near(unloaded_yaw_sens, p.unloaded_yaw_sens, eps)) return false;
-        if (!is_near(unloaded_yaw_gamma, p.unloaded_yaw_gamma, eps)) return false;
-        if (!is_near(unloaded_yaw_punch, p.unloaded_yaw_punch, eps)) return false;
-        if (!is_near(power_yaw_gain, p.power_yaw_gain, eps)) return false;
-        if (!is_near(power_yaw_threshold, p.power_yaw_threshold, eps)) return false;
-        if (!is_near(power_slip_threshold, p.power_slip_threshold, eps)) return false;
-        if (!is_near(power_yaw_gamma, p.power_yaw_gamma, eps)) return false;
-        if (!is_near(power_yaw_punch, p.power_yaw_punch, eps)) return false;
 
         if (!is_near(speed_gate_lower, p.speed_gate_lower, eps)) return false;
         if (!is_near(speed_gate_upper, p.speed_gate_upper, eps)) return false;

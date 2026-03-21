@@ -279,9 +279,9 @@ TEST_CASE(test_slope_detection_no_boost_when_grip_balanced, "SlopeDetection") {
     
     // Enable slope detection with oversteer boost
     engine.m_slope_detection_enabled = true;
-    engine.m_oversteer_boost = 2.0f; // Strong boost setting
-    engine.m_sop_effect = 1.0f;
-    engine.m_sop_scale = 10.0f;
+    engine.m_rear_axle.oversteer_boost = 2.0f; // Strong boost setting
+    engine.m_rear_axle.sop_effect = 1.0f;
+    engine.m_rear_axle.sop_scale = 10.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
 
     // Use fallback-triggering telemetry
@@ -323,9 +323,9 @@ TEST_CASE(test_slope_detection_no_boost_during_oversteer, "SlopeDetection") {
     
     // Enable slope detection with oversteer boost
     engine.m_slope_detection_enabled = true;
-    engine.m_oversteer_boost = 2.0f; // Strong boost setting
-    engine.m_sop_effect = 1.0f;
-    engine.m_sop_scale = 10.0f;
+    engine.m_rear_axle.oversteer_boost = 2.0f; // Strong boost setting
+    engine.m_rear_axle.sop_effect = 1.0f;
+    engine.m_rear_axle.sop_scale = 10.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_optimal_slip_angle = 0.05f; // Rear grip will drop past 0.05 slip
     
@@ -356,9 +356,9 @@ TEST_CASE(test_lat_g_boost_works_without_slope_detection, "SlopeDetection") {
     InitializeEngine(engine);
     
     engine.m_slope_detection_enabled = false;
-    engine.m_oversteer_boost = 2.0f;
-    engine.m_sop_effect = 1.0f;
-    engine.m_sop_scale = 10.0f;
+    engine.m_rear_axle.oversteer_boost = 2.0f;
+    engine.m_rear_axle.sop_effect = 1.0f;
+    engine.m_rear_axle.sop_scale = 10.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_optimal_slip_angle = 0.05f;
     

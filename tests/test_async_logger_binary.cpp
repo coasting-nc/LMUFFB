@@ -23,7 +23,7 @@ TEST_CASE(test_async_logger_binary_integrity, "Logging") {
     info.app_version = "0.7.126";
     info.general.gain = 1.0f;
     info.front_axle.understeer_effect = 0.5f;
-    info.sop_effect = 0.5f;
+    info.rear_axle.sop_effect = 0.5f;
     info.slope_enabled = true;
     info.slope_sensitivity = 0.5f;
     info.slope_threshold = -0.3f;

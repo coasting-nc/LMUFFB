@@ -8,9 +8,9 @@ TEST_CASE(test_issue_241_rectification_fix, "YawGyro") {
     InitializeEngine(engine);
 
     // Setup: Isolate Yaw Kick effect
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_kick_threshold = 1.0f; // Threshold = 1.0
-    engine.m_yaw_accel_smoothing = 0.05f; // Smoothing tau
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.yaw_kick_threshold = 1.0f; // Threshold = 1.0
+    engine.m_rear_axle.yaw_accel_smoothing = 0.05f; // Smoothing tau
     engine.m_general.wheelbase_max_nm = 20.0f;
     engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
@@ -18,10 +18,10 @@ TEST_CASE(test_issue_241_rectification_fix, "YawGyro") {
 
     // Disable other effects
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
-    engine.m_rear_align_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0); // Speed = 20.0 (> 5.0 cutoff)
     data.mDeltaTime = 0.0025; // 400Hz
@@ -62,9 +62,9 @@ TEST_CASE(test_issue_241_continuous_deadzone, "YawGyro") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_sop_yaw_gain = 1.0f;
-    engine.m_yaw_kick_threshold = 1.0f; // Threshold = 1.0
-    engine.m_yaw_accel_smoothing = 0.0001f; // Fast response for testing
+    engine.m_rear_axle.sop_yaw_gain = 1.0f;
+    engine.m_rear_axle.yaw_kick_threshold = 1.0f; // Threshold = 1.0
+    engine.m_rear_axle.yaw_accel_smoothing = 0.0001f; // Fast response for testing
     engine.m_general.wheelbase_max_nm = 20.0f;
     engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;

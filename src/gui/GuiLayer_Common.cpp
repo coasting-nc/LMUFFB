@@ -654,33 +654,33 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Rear Axle (Oversteer)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        FloatSetting("Lateral G Boost (Slide)", &engine.m_oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_oversteer_boost),
+        FloatSetting("Lateral G Boost (Slide)", &engine.m_rear_axle.oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_rear_axle.oversteer_boost),
             Tooltips::OVERSTEER_BOOST);
-        FloatSetting("Lateral G", &engine.m_sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
+        FloatSetting("Lateral G", &engine.m_rear_axle.sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
 
-        FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
+        FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_axle.rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
             Tooltips::REAR_ALIGN_TORQUE);
-        FloatSetting("  Kerb Strike Rejection", &engine.m_kerb_strike_rejection, 0.0f, 1.0f, FormatPct(engine.m_kerb_strike_rejection),
+        FloatSetting("  Kerb Strike Rejection", &engine.m_rear_axle.kerb_strike_rejection, 0.0f, 1.0f, FormatPct(engine.m_rear_axle.kerb_strike_rejection),
             Tooltips::KERB_STRIKE_REJECTION);
-        FloatSetting("Yaw Kick", &engine.m_sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),
+        FloatSetting("Yaw Kick", &engine.m_rear_axle.sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_rear_axle.sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),
             Tooltips::YAW_KICK);
-        FloatSetting("  Activation Threshold", &engine.m_yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/sÂ²", Tooltips::YAW_KICK_THRESHOLD);
+        FloatSetting("  Activation Threshold", &engine.m_rear_axle.yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/sÂ²", Tooltips::YAW_KICK_THRESHOLD);
 
-        FloatSetting("  Kick Response", &engine.m_yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
+        FloatSetting("  Kick Response", &engine.m_rear_axle.yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
             Tooltips::YAW_KICK_RESPONSE,
             [&]() {
-                int ms = (int)std::lround(engine.m_yaw_accel_smoothing * 1000.0f);
+                int ms = (int)std::lround(engine.m_rear_axle.yaw_accel_smoothing * 1000.0f);
                 ImVec4 color = (ms <= 15) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms", ms);
             });
 
         if (ImGui::TreeNodeEx("Unloaded Yaw Kick (Braking)", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
-            FloatSetting("  Gain", &engine.m_unloaded_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_unloaded_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::UNLOADED_YAW_GAIN);
-            FloatSetting("  Threshold", &engine.m_unloaded_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::UNLOADED_YAW_THRESHOLD);
-            FloatSetting("  Unload Sens.", &engine.m_unloaded_yaw_sens, 0.1f, 5.0f, "%.1fx", Tooltips::UNLOADED_YAW_SENS);
-            FloatSetting("  Gamma", &engine.m_unloaded_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::UNLOADED_YAW_GAMMA);
-            FloatSetting("  Punch (Jerk)", &engine.m_unloaded_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::UNLOADED_YAW_PUNCH);
+            FloatSetting("  Gain", &engine.m_rear_axle.unloaded_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_rear_axle.unloaded_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::UNLOADED_YAW_GAIN);
+            FloatSetting("  Threshold", &engine.m_rear_axle.unloaded_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::UNLOADED_YAW_THRESHOLD);
+            FloatSetting("  Unload Sens.", &engine.m_rear_axle.unloaded_yaw_sens, 0.1f, 5.0f, "%.1fx", Tooltips::UNLOADED_YAW_SENS);
+            FloatSetting("  Gamma", &engine.m_rear_axle.unloaded_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::UNLOADED_YAW_GAMMA);
+            FloatSetting("  Punch (Jerk)", &engine.m_rear_axle.unloaded_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::UNLOADED_YAW_PUNCH);
             ImGui::TreePop();
         } else {
             ImGui::NextColumn(); ImGui::NextColumn();
@@ -688,11 +688,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
         if (ImGui::TreeNodeEx("Power Yaw Kick (Acceleration)", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::NextColumn(); ImGui::NextColumn();
-            FloatSetting("  Gain", &engine.m_power_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_power_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::POWER_YAW_GAIN);
-            FloatSetting("  Threshold", &engine.m_power_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::POWER_YAW_THRESHOLD);
-            FloatSetting("  TC Slip Target", &engine.m_power_slip_threshold, 0.01f, 0.5f, FormatPct(engine.m_power_slip_threshold), Tooltips::POWER_SLIP_THRESHOLD);
-            FloatSetting("  Gamma", &engine.m_power_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::POWER_YAW_GAMMA);
-            FloatSetting("  Punch (Jerk)", &engine.m_power_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::POWER_YAW_PUNCH);
+            FloatSetting("  Gain", &engine.m_rear_axle.power_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_rear_axle.power_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::POWER_YAW_GAIN);
+            FloatSetting("  Threshold", &engine.m_rear_axle.power_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::POWER_YAW_THRESHOLD);
+            FloatSetting("  TC Slip Target", &engine.m_rear_axle.power_slip_threshold, 0.01f, 0.5f, FormatPct(engine.m_rear_axle.power_slip_threshold), Tooltips::POWER_SLIP_THRESHOLD);
+            FloatSetting("  Gamma", &engine.m_rear_axle.power_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::POWER_YAW_GAMMA);
+            FloatSetting("  Punch (Jerk)", &engine.m_rear_axle.power_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::POWER_YAW_PUNCH);
             ImGui::TreePop();
         } else {
             ImGui::NextColumn(); ImGui::NextColumn();
@@ -711,10 +711,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        FloatSetting("SoP Smoothing", &engine.m_sop_smoothing_factor, 0.0f, 1.0f, "%.2f",
+        FloatSetting("SoP Smoothing", &engine.m_rear_axle.sop_smoothing_factor, 0.0f, 1.0f, "%.2f",
             Tooltips::SOP_SMOOTHING,
             [&]() {
-                int ms = (int)std::lround(engine.m_sop_smoothing_factor * 100.0f);
+                int ms = (int)std::lround(engine.m_rear_axle.sop_smoothing_factor * 100.0f);
                 ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
                 ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
             });
@@ -722,7 +722,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         FloatSetting("Grip Smoothing", &engine.m_grip_smoothing_steady, 0.000f, 0.100f, "%.3f s",
             Tooltips::GRIP_SMOOTHING);
 
-        FloatSetting("  SoP Scale", &engine.m_sop_scale, 0.0f, 20.0f, "%.2f", Tooltips::SOP_SCALE);
+        FloatSetting("  SoP Scale", &engine.m_rear_axle.sop_scale, 0.0f, 20.0f, "%.2f", Tooltips::SOP_SCALE);
 
         ImGui::TreePop();
     } else {
@@ -776,7 +776,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             Config::Save(engine);
         }
 
-        if (engine.m_slope_detection_enabled && engine.m_oversteer_boost > 0.01f) {
+        if (engine.m_slope_detection_enabled && engine.m_rear_axle.oversteer_boost > 0.01f) {
             ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f),
                 "Note: Lateral G Boost (Slide) is auto-disabled when Slope Detection is ON.");
             ImGui::NextColumn(); ImGui::NextColumn();

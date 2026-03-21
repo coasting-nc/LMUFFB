@@ -8,10 +8,10 @@ using namespace FFBEngineTests;
 TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 0.0;
@@ -64,10 +64,10 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
 TEST_CASE_TAGGED(test_issue_306_sign_convention, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_sop_effect = 1.0f;
+    engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
@@ -162,10 +162,10 @@ TEST_CASE_TAGGED(test_issue_306_wheel_spin_scaling, "CorePhysics", (std::vector<
 TEST_CASE_TAGGED(test_issue_306_suspension_fallback_4_wheel, "CorePhysics", (std::vector<std::string>{"Physics", "Issue306"})) {
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_sop_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_lat_load_effect = 1.0f;
-    engine.m_sop_scale = 1.0f;
-    engine.m_sop_smoothing_factor = 0.0f;
+    engine.m_rear_axle.sop_scale = 1.0f;
+    engine.m_rear_axle.sop_smoothing_factor = 0.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     // Force missing load warning
