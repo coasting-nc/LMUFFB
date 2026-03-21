@@ -158,12 +158,13 @@ void FFBThread() {
                             info.general = g_engine.m_general;
                             info.front_axle = g_engine.m_front_axle;
                             info.rear_axle = g_engine.m_rear_axle;
-                            info.lat_load_effect = g_engine.m_load_forces.lat_load_effect;
-                            info.long_load_effect = g_engine.m_load_forces.long_load_effect;
-                            info.optimal_slip_angle = g_engine.m_grip_estimation.optimal_slip_angle;
-                            info.optimal_slip_ratio = g_engine.m_grip_estimation.optimal_slip_ratio;
+                            info.load_forces = g_engine.m_load_forces;
+                            info.grip_estimation = g_engine.m_grip_estimation;
                             info.slope_detection = g_engine.m_slope_detection;
                             info.braking = g_engine.m_braking;
+                            info.vibration = g_engine.m_vibration;
+                            info.advanced = g_engine.m_advanced;
+                            info.safety = g_engine.m_safety.m_config;
                             AsyncLogger::Get().Start(info, Config::m_log_path);
                         }
                     }

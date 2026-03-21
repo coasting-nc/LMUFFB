@@ -207,12 +207,13 @@ struct SessionInfo {
     GeneralConfig general;
     FrontAxleConfig front_axle;
     RearAxleConfig rear_axle;
-    float lat_load_effect; // v0.7.152
-    float long_load_effect;
-    float optimal_slip_angle; // v0.7.173
-    float optimal_slip_ratio; // v0.7.173
+    LoadForcesConfig load_forces;
+    GripEstimationConfig grip_estimation;
     SlopeDetectionConfig slope_detection;
     BrakingConfig braking;
+    VibrationConfig vibration;
+    AdvancedConfig advanced;
+    SafetyConfig safety;
 };
 
 class AsyncLogger {
@@ -421,24 +422,52 @@ private:
         m_file << "# FFB Settings\n";
         m_file << "# ========================\n";
         m_file << "# Gain: " << info.general.gain << "\n";
-        m_file << "# Understeer Effect: " << info.front_axle.understeer_effect << "\n";
-        m_file << "# SoP Effect: " << info.rear_axle.sop_effect << "\n";
-        m_file << "# Lateral Load Effect: " << info.lat_load_effect << "\n";
-        m_file << "# Long Load Effect: " << info.long_load_effect << "\n";
-        m_file << "# SoP Scale: " << info.rear_axle.sop_scale << "\n";
-        m_file << "# SoP Smoothing: " << info.rear_axle.sop_smoothing_factor << "\n";
-        m_file << "# Lockup Gain: " << info.braking.lockup_gain << "\n";
-        m_file << "# ABS Gain: " << info.braking.abs_gain << "\n";
-        m_file << "# Optimal Slip Angle: " << info.optimal_slip_angle << "\n";
-        m_file << "# Optimal Slip Ratio: " << info.optimal_slip_ratio << "\n";
-        m_file << "# Slope Detection: " << (info.slope_detection.enabled ? "Enabled" : "Disabled") << "\n";
-        m_file << "# Slope Sensitivity: " << info.slope_detection.sensitivity << "\n";
-        m_file << "# Slope Threshold: " << info.slope_detection.min_threshold << "\n";
-        m_file << "# Slope Alpha Threshold: " << info.slope_detection.alpha_threshold << "\n";
-        m_file << "# Slope Decay Rate: " << info.slope_detection.decay_rate << "\n";
-        m_file << "# Torque Passthrough: " << (info.front_axle.torque_passthrough ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Min Force: " << info.general.min_force << "\n";
+        m_file << "# Wheelbase Max Nm: " << info.general.wheelbase_max_nm << "\n";
+        m_file << "# Target Rim Nm: " << info.general.target_rim_nm << "\n";
         m_file << "# Dynamic Normalization: " << (info.general.dynamic_normalization_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# Auto Load Normalization: " << (info.general.auto_load_normalization_enabled ? "Enabled" : "Disabled") << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Understeer Effect: " << info.front_axle.understeer_effect << "\n";
+        m_file << "# Understeer Gamma: " << info.front_axle.understeer_gamma << "\n";
+        m_file << "# Steering Shaft Gain: " << info.front_axle.steering_shaft_gain << "\n";
+        m_file << "# In-Game FFB Gain: " << info.front_axle.ingame_ffb_gain << "\n";
+        m_file << "# Torque Passthrough: " << (info.front_axle.torque_passthrough ? "Enabled" : "Disabled") << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# SoP Effect: " << info.rear_axle.sop_effect << "\n";
+        m_file << "# SoP Scale: " << info.rear_axle.sop_scale << "\n";
+        m_file << "# SoP Smoothing: " << info.rear_axle.sop_smoothing_factor << "\n";
+        m_file << "# Oversteer Boost: " << info.rear_axle.oversteer_boost << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Lateral Load Effect: " << info.load_forces.lat_load_effect << "\n";
+        m_file << "# Long Load Effect: " << info.load_forces.long_load_effect << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Optimal Slip Angle: " << info.grip_estimation.optimal_slip_angle << "\n";
+        m_file << "# Optimal Slip Ratio: " << info.grip_estimation.optimal_slip_ratio << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Slope Detection: " << (info.slope_detection.enabled ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Slope Sensitivity: " << info.slope_detection.sensitivity << "\n";
+        m_file << "# Slope Min Threshold: " << info.slope_detection.min_threshold << "\n";
+        m_file << "# Slope Max Threshold: " << info.slope_detection.max_threshold << "\n";
+        m_file << "# Slope Alpha Threshold: " << info.slope_detection.alpha_threshold << "\n";
+        m_file << "# Slope Decay Rate: " << info.slope_detection.decay_rate << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Lockup Enabled: " << (info.braking.lockup_enabled ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Lockup Gain: " << info.braking.lockup_gain << "\n";
+        m_file << "# ABS Enabled: " << (info.braking.abs_pulse_enabled ? "Enabled" : "Disabled") << "\n";
+        m_file << "# ABS Gain: " << info.braking.abs_gain << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Vibration Gain: " << info.vibration.vibration_gain << "\n";
+        m_file << "# Road Texture Gain: " << info.vibration.road_gain << "\n";
+        m_file << "# Slide Texture Gain: " << info.vibration.slide_gain << "\n";
+        m_file << "# Spin Vibration Gain: " << info.vibration.spin_gain << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Gyro Gain: " << info.advanced.gyro_gain << "\n";
+        m_file << "# Stationary Damping: " << info.advanced.stationary_damping << "\n";
+        m_file << "# Soft Lock Enabled: " << (info.advanced.soft_lock_enabled ? "Enabled" : "Disabled") << "\n";
+        m_file << "# ------------------------\n";
+        m_file << "# Safety Gain Reduction: " << info.safety.gain_reduction << "\n";
+        m_file << "# Safety Slew Rate: " << info.safety.slew_full_scale_time_s << "\n";
         m_file << "# ========================\n";
         
         // CSV Header for human readability
