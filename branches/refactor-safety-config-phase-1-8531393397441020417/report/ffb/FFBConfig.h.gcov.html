@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-21 19:24:59</td>
+            <td class="headerValue">2026-03-21 19:44:12</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -474,7 +474,40 @@
 <span id="L402"><span class="lineNum">     402</span>                 :<span class="tlaGNC">        1125 :     }</span></span>
 <span id="L403"><span class="lineNum">     403</span>                 :             : };</span>
 <span id="L404"><span class="lineNum">     404</span>                 :             : </span>
-<span id="L405"><span class="lineNum">     405</span>                 :             : #endif // FFBCONFIG_H</span>
+<span id="L405"><span class="lineNum">     405</span>                 :             : struct SafetyConfig {</span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :     float window_duration = 0.0f;</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             :     float gain_reduction = 0.3f;</span>
+<span id="L408"><span class="lineNum">     408</span>                 :             :     float smoothing_tau = 0.2f;</span>
+<span id="L409"><span class="lineNum">     409</span>                 :             :     float spike_detection_threshold = 500.0f;</span>
+<span id="L410"><span class="lineNum">     410</span>                 :             :     float immediate_spike_threshold = 1500.0f;</span>
+<span id="L411"><span class="lineNum">     411</span>                 :             :     float slew_full_scale_time_s = 1.0f;</span>
+<span id="L412"><span class="lineNum">     412</span>                 :             :     bool stutter_safety_enabled = false;</span>
+<span id="L413"><span class="lineNum">     413</span>                 :             :     float stutter_threshold = 1.5f;</span>
+<span id="L414"><span class="lineNum">     414</span>                 :             : </span>
+<span id="L415"><span class="lineNum">     415</span>                 :             :     bool Equals(const SafetyConfig&amp; o, float eps = 0.0001f) const {</span>
+<span id="L416"><span class="lineNum">     416</span>                 :             :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span>
+<span id="L417"><span class="lineNum">     417</span>                 :             :         return is_near(window_duration, o.window_duration) &amp;&amp;</span>
+<span id="L418"><span class="lineNum">     418</span>                 :             :                is_near(gain_reduction, o.gain_reduction) &amp;&amp;</span>
+<span id="L419"><span class="lineNum">     419</span>                 :             :                is_near(smoothing_tau, o.smoothing_tau) &amp;&amp;</span>
+<span id="L420"><span class="lineNum">     420</span>                 :             :                is_near(spike_detection_threshold, o.spike_detection_threshold) &amp;&amp;</span>
+<span id="L421"><span class="lineNum">     421</span>                 :             :                is_near(immediate_spike_threshold, o.immediate_spike_threshold) &amp;&amp;</span>
+<span id="L422"><span class="lineNum">     422</span>                 :             :                is_near(slew_full_scale_time_s, o.slew_full_scale_time_s) &amp;&amp;</span>
+<span id="L423"><span class="lineNum">     423</span>                 :             :                stutter_safety_enabled == o.stutter_safety_enabled &amp;&amp;</span>
+<span id="L424"><span class="lineNum">     424</span>                 :             :                is_near(stutter_threshold, o.stutter_threshold);</span>
+<span id="L425"><span class="lineNum">     425</span>                 :             :     }</span>
+<span id="L426"><span class="lineNum">     426</span>                 :             : </span>
+<span id="L427"><span class="lineNum">     427</span>                 :             :     void Validate() {</span>
+<span id="L428"><span class="lineNum">     428</span>                 :             :         window_duration = (std::max)(0.0f, window_duration);</span>
+<span id="L429"><span class="lineNum">     429</span>                 :             :         gain_reduction = (std::max)(0.0f, (std::min)(1.0f, gain_reduction));</span>
+<span id="L430"><span class="lineNum">     430</span>                 :             :         smoothing_tau = (std::max)(0.001f, smoothing_tau);</span>
+<span id="L431"><span class="lineNum">     431</span>                 :             :         spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);</span>
+<span id="L432"><span class="lineNum">     432</span>                 :             :         immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);</span>
+<span id="L433"><span class="lineNum">     433</span>                 :             :         slew_full_scale_time_s = (std::max)(0.01f, slew_full_scale_time_s);</span>
+<span id="L434"><span class="lineNum">     434</span>                 :             :         stutter_threshold = (std::max)(1.01f, stutter_threshold);</span>
+<span id="L435"><span class="lineNum">     435</span>                 :             :     }</span>
+<span id="L436"><span class="lineNum">     436</span>                 :             : };</span>
+<span id="L437"><span class="lineNum">     437</span>                 :             : </span>
+<span id="L438"><span class="lineNum">     438</span>                 :             : #endif // FFBCONFIG_H</span>
         </pre>
               </td>
             </tr>
