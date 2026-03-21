@@ -5,16 +5,16 @@ Note that the refactoring for these logical categories has already been performe
 * `GeneralConfig`
 * `FrontAxleConfig`
 
-Your task is to implement the **`RearAxleConfig`** category. 
+Your task is to implement the **`LoadForcesConfig`** category. 
 
 **⚠️ CRITICAL REFACTORING RULE:**
 You are performing a structural refactor. You must **NOT** change any default values (e.g., in `Config.cpp` or `FFBEngine.h`), you must **NOT** alter any physics logic, and you must **NOT** modify the assertions of existing tests to make them pass. If an existing test fails, your refactor broke the state machine or initialization logic. Fix your refactor, do not change the test.
 
 **Test-Driven Development (TDD) Requirement:**
 Before changing any production code, you must create a new test file (`tests/test_refactor_<name of logical category>.cpp`) and write 3 specific safety tests:
-1. **Consistency Test:** Hardcode a specific telemetry state and specific `RearAxleConfig` values. Run this test on the *current* codebase to get the exact `final_force` output, hardcode that expected value into the test, and `ASSERT_NEAR` against it.
-2. **Round-Trip Test:** Create a `Preset` with wild `RearAxleConfig` values, call `Apply(engine)`, extract it back with `UpdateFromEngine(engine)`, and `ASSERT_TRUE` that the original and extracted presets are `Equals()`.
-3. **Validation Test:** Create a `Preset` with malicious out-of-bounds `RearAxleConfig` values. Call `Apply()`, and assert that the engine clamped them to the safe ranges defined in `RearAxleConfig::Validate()`.
+1. **Consistency Test:** Hardcode a specific telemetry state and specific `LoadForcesConfig` values. Run this test on the *current* codebase to get the exact `final_force` output, hardcode that expected value into the test, and `ASSERT_NEAR` against it.
+2. **Round-Trip Test:** Create a `Preset` with wild `LoadForcesConfig` values, call `Apply(engine)`, extract it back with `UpdateFromEngine(engine)`, and `ASSERT_TRUE` that the original and extracted presets are `Equals()`.
+3. **Validation Test:** Create a `Preset` with malicious out-of-bounds `LoadForcesConfig` values. Call `Apply()`, and assert that the engine clamped them to the safe ranges defined in `LoadForcesConfig::Validate()`.
 
 **Documentation Requirement:**
 Document your work by creating `docs/dev_docs/implementation_plans/redesign_preset_system_phase1_<name of logical category>.md`. 
@@ -24,9 +24,10 @@ Document deviations and build issues. Note any specific issues encountered durin
 See also the implementation notes that were created in previous iterations: 
 * `docs\dev_docs\implementation_plans\redesign_preset_system_phase1_general.md`
 * `docs\dev_docs\implementation_plans\redesign_preset_system_phase1_front_axle.md`
+* `docs\dev_docs\implementation_plans\redesign_preset_system_phase1_rear_axle.md`
 
 **⚠️ CRITICAL WORKFLOW CONSTRAINTS:**
-1. **Scope:** Work ONLY on `RearAxleConfig`. Do not touch `BrakingConfig`, `VibrationConfig`, etc.
+1. **Scope:** Work ONLY on `LoadForcesConfig`. Do not work on other logical categories (those will be worked on in future iterations).
 2. **Autonomous Execution:** **Do not stop** to ask the user for confirmation or permission to proceed. You must loop through the implementation, testing, and review process autonomously until the task is complete, all 580+ tests pass, and the code is perfect.
 
 **⚠️ MANDATORY CHECKPOINTING & RECOVERY PROTOCOL:**
@@ -34,7 +35,7 @@ To prevent losing work due to file corruption and resetting your workspace, you 
 
 1. **Micro-Commits:** You must commit your work at every stable step. Do not wait until the entire task is finished. 
    * *Checkpoint 1:* Commit immediately after writing the 3 new safety tests (even if they don't compile yet).
-   * *Checkpoint 2:* Commit immediately after defining the `RearAxleConfig` struct in the header files.
+   * *Checkpoint 2:* Commit immediately after defining the struct for the logical category in the header files.
    * *Checkpoint 3:* Commit after updating `Preset` and `FFBEngine` and fixing the compiler errors.
    * *Checkpoint 4:* Commit after all 580+ tests pass.
 2. **Pushing/Submitting:** Push your branch or submit your intermediate patch after every successful checkpoint so your progress is permanently saved.
