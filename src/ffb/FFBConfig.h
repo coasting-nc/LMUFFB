@@ -258,4 +258,53 @@ struct SlopeDetectionConfig {
     }
 };
 
+struct BrakingConfig {
+    bool lockup_enabled = true;
+    float lockup_gain = 0.37479f;
+    float lockup_start_pct = 1.0f;
+    float lockup_full_pct = 5.0f;
+    float lockup_rear_boost = 10.0f;
+    float lockup_gamma = 0.1f;
+    float lockup_prediction_sens = 10.0f;
+    float lockup_bump_reject = 0.1f;
+    float brake_load_cap = 2.0f;
+    float lockup_freq_scale = 1.02f;
+
+    bool abs_pulse_enabled = false;
+    float abs_gain = 2.0f;
+    float abs_freq = 25.5f;
+
+    bool Equals(const BrakingConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return lockup_enabled == o.lockup_enabled &&
+               is_near(lockup_gain, o.lockup_gain) &&
+               is_near(lockup_start_pct, o.lockup_start_pct) &&
+               is_near(lockup_full_pct, o.lockup_full_pct) &&
+               is_near(lockup_rear_boost, o.lockup_rear_boost) &&
+               is_near(lockup_gamma, o.lockup_gamma) &&
+               is_near(lockup_prediction_sens, o.lockup_prediction_sens) &&
+               is_near(lockup_bump_reject, o.lockup_bump_reject) &&
+               is_near(brake_load_cap, o.brake_load_cap) &&
+               is_near(lockup_freq_scale, o.lockup_freq_scale) &&
+               abs_pulse_enabled == o.abs_pulse_enabled &&
+               is_near(abs_gain, o.abs_gain) &&
+               is_near(abs_freq, o.abs_freq);
+    }
+
+    void Validate() {
+        lockup_gain = (std::max)(0.0f, (std::min)(3.0f, lockup_gain));
+        lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
+        lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
+        lockup_rear_boost = (std::max)(1.0f, (std::min)(10.0f, lockup_rear_boost));
+        lockup_gamma = (std::max)(0.1f, (std::min)(4.0f, lockup_gamma));
+        lockup_prediction_sens = (std::max)(10.0f, (std::min)(100.0f, lockup_prediction_sens));
+        lockup_bump_reject = (std::max)(0.1f, (std::min)(5.0f, lockup_bump_reject));
+        brake_load_cap = (std::max)(1.0f, (std::min)(10.0f, brake_load_cap));
+        lockup_freq_scale = (std::max)(0.1f, lockup_freq_scale);
+
+        abs_gain = (std::max)(0.0f, (std::min)(10.0f, abs_gain));
+        abs_freq = (std::max)(1.0f, abs_freq);
+    }
+};
+
 #endif // FFBCONFIG_H

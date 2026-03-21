@@ -17,9 +17,11 @@ TEST_CASE(test_refactor_braking_consistency, "RefactorSafety") {
     engine.m_abs_pulse_enabled = true;
     engine.m_abs_gain = 1.2f;
     engine.m_abs_freq_hz = 30.0f;
+    engine.m_front_axle.steering_shaft_gain = 1.0f;
 
     // Create a telemetry state that triggers braking logic
-    TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.2); // 30m/s
+    TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.1); // 30m/s
+    data.mSteeringShaftTorque = 10.0;
     data.mUnfilteredBrake = 0.8;
     // Set wheel rotations to trigger lockup prediction
     for(int i=0; i<4; i++) {
@@ -29,22 +31,25 @@ TEST_CASE(test_refactor_braking_consistency, "RefactorSafety") {
 
     PumpEngineSteadyState(engine, data);
 
-    // One more frame with slower rotation to trigger lockup
+    // One more frame with slower rotation to trigger lockup and pressure change for ABS
+    data.mElapsedTime += 0.01;
     for(int i=0; i<4; i++) {
-        data.mWheel[i].mRotation = 5.0;
+        data.mWheel[i].mRotation = 1.0;
+        data.mWheel[i].mBrakePressure = 0.9;
     }
 
+    // Run a few frames to let the oscillator advance
+    engine.calculate_force(&data, "GT3", "Ferrari", 0.0f, true, 0.0025);
+    data.mElapsedTime += 0.0025;
+    engine.calculate_force(&data, "GT3", "Ferrari", 0.0f, true, 0.0025);
+    data.mElapsedTime += 0.0025;
     double final_force = engine.calculate_force(&data, "GT3", "Ferrari", 0.0f, true, 0.0025);
 
     // Initial run to capture EXPECTED_VALUE
     // After running, replace 0.0 with the actual value.
-    double EXPECTED_VALUE = 0.0; // TODO: Capture this
+    double EXPECTED_VALUE = 0.0250997624;
 
-    if (EXPECTED_VALUE == 0.0) {
-        printf("CAPTURED_FORCE: %.10f\n", final_force);
-    } else {
-        ASSERT_NEAR(final_force, EXPECTED_VALUE, 0.0001);
-    }
+    ASSERT_NEAR(final_force, EXPECTED_VALUE, 0.0001);
 }
 
 // 2. Round-Trip Test: Ensures Preset <-> Engine synchronization works
