@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.7.211]
+## [0.7.212]
 
 ### Refactored
 - **Preset System Redesign (Phase 1, Increment 5)**
@@ -22,11 +22,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.211]  
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 4)**
+  - **Grouped Data Structures**: Introduced `LoadForcesConfig` struct.
+
+---
+
 ## [0.7.210]  
 
 ### Refactored
 - **Preset System Redesign (Phase 1, Increment 4)**
-  - **Grouped Data Structures**: Introduced `RearAxleConfig` and `LoadForcesConfig` structs.
+  - **Grouped Data Structures**: Introduced `RearAxleConfig` struct.
 
 
 ---
