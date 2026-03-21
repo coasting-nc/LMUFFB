@@ -363,9 +363,9 @@ TEST_CASE(test_high_gain_stability, "CorePhysics") {
     
     engine.m_general.gain = 2.0f;
     engine.m_front_axle.understeer_effect = 200.0f;
-    engine.m_abs_gain = 10.0f;
-    engine.m_lockup_gain = 3.0f;
-    engine.m_brake_load_cap = 10.0f;
+    engine.m_braking.abs_gain = 10.0f;
+    engine.m_braking.lockup_gain = 3.0f;
+    engine.m_braking.brake_load_cap = 10.0f;
     engine.m_rear_axle.oversteer_boost = 4.0f;
     
     data.mWheel[0].mLongitudinalPatchVel = -15.0; 
@@ -389,7 +389,7 @@ TEST_CASE(test_stress_stability, "CorePhysics") {
     std::memset(&data, 0, sizeof(data));
     
     // Enable EVERYTHING
-    engine.m_lockup_enabled = true;
+    engine.m_braking.lockup_enabled = true;
     engine.m_spin_enabled = true;
     engine.m_slide_texture_enabled = true;
     engine.m_road_texture_enabled = true;
@@ -521,18 +521,18 @@ TEST_CASE(test_abs_frequency_scaling, "CorePhysics") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
-    engine.m_abs_pulse_enabled = true;
-    engine.m_abs_gain = 1.0f;
+    engine.m_braking.abs_pulse_enabled = true;
+    engine.m_braking.abs_gain = 1.0f;
     data.mDeltaTime = 0.001; 
     
-    engine.m_abs_freq_hz = 20.0f;
+    engine.m_braking.abs_freq = 20.0f;
     engine.m_abs_phase = 0.0;
     engine.calculate_force(&data); 
     double start_phase = engine.m_abs_phase;
     engine.calculate_force(&data);
     double delta_phase_20 = engine.m_abs_phase - start_phase;
     
-    engine.m_abs_freq_hz = 40.0f;
+    engine.m_braking.abs_freq = 40.0f;
     engine.m_abs_phase = 0.0;
     engine.calculate_force(&data);
     start_phase = engine.m_abs_phase;
@@ -547,18 +547,18 @@ TEST_CASE(test_lockup_pitch_scaling, "CorePhysics") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    engine.m_lockup_enabled = true;
+    engine.m_braking.lockup_enabled = true;
     data.mWheel[0].mLongitudinalPatchVel = -5.0; 
     data.mDeltaTime = 0.001;
     
-    engine.m_lockup_freq_scale = 1.0f;
+    engine.m_braking.lockup_freq_scale = 1.0f;
     engine.m_lockup_phase = 0.0;
     engine.calculate_force(&data);
     double start_phase = engine.m_lockup_phase;
     engine.calculate_force(&data);
     double delta_1 = engine.m_lockup_phase - start_phase;
     
-    engine.m_lockup_freq_scale = 2.0f;
+    engine.m_braking.lockup_freq_scale = 2.0f;
     engine.m_lockup_phase = 0.0;
     engine.calculate_force(&data);
     start_phase = engine.m_lockup_phase;

@@ -448,8 +448,8 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine.m_front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
         ASSERT_TRUE(engine.m_rear_axle.sop_effect == reference_defaults.rear_axle.sop_effect);
         ASSERT_TRUE(engine.m_rear_axle.oversteer_boost == reference_defaults.rear_axle.oversteer_boost);
-        ASSERT_TRUE(engine.m_lockup_enabled == reference_defaults.lockup_enabled);
-        ASSERT_TRUE(engine.m_lockup_gain == reference_defaults.lockup_gain);
+        ASSERT_TRUE(engine.m_braking.lockup_enabled == reference_defaults.braking.lockup_enabled);
+        ASSERT_TRUE(engine.m_braking.lockup_gain == reference_defaults.braking.lockup_gain);
         ASSERT_TRUE(engine.m_slide_texture_enabled == reference_defaults.slide_enabled);
         ASSERT_TRUE(engine.m_slide_texture_gain == reference_defaults.slide_gain);
         ASSERT_TRUE(engine.m_slide_freq_scale == reference_defaults.slide_freq);
@@ -481,8 +481,8 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(default_preset.front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
         ASSERT_TRUE(default_preset.rear_axle.sop_effect == reference_defaults.rear_axle.sop_effect);
         ASSERT_TRUE(default_preset.rear_axle.oversteer_boost == reference_defaults.rear_axle.oversteer_boost);
-        ASSERT_TRUE(default_preset.lockup_enabled == reference_defaults.lockup_enabled);
-        ASSERT_TRUE(default_preset.lockup_gain == reference_defaults.lockup_gain);
+        ASSERT_TRUE(default_preset.braking.lockup_enabled == reference_defaults.braking.lockup_enabled);
+        ASSERT_TRUE(default_preset.braking.lockup_gain == reference_defaults.braking.lockup_gain);
         ASSERT_TRUE(default_preset.slide_enabled == reference_defaults.slide_enabled);
         ASSERT_TRUE(default_preset.slide_gain == reference_defaults.slide_gain);
         ASSERT_TRUE(default_preset.slide_freq == reference_defaults.slide_freq);
@@ -513,7 +513,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
 
         ASSERT_TRUE(t300_preset.front_axle.understeer_effect == 0.5f);
         ASSERT_TRUE(abs(t300_preset.rear_axle.sop_effect - 0.425003f) < 0.0001f);
-        ASSERT_TRUE(t300_preset.lockup_freq_scale == 1.02f);
+        ASSERT_TRUE(t300_preset.braking.lockup_freq_scale == 1.02f);
         ASSERT_TRUE(t300_preset.scrub_drag_gain == 0.0462185f);
 
         ASSERT_TRUE(default_preset.front_axle.understeer_effect != t300_preset.front_axle.understeer_effect);
@@ -529,7 +529,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         ASSERT_TRUE(engine1.m_front_axle.understeer_effect == engine2.m_front_axle.understeer_effect);
         ASSERT_TRUE(engine1.m_rear_axle.sop_effect == engine2.m_rear_axle.sop_effect);
         ASSERT_TRUE(engine1.m_rear_axle.oversteer_boost == engine2.m_rear_axle.oversteer_boost);
-        ASSERT_TRUE(engine1.m_lockup_gain == engine2.m_lockup_gain);
+        ASSERT_TRUE(engine1.m_braking.lockup_gain == engine2.m_braking.lockup_gain);
         ASSERT_TRUE(engine1.m_slide_texture_gain == engine2.m_slide_texture_gain);
         ASSERT_TRUE(engine1.m_scrub_drag_gain == engine2.m_scrub_drag_gain);
         ASSERT_TRUE(engine1.m_rear_axle.rear_align_effect == engine2.m_rear_axle.rear_align_effect);
@@ -556,7 +556,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         Config::Load(engine, nonexistent_file);
         ASSERT_TRUE(engine.m_front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
         ASSERT_TRUE(engine.m_rear_axle.sop_effect == reference_defaults.rear_axle.sop_effect);
-        ASSERT_TRUE(engine.m_lockup_gain == reference_defaults.lockup_gain);
+        ASSERT_TRUE(engine.m_braking.lockup_gain == reference_defaults.braking.lockup_gain);
     }
 
     std::cout << "  [SUMMARY] Single source of truth verified across all initialization paths!" << std::endl;
@@ -571,18 +571,18 @@ TEST_CASE(test_config_persistence_braking_group, "Logic") {
     FFBEngine engine_load;
     InitializeEngine(engine_load);
 
-    engine_save.m_brake_load_cap = 2.5f;
-    engine_save.m_lockup_start_pct = 8.0f;
-    engine_save.m_lockup_full_pct = 20.0f;
-    engine_save.m_lockup_rear_boost = 2.0f;
+    engine_save.m_braking.brake_load_cap = 2.5f;
+    engine_save.m_braking.lockup_start_pct = 8.0f;
+    engine_save.m_braking.lockup_full_pct = 20.0f;
+    engine_save.m_braking.lockup_rear_boost = 2.0f;
 
     Config::Save(engine_save, test_file);
     Config::Load(engine_load, test_file);
 
-    ASSERT_TRUE(engine_load.m_brake_load_cap == 2.5f);
-    ASSERT_TRUE(engine_load.m_lockup_start_pct == 8.0f);
-    ASSERT_TRUE(engine_load.m_lockup_full_pct == 20.0f);
-    ASSERT_TRUE(engine_load.m_lockup_rear_boost == 2.0f);
+    ASSERT_TRUE(engine_load.m_braking.brake_load_cap == 2.5f);
+    ASSERT_TRUE(engine_load.m_braking.lockup_start_pct == 8.0f);
+    ASSERT_TRUE(engine_load.m_braking.lockup_full_pct == 20.0f);
+    ASSERT_TRUE(engine_load.m_braking.lockup_rear_boost == 2.0f);
 
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }

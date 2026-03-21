@@ -607,7 +607,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     double texture_safe_max = (std::min)(USER_CAP_MAX, (double)m_texture_load_cap);
     ctx.texture_load_factor = (std::min)(texture_safe_max, m_smoothed_vibration_mult);
 
-    double brake_safe_max = (std::min)(USER_CAP_MAX, (double)m_brake_load_cap);
+    double brake_safe_max = (std::min)(USER_CAP_MAX, (double)m_braking.brake_load_cap);
     ctx.brake_load_factor = (std::min)(brake_safe_max, m_smoothed_vibration_mult);
     
     // Hardware Scaling Safeties
@@ -1417,7 +1417,7 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationC
 
 // Helper: Calculate ABS Pulse (v0.7.53)
 void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx) {
-    if (!m_abs_pulse_enabled) return;
+    if (!m_braking.abs_pulse_enabled) return;
     
     bool abs_active = false;
     for (int i = 0; i < 4; i++) {
@@ -1431,15 +1431,15 @@ void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationCont
     
     if (abs_active) {
         // Generate sine pulse
-        m_abs_phase += (double)m_abs_freq_hz * ctx.dt * TWO_PI;
+        m_abs_phase += (double)m_braking.abs_freq * ctx.dt * TWO_PI;
         m_abs_phase = std::fmod(m_abs_phase, TWO_PI);
-        ctx.abs_pulse_force = (double)(std::sin(m_abs_phase) * m_abs_gain * ABS_PULSE_MAGNITUDE_SCALER * ctx.speed_gate);
+        ctx.abs_pulse_force = (double)(std::sin(m_abs_phase) * m_braking.abs_gain * ABS_PULSE_MAGNITUDE_SCALER * ctx.speed_gate);
     }
 }
 
 // Helper: Calculate Lockup Vibration (v0.4.36 - REWRITTEN as dedicated method)
 void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext& ctx) {
-    if (!m_lockup_enabled) return;
+    if (!m_braking.lockup_enabled) return;
     
     double worst_severity = 0.0;
     double chosen_freq_multiplier = 1.0;
@@ -1464,7 +1464,7 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
 
         // Signal Quality Check (Reject surface bumps)
         double susp_vel = std::abs(w.mVerticalTireDeflection - m_prev_vert_deflection[i]) / ctx.dt;
-        bool is_bumpy = (susp_vel > (double)m_lockup_bump_reject);
+        bool is_bumpy = (susp_vel > (double)m_braking.lockup_bump_reject);
 
         // Pre-conditions
         bool brake_active = (data->mUnfilteredBrake > PREDICTION_BRAKE_THRESHOLD);
@@ -1474,13 +1474,13 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
         double current_load = ctx.frame_warn_load ? approximate_load(w) : w.mTireLoad;
         bool is_grounded = (current_load > PREDICTION_LOAD_THRESHOLD);
 
-        double start_threshold = (double)m_lockup_start_pct / PERCENT_TO_DECIMAL;
-        double full_threshold = (double)m_lockup_full_pct / PERCENT_TO_DECIMAL;
+        double start_threshold = (double)m_braking.lockup_start_pct / PERCENT_TO_DECIMAL;
+        double full_threshold = (double)m_braking.lockup_full_pct / PERCENT_TO_DECIMAL;
         double trigger_threshold = full_threshold;
 
         if (brake_active && is_grounded && !is_bumpy) {
             // Predictive Trigger: Wheel decelerating significantly faster than chassis
-            double sensitivity_threshold = -1.0 * (double)m_lockup_prediction_sens;
+            double sensitivity_threshold = -1.0 * (double)m_braking.lockup_prediction_sens;
             if (wheel_accel < car_dec_ang * LOCKUP_ACCEL_MARGIN && wheel_accel < sensitivity_threshold) {
                 trigger_threshold = start_threshold; // Ease into effect earlier
             }
@@ -1495,7 +1495,7 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
             double severity = (std::min)(1.0, (std::max)(0.0, normalized));
             
             // Apply gamma for curve control
-            severity = std::pow(severity, (double)m_lockup_gamma);
+            severity = std::pow(severity, (double)m_braking.lockup_gamma);
             
             // Frequency calculation
             double freq_mult = 1.0;
@@ -1521,15 +1521,15 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
     // 3. Vibration Synthesis
     if (worst_severity > 0.0) {
         double base_freq = LOCKUP_BASE_FREQ + (ctx.car_speed * LOCKUP_FREQ_SPEED_MULT);
-        double final_freq = base_freq * chosen_freq_multiplier * (double)m_lockup_freq_scale;
+        double final_freq = base_freq * chosen_freq_multiplier * (double)m_braking.lockup_freq_scale;
         
         m_lockup_phase += final_freq * ctx.dt * TWO_PI;
         m_lockup_phase = std::fmod(m_lockup_phase, TWO_PI);
         
-        double amp = worst_severity * chosen_pressure_factor * m_lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * ctx.brake_load_factor;
+        double amp = worst_severity * chosen_pressure_factor * m_braking.lockup_gain * (double)BASE_NM_LOCKUP_VIBRATION * ctx.brake_load_factor;
         
         // v0.4.38: Boost rear lockup volume
-        if (chosen_freq_multiplier < 1.0) amp *= (double)m_lockup_rear_boost;
+        if (chosen_freq_multiplier < 1.0) amp *= (double)m_braking.lockup_rear_boost;
 
         ctx.lockup_rumble = std::sin(m_lockup_phase) * amp * ctx.speed_gate;
     }

@@ -21,7 +21,7 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
     engine.m_bottoming_enabled = false;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
@@ -91,7 +91,7 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     engine.m_scrub_drag_gain = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
@@ -189,7 +189,7 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
@@ -348,7 +348,7 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     
     // Disable others to isolate lateral logic
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = true;  // Required for scrub drag
@@ -463,7 +463,7 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
     engine.m_gyro_gain = 0.0f;
@@ -557,8 +557,8 @@ TEST_CASE(test_regression_phase_explosion, "Coordinates") {
     // Enable All Oscillators
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0f;
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0f;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0f;
     engine.m_spin_enabled = true;
     engine.m_spin_gain = 1.0f;
     

@@ -11,10 +11,10 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     engine.m_road_texture_gain = 1.0f;
     engine.m_slide_texture_enabled = true;
     engine.m_slide_texture_gain = 1.0f;
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0f;
-    engine.m_abs_pulse_enabled = true;
-    engine.m_abs_gain = 1.0f;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0f;
+    engine.m_braking.abs_pulse_enabled = true;
+    engine.m_braking.abs_gain = 1.0f;
     engine.m_spin_enabled = true;
     engine.m_spin_gain = 1.0f;
     engine.m_bottoming_enabled = true;

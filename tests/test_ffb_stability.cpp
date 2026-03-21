@@ -9,7 +9,7 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
     Preset p("KillerPreset", false);
 
     // Set some dangerous negative or zero values
-    p.lockup_gamma = -1.0f;
+    p.braking.lockup_gamma = -1.0f;
     p.front_axle.notch_q = -5.0f;
     p.general.wheelbase_max_nm = -100.0f;
     p.grip_estimation.optimal_slip_angle = -0.1f;
@@ -23,7 +23,7 @@ TEST_CASE(test_negative_parameter_safety, "Stability") {
     p.Apply(engine);
 
     // Verify clamping in engine
-    ASSERT_GE(engine.m_lockup_gamma, 0.1f);
+    ASSERT_GE(engine.m_braking.lockup_gamma, 0.1f);
     ASSERT_GE(engine.m_front_axle.notch_q, 0.1f);
     ASSERT_GE(engine.m_general.wheelbase_max_nm, 1.0f);
     ASSERT_GE(engine.m_grip_estimation.optimal_slip_angle, 0.01f);
@@ -58,7 +58,7 @@ TEST_CASE(test_config_load_validation, "Stability") {
 
     ASSERT_GE(engine.m_general.gain, 0.0f);
     ASSERT_GE(engine.m_general.wheelbase_max_nm, 1.0f);
-    ASSERT_GE(engine.m_lockup_gamma, 0.1f);
+    ASSERT_GE(engine.m_braking.lockup_gamma, 0.1f);
     ASSERT_GE(engine.m_grip_estimation.optimal_slip_angle, 0.01f);
     ASSERT_TRUE(engine.m_slope_detection.sg_window >= 5);
     ASSERT_TRUE(engine.m_slope_detection.sg_window % 2 != 0);

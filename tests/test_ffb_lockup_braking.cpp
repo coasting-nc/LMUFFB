@@ -9,8 +9,8 @@ TEST_CASE(test_progressive_lockup, "LockupBraking") {
     InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
     engine.m_rear_axle.sop_effect = 0.0;
     engine.m_slide_texture_enabled = false;
     
@@ -19,8 +19,8 @@ TEST_CASE(test_progressive_lockup, "LockupBraking") {
     
     // Use production defaults: Start 5%, Full 15% (v0.5.13)
     // These are the default values that ship to users
-    engine.m_lockup_start_pct = 5.0f;
-    engine.m_lockup_full_pct = 15.0f;
+    engine.m_braking.lockup_start_pct = 5.0f;
+    engine.m_braking.lockup_full_pct = 15.0f;
     
     // Case 1: High Slip (-0.20 = 20%). 
     // With Full=15%: severity = 1.0
@@ -70,10 +70,10 @@ TEST_CASE(test_predictive_lockup_v060, "LockupBraking") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_prediction_sens = 50.0f;
-    engine.m_lockup_start_pct = 5.0f;
-    engine.m_lockup_full_pct = 15.0f; // Default threshold is higher than current slip
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_prediction_sens = 50.0f;
+    engine.m_braking.lockup_start_pct = 5.0f;
+    engine.m_braking.lockup_full_pct = 15.0f; // Default threshold is higher than current slip
     
     data.mUnfilteredBrake = 1.0; // Needs brake input for prediction gating (v0.6.0)
     
@@ -116,8 +116,8 @@ TEST_CASE(test_abs_pulse_v060, "LockupBraking") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0); // Moving car (v0.6.21 FIX)
     
-    engine.m_abs_pulse_enabled = true;
-    engine.m_abs_gain = 1.0f;
+    engine.m_braking.abs_pulse_enabled = true;
+    engine.m_braking.abs_gain = 1.0f;
     data.mUnfilteredBrake = 1.0;
     data.mDeltaTime = 0.01;
     
@@ -147,8 +147,8 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     std::memset(&data, 0, sizeof(data));
 
     // Common Setup
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     engine.m_general.gain = 1.0f;
     
@@ -170,8 +170,8 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
 
     // Seed
     InitializeEngine(engine);
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
 
     // Issue #397: Flush and Measure
     PumpEngineTime(engine, data1, 0.05);
@@ -206,8 +206,8 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     data2.mUnfilteredBrake = 1.0;
     // Reset Engine State (interpolators and phases)
     InitializeEngine(engine); // Proper reset
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
     engine.m_lockup_phase = 0.0;
     
     // Front Slip 0.0, Rear Slip -0.5
@@ -252,15 +252,15 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
 
     // Config: Texture Cap = 1.0x, Brake Cap = 3.0x
     engine.m_texture_load_cap = 1.0f; 
-    engine.m_brake_load_cap = 3.0f;
-    engine.m_abs_pulse_enabled = false; // Disable ABS to isolate lockup (v0.6.0)
+    engine.m_braking.brake_load_cap = 3.0f;
+    engine.m_braking.abs_pulse_enabled = false; // Disable ABS to isolate lockup (v0.6.0)
     
     // ===================================================================
     // PART 1: Test Road Texture (Should be clamped to 1.0x)
     // ===================================================================
     engine.m_road_texture_enabled = true;
     engine.m_road_texture_gain = 1.0;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     data.mWheel[0].mVerticalTireDeflection = 0.01; // Bump FL
     data.mWheel[1].mVerticalTireDeflection = 0.01; // Bump FR
     
@@ -303,8 +303,8 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     // PART 2: Test Lockup (Should use Brake Load Cap 3.0x)
     // ===================================================================
     engine.m_road_texture_enabled = false;
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
     data.mUnfilteredBrake = 1.0;
     data.mWheel[0].mLongitudinalPatchVel = -10.0; // Slip
     data.mWheel[1].mLongitudinalPatchVel = -10.0; // Slip (both wheels for consistency)
@@ -327,10 +327,10 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     FFBEngineTestAccess::SetStaticLoadLatched(engine_low, true);
     FFBEngineTestAccess::SetSmoothedVibrationMult(engine_low, 5.0);
 
-    engine_low.m_brake_load_cap = 1.0f;
-    engine_low.m_lockup_enabled = true;
-    engine_low.m_lockup_gain = 1.0;
-    engine_low.m_abs_pulse_enabled = false; // Disable ABS (v0.6.0)
+    engine_low.m_braking.brake_load_cap = 1.0f;
+    engine_low.m_braking.lockup_enabled = true;
+    engine_low.m_braking.lockup_gain = 1.0;
+    engine_low.m_braking.abs_pulse_enabled = false; // Disable ABS (v0.6.0)
     engine_low.m_road_texture_enabled = false; // Disable Road (v0.6.0)
     
     // Reset phase and flush transients
@@ -376,13 +376,13 @@ TEST_CASE(test_dynamic_thresholds, "LockupBraking") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
     data.mUnfilteredBrake = 1.0;
     
     // Config: Start 5%, Full 15%
-    engine.m_lockup_start_pct = 5.0f;
-    engine.m_lockup_full_pct = 15.0f;
+    engine.m_braking.lockup_start_pct = 5.0f;
+    engine.m_braking.lockup_full_pct = 15.0f;
     
     // Case A: 4% Slip (Below Start)
     // 0.04 * 20.0 = 0.8
@@ -425,8 +425,8 @@ TEST_CASE(test_refactor_abs_pulse, "LockupBraking") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
 
     // Enable ABS
-    engine.m_abs_pulse_enabled = true;
-    engine.m_abs_gain = 1.0f;
+    engine.m_braking.abs_pulse_enabled = true;
+    engine.m_braking.abs_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Scale 1.0
 
     // Trigger condition: High Brake + Pressure Delta

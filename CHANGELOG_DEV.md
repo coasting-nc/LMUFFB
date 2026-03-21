@@ -7,6 +7,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.214]
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 7)**
+  - **Grouped Data Structures**: Introduced `BrakingConfig` struct to centralize parameters for lockup vibrations and ABS pulses.
+  - **FFBEngine & Preset Refinement**: Migrated 13 parameters including `lockup_enabled`, `lockup_gain`, `lockup_start_pct`, `lockup_full_pct`, `lockup_rear_boost`, `lockup_gamma`, `lockup_prediction_sens`, `lockup_bump_reject`, `brake_load_cap`, `lockup_freq_scale`, `abs_pulse_enabled`, `abs_gain`, and `abs_freq` into the new grouped structure.
+  - **Implementation Sync**: Updated `FFBEngine.cpp`, `Config.cpp`, `GuiLayer_Common.cpp`, `main.cpp`, and `AsyncLogger.h` to use nested configuration paths.
+  - **Telemetry Logging Integration**: Updated `AsyncLogger` session metadata to include braking configuration for consistent session headers.
+
+### Testing
+- **New Safety Suite**: Added `tests/test_refactor_braking.cpp` verifying physics consistency, round-trip synchronization, and validation clamping.
+- **Regression Guard**: Updated the entire test suite (including `test_ffb_lockup_braking.cpp` and `test_coverage_boost_v5.cpp`) to align with the new data model.
+- Verified 100% pass rate for relevant physics and configuration tests.
+
+---
+
 ## [0.7.213]
 
 ### Refactored

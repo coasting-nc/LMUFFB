@@ -46,12 +46,12 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     ctx.speed_gate = 1.0;
     
     // Path 1: Disabled (early return)
-    engine.m_abs_pulse_enabled = false;
+    engine.m_braking.abs_pulse_enabled = false;
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     ASSERT_EQ(ctx.abs_pulse_force, 0.0);
     
     // Path 2: Enabled but inactive (no pulse - pedal below threshold)
-    engine.m_abs_pulse_enabled = true;
+    engine.m_braking.abs_pulse_enabled = true;
     data.mUnfilteredBrake = 0.1f; // Below 0.5 threshold
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     ASSERT_EQ(ctx.abs_pulse_force, 0.0);
@@ -92,7 +92,7 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     
     // Force some gains so snapshots have non-zero results
     engine.m_gyro_gain = 1.0f;
-    engine.m_abs_gain = 1.0f;
+    engine.m_braking.abs_gain = 1.0f;
     engine.m_general.gain = 1.0f;
     
     TelemInfoV01 data;
@@ -109,7 +109,7 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     engine.calculate_force(&data); // Second call (Hits Line 1921 & 1929)
     
     // 2. ABS Pulse Integration
-    engine.m_abs_pulse_enabled = true;
+    engine.m_braking.abs_pulse_enabled = true;
     data.mUnfilteredBrake = 1.0f;
     for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 1.0f;
     engine.calculate_force(&data); // Hits Line 1612 (update m_prev_brake_pressure)

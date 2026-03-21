@@ -228,9 +228,9 @@ TEST_CASE(test_preset_initialization, "Config") {
             float exp_scrub = expected_scrub_drag_gain;
         
         
-            if (std::abs(preset.lockup_freq_scale - exp_lockup_f) > 0.001f) {
+            if (std::abs(preset.braking.lockup_freq_scale - exp_lockup_f) > 0.001f) {
                  std::cout << "[FAIL] " << preset.name << ": lockup_freq_scale = " 
-                          << preset.lockup_freq_scale << ", expected " << exp_lockup_f << std::endl;
+                          << preset.braking.lockup_freq_scale << ", expected " << exp_lockup_f << std::endl;
                 fields_ok = false;
             }
 
@@ -241,9 +241,9 @@ TEST_CASE(test_preset_initialization, "Config") {
             }
 
             // Generic checks for non-specialized presets
-            if (preset.abs_freq != expected_abs_freq) {
+            if (preset.braking.abs_freq != expected_abs_freq) {
                 std::cout << "[FAIL] " << preset.name << ": abs_freq = " 
-                          << preset.abs_freq << ", expected " << expected_abs_freq << std::endl;
+                          << preset.braking.abs_freq << ", expected " << expected_abs_freq << std::endl;
                 fields_ok = false;
             }
 
@@ -370,8 +370,8 @@ TEST_CASE(test_config_safety_clamping, "Config") {
         std::cout << "[FAIL] road_gain not clamped. Got: " << engine.m_road_texture_gain << " Expected: 2.0" << std::endl;
         all_clamped = false;
     }
-    if (engine.m_lockup_gain != 3.0f) {
-        std::cout << "[FAIL] lockup_gain not clamped. Got: " << engine.m_lockup_gain << " Expected: 3.0" << std::endl;
+    if (engine.m_braking.lockup_gain != 3.0f) {
+        std::cout << "[FAIL] lockup_gain not clamped. Got: " << engine.m_braking.lockup_gain << " Expected: 3.0" << std::endl;
         all_clamped = false;
     }
     if (engine.m_spin_gain != 2.0f) {
@@ -416,9 +416,9 @@ TEST_CASE(test_config_dynamic_thresholds, "Config") {
     std::cout << "\nTest: Dynamic Lockup Thresholds" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_lockup_start_pct = 5.0f;
-    engine.m_lockup_full_pct = 20.0f;
-    ASSERT_TRUE(engine.m_lockup_full_pct > engine.m_lockup_start_pct);
+    engine.m_braking.lockup_start_pct = 5.0f;
+    engine.m_braking.lockup_full_pct = 20.0f;
+    ASSERT_TRUE(engine.m_braking.lockup_full_pct > engine.m_braking.lockup_start_pct);
 }
 
 TEST_CASE(test_config_migration_logic, "Config") {

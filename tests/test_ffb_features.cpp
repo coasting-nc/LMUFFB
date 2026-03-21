@@ -656,8 +656,8 @@ TEST_CASE(test_phase_wraparound, "Texture") {
     // Default RH to avoid scraping
     data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
     
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
     
     data.mUnfilteredBrake = 1.0;
     // Slip ratio -0.3
@@ -719,8 +719,8 @@ TEST_CASE(test_multi_effect_interaction, "Texture") {
     data.mSteeringShaftTorque = 5.0; // 5 Nm base force
     
     // Enable both lockup and spin
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0;
     engine.m_spin_enabled = true;
     engine.m_spin_gain = 1.0;
     

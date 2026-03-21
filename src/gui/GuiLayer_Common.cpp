@@ -833,37 +833,37 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::TreeNodeEx("Braking & Lockup", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        BoolSetting("Lockup Vibration", &engine.m_lockup_enabled, Tooltips::LOCKUP_VIBRATION);
-        if (engine.m_lockup_enabled) {
-            FloatSetting("  Lockup Strength", &engine.m_lockup_gain, 0.0f, 3.0f, FormatDecoupled(engine.m_lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION), Tooltips::LOCKUP_STRENGTH);
-            FloatSetting("  Brake Load Cap", &engine.m_brake_load_cap, 1.0f, 10.0f, "%.2fx", Tooltips::BRAKE_LOAD_CAP);
-            FloatSetting("  Vibration Pitch", &engine.m_lockup_freq_scale, 0.5f, 2.0f, "%.2fx", Tooltips::VIBRATION_PITCH);
+        BoolSetting("Lockup Vibration", &engine.m_braking.lockup_enabled, Tooltips::LOCKUP_VIBRATION);
+        if (engine.m_braking.lockup_enabled) {
+            FloatSetting("  Lockup Strength", &engine.m_braking.lockup_gain, 0.0f, 3.0f, FormatDecoupled(engine.m_braking.lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION), Tooltips::LOCKUP_STRENGTH);
+            FloatSetting("  Brake Load Cap", &engine.m_braking.brake_load_cap, 1.0f, 10.0f, "%.2fx", Tooltips::BRAKE_LOAD_CAP);
+            FloatSetting("  Vibration Pitch", &engine.m_braking.lockup_freq_scale, 0.5f, 2.0f, "%.2fx", Tooltips::VIBRATION_PITCH);
 
             ImGui::Separator();
             ImGui::Text("Response Curve");
             ImGui::NextColumn(); ImGui::NextColumn();
 
-            FloatSetting("  Gamma", &engine.m_lockup_gamma, 0.1f, 3.0f, "%.1f", Tooltips::LOCKUP_GAMMA);
-            FloatSetting("  Start Slip %", &engine.m_lockup_start_pct, 1.0f, 10.0f, "%.1f%%", Tooltips::LOCKUP_START_PCT);
-            FloatSetting("  Full Slip %", &engine.m_lockup_full_pct, 5.0f, 25.0f, "%.1f%%", Tooltips::LOCKUP_FULL_PCT);
+            FloatSetting("  Gamma", &engine.m_braking.lockup_gamma, 0.1f, 3.0f, "%.1f", Tooltips::LOCKUP_GAMMA);
+            FloatSetting("  Start Slip %", &engine.m_braking.lockup_start_pct, 1.0f, 10.0f, "%.1f%%", Tooltips::LOCKUP_START_PCT);
+            FloatSetting("  Full Slip %", &engine.m_braking.lockup_full_pct, 5.0f, 25.0f, "%.1f%%", Tooltips::LOCKUP_FULL_PCT);
 
             ImGui::Separator();
             ImGui::Text("Prediction (Advanced)");
             ImGui::NextColumn(); ImGui::NextColumn();
 
-            FloatSetting("  Sensitivity", &engine.m_lockup_prediction_sens, 10.0f, 100.0f, "%.0f", Tooltips::LOCKUP_PREDICTION_SENS);
-            FloatSetting("  Bump Rejection", &engine.m_lockup_bump_reject, 0.1f, 5.0f, "%.1f m/s", Tooltips::LOCKUP_BUMP_REJECT);
-            FloatSetting("  Rear Boost", &engine.m_lockup_rear_boost, 1.0f, 10.0f, "%.2fx", Tooltips::LOCKUP_REAR_BOOST);
+            FloatSetting("  Sensitivity", &engine.m_braking.lockup_prediction_sens, 10.0f, 100.0f, "%.0f", Tooltips::LOCKUP_PREDICTION_SENS);
+            FloatSetting("  Bump Rejection", &engine.m_braking.lockup_bump_reject, 0.1f, 5.0f, "%.1f m/s", Tooltips::LOCKUP_BUMP_REJECT);
+            FloatSetting("  Rear Boost", &engine.m_braking.lockup_rear_boost, 1.0f, 10.0f, "%.2fx", Tooltips::LOCKUP_REAR_BOOST);
         }
 
         ImGui::Separator();
         ImGui::Text("ABS & Hardware");
         ImGui::NextColumn(); ImGui::NextColumn();
 
-        BoolSetting("ABS Pulse", &engine.m_abs_pulse_enabled, Tooltips::ABS_PULSE);
-        if (engine.m_abs_pulse_enabled) {
-            FloatSetting("  Pulse Gain", &engine.m_abs_gain, 0.0f, 10.0f, "%.2f", Tooltips::ABS_PULSE_GAIN);
-            FloatSetting("  Pulse Frequency", &engine.m_abs_freq_hz, 10.0f, 50.0f, "%.1f Hz", Tooltips::ABS_PULSE_FREQ);
+        BoolSetting("ABS Pulse", &engine.m_braking.abs_pulse_enabled, Tooltips::ABS_PULSE);
+        if (engine.m_braking.abs_pulse_enabled) {
+            FloatSetting("  Pulse Gain", &engine.m_braking.abs_gain, 0.0f, 10.0f, "%.2f", Tooltips::ABS_PULSE_GAIN);
+            FloatSetting("  Pulse Frequency", &engine.m_braking.abs_freq, 10.0f, 50.0f, "%.1f Hz", Tooltips::ABS_PULSE_FREQ);
         }
 
         ImGui::TreePop();

@@ -150,7 +150,7 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_rear_axle.oversteer_boost = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
     engine.m_road_texture_enabled = false;
@@ -397,8 +397,8 @@ void FFBEngineTestAccess::test_unit_abs_pulse() {
     data.mWheel[0].mBrakePressure = 0.5;
     engine.m_prev_brake_pressure[0] = 1.0; 
 
-    engine.m_abs_pulse_enabled = true;
-    engine.m_abs_gain = 1.0;
+    engine.m_braking.abs_pulse_enabled = true;
+    engine.m_braking.abs_gain = 1.0;
 
     engine.calculate_abs_pulse(&data, ctx);
 

@@ -21,11 +21,11 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     engine.m_load_forces.lat_load_effect = 0.0f;
     engine.m_gyro_gain = 0.0f;
     engine.m_rear_axle.rear_align_effect = 0.0f;
-    engine.m_lockup_enabled = false;
+    engine.m_braking.lockup_enabled = false;
     engine.m_spin_enabled = false;
     engine.m_slide_texture_enabled = false;
     engine.m_bottoming_enabled = false;
-    engine.m_abs_pulse_enabled = false;
+    engine.m_braking.abs_pulse_enabled = false;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0); // Speed = 10.0 (> 5.0 cutoff)
     data.mDeltaTime = 0.01; // 100Hz game tick
@@ -102,11 +102,11 @@ TEST_CASE(test_issue_278_lockup_continuity, "DerivedAccel") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_lockup_enabled = true;
-    engine.m_lockup_gain = 1.0f;
+    engine.m_braking.lockup_enabled = true;
+    engine.m_braking.lockup_gain = 1.0f;
     engine.m_vibration_gain = 1.0f;
     engine.m_general.gain = 1.0f;
-    engine.m_lockup_prediction_sens = 10.0f;
+    engine.m_braking.lockup_prediction_sens = 10.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
