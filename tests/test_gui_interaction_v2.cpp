@@ -72,7 +72,7 @@ TEST_CASE(test_gui_interaction_v2, "GUI") {
         engine.m_road_texture_enabled = true;
         engine.m_front_axle.flatspot_suppression = true;
         engine.m_front_axle.static_notch_enabled = true;
-        engine.m_slope_detection_enabled = true;
+        engine.m_slope_detection.enabled = true;
 
         ImGui::NewFrame();
         GuiLayerTestAccess::DrawTuningWindow(engine);

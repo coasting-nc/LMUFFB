@@ -159,11 +159,11 @@ TEST_CASE(test_config_branch_boost, "Config") {
         ofs << "flatspot_strength=0.8\nstatic_notch_enabled=1\nstatic_notch_freq=15.0\n";
         ofs << "static_notch_width=3.0\nyaw_kick_threshold=0.1\nspeed_gate_lower=2.0\n";
         ofs << "speed_gate_upper=10.0\nroad_fallback_scale=0.1\nundersteer_affects_sop=1\n";
-        ofs << "slope_detection_enabled=1\nslope_sg_window=15\nslope_sensitivity=1.0\n";
-        ofs << "slope_smoothing_tau=0.05\nslope_alpha_threshold=0.03\nslope_decay_rate=6.0\n";
-        ofs << "slope_confidence_enabled=1\nslope_min_threshold=-0.5\nslope_max_threshold=-3.0\n";
-        ofs << "slope_g_slew_limit=60.0\nslope_use_torque=1\nslope_torque_sensitivity=0.6\n";
-        ofs << "slope_confidence_max_rate=0.15\nsmoothing=0.9\n";
+        ofs << "slope_detection.enabled=1\nslope_detection.sg_window=15\nslope_detection.sensitivity=1.0\n";
+        ofs << "slope_detection.smoothing_tau=0.05\nslope_detection.alpha_threshold=0.03\nslope_detection.decay_rate=6.0\n";
+        ofs << "slope_detection.confidence_enabled=1\nslope_detection.min_threshold=-0.5\nslope_detection.max_threshold=-3.0\n";
+        ofs << "slope_detection.g_slew_limit=60.0\nslope_detection.use_torque=1\nslope_detection.torque_sensitivity=0.6\n";
+        ofs << "slope_detection.confidence_max_rate=0.15\nsmoothing=0.9\n";
         ofs << "steering_shaft_smoothing=0.05\ngyro_smoothing_factor=0.01\n";
         ofs << "yaw_accel_smoothing=0.02\nchassis_inertia_smoothing=0.03\n";
         ofs << "[Presets]\nPreset1=mega_config.ini\n";

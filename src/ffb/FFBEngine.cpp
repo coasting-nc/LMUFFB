@@ -1198,7 +1198,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     m_grip_diag.rear_slip_angle = rear_grip_res.slip_angle;
     if (rear_grip_res.approximated) ctx.frame_warn_rear_grip = true;
     
-    if (!m_slope_detection_enabled) {
+    if (!m_slope_detection.enabled) {
         double grip_delta = ctx.avg_front_grip - ctx.avg_rear_grip;
         if (grip_delta > 0.0) {
             sop_base *= (1.0 + (grip_delta * m_rear_axle.oversteer_boost * OVERSTEER_BOOST_MULT));

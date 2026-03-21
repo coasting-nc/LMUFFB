@@ -154,12 +154,12 @@ TEST_CASE(test_calculate_slope_grip_torque_coverage, "Coverage") {
     std::memset(&data, 0, sizeof(data));
     data.mSteeringShaftTorque = 1.0f;
 
-    // Path 1: m_slope_use_torque = true, data != nullptr (Line 1203 and 1226)
+    // Path 1: m_slope_detection.use_torque = true, data != nullptr (Line 1203 and 1226)
     FFBEngineTestAccess::SetSlopeUseTorque(engine, true);
     double out = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, &data);
     ASSERT_TRUE(std::isfinite(out));
 
-    // Path 2: m_slope_use_torque = false (Else of 1203 -> Line 1215)
+    // Path 2: m_slope_detection.use_torque = false (Else of 1203 -> Line 1215)
     FFBEngineTestAccess::SetSlopeUseTorque(engine, false);
     out = FFBEngineTestAccess::CallCalculateSlopeGrip(engine, 1.0, 0.1, 0.01, &data);
     ASSERT_TRUE(std::isfinite(out));

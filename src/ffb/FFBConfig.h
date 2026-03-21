@@ -213,4 +213,49 @@ struct GripEstimationConfig {
     }
 };
 
+struct SlopeDetectionConfig {
+    bool enabled = false;
+    int sg_window = 15;
+    float sensitivity = 0.5f;
+    float smoothing_tau = 0.04f;
+    float alpha_threshold = 0.02f;
+    float decay_rate = 5.0f;
+    bool confidence_enabled = true;
+    float confidence_max_rate = 0.10f;
+    float min_threshold = -0.3f;
+    float max_threshold = -2.0f;
+    float g_slew_limit = 50.0f;
+    bool use_torque = true;
+    float torque_sensitivity = 0.5f;
+
+    bool Equals(const SlopeDetectionConfig& o, float eps = 0.0001f) const {
+        auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
+        return enabled == o.enabled &&
+               sg_window == o.sg_window &&
+               is_near(sensitivity, o.sensitivity) &&
+               is_near(smoothing_tau, o.smoothing_tau) &&
+               is_near(alpha_threshold, o.alpha_threshold) &&
+               is_near(decay_rate, o.decay_rate) &&
+               confidence_enabled == o.confidence_enabled &&
+               is_near(confidence_max_rate, o.confidence_max_rate) &&
+               is_near(min_threshold, o.min_threshold) &&
+               is_near(max_threshold, o.max_threshold) &&
+               is_near(g_slew_limit, o.g_slew_limit) &&
+               use_torque == o.use_torque &&
+               is_near(torque_sensitivity, o.torque_sensitivity);
+    }
+
+    void Validate() {
+        sg_window = (std::max)(5, (std::min)(41, sg_window));
+        if (sg_window % 2 == 0) sg_window++; // Must be odd for SG
+        sensitivity = (std::max)(0.1f, sensitivity);
+        smoothing_tau = (std::max)(0.001f, smoothing_tau);
+        alpha_threshold = (std::max)(0.001f, alpha_threshold);
+        decay_rate = (std::max)(0.1f, decay_rate);
+        confidence_max_rate = (std::max)(alpha_threshold + 0.01f, confidence_max_rate);
+        g_slew_limit = (std::max)(1.0f, g_slew_limit);
+        torque_sensitivity = (std::max)(0.01f, torque_sensitivity);
+    }
+};
+
 #endif // FFBCONFIG_H

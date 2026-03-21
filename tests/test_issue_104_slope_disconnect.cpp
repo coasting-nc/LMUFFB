@@ -12,13 +12,13 @@ TEST_CASE(test_slope_config_migration, "Regression") {
     file << "[Presets]" << std::endl;
     file << "[Preset:LegacyTest]" << std::endl;
     file << "slope_negative_threshold=-0.88" << std::endl; // Legacy key
-    file << "slope_detection_enabled=1" << std::endl;
+    file << "slope_detection.enabled=1" << std::endl;
     file.close();
 
     // 2. Load it
     FFBEngine engine;
     // Reset to defaults first to ensure we don't have lingering state
-    engine.m_slope_min_threshold = -0.3f; 
+    engine.m_slope_detection.min_threshold = -0.3f;
     
     Config::m_config_path = "test_legacy_slope.ini";
     Config::LoadPresets(); // Should parse and migrate
@@ -26,10 +26,10 @@ TEST_CASE(test_slope_config_migration, "Regression") {
 
     // 3. Verify Migration
     // The legacy key should have populated the new variable
-    ASSERT_NEAR(engine.m_slope_min_threshold, -0.88f, 0.001f);
+    ASSERT_NEAR(engine.m_slope_detection.min_threshold, -0.88f, 0.001f);
     
     // Verify Struct
-    ASSERT_NEAR(Config::presets.back().slope_min_threshold, -0.88f, 0.001f);
+    ASSERT_NEAR(Config::presets.back().slope_detection.min_threshold, -0.88f, 0.001f);
 
     std::remove("test_legacy_slope.ini");
 }
@@ -38,8 +38,8 @@ TEST_CASE(test_slope_persistence_new_key, "Regression") {
     std::cout << "Test: Slope Persistence New Key (Issue #104)" << std::endl;
 
     FFBEngine engine;
-    engine.m_slope_min_threshold = -0.55f;
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.min_threshold = -0.55f;
+    engine.m_slope_detection.enabled = true;
 
     // Save to a new file
     Config::Save(engine, "test_slope_save.ini");

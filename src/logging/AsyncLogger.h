@@ -211,11 +211,7 @@ struct SessionInfo {
     float long_load_effect;
     float optimal_slip_angle; // v0.7.173
     float optimal_slip_ratio; // v0.7.173
-    bool slope_enabled;
-    float slope_sensitivity;
-    float slope_threshold;
-    float slope_alpha_threshold;
-    float slope_decay_rate;
+    SlopeDetectionConfig slope_detection;
 };
 
 class AsyncLogger {
@@ -432,11 +428,11 @@ private:
         m_file << "# SoP Smoothing: " << info.rear_axle.sop_smoothing_factor << "\n";
         m_file << "# Optimal Slip Angle: " << info.optimal_slip_angle << "\n";
         m_file << "# Optimal Slip Ratio: " << info.optimal_slip_ratio << "\n";
-        m_file << "# Slope Detection: " << (info.slope_enabled ? "Enabled" : "Disabled") << "\n";
-        m_file << "# Slope Sensitivity: " << info.slope_sensitivity << "\n";
-        m_file << "# Slope Threshold: " << info.slope_threshold << "\n";
-        m_file << "# Slope Alpha Threshold: " << info.slope_alpha_threshold << "\n";
-        m_file << "# Slope Decay Rate: " << info.slope_decay_rate << "\n";
+        m_file << "# Slope Detection: " << (info.slope_detection.enabled ? "Enabled" : "Disabled") << "\n";
+        m_file << "# Slope Sensitivity: " << info.slope_detection.sensitivity << "\n";
+        m_file << "# Slope Threshold: " << info.slope_detection.min_threshold << "\n";
+        m_file << "# Slope Alpha Threshold: " << info.slope_detection.alpha_threshold << "\n";
+        m_file << "# Slope Decay Rate: " << info.slope_detection.decay_rate << "\n";
         m_file << "# Torque Passthrough: " << (info.front_axle.torque_passthrough ? "Enabled" : "Disabled") << "\n";
         m_file << "# Dynamic Normalization: " << (info.general.dynamic_normalization_enabled ? "Enabled" : "Disabled") << "\n";
         m_file << "# Auto Load Normalization: " << (info.general.auto_load_normalization_enabled ? "Enabled" : "Disabled") << "\n";

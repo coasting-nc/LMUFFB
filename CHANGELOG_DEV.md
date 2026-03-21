@@ -7,6 +7,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.213]
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 6)**
+  - **Grouped Data Structures**: Introduced `SlopeDetectionConfig` struct to centralize parameters for the experimental dynamic grip detection system.
+  - **FFBEngine & Preset Refinement**: Migrated 13 parameters including `enabled`, `sg_window`, `sensitivity`, `smoothing_tau`, `alpha_threshold`, `decay_rate`, `confidence_enabled`, `min_threshold`, `max_threshold`, `g_slew_limit`, `use_torque`, and `torque_sensitivity` into the new grouped structure.
+  - **Implementation Sync**: Updated `FFBEngine.cpp`, `Config.cpp`, `GuiLayer_Common.cpp`, `main.cpp`, and `GripLoadEstimation.cpp` to use nested configuration paths.
+  - **Telemetry Logging Integration**: Updated `AsyncLogger` and session metadata to utilize the new grouped configuration for consistent session headers.
+
+### Testing
+- **New Safety Suite**: Added `tests/test_refactor_slope_detection.cpp` verifying physics consistency, round-trip synchronization, and validation clamping.
+- **Regression Guard**: Updated the entire test suite (including `test_ffb_advanced_slope.cpp`, `test_ffb_slope_edge_cases.cpp`, `test_ffb_slope_detection.cpp`, and `test_issue_104_slope_disconnect.cpp`) to align with the new data model.
+- Verified 100% pass rate: **589/589 test cases, 2763 assertions, 0 failures**.
+
+---
+
 ## [0.7.212]
 
 ### Refactored

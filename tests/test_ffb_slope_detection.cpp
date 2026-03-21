@@ -37,8 +37,8 @@ TEST_CASE(test_slope_grip_at_peak, "SlopeDetection") {
     std::cout << "\nTest: Slope Grip at Peak (Zero Slope) (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_sg_window = 15;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.sg_window = 15;
     
     // Simulate peak grip: Constant G despite increasing slip?
     // Actually, zero slope means G is constant while slip moves.
@@ -59,11 +59,11 @@ TEST_CASE(test_slope_grip_past_peak, "SlopeDetection") {
     std::cout << "\nTest: Slope Grip Past Peak (Negative Slope) [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_sg_window = 15;
-    engine.m_slope_sensitivity = 1.0f;
-    engine.m_slope_min_threshold = -0.3f;
-    engine.m_slope_max_threshold = -2.0f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.sg_window = 15;
+    engine.m_slope_detection.sensitivity = 1.0f;
+    engine.m_slope_detection.min_threshold = -0.3f;
+    engine.m_slope_detection.max_threshold = -2.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01; // 100Hz
@@ -99,11 +99,11 @@ TEST_CASE(test_slope_vs_static_comparison, "SlopeDetection") {
     std::cout << "\nTest: Slope vs Static Comparison (v0.7.0)" << std::endl;
     FFBEngine engine_slope;
     InitializeEngine(engine_slope);
-    engine_slope.m_slope_detection_enabled = true;
+    engine_slope.m_slope_detection.enabled = true;
     
     FFBEngine engine_static;
     InitializeEngine(engine_static);
-    engine_static.m_slope_detection_enabled = false;
+    engine_static.m_slope_detection.enabled = false;
     engine_static.m_grip_estimation.optimal_slip_angle = 0.10f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.12); // 12% slip
@@ -141,11 +141,11 @@ TEST_CASE(test_slope_config_persistence, "SlopeDetection") {
     FFBEngine engine_save;
     InitializeEngine(engine_save);
     
-    engine_save.m_slope_detection_enabled = true;
-    engine_save.m_slope_sg_window = 21;
-    engine_save.m_slope_sensitivity = 2.5f;
-    engine_save.m_slope_min_threshold = -0.2f;
-    engine_save.m_slope_smoothing_tau = 0.05f;
+    engine_save.m_slope_detection.enabled = true;
+    engine_save.m_slope_detection.sg_window = 21;
+    engine_save.m_slope_detection.sensitivity = 2.5f;
+    engine_save.m_slope_detection.min_threshold = -0.2f;
+    engine_save.m_slope_detection.smoothing_tau = 0.05f;
     
     Config::Save(engine_save, test_file);
     
@@ -153,11 +153,11 @@ TEST_CASE(test_slope_config_persistence, "SlopeDetection") {
     InitializeEngine(engine_load);
     Config::Load(engine_load, test_file);
     
-    ASSERT_TRUE(engine_load.m_slope_detection_enabled == true);
-    ASSERT_TRUE(engine_load.m_slope_sg_window == 21);
-    ASSERT_NEAR(engine_load.m_slope_sensitivity, 2.5f, 0.001);
-    ASSERT_NEAR(engine_load.m_slope_min_threshold, -0.2f, 0.001);
-    ASSERT_NEAR(engine_load.m_slope_smoothing_tau, 0.05f, 0.001);
+    ASSERT_TRUE(engine_load.m_slope_detection.enabled == true);
+    ASSERT_TRUE(engine_load.m_slope_detection.sg_window == 21);
+    ASSERT_NEAR(engine_load.m_slope_detection.sensitivity, 2.5f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_detection.min_threshold, -0.2f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_detection.smoothing_tau, 0.05f, 0.001);
     
     std::remove(test_file.c_str());
 }
@@ -166,9 +166,9 @@ TEST_CASE(test_slope_latency_characteristics, "SlopeDetection") {
     std::cout << "\nTest: Slope Latency Characteristics (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     int window = 15;
-    engine.m_slope_sg_window = window;
+    engine.m_slope_detection.sg_window = window;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -189,8 +189,8 @@ TEST_CASE(test_slope_noise_rejection, "SlopeDetection") {
     std::cout << "\nTest: Slope Noise Rejection (v0.7.0)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_sg_window = 15;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.sg_window = 15;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
     data.mDeltaTime = 0.01;
@@ -221,7 +221,7 @@ TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
     data.mDeltaTime = 0.01;
     
     // Step 1: Fill buffer with data while slope detection is OFF
-    engine.m_slope_detection_enabled = false;
+    engine.m_slope_detection.enabled = false;
     
     for (int i = 0; i < 20; i++) {
         data.mLocalAccel.x = (0.5 + i * 0.05) * 9.81;
@@ -240,11 +240,11 @@ TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
     }
     
     // Step 3: Enable slope detection (simulating GUI toggle)
-    bool prev_enabled = engine.m_slope_detection_enabled;
-    engine.m_slope_detection_enabled = true;
+    bool prev_enabled = engine.m_slope_detection.enabled;
+    engine.m_slope_detection.enabled = true;
     
     //  Simulate the reset logic from GuiLayer.cpp
-    if (!prev_enabled && engine.m_slope_detection_enabled) {
+    if (!prev_enabled && engine.m_slope_detection.enabled) {
         engine.m_slope_buffer_count = 0;
         engine.m_slope_buffer_index = 0;
         engine.m_slope_smoothed_output = 1.0;  // Full grip
@@ -266,7 +266,7 @@ TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
     ASSERT_GT(engine.m_slope_buffer_count, 0);
     
     // Step 6: Test that disabling does NOT reset buffers
-    engine.m_slope_detection_enabled = false;
+    engine.m_slope_detection.enabled = false;
     int count_before = engine.m_slope_buffer_count;
     PumpEngineTime(engine, data, 0.01);
     ASSERT_TRUE(engine.m_slope_buffer_count == count_before + 4);
@@ -278,7 +278,7 @@ TEST_CASE(test_slope_detection_no_boost_when_grip_balanced, "SlopeDetection") {
     InitializeEngine(engine);
     
     // Enable slope detection with oversteer boost
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     engine.m_rear_axle.oversteer_boost = 2.0f; // Strong boost setting
     engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 10.0f;
@@ -322,7 +322,7 @@ TEST_CASE(test_slope_detection_no_boost_during_oversteer, "SlopeDetection") {
     InitializeEngine(engine);
     
     // Enable slope detection with oversteer boost
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     engine.m_rear_axle.oversteer_boost = 2.0f; // Strong boost setting
     engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 10.0f;
@@ -355,7 +355,7 @@ TEST_CASE(test_lat_g_boost_works_without_slope_detection, "SlopeDetection") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_slope_detection_enabled = false;
+    engine.m_slope_detection.enabled = false;
     engine.m_rear_axle.oversteer_boost = 2.0f;
     engine.m_rear_axle.sop_effect = 1.0f;
     engine.m_rear_axle.sop_scale = 10.0f;
@@ -382,16 +382,16 @@ TEST_CASE(test_slope_detection_default_values_v071, "SlopeDetection") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    ASSERT_NEAR(engine.m_slope_sensitivity, 0.5f, 0.001);
-    ASSERT_NEAR(engine.m_slope_min_threshold, -0.3f, 0.001);
-    ASSERT_NEAR(engine.m_slope_smoothing_tau, 0.04f, 0.001);
+    ASSERT_NEAR(engine.m_slope_detection.sensitivity, 0.5f, 0.001);
+    ASSERT_NEAR(engine.m_slope_detection.min_threshold, -0.3f, 0.001);
+    ASSERT_NEAR(engine.m_slope_detection.smoothing_tau, 0.04f, 0.001);
 }
 
 TEST_CASE(test_slope_current_in_snapshot, "SlopeDetection") {
     std::cout << "\nTest: Slope Current in Snapshot (v0.7.1)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -417,10 +417,10 @@ TEST_CASE(test_slope_detection_less_aggressive_v071, "SlopeDetection") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_sensitivity = 0.5f;
-    engine.m_slope_min_threshold = -0.3f;
-    engine.m_slope_sg_window = 15;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.sensitivity = 0.5f;
+    engine.m_slope_detection.min_threshold = -0.3f;
+    engine.m_slope_detection.sg_window = 15;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -451,9 +451,9 @@ TEST_CASE(test_slope_decay_on_straight, "SlopeDetection") {
     std::cout << "\nTest: Slope Decay on Straight [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.02f;
-    engine.m_slope_decay_rate = 5.0f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.02f;
+    engine.m_slope_detection.decay_rate = 5.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.05);
     
@@ -488,12 +488,12 @@ TEST_CASE(test_slope_decay_on_straight, "SlopeDetection") {
     ASSERT_NEAR(slope_final, 0.0, 0.05);
 }
 
-TEST_CASE(test_slope_alpha_threshold_configurable, "SlopeDetection") {
+TEST_CASE(test_slope_detection_alpha_threshold_configurable, "SlopeDetection") {
     std::cout << "\nTest: Slope dAlpha Threshold Configurable (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.02f;
     engine.m_slope_current = -0.5f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
@@ -527,11 +527,11 @@ TEST_CASE(test_slope_confidence_gate, "SlopeDetection") {
     std::cout << "\nTest: Slope Confidence Gate (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_confidence_enabled = true;
-    engine.m_slope_alpha_threshold = 0.01f;
-    engine.m_slope_min_threshold = -0.3f;
-    engine.m_slope_sensitivity = 1.0f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.confidence_enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.01f;
+    engine.m_slope_detection.min_threshold = -0.3f;
+    engine.m_slope_detection.sensitivity = 1.0f;
     
     double dAlpha_dt = 0.1;
     double confidence = (std::min)(1.0, std::abs(dAlpha_dt) / 0.1);
@@ -546,10 +546,10 @@ TEST_CASE(test_slope_stability_config_persistence, "SlopeDetection") {
     std::cout << "\nTest: Slope Stability Config Persistence (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.035f;
-    engine.m_slope_decay_rate = 8.5f;
-    engine.m_slope_confidence_enabled = false;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.035f;
+    engine.m_slope_detection.decay_rate = 8.5f;
+    engine.m_slope_detection.confidence_enabled = false;
     
     Config::Save(engine, "test_stability.ini");
     
@@ -557,16 +557,16 @@ TEST_CASE(test_slope_stability_config_persistence, "SlopeDetection") {
     InitializeEngine(engine2);
     Config::Load(engine2, "test_stability.ini");
     
-    ASSERT_NEAR(engine2.m_slope_alpha_threshold, 0.035f, 0.0001);
-    ASSERT_NEAR(engine2.m_slope_decay_rate, 8.5f, 0.0001);
-    ASSERT_TRUE(engine2.m_slope_confidence_enabled == false);
+    ASSERT_NEAR(engine2.m_slope_detection.alpha_threshold, 0.035f, 0.0001);
+    ASSERT_NEAR(engine2.m_slope_detection.decay_rate, 8.5f, 0.0001);
+    ASSERT_TRUE(engine2.m_slope_detection.confidence_enabled == false);
 }
 
 TEST_CASE(test_slope_no_understeer_on_straight_v073, "SlopeDetection") {
     std::cout << "\nTest: No Understeer on Straight (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     engine.m_front_axle.understeer_effect = 1.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.0);
@@ -586,20 +586,20 @@ TEST_CASE(test_slope_no_understeer_on_straight_v073, "SlopeDetection") {
     ASSERT_GT(snap.calc_front_grip, 0.9);
 }
 
-TEST_CASE(test_slope_decay_rate_boundaries, "SlopeDetection") {
+TEST_CASE(test_slope_detection_decay_rate_boundaries, "SlopeDetection") {
     std::cout << "\nTest: Slope Decay Rate Boundaries (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
-    engine.m_slope_decay_rate = 0.5f;
+    engine.m_slope_detection.decay_rate = 0.5f;
     engine.m_slope_current = -1.0f;
     PumpEngineTime(engine, data, 0.05);
     double decayed_slow = engine.m_slope_current;
 
-    engine.m_slope_decay_rate = 20.0f;
+    engine.m_slope_detection.decay_rate = 20.0f;
     engine.m_slope_current = -1.0f;
     PumpEngineTime(engine, data, 0.05);
     double decayed_fast = engine.m_slope_current;
@@ -607,20 +607,20 @@ TEST_CASE(test_slope_decay_rate_boundaries, "SlopeDetection") {
     ASSERT_TRUE(std::abs(decayed_fast) < std::abs(decayed_slow));
 }
 
-TEST_CASE(test_slope_alpha_threshold_validation, "SlopeDetection") {
+TEST_CASE(test_slope_detection_alpha_threshold_validation, "SlopeDetection") {
     std::cout << "\nTest: Slope Alpha Threshold Validation (v0.7.3)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
 
-    engine.m_slope_alpha_threshold = 0.0001f;
+    engine.m_slope_detection.alpha_threshold = 0.0001f;
     Config::Save(engine, "test_val.ini");
     Config::Load(engine, "test_val.ini");
-    ASSERT_NEAR(engine.m_slope_alpha_threshold, 0.02f, 0.0001);
+    ASSERT_NEAR(engine.m_slope_detection.alpha_threshold, 0.02f, 0.0001);
 
-    engine.m_slope_alpha_threshold = 0.5f;
+    engine.m_slope_detection.alpha_threshold = 0.5f;
     Config::Save(engine, "test_val.ini");
     Config::Load(engine, "test_val.ini");
-    ASSERT_NEAR(engine.m_slope_alpha_threshold, 0.02f, 0.0001);
+    ASSERT_NEAR(engine.m_slope_detection.alpha_threshold, 0.02f, 0.0001);
 }
 
 TEST_CASE(test_inverse_lerp_helper, "SlopeDetection") {
@@ -655,8 +655,8 @@ TEST_CASE(test_slope_minmax_dead_zone, "SlopeDetection") {
     std::cout << "\nTest: Slope Min/Max Dead Zone (v0.7.11)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_min_threshold = -0.5f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.min_threshold = -0.5f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
     data.mLocalAccel.x = 1.0 * 9.81;
@@ -673,11 +673,11 @@ TEST_CASE(test_slope_minmax_linear_response, "SlopeDetection") {
     std::cout << "\nTest: Slope Min/Max Linear Response [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_min_threshold = -0.3f;
-    engine.m_slope_max_threshold = -2.0f;
-    engine.m_slope_smoothing_tau = 0.001f;  // Fast smoothing for test
-    engine.m_slope_alpha_threshold = 0.0001f; // Ensure it doesn't decay
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.min_threshold = -0.3f;
+    engine.m_slope_detection.max_threshold = -2.0f;
+    engine.m_slope_detection.smoothing_tau = 0.001f;  // Fast smoothing for test
+    engine.m_slope_detection.alpha_threshold = 0.0001f; // Ensure it doesn't decay
 
     auto fill_buffers_for_slope = [&](double target_slope) {
         engine.m_slope_buffer_count = 0;
@@ -715,10 +715,10 @@ TEST_CASE(test_slope_minmax_saturation, "SlopeDetection") {
     std::cout << "\nTest: Slope Min/Max Saturation [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_min_threshold = -0.3f;
-    engine.m_slope_max_threshold = -2.0f;
-    engine.m_slope_smoothing_tau = 0.01f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.min_threshold = -0.3f;
+    engine.m_slope_detection.max_threshold = -2.0f;
+    engine.m_slope_detection.smoothing_tau = 0.01f;
 
     auto fill_buffers_for_slope = [&](double target_slope) {
         engine.m_slope_buffer_count = 0;
@@ -746,21 +746,21 @@ TEST_CASE(test_slope_threshold_config_persistence, "SlopeDetection") {
     std::string test_file = "test_slope_minmax.ini";
 
     FFBEngine engine_save;
-    engine_save.m_slope_min_threshold = -0.5f;
-    engine_save.m_slope_max_threshold = -3.0f;
+    engine_save.m_slope_detection.min_threshold = -0.5f;
+    engine_save.m_slope_detection.max_threshold = -3.0f;
     Config::Save(engine_save, test_file);
 
     FFBEngine engine_load;
     InitializeEngine(engine_load);
     Config::Load(engine_load, test_file);
 
-    ASSERT_NEAR(engine_load.m_slope_min_threshold, -0.5f, 0.001);
-    ASSERT_NEAR(engine_load.m_slope_max_threshold, -3.0f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_detection.min_threshold, -0.5f, 0.001);
+    ASSERT_NEAR(engine_load.m_slope_detection.max_threshold, -3.0f, 0.001);
 
     std::remove(test_file.c_str());
 }
 
-TEST_CASE(test_slope_sensitivity_migration, "SlopeDetection") {
+TEST_CASE(test_slope_detection_sensitivity_migration, "SlopeDetection") {
     std::cout << "\nTest: Slope Sensitivity Migration (v0.7.11)" << std::endl;
     std::string test_file = "test_slope_migration.ini";
 
@@ -779,8 +779,8 @@ TEST_CASE(test_slope_sensitivity_migration, "SlopeDetection") {
 
     // With sensitivity=1.0, max_threshold should be calculated
     // Formula: max = min - (8/sens) = -0.3 - 8 = -8.3
-    ASSERT_TRUE(engine.m_slope_max_threshold < engine.m_slope_min_threshold);
-    ASSERT_NEAR(engine.m_slope_max_threshold, -8.3f, 0.5);
+    ASSERT_TRUE(engine.m_slope_detection.max_threshold < engine.m_slope_detection.min_threshold);
+    ASSERT_NEAR(engine.m_slope_detection.max_threshold, -8.3f, 0.5);
 
     std::remove(test_file.c_str());
 }
@@ -811,8 +811,8 @@ TEST_CASE(TestSlope_NearThreshold_Singularity, "SlopeDetection") {
     std::cout << "\nTest: Slope Near Threshold Singularity (v0.7.17)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.02f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -837,7 +837,7 @@ TEST_CASE(test_issue_348_shadow_mode_v2, "SlopeDetection") {
     std::cout << "\nTest: Issue #348 Slope Detection Shadow Mode (v2)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = false; // Primary is OFF
+    engine.m_slope_detection.enabled = false; // Primary is OFF
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
     // Explicitly set 1.0 grip to verify shadow mode doesn't contaminate pure telemetry
@@ -862,7 +862,7 @@ TEST_CASE(test_slope_sg_filter_dt_independence, "SlopeDetection") {
     std::cout << "\nTest: SG Filter Time-Domain Independence [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
@@ -905,9 +905,9 @@ TEST_CASE(test_slope_decay_with_zero_dt, "SlopeDetection") {
     std::cout << "\nTest: Slope Decay with Zero dt (Timer Robustness) [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_decay_rate = 10.0f;
-    engine.m_slope_alpha_threshold = 0.01f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.decay_rate = 10.0f;
+    engine.m_slope_detection.alpha_threshold = 0.01f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
@@ -961,11 +961,11 @@ TEST_CASE(TestSlope_SmallSignals, "SlopeDetection") {
     std::cout << "\nTest: Slope Small Signals (Noise Rejection) (v0.7.17)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.02f;
 
     double dt = 0.01;
-    int window = engine.m_slope_sg_window;
+    int window = engine.m_slope_detection.sg_window;
 
     // Tiny oscillation in alpha (below threshold)
     // dAlpha/dt will be around 0.001 / 0.01 = 0.1? Wait.
@@ -988,11 +988,11 @@ TEST_CASE(TestSlope_ImpulseRejection, "SlopeDetection") {
     std::cout << "\nTest: Slope Impulse Rejection (v0.7.17)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_smoothing_tau = 0.04f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.smoothing_tau = 0.04f;
 
     double dt = 0.01;
-    int window = engine.m_slope_sg_window;
+    int window = engine.m_slope_detection.sg_window;
 
     // 1. Settle in a corner
     for (int i = 0; i < window + 10; i++) {
@@ -1017,8 +1017,8 @@ TEST_CASE(TestSlope_NoiseImmunity, "SlopeDetection") {
     std::cout << "\nTest: Slope Noise Immunity (v0.7.17)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_sg_window = 15;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.sg_window = 15;
 
     double dt = 0.01;
 
@@ -1056,17 +1056,17 @@ TEST_CASE(TestConfidenceRamp_Progressive, "SlopeDetection") {
     std::cout << "\nTest: Confidence Ramp Progressive (v0.7.17)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_min_threshold = -0.3f;
-    engine.m_slope_max_threshold = -2.0f;
-    engine.m_slope_smoothing_tau = 0.001f; // Fast for testing
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.min_threshold = -0.3f;
+    engine.m_slope_detection.max_threshold = -2.0f;
+    engine.m_slope_detection.smoothing_tau = 0.001f; // Fast for testing
 
     // FIX: The SG filter inside calculate_slope_grip now hardcodes 0.0025s (400Hz)
     // for its derivative calculations because the buffer is always populated at 400Hz.
     // We must feed the test data at 400Hz to match, otherwise the derivatives
     // will be artificially multiplied.
     double dt = 0.0025; 
-    int window = engine.m_slope_sg_window;
+    int window = engine.m_slope_detection.sg_window;
 
     std::vector<double> grips;
 

@@ -33,6 +33,7 @@ struct Preset {
     RearAxleConfig rear_axle;
     LoadForcesConfig load_forces;
     GripEstimationConfig grip_estimation;
+    SlopeDetectionConfig slope_detection;
 
     // FFB Safety (Issue #316)
     float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
@@ -94,28 +95,6 @@ struct Preset {
     // Reserved for future implementation (v0.6.23+)
     float road_fallback_scale = 0.05f;      // Planned: Road texture fallback scaling
     bool understeer_affects_sop = false;     // Planned: Understeer modulation of SoP
-
-    // ===== SLOPE DETECTION (v0.7.0 â†’ v0.7.1 defaults) =====
-    bool slope_detection_enabled = false;
-    int slope_sg_window = 15;
-    float slope_sensitivity = 0.5f;          // Reduced from 1.0 (less aggressive)
-
-    float slope_smoothing_tau = 0.04f;       // Changed from 0.02 (smoother transitions)
-
-    // v0.7.3: Slope detection stability fixes
-    float slope_alpha_threshold = 0.02f;
-    float slope_decay_rate = 5.0f;
-    bool slope_confidence_enabled = true;
-
-    // v0.7.11: Min/Max Threshold System
-    float slope_min_threshold = -0.3f;
-    float slope_max_threshold = -2.0f;
-
-    // NEW v0.7.40: Advanced Slope Settings
-    float slope_g_slew_limit = 50.0f;
-    bool slope_use_torque = true;
-    float slope_torque_sensitivity = 0.5f;
-    float slope_confidence_max_rate = 0.10f;
 
     bool rest_api_enabled = false;
     int rest_api_port = 6397;
@@ -246,25 +225,25 @@ struct Preset {
     Preset& SetChassisSmoothing(float v) { grip_estimation.chassis_inertia_smoothing = v; return *this; }
     
     Preset& SetSlopeDetection(bool enabled, int window = 15, float min_thresh = -0.3f, float max_thresh = -2.0f, float tau = 0.04f) {
-        slope_detection_enabled = enabled;
-        slope_sg_window = window;
-        slope_min_threshold = min_thresh;
-        slope_max_threshold = max_thresh;
-        slope_smoothing_tau = tau;
+        slope_detection.enabled = enabled;
+        slope_detection.sg_window = window;
+        slope_detection.min_threshold = min_thresh;
+        slope_detection.max_threshold = max_thresh;
+        slope_detection.smoothing_tau = tau;
         return *this;
     }
 
     Preset& SetSlopeStability(float alpha_thresh = 0.02f, float decay = 5.0f, bool conf = true) {
-        slope_alpha_threshold = alpha_thresh;
-        slope_decay_rate = decay;
-        slope_confidence_enabled = conf;
+        slope_detection.alpha_threshold = alpha_thresh;
+        slope_detection.decay_rate = decay;
+        slope_detection.confidence_enabled = conf;
         return *this;
     }
 
     Preset& SetSlopeAdvanced(float slew = 50.0f, bool use_torque = true, float torque_sens = 0.5f) {
-        slope_g_slew_limit = slew;
-        slope_use_torque = use_torque;
-        slope_torque_sensitivity = torque_sens;
+        slope_detection.g_slew_limit = slew;
+        slope_detection.use_torque = use_torque;
+        slope_detection.torque_sensitivity = torque_sens;
         return *this;
     }
 
@@ -326,6 +305,9 @@ struct Preset {
         engine.m_grip_estimation = this->grip_estimation;
         engine.m_grip_estimation.Validate();
 
+        engine.m_slope_detection = this->slope_detection;
+        engine.m_slope_detection.Validate();
+
         // FFB Safety (Issue #316)
         engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
         engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
@@ -381,29 +363,6 @@ struct Preset {
         engine.m_road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         engine.m_understeer_affects_sop = understeer_affects_sop;
         
-        // Slope Detection (v0.7.0)
-        engine.m_slope_detection_enabled = slope_detection_enabled;
-        engine.m_slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
-        if (engine.m_slope_sg_window % 2 == 0) engine.m_slope_sg_window++; // Must be odd for SG
-        engine.m_slope_sensitivity = (std::max)(0.1f, slope_sensitivity);
-
-        engine.m_slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);
-
-        // v0.7.3: Slope stability fixes
-        engine.m_slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold); // Critical for slope division
-        engine.m_slope_decay_rate = (std::max)(0.1f, slope_decay_rate);
-        engine.m_slope_confidence_enabled = slope_confidence_enabled;
-        engine.m_slope_confidence_max_rate = (std::max)(engine.m_slope_alpha_threshold + 0.01f, slope_confidence_max_rate);
-
-        // v0.7.11: Min/Max thresholds
-        engine.m_slope_min_threshold = slope_min_threshold;
-        engine.m_slope_max_threshold = slope_max_threshold;
-
-        // NEW v0.7.40: Advanced Slope Settings
-        engine.m_slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);
-        engine.m_slope_use_torque = slope_use_torque;
-        engine.m_slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
-
         engine.m_rest_api_enabled = rest_api_enabled;
         engine.m_rest_api_port = (std::max)(1, rest_api_port);
 
@@ -420,6 +379,7 @@ struct Preset {
         rear_axle.Validate();
         load_forces.Validate();
         grip_estimation.Validate();
+        slope_detection.Validate();
         lockup_gain = (std::max)(0.0f, lockup_gain);
         lockup_start_pct = (std::max)(0.1f, lockup_start_pct);
         lockup_full_pct = (std::max)(0.2f, lockup_full_pct);
@@ -447,15 +407,6 @@ struct Preset {
         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         gyro_smoothing = (std::max)(0.0f, gyro_smoothing);
         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
-        slope_sg_window = (std::max)(5, (std::min)(41, slope_sg_window));
-        if (slope_sg_window % 2 == 0) slope_sg_window++;
-        slope_sensitivity = (std::max)(0.1f, slope_sensitivity);
-        slope_smoothing_tau = (std::max)(0.001f, slope_smoothing_tau);
-        slope_alpha_threshold = (std::max)(0.001f, slope_alpha_threshold);
-        slope_decay_rate = (std::max)(0.1f, slope_decay_rate);
-        slope_g_slew_limit = (std::max)(1.0f, slope_g_slew_limit);
-        slope_torque_sensitivity = (std::max)(0.01f, slope_torque_sensitivity);
-        slope_confidence_max_rate = (std::max)(slope_alpha_threshold + 0.01f, slope_confidence_max_rate);
         rest_api_port = (std::max)(1, rest_api_port);
 
         // FFB Safety (Issue #316)
@@ -475,6 +426,7 @@ struct Preset {
         rear_axle = engine.m_rear_axle;
         load_forces = engine.m_load_forces;
         grip_estimation = engine.m_grip_estimation;
+        slope_detection = engine.m_slope_detection;
 
         // FFB Safety (Issue #316)
         safety_window_duration = engine.m_safety.m_safety_window_duration;
@@ -530,28 +482,6 @@ struct Preset {
         road_fallback_scale = engine.m_road_fallback_scale;
         understeer_affects_sop = engine.m_understeer_affects_sop;
 
-        // Slope Detection (v0.7.0)
-        slope_detection_enabled = engine.m_slope_detection_enabled;
-        slope_sg_window = engine.m_slope_sg_window;
-        slope_sensitivity = engine.m_slope_sensitivity;
-
-        slope_smoothing_tau = engine.m_slope_smoothing_tau;
-
-        // v0.7.3: Slope stability fixes
-        slope_alpha_threshold = engine.m_slope_alpha_threshold;
-        slope_decay_rate = engine.m_slope_decay_rate;
-        slope_confidence_enabled = engine.m_slope_confidence_enabled;
-        slope_confidence_max_rate = engine.m_slope_confidence_max_rate;
-
-        // v0.7.11: Min/Max thresholds
-        slope_min_threshold = engine.m_slope_min_threshold;
-        slope_max_threshold = engine.m_slope_max_threshold;
-
-        // NEW v0.7.40: Advanced Slope Settings
-        slope_g_slew_limit = engine.m_slope_g_slew_limit;
-        slope_use_torque = engine.m_slope_use_torque;
-        slope_torque_sensitivity = engine.m_slope_torque_sensitivity;
-
         rest_api_enabled = engine.m_rest_api_enabled;
         rest_api_port = engine.m_rest_api_port;
 
@@ -567,6 +497,7 @@ struct Preset {
         if (!rear_axle.Equals(p.rear_axle, eps)) return false;
         if (!load_forces.Equals(p.load_forces, eps)) return false;
         if (!grip_estimation.Equals(p.grip_estimation, eps)) return false;
+        if (!slope_detection.Equals(p.slope_detection, eps)) return false;
 
         // FFB Safety (Issue #316)
         if (!is_near(safety_window_duration, p.safety_window_duration, eps)) return false;
@@ -624,22 +555,6 @@ struct Preset {
 
         if (!is_near(road_fallback_scale, p.road_fallback_scale, eps)) return false;
         if (understeer_affects_sop != p.understeer_affects_sop) return false;
-
-        if (slope_detection_enabled != p.slope_detection_enabled) return false;
-        if (slope_sg_window != p.slope_sg_window) return false;
-        if (!is_near(slope_sensitivity, p.slope_sensitivity, eps)) return false;
-
-        if (!is_near(slope_smoothing_tau, p.slope_smoothing_tau, eps)) return false;
-        if (!is_near(slope_alpha_threshold, p.slope_alpha_threshold, eps)) return false;
-        if (!is_near(slope_decay_rate, p.slope_decay_rate, eps)) return false;
-        if (slope_confidence_enabled != p.slope_confidence_enabled) return false;
-        if (!is_near(slope_min_threshold, p.slope_min_threshold, eps)) return false;
-        if (!is_near(slope_max_threshold, p.slope_max_threshold, eps)) return false;
-
-        if (!is_near(slope_g_slew_limit, p.slope_g_slew_limit, eps)) return false;
-        if (slope_use_torque != p.slope_use_torque) return false;
-        if (!is_near(slope_torque_sensitivity, p.slope_torque_sensitivity, eps)) return false;
-        if (!is_near(slope_confidence_max_rate, p.slope_confidence_max_rate, eps)) return false;
 
         if (rest_api_enabled != p.rest_api_enabled) return false;
         if (rest_api_port != p.rest_api_port) return false;

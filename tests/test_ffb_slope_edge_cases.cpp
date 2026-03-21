@@ -8,9 +8,9 @@ TEST_CASE(test_slope_asymmetry_fix, "SlopeEdgeCases") {
     auto simulate_turn = [&](bool right) {
         FFBEngine test_engine;
         InitializeEngine(test_engine);
-        test_engine.m_slope_detection_enabled = true;
-        test_engine.m_slope_sg_window = 9;
-        test_engine.m_slope_alpha_threshold = 0.02f;
+        test_engine.m_slope_detection.enabled = true;
+        test_engine.m_slope_detection.sg_window = 9;
+        test_engine.m_slope_detection.alpha_threshold = 0.02f;
 
         TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
         data.mDeltaTime = 0.01;
@@ -51,17 +51,17 @@ TEST_CASE(test_slope_confidence_tuning, "SlopeEdgeCases") {
     std::cout << "\nTest: Slope Confidence Tuning" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.alpha_threshold = 0.02f;
 
     double dAlpha_dt = 0.05;
 
     // Case 1: Default (max_rate = 0.10)
-    engine.m_slope_confidence_max_rate = 0.10f;
+    engine.m_slope_detection.confidence_max_rate = 0.10f;
     double conf1 = engine.calculate_slope_confidence(dAlpha_dt);
 
     // Case 2: Tuned (max_rate = 0.05)
-    engine.m_slope_confidence_max_rate = 0.05f;
+    engine.m_slope_detection.confidence_max_rate = 0.05f;
     double conf2 = engine.calculate_slope_confidence(dAlpha_dt);
 
     std::cout << "  Confidence (max_rate=0.10): " << conf1 << std::endl;
@@ -75,10 +75,10 @@ TEST_CASE(test_torque_slope_timing, "SlopeEdgeCases") {
     std::cout << "\nTest: Torque Slope Timing (Anticipation) [Issue #397 Remediation]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    engine.m_slope_detection_enabled = true;
-    engine.m_slope_use_torque = true;
-    engine.m_slope_sg_window = 9;
-    engine.m_slope_alpha_threshold = 0.02f;
+    engine.m_slope_detection.enabled = true;
+    engine.m_slope_detection.use_torque = true;
+    engine.m_slope_detection.sg_window = 9;
+    engine.m_slope_detection.alpha_threshold = 0.02f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
 

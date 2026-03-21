@@ -399,7 +399,7 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
         engine.m_front_axle.static_notch_enabled = true;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
-        engine.m_slope_detection_enabled = true;
+        engine.m_slope_detection.enabled = true;
         engine.m_rear_axle.oversteer_boost = 0.5f;
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
@@ -702,18 +702,18 @@ TEST_CASE(test_config_branches_v6, "System") {
         f << "static_notch_freq=50.0\n";
         f << "static_notch_width=1.0\n";
         f << "yaw_kick_threshold=1.5\n";
-        f << "slope_detection_enabled=1\n";
-        f << "slope_sg_window=21\n";
-        f << "slope_sensitivity=2.0\n";
-        f << "slope_min_threshold=-0.5\n";
-        f << "slope_max_threshold=-1.5\n";
-        f << "slope_alpha_threshold=0.02\n";
-        f << "slope_decay_rate=5.0\n";
-        f << "slope_confidence_enabled=1\n";
-        f << "slope_g_slew_limit=100.0\n";
-        f << "slope_use_torque=1\n";
-        f << "slope_torque_sensitivity=1.0\n";
-        f << "slope_confidence_max_rate=0.5\n";
+        f << "slope_detection.enabled=1\n";
+        f << "slope_detection.sg_window=21\n";
+        f << "slope_detection.sensitivity=2.0\n";
+        f << "slope_detection.min_threshold=-0.5\n";
+        f << "slope_detection.max_threshold=-1.5\n";
+        f << "slope_detection.alpha_threshold=0.02\n";
+        f << "slope_detection.decay_rate=5.0\n";
+        f << "slope_detection.confidence_enabled=1\n";
+        f << "slope_detection.g_slew_limit=100.0\n";
+        f << "slope_detection.use_torque=1\n";
+        f << "slope_detection.torque_sensitivity=1.0\n";
+        f << "slope_detection.confidence_max_rate=0.5\n";
         f << "last_device_guid={1234}\n";
         f << "last_preset_name=Default\n";
         f << "show_graphs=1\n";
@@ -741,9 +741,9 @@ TEST_CASE(test_config_branches_v6, "System") {
     {
         std::ofstream f("test_slope_mig.ini");
         f << "[Settings]\n";
-        f << "slope_min_threshold=-0.3\n";
-        f << "slope_max_threshold=-2.0\n";
-        f << "slope_sensitivity=1.0\n"; // Different from 0.5 triggers migration
+        f << "slope_detection.min_threshold=-0.3\n";
+        f << "slope_detection.max_threshold=-2.0\n";
+        f << "slope_detection.sensitivity=1.0\n"; // Different from 0.5 triggers migration
         f.close();
     }
     Config::Load(engine, "test_slope_mig.ini");
@@ -752,8 +752,8 @@ TEST_CASE(test_config_branches_v6, "System") {
     {
         std::ofstream f("test_swap.ini");
         f << "[Settings]\n";
-        f << "slope_min_threshold=-2.0\n";
-        f << "slope_max_threshold=-0.5\n"; // max > min, should swap
+        f << "slope_detection.min_threshold=-2.0\n";
+        f << "slope_detection.max_threshold=-0.5\n"; // max > min, should swap
         f.close();
     }
     Config::Load(engine, "test_swap.ini");
@@ -826,7 +826,7 @@ TEST_CASE(test_grip_load_estimation_v6, "Physics") {
     bool warned = false;
     double prev_slip1 = 0, prev_slip2 = 0;
     double prev_load1 = 0, prev_load2 = 0;
-    engine.m_slope_detection_enabled = true;
+    engine.m_slope_detection.enabled = true;
     engine.calculate_axle_grip(w, w, 5000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "Test", &data, true);
 
     // 7. calculate_axle_grip zero load branch

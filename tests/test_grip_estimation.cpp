@@ -25,7 +25,7 @@ TEST_CASE(test_grip_symmetric_falloff, "SlipGrip") {
     // Set clean thresholds for easy math
     engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
-    engine.m_slope_detection_enabled = false; // Force friction circle fallback
+    engine.m_slope_detection.enabled = false; // Force friction circle fallback
     engine.m_grip_estimation.grip_smoothing_steady = 0.0f;    // Disable smoothing for instant results
     engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
@@ -78,7 +78,7 @@ TEST_CASE(test_grip_asymmetric_split, "SlipGrip") {
     
     engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
-    engine.m_slope_detection_enabled = false;
+    engine.m_slope_detection.enabled = false;
     engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
     engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
@@ -115,7 +115,7 @@ TEST_CASE(test_grip_friction_circle, "SlipGrip") {
     
     engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
-    engine.m_slope_detection_enabled = false;
+    engine.m_slope_detection.enabled = false;
     engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
     engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
@@ -151,7 +151,7 @@ TEST_CASE(test_grip_low_speed_bypass, "SlipGrip") {
     
     engine.m_grip_estimation.optimal_slip_angle = 0.10f;
     engine.m_grip_estimation.optimal_slip_ratio = 0.10f;
-    engine.m_slope_detection_enabled = false;
+    engine.m_slope_detection.enabled = false;
     engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
     engine.m_grip_estimation.grip_smoothing_fast = 0.0f;
 
