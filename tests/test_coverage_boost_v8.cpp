@@ -6,7 +6,7 @@ TEST_CASE(test_ffb_engine_control_transition_extended, "Safety") {
     FFBEngine engine;
     InitializeEngine(engine);
     // Explicitly set duration for test, as default is now 0.0 (Issue #350)
-    engine.m_safety.m_safety_window_duration = 2.0f;
+    engine.m_safety.m_config.window_duration = 2.0f;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mElapsedTime = 1.0;
 
@@ -228,7 +228,7 @@ TEST_CASE(test_ffb_engine_safety_seeded_branch, "Safety") {
     FFBEngine engine;
     InitializeEngine(engine);
     // Explicitly set duration for test, as default is now 0.0 (Issue #350)
-    engine.m_safety.m_safety_window_duration = 2.0f;
+    engine.m_safety.m_config.window_duration = 2.0f;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // Trigger safety window

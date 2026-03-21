@@ -6,13 +6,13 @@ TEST_CASE(test_safety_slew_spikes, "Safety") {
     FFBEngine engine;
     InitializeEngine(engine);
     // Explicitly set duration for test, as default is now 0.0 (Issue #350)
-    engine.m_safety.m_safety_window_duration = 1.0f;
+    engine.m_safety.m_config.window_duration = 1.0f;
     
     // Setup for spike detection
-    engine.m_safety.m_immediate_spike_threshold = 1000.0f;
-    engine.m_safety.m_spike_detection_threshold = 500.0f;
-    engine.m_safety.m_safety_window_duration = 1.0f;
-    engine.m_safety.m_safety_slew_full_scale_time_s = 0.5f;
+    engine.m_safety.m_config.immediate_spike_threshold = 1000.0f;
+    engine.m_safety.m_config.spike_detection_threshold = 500.0f;
+    engine.m_safety.m_config.window_duration = 1.0f;
+    engine.m_safety.m_config.slew_full_scale_time_s = 0.5f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mElapsedTime = 10.0;
@@ -58,7 +58,7 @@ TEST_CASE(test_safety_window_trigger_spam, "Safety") {
     FFBEngine engine;
     InitializeEngine(engine);
     // Explicitly set duration for test, as default is now 0.0 (Issue #350)
-    engine.m_safety.m_safety_window_duration = 2.0f;
+    engine.m_safety.m_config.window_duration = 2.0f;
     
     // Use m_working_info to set mElapsedTime
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
@@ -241,7 +241,7 @@ TEST_CASE(test_calculate_force_transitions, "Safety") {
     FFBEngine engine;
     InitializeEngine(engine);
     // Explicitly set duration for test, as default is now 0.0 (Issue #350)
-    engine.m_safety.m_safety_window_duration = 2.0f;
+    engine.m_safety.m_config.window_duration = 2.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mElapsedTime = 1.0;

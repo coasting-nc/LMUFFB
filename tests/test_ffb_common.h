@@ -475,7 +475,7 @@ public:
 
     static void ResetSafety(FFBEngine& engine) {
         engine.m_safety = FFBSafetyMonitor();
-        engine.m_safety.m_safety_window_duration = 2.0f; // Reset to legacy default for test compatibility
+        engine.m_safety.m_config.window_duration = 2.0f; // Reset to legacy default for test compatibility
         engine.m_safety.SetLastControl(-2);
         // Restore connection to time source
         engine.m_safety.SetTimePtr(&engine.m_working_info.mElapsedTime);

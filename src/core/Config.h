@@ -37,16 +37,7 @@ struct Preset {
     BrakingConfig braking;
     VibrationConfig vibration;
     AdvancedConfig advanced;
-
-    // FFB Safety (Issue #316)
-    float safety_window_duration = FFBEngine::DEFAULT_SAFETY_WINDOW_DURATION;
-    float safety_gain_reduction = FFBEngine::DEFAULT_SAFETY_GAIN_REDUCTION;
-    float safety_smoothing_tau = FFBEngine::DEFAULT_SAFETY_SMOOTHING_TAU;
-    float spike_detection_threshold = FFBEngine::DEFAULT_SPIKE_DETECTION_THRESHOLD;
-    float immediate_spike_threshold = FFBEngine::DEFAULT_IMMEDIATE_SPIKE_THRESHOLD;
-    float safety_slew_full_scale_time_s = FFBEngine::DEFAULT_SAFETY_SLEW_FULL_SCALE_TIME_S;
-    bool stutter_safety_enabled = FFBEngine::DEFAULT_STUTTER_SAFETY_ENABLED;
-    float stutter_threshold = FFBEngine::DEFAULT_STUTTER_THRESHOLD;
+    SafetyConfig safety;
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}
@@ -203,14 +194,14 @@ struct Preset {
     }
 
     Preset& SetSafety(float duration, float gain, float smoothing, float threshold, float immediate, float slew, bool stutter = false, float stutter_thresh = 1.5f) {
-        safety_window_duration = duration;
-        safety_gain_reduction = gain;
-        safety_smoothing_tau = smoothing;
-        spike_detection_threshold = threshold;
-        immediate_spike_threshold = immediate;
-        safety_slew_full_scale_time_s = slew;
-        stutter_safety_enabled = stutter;
-        stutter_threshold = stutter_thresh;
+        safety.window_duration = duration;
+        safety.gain_reduction = gain;
+        safety.smoothing_tau = smoothing;
+        safety.spike_detection_threshold = threshold;
+        safety.immediate_spike_threshold = immediate;
+        safety.slew_full_scale_time_s = slew;
+        safety.stutter_safety_enabled = stutter;
+        safety.stutter_threshold = stutter_thresh;
         return *this;
     }
 
@@ -266,15 +257,8 @@ struct Preset {
         engine.m_advanced = this->advanced;
         engine.m_advanced.Validate();
 
-        // FFB Safety (Issue #316)
-        engine.m_safety.m_safety_window_duration = (std::max)(0.0f, safety_window_duration);
-        engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
-        engine.m_safety.m_safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);
-        engine.m_safety.m_spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);
-        engine.m_safety.m_immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);
-        engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);
-        engine.m_safety.m_stutter_safety_enabled = stutter_safety_enabled;
-        engine.m_safety.m_stutter_threshold = (std::max)(1.01f, stutter_threshold);
+        engine.m_safety.m_config = this->safety;
+        engine.m_safety.m_config.Validate();
 
         // Stage 1 & 2 Normalization (Issue #152 & #153)
         // Initialize session peak from target rim torque to provide a sane starting point.
@@ -293,15 +277,7 @@ struct Preset {
         braking.Validate();
         vibration.Validate();
         advanced.Validate();
-
-        // FFB Safety (Issue #316)
-        safety_window_duration = (std::max)(0.0f, safety_window_duration);
-        safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, safety_gain_reduction));
-        safety_smoothing_tau = (std::max)(0.001f, safety_smoothing_tau);
-        spike_detection_threshold = (std::max)(1.0f, spike_detection_threshold);
-        immediate_spike_threshold = (std::max)(1.0f, immediate_spike_threshold);
-        safety_slew_full_scale_time_s = (std::max)(0.01f, safety_slew_full_scale_time_s);
-        stutter_threshold = (std::max)(1.01f, stutter_threshold);
+        safety.Validate();
     }
 
     // NEW: Capture current engine state into this preset
@@ -315,16 +291,7 @@ struct Preset {
         braking = engine.m_braking;
         vibration = engine.m_vibration;
         advanced = engine.m_advanced;
-
-        // FFB Safety (Issue #316)
-        safety_window_duration = engine.m_safety.m_safety_window_duration;
-        safety_gain_reduction = engine.m_safety.m_safety_gain_reduction;
-        safety_smoothing_tau = engine.m_safety.m_safety_smoothing_tau;
-        spike_detection_threshold = engine.m_safety.m_spike_detection_threshold;
-        immediate_spike_threshold = engine.m_safety.m_immediate_spike_threshold;
-        safety_slew_full_scale_time_s = engine.m_safety.m_safety_slew_full_scale_time_s;
-        stutter_safety_enabled = engine.m_safety.m_stutter_safety_enabled;
-        stutter_threshold = engine.m_safety.m_stutter_threshold;
+        safety = engine.m_safety.m_config;
 
         app_version = LMUFFB_VERSION;
     }
@@ -342,16 +309,7 @@ struct Preset {
         if (!braking.Equals(p.braking, eps)) return false;
         if (!vibration.Equals(p.vibration, eps)) return false;
         if (!advanced.Equals(p.advanced, eps)) return false;
-
-        // FFB Safety (Issue #316)
-        if (!is_near(safety_window_duration, p.safety_window_duration, eps)) return false;
-        if (!is_near(safety_gain_reduction, p.safety_gain_reduction, eps)) return false;
-        if (!is_near(safety_smoothing_tau, p.safety_smoothing_tau, eps)) return false;
-        if (!is_near(spike_detection_threshold, p.spike_detection_threshold, eps)) return false;
-        if (!is_near(immediate_spike_threshold, p.immediate_spike_threshold, eps)) return false;
-        if (!is_near(safety_slew_full_scale_time_s, p.safety_slew_full_scale_time_s, eps)) return false;
-        if (stutter_safety_enabled != p.stutter_safety_enabled) return false;
-        if (!is_near(stutter_threshold, p.stutter_threshold, eps)) return false;
+        if (!safety.Equals(p.safety, eps)) return false;
 
         return true;
     }

@@ -200,14 +200,14 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
 }
 
 bool Config::ParseSafetyLine(const std::string& key, const std::string& value, Preset& current_preset) {
-    if (key == "safety_window_duration") { current_preset.safety_window_duration = std::stof(value); return true; }
-    if (key == "safety_gain_reduction") { current_preset.safety_gain_reduction = std::stof(value); return true; }
-    if (key == "safety_smoothing_tau") { current_preset.safety_smoothing_tau = std::stof(value); return true; }
-    if (key == "spike_detection_threshold") { current_preset.spike_detection_threshold = std::stof(value); return true; }
-    if (key == "immediate_spike_threshold") { current_preset.immediate_spike_threshold = std::stof(value); return true; }
-    if (key == "safety_slew_full_scale_time_s") { current_preset.safety_slew_full_scale_time_s = std::stof(value); return true; }
-    if (key == "stutter_safety_enabled") { current_preset.stutter_safety_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "stutter_threshold") { current_preset.stutter_threshold = std::stof(value); return true; }
+    if (key == "safety_window_duration") { current_preset.safety.window_duration = std::stof(value); return true; }
+    if (key == "safety_gain_reduction") { current_preset.safety.gain_reduction = std::stof(value); return true; }
+    if (key == "safety_smoothing_tau") { current_preset.safety.smoothing_tau = std::stof(value); return true; }
+    if (key == "spike_detection_threshold") { current_preset.safety.spike_detection_threshold = std::stof(value); return true; }
+    if (key == "immediate_spike_threshold") { current_preset.safety.immediate_spike_threshold = std::stof(value); return true; }
+    if (key == "safety_slew_full_scale_time_s") { current_preset.safety.slew_full_scale_time_s = std::stof(value); return true; }
+    if (key == "stutter_safety_enabled") { current_preset.safety.stutter_safety_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "stutter_threshold") { current_preset.safety.stutter_threshold = std::stof(value); return true; }
     return false;
 }
 
@@ -372,14 +372,14 @@ bool Config::SyncVibrationLine(const std::string& key, const std::string& value,
 }
 
 bool Config::SyncSafetyLine(const std::string& key, const std::string& value, FFBEngine& engine) {
-    if (key == "safety_window_duration") { engine.m_safety.m_safety_window_duration = std::stof(value); return true; }
-    if (key == "safety_gain_reduction") { engine.m_safety.m_safety_gain_reduction = std::stof(value); return true; }
-    if (key == "safety_smoothing_tau") { engine.m_safety.m_safety_smoothing_tau = std::stof(value); return true; }
-    if (key == "spike_detection_threshold") { engine.m_safety.m_spike_detection_threshold = std::stof(value); return true; }
-    if (key == "immediate_spike_threshold") { engine.m_safety.m_immediate_spike_threshold = std::stof(value); return true; }
-    if (key == "safety_slew_full_scale_time_s") { engine.m_safety.m_safety_slew_full_scale_time_s = std::stof(value); return true; }
-    if (key == "stutter_safety_enabled") { engine.m_safety.m_stutter_safety_enabled = (value == "1" || value == "true"); return true; }
-    if (key == "stutter_threshold") { engine.m_safety.m_stutter_threshold = std::stof(value); return true; }
+    if (key == "safety_window_duration") { engine.m_safety.m_config.window_duration = std::stof(value); return true; }
+    if (key == "safety_gain_reduction") { engine.m_safety.m_config.gain_reduction = std::stof(value); return true; }
+    if (key == "safety_smoothing_tau") { engine.m_safety.m_config.smoothing_tau = std::stof(value); return true; }
+    if (key == "spike_detection_threshold") { engine.m_safety.m_config.spike_detection_threshold = std::stof(value); return true; }
+    if (key == "immediate_spike_threshold") { engine.m_safety.m_config.immediate_spike_threshold = std::stof(value); return true; }
+    if (key == "safety_slew_full_scale_time_s") { engine.m_safety.m_config.slew_full_scale_time_s = std::stof(value); return true; }
+    if (key == "stutter_safety_enabled") { engine.m_safety.m_config.stutter_safety_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "stutter_threshold") { engine.m_safety.m_config.stutter_threshold = std::stof(value); return true; }
     return false;
 }
 
@@ -570,14 +570,14 @@ void Config::LoadPresets() {
         p.vibration.bottoming_method = 0;
         p.advanced.rest_api_enabled = true;
         p.advanced.rest_api_port = 6397;
-        p.safety_window_duration = 0.0f;
-        p.safety_gain_reduction = 0.3f;
-        p.safety_smoothing_tau = 0.2f;
-        p.spike_detection_threshold = 500.0f;
-        p.immediate_spike_threshold = 1500.0f;
-        p.safety_slew_full_scale_time_s = 1.0f;
-        p.stutter_safety_enabled = false;
-        p.stutter_threshold = 1.5f;
+        p.safety.window_duration = 0.0f;
+        p.safety.gain_reduction = 0.3f;
+        p.safety.smoothing_tau = 0.2f;
+        p.safety.spike_detection_threshold = 500.0f;
+        p.safety.immediate_spike_threshold = 1500.0f;
+        p.safety.slew_full_scale_time_s = 1.0f;
+        p.safety.stutter_safety_enabled = false;
+        p.safety.stutter_threshold = 1.5f;
         p.advanced.speed_gate_lower = 1.0f;
         p.advanced.speed_gate_upper = 5.0f;
         presets.push_back(p);
@@ -1352,14 +1352,14 @@ void Config::WritePresetFields(std::ofstream& file, const Preset& p) {
     file << "rest_api_fallback_enabled=" << (p.advanced.rest_api_enabled ? "1" : "0") << "\n";
     file << "rest_api_port=" << p.advanced.rest_api_port << "\n";
 
-    file << "safety_window_duration=" << p.safety_window_duration << "\n";
-    file << "safety_gain_reduction=" << p.safety_gain_reduction << "\n";
-    file << "safety_smoothing_tau=" << p.safety_smoothing_tau << "\n";
-    file << "spike_detection_threshold=" << p.spike_detection_threshold << "\n";
-    file << "immediate_spike_threshold=" << p.immediate_spike_threshold << "\n";
-    file << "safety_slew_full_scale_time_s=" << p.safety_slew_full_scale_time_s << "\n";
-    file << "stutter_safety_enabled=" << (p.stutter_safety_enabled ? "1" : "0") << "\n";
-    file << "stutter_threshold=" << p.stutter_threshold << "\n";
+    file << "safety_window_duration=" << p.safety.window_duration << "\n";
+    file << "safety_gain_reduction=" << p.safety.gain_reduction << "\n";
+    file << "safety_smoothing_tau=" << p.safety.smoothing_tau << "\n";
+    file << "spike_detection_threshold=" << p.safety.spike_detection_threshold << "\n";
+    file << "immediate_spike_threshold=" << p.safety.immediate_spike_threshold << "\n";
+    file << "safety_slew_full_scale_time_s=" << p.safety.slew_full_scale_time_s << "\n";
+    file << "stutter_safety_enabled=" << (p.safety.stutter_safety_enabled ? "1" : "0") << "\n";
+    file << "stutter_threshold=" << p.safety.stutter_threshold << "\n";
 
     file << "speed_gate_lower=" << p.advanced.speed_gate_lower << "\n";
     file << "speed_gate_upper=" << p.advanced.speed_gate_upper << "\n";
@@ -1702,14 +1702,14 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
     file << "rest_api_fallback_enabled=" << engine.m_advanced.rest_api_enabled << "\n";
     file << "rest_api_port=" << engine.m_advanced.rest_api_port << "\n";
 
-        file << "safety_window_duration=" << engine.m_safety.m_safety_window_duration << "\n";
-        file << "safety_gain_reduction=" << engine.m_safety.m_safety_gain_reduction << "\n";
-        file << "safety_smoothing_tau=" << engine.m_safety.m_safety_smoothing_tau << "\n";
-        file << "spike_detection_threshold=" << engine.m_safety.m_spike_detection_threshold << "\n";
-        file << "immediate_spike_threshold=" << engine.m_safety.m_immediate_spike_threshold << "\n";
-        file << "safety_slew_full_scale_time_s=" << engine.m_safety.m_safety_slew_full_scale_time_s << "\n";
-        file << "stutter_safety_enabled=" << engine.m_safety.m_stutter_safety_enabled << "\n";
-        file << "stutter_threshold=" << engine.m_safety.m_stutter_threshold << "\n";
+        file << "safety_window_duration=" << engine.m_safety.m_config.window_duration << "\n";
+        file << "safety_gain_reduction=" << engine.m_safety.m_config.gain_reduction << "\n";
+        file << "safety_smoothing_tau=" << engine.m_safety.m_config.smoothing_tau << "\n";
+        file << "spike_detection_threshold=" << engine.m_safety.m_config.spike_detection_threshold << "\n";
+        file << "immediate_spike_threshold=" << engine.m_safety.m_config.immediate_spike_threshold << "\n";
+        file << "safety_slew_full_scale_time_s=" << engine.m_safety.m_config.slew_full_scale_time_s << "\n";
+        file << "stutter_safety_enabled=" << engine.m_safety.m_config.stutter_safety_enabled << "\n";
+        file << "stutter_threshold=" << engine.m_safety.m_config.stutter_threshold << "\n";
 
         file << "\n; --- Advanced Settings ---\n";
     file << "speed_gate_lower=" << engine.m_advanced.speed_gate_lower << "\n";
@@ -1942,13 +1942,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
     }
 
     // FFB Safety Validation
-    engine.m_safety.m_safety_window_duration = (std::max)(0.0f, engine.m_safety.m_safety_window_duration);
-    engine.m_safety.m_safety_gain_reduction = (std::max)(0.0f, (std::min)(1.0f, engine.m_safety.m_safety_gain_reduction));
-    engine.m_safety.m_safety_smoothing_tau = (std::max)(0.001f, engine.m_safety.m_safety_smoothing_tau);
-    engine.m_safety.m_spike_detection_threshold = (std::max)(1.0f, engine.m_safety.m_spike_detection_threshold);
-    engine.m_safety.m_immediate_spike_threshold = (std::max)(1.0f, engine.m_safety.m_immediate_spike_threshold);
-    engine.m_safety.m_safety_slew_full_scale_time_s = (std::max)(0.01f, engine.m_safety.m_safety_slew_full_scale_time_s);
-    engine.m_safety.m_stutter_threshold = (std::max)(1.01f, engine.m_safety.m_stutter_threshold);
+    engine.m_safety.m_config.Validate();
 
     Logger::Get().LogFile("[Config] Loaded from %s", final_path.c_str());
 }

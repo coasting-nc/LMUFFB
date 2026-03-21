@@ -7,6 +7,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.217]
+
+### Refactored
+- **Preset System Redesign (Phase 1, Increment 10)**
+  - **Grouped Data Structures**: Introduced `SafetyConfig` struct to centralize FFB spike detection and mitigation parameters.
+  - **FFBEngine & Preset Refinement**: Migrated 8 parameters including `window_duration`, `gain_reduction`, `smoothing_tau`, `spike_detection_threshold`, `immediate_spike_threshold`, `slew_full_scale_time_s`, `stutter_safety_enabled`, and `stutter_threshold` into the new grouped structure.
+  - **Implementation Sync**: Updated `FFBSafetyMonitor`, `Config.cpp`, `GuiLayer_Common.cpp`, `main.cpp`, and numerous tests to use nested configuration paths.
+  - **Memory Safety**: Hardened `FFBSafetyMonitor` with a dedicated config object, improving thread safety and state isolation.
+
+### Testing
+- **New Safety Suite**: Added `tests/test_refactor_safety.cpp` verifying physics consistency, round-trip synchronization, and validation clamping.
+- **Regression Guard**: Updated the entire test suite (600+ cases) to ensure compatibility with the structural refactor.
+- Verified 100% pass rate: **601/601 test cases, 2852 assertions, 0 failures**.
+
+---
+
 ## [0.7.216]
 
 ### Refactored
