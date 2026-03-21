@@ -4,6 +4,7 @@ Then follow the plan defined in "## Adopt the 'Strangler Fig' pattern in refacto
 Note that the refactoring for these logical categories has already been performed: 
 * `GeneralConfig`
 * `FrontAxleConfig`
+* `RearAxleConfig`
 
 Your task is to implement the **`LoadForcesConfig`** category. 
 
