@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-21 12:24:48</td>
+            <td class="headerValue">2026-03-21 12:52:45</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -75,40 +75,40 @@
 <span id="L4"><span class="lineNum">       4</span>                 :             : #include &lt;cctype&gt;</span>
 <span id="L5"><span class="lineNum">       5</span>                 :             : </span>
 <span id="L6"><span class="lineNum">       6</span>                 :             : // Helper: Trim whitespace from a string</span>
-<span id="L7"><span class="lineNum">       7</span>                 :<span class="tlaGNC tlaBgGNC">         986 : static std::string Trim(const std::string&amp; s) {</span></span>
-<span id="L8"><span class="lineNum">       8</span>                 :<span class="tlaGNC">         986 :     auto start = s.find_first_not_of(&quot; \t\n\r&quot;);</span></span>
-<span id="L9"><span class="lineNum">       9</span>   [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 917 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        1124 :     if (start == std::string::npos) return &quot;&quot;;</span></span>
-<span id="L10"><span class="lineNum">      10</span>                 :<span class="tlaGNC">         917 :     auto end = s.find_last_not_of(&quot; \t\n\r&quot;);</span></span>
-<span id="L11"><span class="lineNum">      11</span>                 :<span class="tlaGNC">         917 :     return s.substr(start, end - start + 1);</span></span>
+<span id="L7"><span class="lineNum">       7</span>                 :<span class="tlaGNC tlaBgGNC">         992 : static std::string Trim(const std::string&amp; s) {</span></span>
+<span id="L8"><span class="lineNum">       8</span>                 :<span class="tlaGNC">         992 :     auto start = s.find_first_not_of(&quot; \t\n\r&quot;);</span></span>
+<span id="L9"><span class="lineNum">       9</span>   [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 923 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        1130 :     if (start == std::string::npos) return &quot;&quot;;</span></span>
+<span id="L10"><span class="lineNum">      10</span>                 :<span class="tlaGNC">         923 :     auto end = s.find_last_not_of(&quot; \t\n\r&quot;);</span></span>
+<span id="L11"><span class="lineNum">      11</span>                 :<span class="tlaGNC">         923 :     return s.substr(start, end - start + 1);</span></span>
 <span id="L12"><span class="lineNum">      12</span>                 :             : }</span>
 <span id="L13"><span class="lineNum">      13</span>                 :             : </span>
 <span id="L14"><span class="lineNum">      14</span>                 :             : // Helper: Parse car class from strings (v0.7.44 Refactor)</span>
 <span id="L15"><span class="lineNum">      15</span>                 :             : // Returns a ParsedVehicleClass enum for internal logic and categorization</span>
-<span id="L16"><span class="lineNum">      16</span>                 :<span class="tlaGNC">         476 : ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleName) {</span></span>
-<span id="L17"><span class="lineNum">      17</span>   [<span class="tlaGBC" title="Branch 0 was taken 474 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 476 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         952 :     std::string cls = className ? className : &quot;&quot;;</span></span>
-<span id="L18"><span class="lineNum">      18</span>   [<span class="tlaGBC" title="Branch 0 was taken 475 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 476 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         476 :     std::string name = vehicleName ? vehicleName : &quot;&quot;;</span></span>
+<span id="L16"><span class="lineNum">      16</span>                 :<span class="tlaGNC">         479 : ParsedVehicleClass ParseVehicleClass(const char* className, const char* vehicleName) {</span></span>
+<span id="L17"><span class="lineNum">      17</span>   [<span class="tlaGBC" title="Branch 0 was taken 477 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 479 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         958 :     std::string cls = className ? className : &quot;&quot;;</span></span>
+<span id="L18"><span class="lineNum">      18</span>   [<span class="tlaGBC" title="Branch 0 was taken 478 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 479 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         479 :     std::string name = vehicleName ? vehicleName : &quot;&quot;;</span></span>
 <span id="L19"><span class="lineNum">      19</span>                 :             : </span>
 <span id="L20"><span class="lineNum">      20</span>                 :             :     // Normalize for case-insensitive matching</span>
-<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">         476 :     std::transform(cls.begin(), cls.end(), cls.begin(), ::toupper);</span></span>
-<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">         476 :     std::transform(name.begin(), name.end(), name.begin(), ::toupper);</span></span>
+<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">         479 :     std::transform(cls.begin(), cls.end(), cls.begin(), ::toupper);</span></span>
+<span id="L22"><span class="lineNum">      22</span>                 :<span class="tlaGNC">         479 :     std::transform(name.begin(), name.end(), name.begin(), ::toupper);</span></span>
 <span id="L23"><span class="lineNum">      23</span>                 :             : </span>
 <span id="L24"><span class="lineNum">      24</span>                 :             :     // Issue #368: Trim hidden whitespace that might cause matching failures in some environments</span>
-<span id="L25"><span class="lineNum">      25</span>         [<span class="tlaGBC" title="Branch 0 was taken 476 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         476 :     cls = Trim(cls);</span></span>
-<span id="L26"><span class="lineNum">      26</span>         [<span class="tlaGBC" title="Branch 0 was taken 476 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         476 :     name = Trim(name);</span></span>
+<span id="L25"><span class="lineNum">      25</span>         [<span class="tlaGBC" title="Branch 0 was taken 479 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         479 :     cls = Trim(cls);</span></span>
+<span id="L26"><span class="lineNum">      26</span>         [<span class="tlaGBC" title="Branch 0 was taken 479 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         479 :     name = Trim(name);</span></span>
 <span id="L27"><span class="lineNum">      27</span>                 :             : </span>
 <span id="L28"><span class="lineNum">      28</span>                 :             :     // 1. Primary Identification via Class Name (Hierarchical)</span>
-<span id="L29"><span class="lineNum">      29</span>   [<span class="tlaGBC" title="Branch 0 was taken 435 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 434 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">        1347 :     if (cls.find(&quot;HYPERCAR&quot;) != std::string::npos || cls.find(&quot;LMH&quot;) != std::string::npos ||</span></span>
-<span id="L30"><span class="lineNum">      30</span>   [<span class="tlaGBC" title="Branch 0 was taken 436 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 40 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 434 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        1781 :         cls.find(&quot;LMDH&quot;) != std::string::npos || cls.find(&quot;HYPER&quot;) != std::string::npos ||</span></span>
-<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 434 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 42 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 434 times"> + </span>]
-<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">         434 :         cls.find(&quot;CADILLAC&quot;) != std::string::npos) {</span></span>
+<span id="L29"><span class="lineNum">      29</span>   [<span class="tlaGBC" title="Branch 0 was taken 438 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 437 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">        1356 :     if (cls.find(&quot;HYPERCAR&quot;) != std::string::npos || cls.find(&quot;LMH&quot;) != std::string::npos ||</span></span>
+<span id="L30"><span class="lineNum">      30</span>   [<span class="tlaGBC" title="Branch 0 was taken 439 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 40 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 437 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        1793 :         cls.find(&quot;LMDH&quot;) != std::string::npos || cls.find(&quot;HYPER&quot;) != std::string::npos ||</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 437 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 42 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 437 times"> + </span>]
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">         437 :         cls.find(&quot;CADILLAC&quot;) != std::string::npos) {</span></span>
 <span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">          42 :         return ParsedVehicleClass::HYPERCAR;</span></span>
 <span id="L33"><span class="lineNum">      33</span>                 :             :     }</span>
 <span id="L34"><span class="lineNum">      34</span>                 :             :     </span>
-<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 42 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 392 times"> + </span>]:<span class="tlaGNC">         434 :     if (cls.find(&quot;LMP2&quot;) != std::string::npos) {</span></span>
-<span id="L36"><span class="lineNum">      36</span>   [<span class="tlaGBC" title="Branch 0 was taken 34 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 30 times"> + </span> :<span class="tlaGNC">          42 :         if (cls.find(&quot;ELMS&quot;) != std::string::npos || name.find(&quot;DERESTRICTED&quot;) != std::string::npos) { return ParsedVehicleClass::LMP2_UNRESTRICTED; }</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 30 times"> + </span>]
+<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 45 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 392 times"> + </span>]:<span class="tlaGNC">         437 :     if (cls.find(&quot;LMP2&quot;) != std::string::npos) {</span></span>
+<span id="L36"><span class="lineNum">      36</span>   [<span class="tlaGBC" title="Branch 0 was taken 37 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 33 times"> + </span> :<span class="tlaGNC">          45 :         if (cls.find(&quot;ELMS&quot;) != std::string::npos || name.find(&quot;DERESTRICTED&quot;) != std::string::npos) { return ParsedVehicleClass::LMP2_UNRESTRICTED; }</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 33 times"> + </span>]
 <span id="L37"><span class="lineNum">      37</span>                 :             :         // Issue #225: &quot;LMP2&quot; in LMU refers to the restricted WEC spec.</span>
-<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">          30 :         return ParsedVehicleClass::LMP2_RESTRICTED;</span></span>
+<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">          33 :         return ParsedVehicleClass::LMP2_RESTRICTED;</span></span>
 <span id="L39"><span class="lineNum">      39</span>                 :             :     }</span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : </span>
 <span id="L41"><span class="lineNum">      41</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 391 times"> + </span>]:<span class="tlaGNC">         392 :     if (cls.find(&quot;LMP3&quot;) != std::string::npos) return ParsedVehicleClass::LMP3;</span></span>
@@ -165,15 +165,15 @@
 <span id="L86"><span class="lineNum">      86</span>                 :             :     }</span>
 <span id="L87"><span class="lineNum">      87</span>                 :             : </span>
 <span id="L88"><span class="lineNum">      88</span>                 :<span class="tlaGNC">          33 :     return ParsedVehicleClass::UNKNOWN;</span></span>
-<span id="L89"><span class="lineNum">      89</span>                 :<span class="tlaGNC">         476 : }</span></span>
+<span id="L89"><span class="lineNum">      89</span>                 :<span class="tlaGNC">         479 : }</span></span>
 <span id="L90"><span class="lineNum">      90</span>                 :             : </span>
 <span id="L91"><span class="lineNum">      91</span>                 :             : // Lookup table: Map ParsedVehicleClass to Seed Load (Newtons)</span>
-<span id="L92"><span class="lineNum">      92</span>                 :<span class="tlaGNC">         290 : double GetDefaultLoadForClass(ParsedVehicleClass vclass) {</span></span>
-<span id="L93"><span class="lineNum">      93</span>   [<span class="tlaGBC" title="Branch 0 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 18 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">         290 :     switch (vclass) {</span></span>
+<span id="L92"><span class="lineNum">      92</span>                 :<span class="tlaGNC">         292 : double GetDefaultLoadForClass(ParsedVehicleClass vclass) {</span></span>
+<span id="L93"><span class="lineNum">      93</span>   [<span class="tlaGBC" title="Branch 0 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 20 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">         292 :     switch (vclass) {</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 13 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 193 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 27 times"> + </span>]
 <span id="L94"><span class="lineNum">      94</span>                 :<span class="tlaGNC">          28 :         case ParsedVehicleClass::HYPERCAR:         return 9500.0;</span></span>
 <span id="L95"><span class="lineNum">      95</span>                 :<span class="tlaGNC">           7 :         case ParsedVehicleClass::LMP2_UNRESTRICTED: return 8500.0;</span></span>
-<span id="L96"><span class="lineNum">      96</span>                 :<span class="tlaGNC">          18 :         case ParsedVehicleClass::LMP2_RESTRICTED:   return 7500.0;</span></span>
+<span id="L96"><span class="lineNum">      96</span>                 :<span class="tlaGNC">          20 :         case ParsedVehicleClass::LMP2_RESTRICTED:   return 7500.0;</span></span>
 <span id="L97"><span class="lineNum">      97</span>                 :<span class="tlaGNC">           1 :         case ParsedVehicleClass::LMP2_UNSPECIFIED:  return 8000.0;</span></span>
 <span id="L98"><span class="lineNum">      98</span>                 :<span class="tlaGNC">           3 :         case ParsedVehicleClass::LMP3:             return 5800.0;</span></span>
 <span id="L99"><span class="lineNum">      99</span>                 :<span class="tlaGNC">          13 :         case ParsedVehicleClass::GTE:              return 5500.0;</span></span>
@@ -183,12 +183,12 @@
 <span id="L103"><span class="lineNum">     103</span>                 :             : }</span>
 <span id="L104"><span class="lineNum">     104</span>                 :             : </span>
 <span id="L105"><span class="lineNum">     105</span>                 :             : // Helper: String representation of parsed class for logging and UI</span>
-<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">         148 : const char* VehicleClassToString(ParsedVehicleClass vclass) {</span></span>
-<span id="L107"><span class="lineNum">     107</span>   [<span class="tlaGBC" title="Branch 0 was taken 15 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 10 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">         148 :     switch (vclass) {</span></span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">         149 : const char* VehicleClassToString(ParsedVehicleClass vclass) {</span></span>
+<span id="L107"><span class="lineNum">     107</span>   [<span class="tlaGBC" title="Branch 0 was taken 15 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span> :<span class="tlaGNC">         149 :     switch (vclass) {</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 9 times"> + </span><span class="tlaGBC" title="Branch 6 was taken 99 times"> + </span><span class="tlaGBC" title="Branch 7 was taken 8 times"> + </span>]
 <span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">          15 :         case ParsedVehicleClass::HYPERCAR:         return &quot;Hypercar&quot;;</span></span>
 <span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC">           4 :         case ParsedVehicleClass::LMP2_UNRESTRICTED: return &quot;LMP2 Unrestricted&quot;;</span></span>
-<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">          10 :         case ParsedVehicleClass::LMP2_RESTRICTED:   return &quot;LMP2 Restricted&quot;;</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">          11 :         case ParsedVehicleClass::LMP2_RESTRICTED:   return &quot;LMP2 Restricted&quot;;</span></span>
 <span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">           1 :         case ParsedVehicleClass::LMP2_UNSPECIFIED:  return &quot;LMP2 Unspecified&quot;;</span></span>
 <span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">           2 :         case ParsedVehicleClass::LMP3:             return &quot;LMP3&quot;;</span></span>
 <span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">           9 :         case ParsedVehicleClass::GTE:              return &quot;GTE&quot;;</span></span>
@@ -274,8 +274,8 @@
 <span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">          34 : }</span></span>
 <span id="L171"><span class="lineNum">     171</span>                 :             : </span>
 <span id="L172"><span class="lineNum">     172</span>                 :             : // Lookup table: Map ParsedVehicleClass to Motion Ratio (Wheel vs Pushrod)</span>
-<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">      238490 : double GetMotionRatioForClass(ParsedVehicleClass vclass) {</span></span>
-<span id="L174"><span class="lineNum">     174</span>      [<span class="tlaGBC" title="Branch 0 was taken 74 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 24060 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 214356 times"> + </span>]:<span class="tlaGNC">      238490 :     switch (vclass) {</span></span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">      239286 : double GetMotionRatioForClass(ParsedVehicleClass vclass) {</span></span>
+<span id="L174"><span class="lineNum">     174</span>      [<span class="tlaGBC" title="Branch 0 was taken 74 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 24060 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 215152 times"> + </span>]:<span class="tlaGNC">      239286 :     switch (vclass) {</span></span>
 <span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">          74 :         case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L176"><span class="lineNum">     176</span>                 :             :         case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
 <span id="L177"><span class="lineNum">     177</span>                 :             :         case ParsedVehicleClass::LMP2_RESTRICTED:</span>
@@ -285,14 +285,14 @@
 <span id="L181"><span class="lineNum">     181</span>                 :<span class="tlaGNC">       24060 :         case ParsedVehicleClass::GTE:</span></span>
 <span id="L182"><span class="lineNum">     182</span>                 :             :         case ParsedVehicleClass::LMGT3:</span>
 <span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">       24060 :             return 0.65; // GT cars have lower motion ratios</span></span>
-<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">      214356 :         default:</span></span>
-<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">      214356 :             return 0.55; // Default fallback</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">      215152 :         default:</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">      215152 :             return 0.55; // Default fallback</span></span>
 <span id="L186"><span class="lineNum">     186</span>                 :             :     }</span>
 <span id="L187"><span class="lineNum">     187</span>                 :             : }</span>
 <span id="L188"><span class="lineNum">     188</span>                 :             : </span>
 <span id="L189"><span class="lineNum">     189</span>                 :             : // Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)</span>
-<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">      238179 : double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {</span></span>
-<span id="L191"><span class="lineNum">     191</span>         [<span class="tlaGBC" title="Branch 0 was taken 35993 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 202186 times"> + </span>]:<span class="tlaGNC">      238179 :     if (is_rear) {</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">      238975 : double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {</span></span>
+<span id="L191"><span class="lineNum">     191</span>         [<span class="tlaGBC" title="Branch 0 was taken 35993 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 202982 times"> + </span>]:<span class="tlaGNC">      238975 :     if (is_rear) {</span></span>
 <span id="L192"><span class="lineNum">     192</span>      [<span class="tlaGBC" title="Branch 0 was taken 24 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1926 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 34043 times"> + </span>]:<span class="tlaGNC">       35993 :         switch (vclass) {</span></span>
 <span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">          24 :             case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L194"><span class="lineNum">     194</span>                 :             :             case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
@@ -307,7 +307,7 @@
 <span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">       34043 :                 return 500.0;</span></span>
 <span id="L204"><span class="lineNum">     204</span>                 :             :         }</span>
 <span id="L205"><span class="lineNum">     205</span>                 :             :     } else {</span>
-<span id="L206"><span class="lineNum">     206</span>      [<span class="tlaGBC" title="Branch 0 was taken 44 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 22125 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 180017 times"> + </span>]:<span class="tlaGNC">      202186 :         switch (vclass) {</span></span>
+<span id="L206"><span class="lineNum">     206</span>      [<span class="tlaGBC" title="Branch 0 was taken 44 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 22125 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 180813 times"> + </span>]:<span class="tlaGNC">      202982 :         switch (vclass) {</span></span>
 <span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaGNC">          44 :             case ParsedVehicleClass::HYPERCAR:</span></span>
 <span id="L208"><span class="lineNum">     208</span>                 :             :             case ParsedVehicleClass::LMP2_UNRESTRICTED:</span>
 <span id="L209"><span class="lineNum">     209</span>                 :             :             case ParsedVehicleClass::LMP2_RESTRICTED:</span>
@@ -317,8 +317,8 @@
 <span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">       22125 :             case ParsedVehicleClass::GTE:</span></span>
 <span id="L214"><span class="lineNum">     214</span>                 :             :             case ParsedVehicleClass::LMGT3:</span>
 <span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">       22125 :                 return 500.0;</span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">      180017 :             default:</span></span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">      180017 :                 return 450.0;</span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">      180813 :             default:</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">      180813 :                 return 450.0;</span></span>
 <span id="L218"><span class="lineNum">     218</span>                 :             :         }</span>
 <span id="L219"><span class="lineNum">     219</span>                 :             :     }</span>
 <span id="L220"><span class="lineNum">     220</span>                 :             : }</span>

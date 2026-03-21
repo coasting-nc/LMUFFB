@@ -32,26 +32,26 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">85</td>
-            <td class="headerCovTableEntry">85</td>
+            <td class="headerCovTableEntry">99</td>
+            <td class="headerCovTableEntry">99</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-21 12:24:48</td>
+            <td class="headerValue">2026-03-21 12:52:45</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">9</td>
-            <td class="headerCovTableEntry">9</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntry">12</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryMed">80.8&nbsp;%</td>
-            <td class="headerCovTableEntry">78</td>
-            <td class="headerCovTableEntry">63</td>
+            <td class="headerCovTableEntryMed">79.5&nbsp;%</td>
+            <td class="headerCovTableEntry">88</td>
+            <td class="headerCovTableEntry">70</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
                 </table>
@@ -83,22 +83,22 @@
 <span id="L12"><span class="lineNum">      12</span>                 :             :     bool dynamic_normalization_enabled = false;</span>
 <span id="L13"><span class="lineNum">      13</span>                 :             :     bool auto_load_normalization_enabled = false;</span>
 <span id="L14"><span class="lineNum">      14</span>                 :             : </span>
-<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC tlaBgGNC">         464 :     bool Equals(const GeneralConfig&amp; o, float eps = 0.0001f) const {</span></span>
-<span id="L16"><span class="lineNum">      16</span>                 :<span class="tlaGNC">        1843 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
-<span id="L17"><span class="lineNum">      17</span>         [<span class="tlaGBC" title="Branch 0 was taken 461 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         926 :         return is_near(gain, o.gain) &amp;&amp;</span></span>
-<span id="L18"><span class="lineNum">      18</span>         [<span class="tlaGBC" title="Branch 0 was taken 456 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5 times"> + </span>]:<span class="tlaGNC">         923 :                is_near(min_force, o.min_force) &amp;&amp;</span></span>
-<span id="L19"><span class="lineNum">      19</span>         [<span class="tlaGBC" title="Branch 0 was taken 455 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         917 :                is_near(wheelbase_max_nm, o.wheelbase_max_nm) &amp;&amp;</span></span>
-<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">         456 :                is_near(target_rim_nm, o.target_rim_nm) &amp;&amp;</span></span>
-<span id="L21"><span class="lineNum">      21</span>   [<span class="tlaGBC" title="Branch 0 was taken 462 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 455 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        1381 :                dynamic_normalization_enabled == o.dynamic_normalization_enabled &amp;&amp;</span></span>
-<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 455 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         919 :                auto_load_normalization_enabled == o.auto_load_normalization_enabled;</span></span>
+<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC tlaBgGNC">         465 :     bool Equals(const GeneralConfig&amp; o, float eps = 0.0001f) const {</span></span>
+<span id="L16"><span class="lineNum">      16</span>                 :<span class="tlaGNC">        1847 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
+<span id="L17"><span class="lineNum">      17</span>         [<span class="tlaGBC" title="Branch 0 was taken 462 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         928 :         return is_near(gain, o.gain) &amp;&amp;</span></span>
+<span id="L18"><span class="lineNum">      18</span>         [<span class="tlaGBC" title="Branch 0 was taken 457 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5 times"> + </span>]:<span class="tlaGNC">         925 :                is_near(min_force, o.min_force) &amp;&amp;</span></span>
+<span id="L19"><span class="lineNum">      19</span>         [<span class="tlaGBC" title="Branch 0 was taken 456 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         919 :                is_near(wheelbase_max_nm, o.wheelbase_max_nm) &amp;&amp;</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :<span class="tlaGNC">         457 :                is_near(target_rim_nm, o.target_rim_nm) &amp;&amp;</span></span>
+<span id="L21"><span class="lineNum">      21</span>   [<span class="tlaGBC" title="Branch 0 was taken 463 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 456 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        1384 :                dynamic_normalization_enabled == o.dynamic_normalization_enabled &amp;&amp;</span></span>
+<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 456 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         921 :                auto_load_normalization_enabled == o.auto_load_normalization_enabled;</span></span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :     }</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : </span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">        1069 :     void Validate() {</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        1069 :         gain = (std::max)(0.0f, gain);</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        1069 :         wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);</span></span>
-<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">        1069 :         target_rim_nm = (std::max)(1.0f, target_rim_nm);</span></span>
-<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">        1069 :         min_force = (std::max)(0.0f, min_force);</span></span>
-<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">        1069 :     }</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">        1077 :     void Validate() {</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">        1077 :         gain = (std::max)(0.0f, gain);</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">        1077 :         wheelbase_max_nm = (std::max)(1.0f, wheelbase_max_nm);</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">        1077 :         target_rim_nm = (std::max)(1.0f, target_rim_nm);</span></span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">        1077 :         min_force = (std::max)(0.0f, min_force);</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">        1077 :     }</span></span>
 <span id="L31"><span class="lineNum">      31</span>                 :             : };</span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : </span>
 <span id="L33"><span class="lineNum">      33</span>                 :             : struct FrontAxleConfig {</span>
@@ -119,37 +119,37 @@
 <span id="L48"><span class="lineNum">      48</span>                 :             :     float static_notch_freq = 11.0f;</span>
 <span id="L49"><span class="lineNum">      49</span>                 :             :     float static_notch_width = 2.0f;</span>
 <span id="L50"><span class="lineNum">      50</span>                 :             : </span>
-<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">         455 :     bool Equals(const FrontAxleConfig&amp; o, float eps = 0.0001f) const {</span></span>
-<span id="L52"><span class="lineNum">      52</span>                 :<span class="tlaGNC">        2585 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
-<span id="L53"><span class="lineNum">      53</span>         [<span class="tlaGBC" title="Branch 0 was taken 453 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         909 :         return is_near(steering_shaft_gain, o.steering_shaft_gain) &amp;&amp;</span></span>
-<span id="L54"><span class="lineNum">      54</span>         [<span class="tlaGBC" title="Branch 0 was taken 452 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         907 :                is_near(ingame_ffb_gain, o.ingame_ffb_gain) &amp;&amp;</span></span>
-<span id="L55"><span class="lineNum">      55</span>         [<span class="tlaGBC" title="Branch 0 was taken 451 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         905 :                is_near(steering_shaft_smoothing, o.steering_shaft_smoothing) &amp;&amp;</span></span>
-<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaGBC" title="Branch 0 was taken 451 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         903 :                is_near(understeer_effect, o.understeer_effect) &amp;&amp;</span></span>
-<span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaGNC">         451 :                is_near(understeer_gamma, o.understeer_gamma) &amp;&amp;</span></span>
-<span id="L58"><span class="lineNum">      58</span>         [<span class="tlaGBC" title="Branch 0 was taken 285 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 166 times"> + </span>]:<span class="tlaGNC">         451 :                torque_source == o.torque_source &amp;&amp;</span></span>
-<span id="L59"><span class="lineNum">      59</span>         [<span class="tlaGBC" title="Branch 0 was taken 285 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         285 :                steering_100hz_reconstruction == o.steering_100hz_reconstruction &amp;&amp;</span></span>
-<span id="L60"><span class="lineNum">      60</span>         [<span class="tlaGBC" title="Branch 0 was taken 284 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         285 :                torque_passthrough == o.torque_passthrough &amp;&amp;</span></span>
-<span id="L61"><span class="lineNum">      61</span>   [<span class="tlaGBC" title="Branch 0 was taken 82 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 202 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 81 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">         366 :                flatspot_suppression == o.flatspot_suppression &amp;&amp;</span></span>
-<span id="L62"><span class="lineNum">      62</span>         [<span class="tlaGBC" title="Branch 0 was taken 80 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         163 :                is_near(notch_q, o.notch_q) &amp;&amp;</span></span>
-<span id="L63"><span class="lineNum">      63</span>                 :<span class="tlaGNC">          81 :                is_near(flatspot_strength, o.flatspot_strength) &amp;&amp;</span></span>
-<span id="L64"><span class="lineNum">      64</span>   [<span class="tlaGBC" title="Branch 0 was taken 79 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 78 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">         159 :                static_notch_enabled == o.static_notch_enabled &amp;&amp;</span></span>
-<span id="L65"><span class="lineNum">      65</span>   [<span class="tlaGBC" title="Branch 0 was taken 454 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 77 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">         988 :                is_near(static_notch_freq, o.static_notch_freq) &amp;&amp;</span></span>
-<span id="L66"><span class="lineNum">      66</span>                 :<span class="tlaGNC">         533 :                is_near(static_notch_width, o.static_notch_width);</span></span>
+<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">         456 :     bool Equals(const FrontAxleConfig&amp; o, float eps = 0.0001f) const {</span></span>
+<span id="L52"><span class="lineNum">      52</span>                 :<span class="tlaGNC">        2594 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
+<span id="L53"><span class="lineNum">      53</span>         [<span class="tlaGBC" title="Branch 0 was taken 454 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         911 :         return is_near(steering_shaft_gain, o.steering_shaft_gain) &amp;&amp;</span></span>
+<span id="L54"><span class="lineNum">      54</span>         [<span class="tlaGBC" title="Branch 0 was taken 453 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         909 :                is_near(ingame_ffb_gain, o.ingame_ffb_gain) &amp;&amp;</span></span>
+<span id="L55"><span class="lineNum">      55</span>         [<span class="tlaGBC" title="Branch 0 was taken 452 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         907 :                is_near(steering_shaft_smoothing, o.steering_shaft_smoothing) &amp;&amp;</span></span>
+<span id="L56"><span class="lineNum">      56</span>         [<span class="tlaGBC" title="Branch 0 was taken 452 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         905 :                is_near(understeer_effect, o.understeer_effect) &amp;&amp;</span></span>
+<span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaGNC">         452 :                is_near(understeer_gamma, o.understeer_gamma) &amp;&amp;</span></span>
+<span id="L58"><span class="lineNum">      58</span>         [<span class="tlaGBC" title="Branch 0 was taken 286 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 166 times"> + </span>]:<span class="tlaGNC">         452 :                torque_source == o.torque_source &amp;&amp;</span></span>
+<span id="L59"><span class="lineNum">      59</span>         [<span class="tlaGBC" title="Branch 0 was taken 286 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         286 :                steering_100hz_reconstruction == o.steering_100hz_reconstruction &amp;&amp;</span></span>
+<span id="L60"><span class="lineNum">      60</span>         [<span class="tlaGBC" title="Branch 0 was taken 285 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         286 :                torque_passthrough == o.torque_passthrough &amp;&amp;</span></span>
+<span id="L61"><span class="lineNum">      61</span>   [<span class="tlaGBC" title="Branch 0 was taken 83 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 202 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 82 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">         368 :                flatspot_suppression == o.flatspot_suppression &amp;&amp;</span></span>
+<span id="L62"><span class="lineNum">      62</span>         [<span class="tlaGBC" title="Branch 0 was taken 81 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         165 :                is_near(notch_q, o.notch_q) &amp;&amp;</span></span>
+<span id="L63"><span class="lineNum">      63</span>                 :<span class="tlaGNC">          82 :                is_near(flatspot_strength, o.flatspot_strength) &amp;&amp;</span></span>
+<span id="L64"><span class="lineNum">      64</span>   [<span class="tlaGBC" title="Branch 0 was taken 80 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 79 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">         161 :                static_notch_enabled == o.static_notch_enabled &amp;&amp;</span></span>
+<span id="L65"><span class="lineNum">      65</span>   [<span class="tlaGBC" title="Branch 0 was taken 455 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 78 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">         991 :                is_near(static_notch_freq, o.static_notch_freq) &amp;&amp;</span></span>
+<span id="L66"><span class="lineNum">      66</span>                 :<span class="tlaGNC">         535 :                is_near(static_notch_width, o.static_notch_width);</span></span>
 <span id="L67"><span class="lineNum">      67</span>                 :             :     }</span>
 <span id="L68"><span class="lineNum">      68</span>                 :             : </span>
-<span id="L69"><span class="lineNum">      69</span>                 :<span class="tlaGNC">        1069 :     void Validate() {</span></span>
-<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">        1069 :         steering_shaft_gain = (std::max)(0.0f, (std::min)(2.0f, steering_shaft_gain));</span></span>
-<span id="L71"><span class="lineNum">      71</span>                 :<span class="tlaGNC">        1069 :         ingame_ffb_gain = (std::max)(0.0f, (std::min)(2.0f, ingame_ffb_gain));</span></span>
-<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">        1069 :         steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);</span></span>
-<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">        1069 :         understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer_effect));</span></span>
-<span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">        1069 :         understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));</span></span>
-<span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">        1069 :         torque_source = (std::max)(0, (std::min)(1, torque_source));</span></span>
-<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">        1069 :         steering_100hz_reconstruction = (std::max)(0, (std::min)(1, steering_100hz_reconstruction));</span></span>
-<span id="L77"><span class="lineNum">      77</span>                 :<span class="tlaGNC">        1069 :         notch_q = (std::max)(0.1f, notch_q);</span></span>
-<span id="L78"><span class="lineNum">      78</span>                 :<span class="tlaGNC">        1069 :         flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));</span></span>
-<span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">        1069 :         static_notch_freq = (std::max)(1.0f, static_notch_freq);</span></span>
-<span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">        1069 :         static_notch_width = (std::max)(0.1f, static_notch_width);</span></span>
-<span id="L81"><span class="lineNum">      81</span>                 :<span class="tlaGNC">        1069 :     }</span></span>
+<span id="L69"><span class="lineNum">      69</span>                 :<span class="tlaGNC">        1077 :     void Validate() {</span></span>
+<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">        1077 :         steering_shaft_gain = (std::max)(0.0f, (std::min)(2.0f, steering_shaft_gain));</span></span>
+<span id="L71"><span class="lineNum">      71</span>                 :<span class="tlaGNC">        1077 :         ingame_ffb_gain = (std::max)(0.0f, (std::min)(2.0f, ingame_ffb_gain));</span></span>
+<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">        1077 :         steering_shaft_smoothing = (std::max)(0.0f, steering_shaft_smoothing);</span></span>
+<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">        1077 :         understeer_effect = (std::max)(0.0f, (std::min)(2.0f, understeer_effect));</span></span>
+<span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">        1077 :         understeer_gamma = (std::max)(0.1f, (std::min)(4.0f, understeer_gamma));</span></span>
+<span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">        1077 :         torque_source = (std::max)(0, (std::min)(1, torque_source));</span></span>
+<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">        1077 :         steering_100hz_reconstruction = (std::max)(0, (std::min)(1, steering_100hz_reconstruction));</span></span>
+<span id="L77"><span class="lineNum">      77</span>                 :<span class="tlaGNC">        1077 :         notch_q = (std::max)(0.1f, notch_q);</span></span>
+<span id="L78"><span class="lineNum">      78</span>                 :<span class="tlaGNC">        1077 :         flatspot_strength = (std::max)(0.0f, (std::min)(1.0f, flatspot_strength));</span></span>
+<span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">        1077 :         static_notch_freq = (std::max)(1.0f, static_notch_freq);</span></span>
+<span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">        1077 :         static_notch_width = (std::max)(0.1f, static_notch_width);</span></span>
+<span id="L81"><span class="lineNum">      81</span>                 :<span class="tlaGNC">        1077 :     }</span></span>
 <span id="L82"><span class="lineNum">      82</span>                 :             : };</span>
 <span id="L83"><span class="lineNum">      83</span>                 :             : </span>
 <span id="L84"><span class="lineNum">      84</span>                 :             : struct RearAxleConfig {</span>
@@ -179,53 +179,78 @@
 <span id="L108"><span class="lineNum">     108</span>                 :             :     float power_yaw_gamma = 0.5f;</span>
 <span id="L109"><span class="lineNum">     109</span>                 :             :     float power_yaw_punch = 0.05f;</span>
 <span id="L110"><span class="lineNum">     110</span>                 :             : </span>
-<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">          77 :     bool Equals(const RearAxleConfig&amp; o, float eps = 0.0001f) const {</span></span>
-<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">        1350 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
-<span id="L113"><span class="lineNum">     113</span>         [<span class="tlaGBC" title="Branch 0 was taken 75 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         153 :         return is_near(oversteer_boost, o.oversteer_boost) &amp;&amp;</span></span>
-<span id="L114"><span class="lineNum">     114</span>         [<span class="tlaGBC" title="Branch 0 was taken 74 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         151 :                is_near(sop_effect, o.sop_effect) &amp;&amp;</span></span>
-<span id="L115"><span class="lineNum">     115</span>         [<span class="tlaGBC" title="Branch 0 was taken 73 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         149 :                is_near(sop_scale, o.sop_scale) &amp;&amp;</span></span>
-<span id="L116"><span class="lineNum">     116</span>         [<span class="tlaGBC" title="Branch 0 was taken 72 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         147 :                is_near(sop_smoothing_factor, o.sop_smoothing_factor) &amp;&amp;</span></span>
-<span id="L117"><span class="lineNum">     117</span>         [<span class="tlaGBC" title="Branch 0 was taken 72 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         145 :                is_near(rear_align_effect, o.rear_align_effect) &amp;&amp;</span></span>
-<span id="L118"><span class="lineNum">     118</span>         [<span class="tlaGBC" title="Branch 0 was taken 71 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         144 :                is_near(kerb_strike_rejection, o.kerb_strike_rejection) &amp;&amp;</span></span>
-<span id="L119"><span class="lineNum">     119</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         143 :                is_near(sop_yaw_gain, o.sop_yaw_gain) &amp;&amp;</span></span>
-<span id="L120"><span class="lineNum">     120</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         141 :                is_near(yaw_kick_threshold, o.yaw_kick_threshold) &amp;&amp;</span></span>
-<span id="L121"><span class="lineNum">     121</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         139 :                is_near(yaw_accel_smoothing, o.yaw_accel_smoothing) &amp;&amp;</span></span>
-<span id="L122"><span class="lineNum">     122</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(unloaded_yaw_gain, o.unloaded_yaw_gain) &amp;&amp;</span></span>
-<span id="L123"><span class="lineNum">     123</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(unloaded_yaw_threshold, o.unloaded_yaw_threshold) &amp;&amp;</span></span>
-<span id="L124"><span class="lineNum">     124</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(unloaded_yaw_sens, o.unloaded_yaw_sens) &amp;&amp;</span></span>
-<span id="L125"><span class="lineNum">     125</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(unloaded_yaw_gamma, o.unloaded_yaw_gamma) &amp;&amp;</span></span>
-<span id="L126"><span class="lineNum">     126</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(unloaded_yaw_punch, o.unloaded_yaw_punch) &amp;&amp;</span></span>
-<span id="L127"><span class="lineNum">     127</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(power_yaw_gain, o.power_yaw_gain) &amp;&amp;</span></span>
-<span id="L128"><span class="lineNum">     128</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(power_yaw_threshold, o.power_yaw_threshold) &amp;&amp;</span></span>
-<span id="L129"><span class="lineNum">     129</span>         [<span class="tlaGBC" title="Branch 0 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                is_near(power_slip_threshold, o.power_slip_threshold) &amp;&amp;</span></span>
-<span id="L130"><span class="lineNum">     130</span>   [<span class="tlaGBC" title="Branch 0 was taken 76 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 69 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         222 :                is_near(power_yaw_gamma, o.power_yaw_gamma) &amp;&amp;</span></span>
-<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">         146 :                is_near(power_yaw_punch, o.power_yaw_punch);</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">          78 :     bool Equals(const RearAxleConfig&amp; o, float eps = 0.0001f) const {</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">        1369 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
+<span id="L113"><span class="lineNum">     113</span>         [<span class="tlaGBC" title="Branch 0 was taken 76 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         155 :         return is_near(oversteer_boost, o.oversteer_boost) &amp;&amp;</span></span>
+<span id="L114"><span class="lineNum">     114</span>         [<span class="tlaGBC" title="Branch 0 was taken 75 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         153 :                is_near(sop_effect, o.sop_effect) &amp;&amp;</span></span>
+<span id="L115"><span class="lineNum">     115</span>         [<span class="tlaGBC" title="Branch 0 was taken 74 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         151 :                is_near(sop_scale, o.sop_scale) &amp;&amp;</span></span>
+<span id="L116"><span class="lineNum">     116</span>         [<span class="tlaGBC" title="Branch 0 was taken 73 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         149 :                is_near(sop_smoothing_factor, o.sop_smoothing_factor) &amp;&amp;</span></span>
+<span id="L117"><span class="lineNum">     117</span>         [<span class="tlaGBC" title="Branch 0 was taken 73 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         147 :                is_near(rear_align_effect, o.rear_align_effect) &amp;&amp;</span></span>
+<span id="L118"><span class="lineNum">     118</span>         [<span class="tlaGBC" title="Branch 0 was taken 72 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         146 :                is_near(kerb_strike_rejection, o.kerb_strike_rejection) &amp;&amp;</span></span>
+<span id="L119"><span class="lineNum">     119</span>         [<span class="tlaGBC" title="Branch 0 was taken 71 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         145 :                is_near(sop_yaw_gain, o.sop_yaw_gain) &amp;&amp;</span></span>
+<span id="L120"><span class="lineNum">     120</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         143 :                is_near(yaw_kick_threshold, o.yaw_kick_threshold) &amp;&amp;</span></span>
+<span id="L121"><span class="lineNum">     121</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         141 :                is_near(yaw_accel_smoothing, o.yaw_accel_smoothing) &amp;&amp;</span></span>
+<span id="L122"><span class="lineNum">     122</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(unloaded_yaw_gain, o.unloaded_yaw_gain) &amp;&amp;</span></span>
+<span id="L123"><span class="lineNum">     123</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(unloaded_yaw_threshold, o.unloaded_yaw_threshold) &amp;&amp;</span></span>
+<span id="L124"><span class="lineNum">     124</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(unloaded_yaw_sens, o.unloaded_yaw_sens) &amp;&amp;</span></span>
+<span id="L125"><span class="lineNum">     125</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(unloaded_yaw_gamma, o.unloaded_yaw_gamma) &amp;&amp;</span></span>
+<span id="L126"><span class="lineNum">     126</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(unloaded_yaw_punch, o.unloaded_yaw_punch) &amp;&amp;</span></span>
+<span id="L127"><span class="lineNum">     127</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(power_yaw_gain, o.power_yaw_gain) &amp;&amp;</span></span>
+<span id="L128"><span class="lineNum">     128</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(power_yaw_threshold, o.power_yaw_threshold) &amp;&amp;</span></span>
+<span id="L129"><span class="lineNum">     129</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         140 :                is_near(power_slip_threshold, o.power_slip_threshold) &amp;&amp;</span></span>
+<span id="L130"><span class="lineNum">     130</span>   [<span class="tlaGBC" title="Branch 0 was taken 77 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         225 :                is_near(power_yaw_gamma, o.power_yaw_gamma) &amp;&amp;</span></span>
+<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">         148 :                is_near(power_yaw_punch, o.power_yaw_punch);</span></span>
 <span id="L132"><span class="lineNum">     132</span>                 :             :     }</span>
 <span id="L133"><span class="lineNum">     133</span>                 :             : </span>
-<span id="L134"><span class="lineNum">     134</span>                 :<span class="tlaGNC">        1069 :     void Validate() {</span></span>
-<span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaGNC">        1069 :         oversteer_boost = (std::max)(0.0f, (std::min)(4.0f, oversteer_boost));</span></span>
-<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">        1069 :         sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop_effect));</span></span>
-<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">        1069 :         sop_scale = (std::max)(0.01f, sop_scale);</span></span>
-<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">        1069 :         sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing_factor));</span></span>
-<span id="L139"><span class="lineNum">     139</span>                 :<span class="tlaGNC">        1069 :         rear_align_effect = (std::max)(0.0f, (std::min)(2.0f, rear_align_effect));</span></span>
-<span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">        1069 :         kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));</span></span>
-<span id="L141"><span class="lineNum">     141</span>                 :<span class="tlaGNC">        1069 :         sop_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, sop_yaw_gain));</span></span>
-<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">        1069 :         yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);</span></span>
-<span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC">        1069 :         yaw_accel_smoothing = (std::max)(0.0f, yaw_accel_smoothing);</span></span>
-<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaGNC">        1069 :         unloaded_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_gain));</span></span>
-<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">        1069 :         unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);</span></span>
-<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">        1069 :         unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);</span></span>
-<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaGNC">        1069 :         unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));</span></span>
-<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaGNC">        1069 :         unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));</span></span>
-<span id="L149"><span class="lineNum">     149</span>                 :<span class="tlaGNC">        1069 :         power_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, power_yaw_gain));</span></span>
-<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">        1069 :         power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);</span></span>
-<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">        1069 :         power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));</span></span>
-<span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">        1069 :         power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));</span></span>
-<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC">        1069 :         power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));</span></span>
-<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">        1069 :     }</span></span>
+<span id="L134"><span class="lineNum">     134</span>                 :<span class="tlaGNC">        1077 :     void Validate() {</span></span>
+<span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaGNC">        1077 :         oversteer_boost = (std::max)(0.0f, (std::min)(4.0f, oversteer_boost));</span></span>
+<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">        1077 :         sop_effect = (std::max)(0.0f, (std::min)(2.0f, sop_effect));</span></span>
+<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">        1077 :         sop_scale = (std::max)(0.01f, sop_scale);</span></span>
+<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">        1077 :         sop_smoothing_factor = (std::max)(0.0f, (std::min)(1.0f, sop_smoothing_factor));</span></span>
+<span id="L139"><span class="lineNum">     139</span>                 :<span class="tlaGNC">        1077 :         rear_align_effect = (std::max)(0.0f, (std::min)(2.0f, rear_align_effect));</span></span>
+<span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">        1077 :         kerb_strike_rejection = (std::max)(0.0f, (std::min)(1.0f, kerb_strike_rejection));</span></span>
+<span id="L141"><span class="lineNum">     141</span>                 :<span class="tlaGNC">        1077 :         sop_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, sop_yaw_gain));</span></span>
+<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">        1077 :         yaw_kick_threshold = (std::max)(0.0f, yaw_kick_threshold);</span></span>
+<span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC">        1077 :         yaw_accel_smoothing = (std::max)(0.0f, yaw_accel_smoothing);</span></span>
+<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaGNC">        1077 :         unloaded_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_gain));</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">        1077 :         unloaded_yaw_threshold = (std::max)(0.0f, unloaded_yaw_threshold);</span></span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">        1077 :         unloaded_yaw_sens = (std::max)(0.1f, unloaded_yaw_sens);</span></span>
+<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaGNC">        1077 :         unloaded_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, unloaded_yaw_gamma));</span></span>
+<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaGNC">        1077 :         unloaded_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, unloaded_yaw_punch));</span></span>
+<span id="L149"><span class="lineNum">     149</span>                 :<span class="tlaGNC">        1077 :         power_yaw_gain = (std::max)(0.0f, (std::min)(1.0f, power_yaw_gain));</span></span>
+<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">        1077 :         power_yaw_threshold = (std::max)(0.0f, power_yaw_threshold);</span></span>
+<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">        1077 :         power_slip_threshold = (std::max)(0.01f, (std::min)(1.0f, power_slip_threshold));</span></span>
+<span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">        1077 :         power_yaw_gamma = (std::max)(0.1f, (std::min)(4.0f, power_yaw_gamma));</span></span>
+<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC">        1077 :         power_yaw_punch = (std::max)(0.0f, (std::min)(1.0f, power_yaw_punch));</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">        1077 :     }</span></span>
 <span id="L155"><span class="lineNum">     155</span>                 :             : };</span>
 <span id="L156"><span class="lineNum">     156</span>                 :             : </span>
-<span id="L157"><span class="lineNum">     157</span>                 :             : #endif // FFBCONFIG_H</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             : struct LoadForcesConfig {</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :     float lat_load_effect = 0.0f;</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             :     int lat_load_transform = 0; // Cast to LoadTransform enum in engine</span>
+<span id="L160"><span class="lineNum">     160</span>                 :             :     float long_load_effect = 0.0f;</span>
+<span id="L161"><span class="lineNum">     161</span>                 :             :     float long_load_smoothing = 0.15f;</span>
+<span id="L162"><span class="lineNum">     162</span>                 :             :     int long_load_transform = 0; // Cast to LoadTransform enum in engine</span>
+<span id="L163"><span class="lineNum">     163</span>                 :             : </span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">          70 :     bool Equals(const LoadForcesConfig&amp; o, float eps = 0.0001f) const {</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">         209 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
+<span id="L166"><span class="lineNum">     166</span>                 :<span class="tlaGNC">          70 :         return is_near(lat_load_effect, o.lat_load_effect) &amp;&amp;</span></span>
+<span id="L167"><span class="lineNum">     167</span>   [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 69 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">         140 :                lat_load_transform == o.lat_load_transform &amp;&amp;</span></span>
+<span id="L168"><span class="lineNum">     168</span>         [<span class="tlaGBC" title="Branch 0 was taken 68 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">         139 :                is_near(long_load_effect, o.long_load_effect) &amp;&amp;</span></span>
+<span id="L169"><span class="lineNum">     169</span>         [<span class="tlaGBC" title="Branch 0 was taken 70 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         209 :                is_near(long_load_smoothing, o.long_load_smoothing) &amp;&amp;</span></span>
+<span id="L170"><span class="lineNum">     170</span>         [<span class="tlaGBC" title="Branch 0 was taken 68 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         138 :                long_load_transform == o.long_load_transform;</span></span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :     }</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : </span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">        1013 :     void Validate() {</span></span>
+<span id="L174"><span class="lineNum">     174</span>                 :<span class="tlaGNC">        1013 :         lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lat_load_effect));</span></span>
+<span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">        1013 :         lat_load_transform = (std::max)(0, (std::min)(3, lat_load_transform));</span></span>
+<span id="L176"><span class="lineNum">     176</span>                 :<span class="tlaGNC">        1013 :         long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));</span></span>
+<span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaGNC">        1013 :         long_load_smoothing = (std::max)(0.0f, long_load_smoothing);</span></span>
+<span id="L178"><span class="lineNum">     178</span>                 :<span class="tlaGNC">        1013 :         long_load_transform = (std::max)(0, (std::min)(3, long_load_transform));</span></span>
+<span id="L179"><span class="lineNum">     179</span>                 :<span class="tlaGNC">        1013 :     }</span></span>
+<span id="L180"><span class="lineNum">     180</span>                 :             : };</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             : </span>
+<span id="L182"><span class="lineNum">     182</span>                 :             : #endif // FFBCONFIG_H</span>
         </pre>
               </td>
             </tr>
