@@ -32,26 +32,26 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">172</td>
-            <td class="headerCovTableEntry">172</td>
+            <td class="headerCovTableEntry">200</td>
+            <td class="headerCovTableEntry">200</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-21 18:02:57</td>
+            <td class="headerValue">2026-03-21 18:22:25</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">21</td>
-            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntry">24</td>
+            <td class="headerCovTableEntry">24</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryMed">86.7&nbsp;%</td>
-            <td class="headerCovTableEntry">158</td>
-            <td class="headerCovTableEntry">137</td>
+            <td class="headerCovTableEntryMed">86.6&nbsp;%</td>
+            <td class="headerCovTableEntry">186</td>
+            <td class="headerCovTableEntry">161</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
                 </table>
@@ -399,36 +399,36 @@
 <span id="L327"><span class="lineNum">     327</span>                 :             :     float bottoming_gain = 1.0f;</span>
 <span id="L328"><span class="lineNum">     328</span>                 :             :     int bottoming_method = 0;</span>
 <span id="L329"><span class="lineNum">     329</span>                 :             : </span>
-<span id="L330"><span class="lineNum">     330</span>                 :             :     bool Equals(const VibrationConfig&amp; o, float eps = 0.0001f) const {</span>
-<span id="L331"><span class="lineNum">     331</span>                 :             :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span>
-<span id="L332"><span class="lineNum">     332</span>                 :             :         return is_near(vibration_gain, o.vibration_gain) &amp;&amp;</span>
-<span id="L333"><span class="lineNum">     333</span>                 :             :                is_near(texture_load_cap, o.texture_load_cap) &amp;&amp;</span>
-<span id="L334"><span class="lineNum">     334</span>                 :             :                slide_enabled == o.slide_enabled &amp;&amp;</span>
-<span id="L335"><span class="lineNum">     335</span>                 :             :                is_near(slide_gain, o.slide_gain) &amp;&amp;</span>
-<span id="L336"><span class="lineNum">     336</span>                 :             :                is_near(slide_freq, o.slide_freq) &amp;&amp;</span>
-<span id="L337"><span class="lineNum">     337</span>                 :             :                road_enabled == o.road_enabled &amp;&amp;</span>
-<span id="L338"><span class="lineNum">     338</span>                 :             :                is_near(road_gain, o.road_gain) &amp;&amp;</span>
-<span id="L339"><span class="lineNum">     339</span>                 :             :                spin_enabled == o.spin_enabled &amp;&amp;</span>
-<span id="L340"><span class="lineNum">     340</span>                 :             :                is_near(spin_gain, o.spin_gain) &amp;&amp;</span>
-<span id="L341"><span class="lineNum">     341</span>                 :             :                is_near(spin_freq_scale, o.spin_freq_scale) &amp;&amp;</span>
-<span id="L342"><span class="lineNum">     342</span>                 :             :                is_near(scrub_drag_gain, o.scrub_drag_gain) &amp;&amp;</span>
-<span id="L343"><span class="lineNum">     343</span>                 :             :                bottoming_enabled == o.bottoming_enabled &amp;&amp;</span>
-<span id="L344"><span class="lineNum">     344</span>                 :             :                is_near(bottoming_gain, o.bottoming_gain) &amp;&amp;</span>
-<span id="L345"><span class="lineNum">     345</span>                 :             :                bottoming_method == o.bottoming_method;</span>
+<span id="L330"><span class="lineNum">     330</span>                 :<span class="tlaGNC">          40 :     bool Equals(const VibrationConfig&amp; o, float eps = 0.0001f) const {</span></span>
+<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">         319 :         auto is_near = [eps](float a, float b) { return std::abs(a - b) &lt; eps; };</span></span>
+<span id="L332"><span class="lineNum">     332</span>         [<span class="tlaGBC" title="Branch 0 was taken 39 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          80 :         return is_near(vibration_gain, o.vibration_gain) &amp;&amp;</span></span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">          40 :                is_near(texture_load_cap, o.texture_load_cap) &amp;&amp;</span></span>
+<span id="L334"><span class="lineNum">     334</span>   [<span class="tlaGBC" title="Branch 0 was taken 38 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 37 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">          77 :                slide_enabled == o.slide_enabled &amp;&amp;</span></span>
+<span id="L335"><span class="lineNum">     335</span>         [<span class="tlaGBC" title="Branch 0 was taken 36 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          75 :                is_near(slide_gain, o.slide_gain) &amp;&amp;</span></span>
+<span id="L336"><span class="lineNum">     336</span>                 :<span class="tlaGNC">          37 :                is_near(slide_freq, o.slide_freq) &amp;&amp;</span></span>
+<span id="L337"><span class="lineNum">     337</span>   [<span class="tlaGBC" title="Branch 0 was taken 35 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 34 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">          71 :                road_enabled == o.road_enabled &amp;&amp;</span></span>
+<span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaGNC">          35 :                is_near(road_gain, o.road_gain) &amp;&amp;</span></span>
+<span id="L339"><span class="lineNum">     339</span>   [<span class="tlaGBC" title="Branch 0 was taken 33 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 33 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          67 :                spin_enabled == o.spin_enabled &amp;&amp;</span></span>
+<span id="L340"><span class="lineNum">     340</span>         [<span class="tlaGBC" title="Branch 0 was taken 32 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          66 :                is_near(spin_gain, o.spin_gain) &amp;&amp;</span></span>
+<span id="L341"><span class="lineNum">     341</span>         [<span class="tlaGBC" title="Branch 0 was taken 31 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          65 :                is_near(spin_freq_scale, o.spin_freq_scale) &amp;&amp;</span></span>
+<span id="L342"><span class="lineNum">     342</span>                 :<span class="tlaGNC">          32 :                is_near(scrub_drag_gain, o.scrub_drag_gain) &amp;&amp;</span></span>
+<span id="L343"><span class="lineNum">     343</span>   [<span class="tlaGBC" title="Branch 0 was taken 31 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 31 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          62 :                bottoming_enabled == o.bottoming_enabled &amp;&amp;</span></span>
+<span id="L344"><span class="lineNum">     344</span>         [<span class="tlaGBC" title="Branch 0 was taken 40 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         111 :                is_near(bottoming_gain, o.bottoming_gain) &amp;&amp;</span></span>
+<span id="L345"><span class="lineNum">     345</span>         [<span class="tlaGBC" title="Branch 0 was taken 30 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">          71 :                bottoming_method == o.bottoming_method;</span></span>
 <span id="L346"><span class="lineNum">     346</span>                 :             :     }</span>
 <span id="L347"><span class="lineNum">     347</span>                 :             : </span>
-<span id="L348"><span class="lineNum">     348</span>                 :             :     void Validate() {</span>
-<span id="L349"><span class="lineNum">     349</span>                 :             :         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span>
-<span id="L350"><span class="lineNum">     350</span>                 :             :         texture_load_cap = (std::max)(1.0f, (std::min)(10.0f, texture_load_cap));</span>
-<span id="L351"><span class="lineNum">     351</span>                 :             :         slide_gain = (std::max)(0.0f, (std::min)(2.0f, slide_gain));</span>
-<span id="L352"><span class="lineNum">     352</span>                 :             :         slide_freq = (std::max)(0.1f, (std::min)(5.0f, slide_freq));</span>
-<span id="L353"><span class="lineNum">     353</span>                 :             :         road_gain = (std::max)(0.0f, (std::min)(2.0f, road_gain));</span>
-<span id="L354"><span class="lineNum">     354</span>                 :             :         spin_gain = (std::max)(0.0f, (std::min)(2.0f, spin_gain));</span>
-<span id="L355"><span class="lineNum">     355</span>                 :             :         spin_freq_scale = (std::max)(0.1f, (std::min)(5.0f, spin_freq_scale));</span>
-<span id="L356"><span class="lineNum">     356</span>                 :             :         scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, scrub_drag_gain));</span>
-<span id="L357"><span class="lineNum">     357</span>                 :             :         bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));</span>
-<span id="L358"><span class="lineNum">     358</span>                 :             :         bottoming_method = (std::max)(0, (std::min)(1, bottoming_method));</span>
-<span id="L359"><span class="lineNum">     359</span>                 :             :     }</span>
+<span id="L348"><span class="lineNum">     348</span>                 :<span class="tlaGNC">        1045 :     void Validate() {</span></span>
+<span id="L349"><span class="lineNum">     349</span>                 :<span class="tlaGNC">        1045 :         vibration_gain = (std::max)(0.0f, (std::min)(2.0f, vibration_gain));</span></span>
+<span id="L350"><span class="lineNum">     350</span>                 :<span class="tlaGNC">        1045 :         texture_load_cap = (std::max)(1.0f, (std::min)(10.0f, texture_load_cap));</span></span>
+<span id="L351"><span class="lineNum">     351</span>                 :<span class="tlaGNC">        1045 :         slide_gain = (std::max)(0.0f, (std::min)(2.0f, slide_gain));</span></span>
+<span id="L352"><span class="lineNum">     352</span>                 :<span class="tlaGNC">        1045 :         slide_freq = (std::max)(0.1f, (std::min)(5.0f, slide_freq));</span></span>
+<span id="L353"><span class="lineNum">     353</span>                 :<span class="tlaGNC">        1045 :         road_gain = (std::max)(0.0f, (std::min)(2.0f, road_gain));</span></span>
+<span id="L354"><span class="lineNum">     354</span>                 :<span class="tlaGNC">        1045 :         spin_gain = (std::max)(0.0f, (std::min)(2.0f, spin_gain));</span></span>
+<span id="L355"><span class="lineNum">     355</span>                 :<span class="tlaGNC">        1045 :         spin_freq_scale = (std::max)(0.1f, (std::min)(5.0f, spin_freq_scale));</span></span>
+<span id="L356"><span class="lineNum">     356</span>                 :<span class="tlaGNC">        1045 :         scrub_drag_gain = (std::max)(0.0f, (std::min)(1.0f, scrub_drag_gain));</span></span>
+<span id="L357"><span class="lineNum">     357</span>                 :<span class="tlaGNC">        1045 :         bottoming_gain = (std::max)(0.0f, (std::min)(2.0f, bottoming_gain));</span></span>
+<span id="L358"><span class="lineNum">     358</span>                 :<span class="tlaGNC">        1045 :         bottoming_method = (std::max)(0, (std::min)(1, bottoming_method));</span></span>
+<span id="L359"><span class="lineNum">     359</span>                 :<span class="tlaGNC">        1045 :     }</span></span>
 <span id="L360"><span class="lineNum">     360</span>                 :             : };</span>
 <span id="L361"><span class="lineNum">     361</span>                 :             : </span>
 <span id="L362"><span class="lineNum">     362</span>                 :             : #endif // FFBCONFIG_H</span>
