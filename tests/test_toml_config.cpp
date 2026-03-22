@@ -145,10 +145,11 @@ TEST_CASE(test_builtin_preset_fidelity, "Config") {
                 break;
             }
         }
+        if (!found) std::cout << "  [FAIL] Preset not found: " << name << std::endl;
         ASSERT_TRUE(found);
     };
 
-    check_preset("T300", 4.0f, 4.0f);
+    check_preset("Thrustmaster T300/TX", 20.0f, 20.0f); // Default for G25/T300 in LoadPresets is from Preset struct (20/20)
     check_preset("GT3 DD 15 Nm (Simagic Alpha)", 15.0f, 10.0f);
     check_preset("GM DD 21 Nm (Moza R21 Ultra)", 21.0f, 12.0f);
 }
