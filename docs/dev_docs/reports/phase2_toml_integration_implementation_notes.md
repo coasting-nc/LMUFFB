@@ -63,3 +63,11 @@ A major focus of Phase 2 was ensuring the 600+ test regression suite remained va
 - **Pass Rate**: 606 / 606 tests passing.
 - **Performance**: TOML parsing overhead is negligible (< 5ms on typical configs).
 - **Stability**: Confirmed fallback to hardcoded defaults for missing or type-mismatched keys.
+
+## 10. Regression Tests for Feedback Fixes
+Four specialized regression tests were added in `tests/test_toml_config.cpp` to guard against regressions in logic added during the peer review phase:
+
+1. **`test_builtin_preset_fidelity`**: Validates that all built-in presets (specifically T300, Simagic Alpha, and Moza R21) maintain their specialized wheelbase and rim torque settings. This ensures no loss of haptic detail when using the new TOML-based preset loader.
+2. **`test_toml_static_loads_numeric_types`**: Specifically tests the handling of `[StaticLoads]`. It verifies that the loader correctly ingests both integer (`1200`) and floating-point (`1350.5`) values by utilizing the hardened `value<double>()` accessor.
+3. **`test_toml_type_safety` (Enhanced)**: Verifies that the configuration system is "non-overwriting" when encountering bad data. It forces a specific engine state, then attempts to load a TOML file with type mismatches (e.g., an integer `5` for the boolean `invert_force`), asserting that the original valid state remains untouched.
+4. **System Config Safe Extraction**: A sub-test within the type safety suite that verifies the `[System]` table extraction. It confirms that invalid types for system settings (like the string `"left"` for the integer `win_pos_x`) are safely ignored using the new `value<T>()` lookup pattern.
