@@ -262,13 +262,17 @@ private:
 public:
     void Configure(double alpha, double beta, double game_tick = 0.01) {
         m_alpha = std::clamp(alpha, 0.01, 1.0);
-        m_beta = std::clamp(beta, 0.01, 1.0);
+        m_beta = std::clamp(beta, 0.0, 1.0);
         m_game_tick = (std::max)(0.0001, game_tick);
     }
 
     void SetZeroLatency(bool zero_latency) {
         m_zero_latency = zero_latency;
     }
+
+    double GetAlpha() const { return m_alpha; }
+    double GetBeta() const { return m_beta; }
+    bool GetZeroLatency() const { return m_zero_latency; }
 
     double Process(double raw_input, double dt, bool is_new_frame) {
         if (!m_initialized) {

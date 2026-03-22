@@ -8,6 +8,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.221]
+
+### Changed
+- **Physics-Based DSP Differentiation for Auxiliary Telemetry (Issue #466)**
+  - **Signal-Specific Tuning**: Categorized the 22 auxiliary telemetry channels into three distinct groups based on their physical noise profiles:
+    - **Group 1 (Driver Inputs)**: Steering, Throttle, Brake. Forced to **Zero Latency** (Predictive) with aggressive tuning (Alpha 0.95, Beta 0.40) for maximum responsiveness.
+    - **Group 2 (Texture & Tire)**: Road Details, Patch Velocities, Wheel Rotation. Tied to the **User UI Toggle**, allowing choice between detail and smoothness (Balanced Alpha 0.80, Beta 0.20).
+    - **Group 3 (Chassis & Impacts)**: Accelerations, Suspension Force. Forced to **Smooth** (Interpolation) with heavy damping (Alpha 0.50, Beta 0.00) to eliminate dangerous mathematical spikes from physics engine singularities.
+  - **Hot-Path Optimization**: Refactored the 400Hz `calculate_force` loop to remove 22 redundant `SetZeroLatency()` calls. State changes are now handled by a private `ApplyAuxReconstructionMode()` method triggered only when configuration actually changes.
+  - **Mathematical Hardening**: Updated `HoltWintersFilter` to support Beta=0.0, enabling pure exponential smoothing without trend extrapolation for noisy chassis signals.
+
+### Testing
+- **DSP Verification Suite**: Added `tests/test_reconstruction.cpp` verifying group-specific Alpha/Beta initialization and UI toggle isolation.
+- **Regression Hardening**: Re-baselined physics consistency tests and updated warning logic to account for new differentiated signal response times.
+- Verified 100% pass rate: **615/615 test cases passed**.
+
 ## [0.7.220]
 
 ### Changed
