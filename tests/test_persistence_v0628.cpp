@@ -79,7 +79,8 @@ TEST_CASE(test_save_order, "Persistence") {
         ASSERT_TRUE(tbl.contains("General"));
         ASSERT_TRUE(tbl.contains("FrontAxle"));
         ASSERT_TRUE(tbl.contains("RearAxle"));
-        ASSERT_TRUE(tbl.contains("Presets"));
+        // Presets are no longer in config.toml in Phase 3
+        ASSERT_FALSE(tbl.contains("Presets"));
 
         auto sys = tbl["System"].as_table();
         ASSERT_TRUE(sys != nullptr);

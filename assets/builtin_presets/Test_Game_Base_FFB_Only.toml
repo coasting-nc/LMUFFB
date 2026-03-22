@@ -1,0 +1,16 @@
+name = "Test: Game Base FFB Only"
+[FrontAxle]
+understeer_effect = 0.0
+[RearAxle]
+sop_effect = 0.0
+sop_scale = 1.0
+sop_smoothing_factor = 0.0
+rear_align_effect = 0.0
+[GripEstimation]
+slip_angle_smoothing = 0.015
+[Vibration]
+slide_enabled = false
+slide_gain = 0.0
+bottoming_enabled = false
+bottoming_gain = 0.0
+bottoming_method = 0

@@ -475,10 +475,19 @@ TEST_CASE(test_defaults_consistency, "Logic") {
     {
         Config::LoadPresets();
         ASSERT_TRUE(!Config::presets.empty());
-        ASSERT_TRUE(Config::presets[0].name == "Default");
-        ASSERT_TRUE(Config::presets[0].is_builtin == true);
 
-        const Preset& default_preset = Config::presets[0];
+        // Find Default preset by name since sorting might have moved it
+        int default_idx = -1;
+        for(int i=0; i<(int)Config::presets.size(); i++) {
+            if(Config::presets[i].name == "Default") {
+                default_idx = i;
+                break;
+            }
+        }
+        ASSERT_TRUE(default_idx != -1);
+        ASSERT_TRUE(Config::presets[default_idx].is_builtin == true);
+
+        const Preset& default_preset = Config::presets[default_idx];
         ASSERT_TRUE(default_preset.front_axle.understeer_effect == reference_defaults.front_axle.understeer_effect);
         ASSERT_TRUE(default_preset.rear_axle.sop_effect == reference_defaults.rear_axle.sop_effect);
         ASSERT_TRUE(default_preset.rear_axle.oversteer_boost == reference_defaults.rear_axle.oversteer_boost);
@@ -507,10 +516,19 @@ TEST_CASE(test_defaults_consistency, "Logic") {
     // Test 4: T300 specialized preset
     {
         ASSERT_TRUE(Config::presets.size() > 1);
-        ASSERT_TRUE(Config::presets[2].name == "Thrustmaster T300/TX");
 
-        const Preset& default_preset = Config::presets[0];
-        const Preset& t300_preset = Config::presets[2];
+        int t300_idx = -1;
+        int default_idx = -1;
+        for(int i=0; i<(int)Config::presets.size(); i++) {
+            if(Config::presets[i].name == "Thrustmaster T300/TX") t300_idx = i;
+            if(Config::presets[i].name == "Default") default_idx = i;
+        }
+
+        ASSERT_TRUE(t300_idx != -1);
+        ASSERT_TRUE(default_idx != -1);
+
+        const Preset& default_preset = Config::presets[default_idx];
+        const Preset& t300_preset = Config::presets[t300_idx];
 
         // T300 builtin has special min_force and steering_shaft_smoothing
         ASSERT_NEAR(t300_preset.general.min_force, 0.08f, 0.0001f);
@@ -523,7 +541,16 @@ TEST_CASE(test_defaults_consistency, "Logic") {
     {
         FFBEngine engine1, engine2;
         Preset::ApplyDefaultsToEngine(engine1);
-        Config::ApplyPreset(0, engine2); // Apply "Default"
+
+        int default_idx = -1;
+        for(int i=0; i<(int)Config::presets.size(); i++) {
+            if(Config::presets[i].name == "Default") {
+                default_idx = i;
+                break;
+            }
+        }
+        ASSERT_TRUE(default_idx != -1);
+        Config::ApplyPreset(default_idx, engine2); // Apply "Default"
 
         ASSERT_TRUE(engine1.m_general.gain == engine2.m_general.gain);
         ASSERT_TRUE(engine1.m_front_axle.understeer_effect == engine2.m_front_axle.understeer_effect);

@@ -80,34 +80,33 @@ TEST_CASE(test_preset_initialization, "Config") {
     std::cout << "\nTest: Built-in Preset Fidelity" << std::endl;
     Config::LoadPresets();
     
-    // In Phase 3, built-in names are derived from filenames or 'name' key in TOML.
-    // Let's verify based on the expected filenames (stem).
-    const char* preset_stems[] = {
+    // In Phase 3, built-in names are restored to their original descriptive strings.
+    const char* preset_names[] = {
         "Default",
-        "Logitech_G25G27G29G920",
-        "Thrustmaster_T300TX",
-        "Thrustmaster_T-GTT-GT_II",
-        "Thrustmaster_TS-PCTS-XW",
-        "Fanatec_CSL_DD__GT_DD_Pro",
-        "Fanatec_Podium_DD1DD2",
-        "Simucube_2_SportProUltimate",
-        "Simagic_AlphaAlpha_MiniAlpha_U",
-        "Moza_R5R9R16R21"
+        "Logitech G25/G27/G29/G920",
+        "Thrustmaster T300/TX",
+        "Thrustmaster T-GT/T-GT II",
+        "Thrustmaster TS-PC/TS-XW",
+        "Fanatec CSL DD / GT DD Pro",
+        "Fanatec Podium DD1/DD2",
+        "Simucube 2 Sport/Pro/Ultimate",
+        "Simagic Alpha/Alpha Mini/Alpha U",
+        "Moza R5/R9/R16/R21"
     };
     
     for (int i = 0; i < 10; i++) {
         bool found = false;
         for (const auto& p : Config::presets) {
-            if (p.name == preset_stems[i]) {
+            if (p.name == preset_names[i]) {
                 found = true;
                 break;
             }
         }
         if (found) {
-            std::cout << "[PASS] " << preset_stems[i] << " verified." << std::endl;
+            std::cout << "[PASS] " << preset_names[i] << " verified." << std::endl;
             g_tests_passed++;
         } else {
-            FAIL_TEST("Preset " << preset_stems[i] << " not found!");
+            FAIL_TEST("Preset " << preset_names[i] << " not found!");
         }
     }
 }

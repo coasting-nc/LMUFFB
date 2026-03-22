@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "Version.h"
+#include "GeneratedBuiltinPresets.h"
 #include "logging/Logger.h"
 #include <fstream>
 #include <sstream>
@@ -966,63 +967,27 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
     }
 }
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
-
-static std::filesystem::path GetExecutablePath() {
-#ifdef _WIN32
-    char buffer[MAX_PATH];
-    GetModuleFileNameA(NULL, buffer, MAX_PATH);
-    return std::filesystem::path(buffer).parent_path();
-#else
-    char buffer[1024];
-    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer)-1);
-    if (len != -1) {
-        buffer[len] = '\0';
-        return std::filesystem::path(buffer).parent_path();
-    }
-    return std::filesystem::current_path();
-#endif
-}
-
 void Config::LoadPresets() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     presets.clear();
 
-    // 1. Load Built-in Presets from builtin_presets/ directory
-    std::filesystem::path builtin_dir = GetExecutablePath() / "builtin_presets";
-    // Fallback to source directory if not found (for dev/tests)
-    if (!std::filesystem::exists(builtin_dir)) {
-        builtin_dir = std::filesystem::current_path() / "builtin_presets";
-    }
-    // Deep fallback for tests running from build/tests
-    if (!std::filesystem::exists(builtin_dir)) {
-        builtin_dir = std::filesystem::current_path() / "../../builtin_presets";
-    }
-
-    if (std::filesystem::exists(builtin_dir)) {
+    // 1. Load Built-in Presets from embedded BUILTIN_PRESETS map
+    for (auto const& [name, content] : BUILTIN_PRESETS) {
         try {
-            for (const auto& entry : std::filesystem::directory_iterator(builtin_dir)) {
-                if (entry.is_regular_file() && entry.path().extension() == ".toml") {
-                    try {
-                        toml::table tbl = toml::parse_file(entry.path().string());
-                        Preset p("Unnamed", true);
-                        TomlToPreset(tbl, p);
-                        if (p.name == "Unnamed") {
-                            p.name = entry.path().stem().string();
-                        }
-                        p.is_builtin = true;
-                        p.Validate();
-                        presets.push_back(p);
-                    } catch (const std::exception& e) {
-                        Logger::Get().Log("[Config] Error parsing built-in preset %s: %s", entry.path().string().c_str(), e.what());
-                    }
-                }
+            toml::table tbl = toml::parse(content);
+            Preset p("Unnamed", true);
+            TomlToPreset(tbl, p);
+            if (p.name == "Unnamed") {
+                std::string n(name);
+                std::replace(n.begin(), n.end(), '_', ' ');
+                p.name = n;
             }
-        } catch (...) {}
+            p.is_builtin = true;
+            p.Validate();
+            presets.push_back(p);
+        } catch (const std::exception& e) {
+            Logger::Get().Log("[Config] Error parsing embedded built-in preset %s: %s", std::string(name).c_str(), e.what());
+        }
     }
 
     // 2. Load User Presets from user_presets/ directory
@@ -1058,6 +1023,14 @@ void Config::LoadPresets() {
             }
         }
     } catch (...) {}
+
+    // 3. Deterministic Sorting: Built-ins first, then "Default" first within that group, then alphabetical.
+    std::sort(presets.begin(), presets.end(), [](const Preset& a, const Preset& b) {
+        if (a.is_builtin != b.is_builtin) return a.is_builtin; // Built-ins first
+        if (a.name == "Default") return true;
+        if (b.name == "Default") return false;
+        return a.name < b.name;
+    });
 }
 
 

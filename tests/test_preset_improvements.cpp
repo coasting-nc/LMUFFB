@@ -58,12 +58,19 @@ TEST_CASE(test_duplicate_preset, "Presets") {
     Config::LoadPresets();
     size_t initial_count = Config::presets.size();
 
-    Config::DuplicatePreset(0, engine); // Duplicate "Default"
+    Config::DuplicatePreset(0, engine); // Duplicate first preset
 
     ASSERT_TRUE(Config::presets.size() == initial_count + 1);
-    ASSERT_TRUE(Config::presets.back().name.find("Default") != std::string::npos);
-    ASSERT_TRUE(Config::presets.back().name.find("(Copy)") != std::string::npos);
-    ASSERT_TRUE(!Config::presets.back().is_builtin);
+
+    bool found_copy = false;
+    for (const auto& p : Config::presets) {
+        if (p.name.find("(Copy)") != std::string::npos) {
+            found_copy = true;
+            ASSERT_TRUE(!p.is_builtin);
+            break;
+        }
+    }
+    ASSERT_TRUE(found_copy);
 }
 
 TEST_CASE(test_delete_user_preset, "Presets") {

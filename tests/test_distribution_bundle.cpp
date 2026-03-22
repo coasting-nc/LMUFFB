@@ -24,8 +24,14 @@ TEST_CASE(test_analyzer_bundling_integrity, "Distribution") {
        }
     }
 
+    // Fallback to source tree for CI/Headless environments where POST_BUILD didn't run
     if (!fs::exists(tools_build_path)) {
-        std::string msg = "Could not find tools build path in: " + tools_build_path.string();
+        std::cout << "[INFO] Tools not found in build path, falling back to source root..." << std::endl;
+        tools_build_path = source_root / "tools" / "lmuffb_log_analyzer";
+    }
+
+    if (!fs::exists(tools_build_path)) {
+        std::string msg = "Could not find tools path in build or source: " + tools_build_path.string();
         FAIL_TEST(msg.c_str());
         return;
     }

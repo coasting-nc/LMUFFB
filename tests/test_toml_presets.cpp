@@ -17,14 +17,19 @@ TEST_CASE(test_phase3_embedded_builtins, "Presets") {
 
     bool found_t300 = false;
     for (const auto& p : Config::presets) {
-        // Built-in presets are loaded from files, and their names come from 'name' key or filename.
-        // In the extracted files, name is inside or it defaults to filename.
-        if (p.name == "Thrustmaster T300/TX" || p.name == "Thrustmaster_T300TX") {
+        // Built-in presets are embedded in the binary as TOML strings.
+        // Their names come from the 'name' key in TOML or the key in the BUILTIN_PRESETS map.
+        if (p.name == "Thrustmaster T300/TX") {
             found_t300 = true;
             ASSERT_TRUE(p.is_builtin);
             // Verify some core values are loaded
             ASSERT_GT(p.general.wheelbase_max_nm, 0.0f);
         }
+    }
+    if (!found_t300) {
+        std::cout << "  [FAIL] T300 preset not found. Available: ";
+        for (const auto& p : Config::presets) std::cout << "'" << p.name << "' ";
+        std::cout << std::endl;
     }
     ASSERT_TRUE(found_t300);
 }
