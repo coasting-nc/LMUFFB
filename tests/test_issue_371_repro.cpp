@@ -8,18 +8,14 @@ namespace FFBEngineTests {
 TEST_CASE(test_issue_371_repro, "Config") {
     std::cout << "\nTest: Issue #371 Repro (Imported profiles don't save)" << std::endl;
 
-    std::string mock_config = "repro_371_config.ini";
+    std::string mock_config = "repro_371_config.toml";
 
-    // 1. Create a mock config.ini with a user-defined preset
+    // 1. Create a mock config.toml with a user-defined preset
     {
         std::ofstream file(mock_config);
-        file << "ini_version=0.7.203\n";
-        file << "last_preset_name=MyUserPreset\n";
-        file << "\n[Presets]\n";
-        file << "[Preset:MyUserPreset]\n";
-        file << "app_version=0.7.203\n";
-        file << "gain=0.85\n";
-        file << "sop=1.5\n";
+        file << "[System]\nlast_preset_name = \"MyUserPreset\"\n";
+        file << "[Presets.MyUserPreset.General]\ngain = 0.85\n";
+        file << "[Presets.MyUserPreset.RearAxle]\nsop_effect = 1.5\n";
         file.close();
     }
 
@@ -36,11 +32,6 @@ TEST_CASE(test_issue_371_repro, "Config") {
     std::cout << "Step 1: Loading config..." << std::endl;
     Config::Load(engine, mock_config);
 
-    // BUG REPRO: At this point, Config::presets is expected to be EMPTY
-    // because Load() does not call LoadPresets().
-    // Only Default and built-ins might be there if they were added elsewhere,
-    // but our specific "MyUserPreset" will definitely be missing if not loaded.
-
     // 5. Simulate an auto-save (e.g. session change or exiting)
     std::cout << "Step 2: Saving config (Simulated Auto-Save)..." << std::endl;
     Config::Save(engine, mock_config);
@@ -48,7 +39,7 @@ TEST_CASE(test_issue_371_repro, "Config") {
     // 6. Reload and check if "MyUserPreset" survived
     std::cout << "Step 3: Reloading to verify persistence..." << std::endl;
     Config::presets.clear();
-    Config::LoadPresets(); // We use LoadPresets directly here to see what's in the file
+    Config::LoadPresets(mock_config);
 
     bool found = false;
     for (const auto& p : Config::presets) {
@@ -70,7 +61,7 @@ TEST_CASE(test_issue_371_repro, "Config") {
     // Clean up
     if (std::filesystem::exists(mock_config)) std::filesystem::remove(mock_config);
 
-    ASSERT_TRUE(found); // This will fail if the bug is present
+    ASSERT_TRUE(found);
 }
 
 } // namespace FFBEngineTests

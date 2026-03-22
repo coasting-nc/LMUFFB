@@ -6,11 +6,9 @@
 #include "src/ffb/FFBEngine.h"
 #include "src/core/Config.h"
 #include "src/Version.h"
+#include <toml.hpp>
 
 namespace FFBEngineTests {
-// Counters are now extern from test_ffb_common.h
-
-// ASSERT macros are reused or redefined if needed
 
 /**
  * Helper to check if a file contains a specific string.
@@ -41,107 +39,97 @@ int GetLineNumber(const std::string& filename, const std::string& pattern) {
 }
 
 // ----------------------------------------------------------------------------
-// TEST 1: Load Stops At Presets Header
+// TEST 1: Load Stops At Presets Table (Phase 2 TOML)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_load_stops_at_presets, "Persistence") {
-    std::cout << "Test 1: Load Stops At Presets Header..." << std::endl;
+    std::cout << "Test 1: Load Isolation..." << std::endl;
     Config::presets.clear();
     
-    std::string test_file = "test_isolation.ini";
+    std::string test_file = "test_isolation.toml";
     {
         std::ofstream file(test_file);
-        file << "gain=0.5\n";
-        file << "[Presets]\n";
-        file << "gain=2.0\n";
+        file << "[General]\ngain = 0.5\n";
+        file << "[Presets.SomePreset.General]\ngain = 2.0\n";
     }
     
     FFBEngine engine;
     Config::Load(engine, test_file);
     
-    // In the buggy version, it would be 2.0
+    // Config::Load should only load the main settings, not presets
     ASSERT_NEAR(engine.m_general.gain, 0.5f, 0.001f);
     
     std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
-// TEST 2: Save Follows Defined Order
+// TEST 2: Save verified via TOML parsing (Category existence)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_save_order, "Persistence") {
-    std::cout << "Test 2: Save Follows Defined Order..." << std::endl;
+    std::cout << "Test 2: Category Verification (TOML)..." << std::endl;
     Config::presets.clear();
     FFBEngine engine;
-    Preset::ApplyDefaultsToEngine(engine);
+    InitializeEngine(engine);
     
-    std::string test_file = "test_order.ini";
+    std::string test_file = "test_order.toml";
     Config::Save(engine, test_file);
     
-    int line_win = GetLineNumber(test_file, "win_pos_x");
-    int line_gain = GetLineNumber(test_file, "gain");
-    int line_understeer = GetLineNumber(test_file, "understeer=");
-    int line_boost = GetLineNumber(test_file, "oversteer_boost");
-    int line_presets = GetLineNumber(test_file, "[Presets]");
-    
-    ASSERT_TRUE(line_win != -1);
-    ASSERT_TRUE(line_gain != -1);
-    ASSERT_TRUE(line_understeer != -1);
-    ASSERT_TRUE(line_boost != -1);
-    ASSERT_TRUE(line_presets != -1);
-    
-    ASSERT_TRUE(line_win < line_gain);
-    ASSERT_TRUE(line_gain < line_understeer);
-    ASSERT_TRUE(line_understeer < line_boost);
-    ASSERT_TRUE(line_boost < line_presets);
+    try {
+        toml::table tbl = toml::parse_file(test_file);
+        ASSERT_TRUE(tbl.contains("System"));
+        ASSERT_TRUE(tbl.contains("General"));
+        ASSERT_TRUE(tbl.contains("FrontAxle"));
+        ASSERT_TRUE(tbl.contains("RearAxle"));
+        ASSERT_TRUE(tbl.contains("Presets"));
+
+        auto sys = tbl["System"].as_table();
+        ASSERT_TRUE(sys != nullptr);
+        ASSERT_TRUE(sys->contains("app_version"));
+    } catch (const toml::parse_error& err) {
+        FAIL_TEST("TOML parse error: " << err.description());
+    }
     
     std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
-// TEST 3: Load Supports Legacy Keys
+// TEST 3: Load Supports Legacy Keys via MigrateFromLegacyIni
 // ----------------------------------------------------------------------------
 TEST_CASE(test_legacy_keys, "Persistence") {
-    std::cout << "Test 3: Load Supports Legacy Keys..." << std::endl;
+    std::cout << "Test 3: Legacy Key Support..." << std::endl;
     Config::presets.clear();
     
-    std::string test_file = "test_legacy.ini";
+    std::string ini_file = "test_legacy.ini";
     {
-        std::ofstream file(test_file);
-        file << "smoothing=0.1\n";
-        file << "max_load_factor=2.0\n";
-    }
-    
-    FFBEngine engine;
-    // Set current version to avoid migration reset
-    {
-        std::ofstream file(test_file);
-        file << "ini_version=" << LMUFFB_VERSION << "\n";
+        std::ofstream file(ini_file);
         file << "smoothing=0.1\n";
         file << "max_load_factor=2.0\n";
         file.close();
     }
-    Config::Load(engine, test_file);
+    
+    FFBEngine engine;
+    Config::MigrateFromLegacyIni(engine, ini_file);
     
     ASSERT_NEAR(engine.m_rear_axle.sop_smoothing_factor, 0.1f, 0.001f);
     ASSERT_NEAR(engine.m_vibration.texture_load_cap, 2.0f, 0.001f);
     
-    std::remove(test_file.c_str());
+    std::remove(ini_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
-// TEST 4: Structure Includes Comments
+// TEST 4: Structure (TOML headers)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_structure_comments, "Persistence") {
-    std::cout << "Test 4: Structure Includes Comments..." << std::endl;
+    std::cout << "Test 4: TOML Headers..." << std::endl;
     Config::presets.clear();
     FFBEngine engine;
     
-    std::string test_file = "test_comments.ini";
+    std::string test_file = "test_headers.toml";
     Config::Save(engine, test_file);
     
-    ASSERT_TRUE(FileContains(test_file, "; --- System & Window ---"));
-    ASSERT_TRUE(FileContains(test_file, "; --- General FFB ---"));
-    ASSERT_TRUE(FileContains(test_file, "; --- Front Axle (Understeer) ---"));
-    ASSERT_TRUE(FileContains(test_file, "; --- Rear Axle (Oversteer) ---"));
+    ASSERT_TRUE(FileContains(test_file, "[System]"));
+    ASSERT_TRUE(FileContains(test_file, "[General]"));
+    ASSERT_TRUE(FileContains(test_file, "[FrontAxle]"));
+    ASSERT_TRUE(FileContains(test_file, "[RearAxle]"));
     
     std::remove(test_file.c_str());
 }

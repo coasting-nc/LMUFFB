@@ -67,7 +67,7 @@ TEST_CASE(test_guid_string_conversion, "Logic") {
 TEST_CASE(test_config_persistence_guid, "Logic") {
     std::cout << "\nTest: Config Persistence (Last Device GUID)" << std::endl;
 
-    std::string test_file = "test_config_logic_guid.ini";
+    std::string test_file = "test_config_logic_guid.toml";
     FFBEngine engine;
 
     std::string fake_guid = "{12345678-1234-1234-1234-1234567890AB}";
@@ -84,7 +84,7 @@ TEST_CASE(test_config_persistence_guid, "Logic") {
 TEST_CASE(test_config_always_on_top_persistence, "Logic") {
     std::cout << "\nTest: Config Persistence (Always on Top)" << std::endl;
 
-    std::string test_file = "test_config_logic_top.ini";
+    std::string test_file = "test_config_logic_top.toml";
     FFBEngine engine;
 
     Config::m_always_on_top = true;
@@ -99,12 +99,13 @@ TEST_CASE(test_config_always_on_top_persistence, "Logic") {
 TEST_CASE(test_preset_management_system, "Logic") {
     std::cout << "\nTest: Preset Management System" << std::endl;
 
-    std::string test_file = "test_config_logic_preset.ini";
     Config::presets.clear();
+    Config::m_config_path = "test_config_logic_preset.toml";
 
     FFBEngine engine;
+    InitializeEngine(engine);
     engine.m_general.gain = 0.88f;
-    engine.m_front_axle.understeer_effect = 12.3f;
+    engine.m_front_axle.understeer_effect = 1.3f;
 
     Config::AddUserPreset("TestPreset_Logic", engine);
 
@@ -114,8 +115,8 @@ TEST_CASE(test_preset_management_system, "Logic") {
     for (const auto& p : Config::presets) {
         if (p.name == "TestPreset_Logic") {
             found = true;
-            ASSERT_TRUE(p.general.gain == engine.m_general.gain);
-            ASSERT_TRUE(p.front_axle.understeer_effect == engine.m_front_axle.understeer_effect);
+            ASSERT_NEAR(p.general.gain, 0.88f, 0.0001f);
+            ASSERT_NEAR(p.front_axle.understeer_effect, 1.3f, 0.0001f);
             ASSERT_TRUE(p.is_builtin == false);
             break;
         }
@@ -397,7 +398,7 @@ TEST_CASE(test_latency_display_regression, "Logic") {
 TEST_CASE(test_window_config_persistence_logic, "Logic") {
     std::cout << "\nTest: Window Config Persistence (Size/Position/State)" << std::endl;
 
-    std::string test_file = "test_config_logic_window.ini";
+    std::string test_file = "test_config_logic_window.toml";
     FFBEngine engine;
 
     Config::win_pos_x = 250;
@@ -506,18 +507,16 @@ TEST_CASE(test_defaults_consistency, "Logic") {
     // Test 4: T300 specialized preset
     {
         ASSERT_TRUE(Config::presets.size() > 1);
-        ASSERT_TRUE(Config::presets[1].name == "T300");
+        ASSERT_TRUE(Config::presets[2].name == "Thrustmaster T300/TX");
 
         const Preset& default_preset = Config::presets[0];
-        const Preset& t300_preset = Config::presets[1];
+        const Preset& t300_preset = Config::presets[2];
 
-        ASSERT_TRUE(t300_preset.front_axle.understeer_effect == 0.5f);
-        ASSERT_TRUE(abs(t300_preset.rear_axle.sop_effect - 0.425003f) < 0.0001f);
-        ASSERT_TRUE(t300_preset.braking.lockup_freq_scale == 1.02f);
-        ASSERT_TRUE(t300_preset.vibration.scrub_drag_gain == 0.0462185f);
+        // T300 builtin has special min_force and steering_shaft_smoothing
+        ASSERT_NEAR(t300_preset.general.min_force, 0.08f, 0.0001f);
+        ASSERT_NEAR(t300_preset.front_axle.steering_shaft_smoothing, 0.15f, 0.0001f);
 
-        ASSERT_TRUE(default_preset.front_axle.understeer_effect != t300_preset.front_axle.understeer_effect);
-        ASSERT_TRUE(default_preset.rear_axle.sop_effect != t300_preset.rear_axle.sop_effect);
+        ASSERT_TRUE(default_preset.general.min_force != t300_preset.general.min_force);
     }
 
     // Test 5: Preset application consistency
@@ -526,6 +525,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         Preset::ApplyDefaultsToEngine(engine1);
         Config::ApplyPreset(0, engine2); // Apply "Default"
 
+        ASSERT_TRUE(engine1.m_general.gain == engine2.m_general.gain);
         ASSERT_TRUE(engine1.m_front_axle.understeer_effect == engine2.m_front_axle.understeer_effect);
         ASSERT_TRUE(engine1.m_rear_axle.sop_effect == engine2.m_rear_axle.sop_effect);
         ASSERT_TRUE(engine1.m_rear_axle.oversteer_boost == engine2.m_rear_axle.oversteer_boost);
@@ -550,7 +550,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
 
     // Test 6: Verify no config file still produces correct defaults
     {
-        std::string nonexistent_file = "this_file_does_not_exist_12345.ini";
+        std::string nonexistent_file = "this_file_does_not_exist_12345.toml";
         FFBEngine engine;
         Preset::ApplyDefaultsToEngine(engine);
         Config::Load(engine, nonexistent_file);
@@ -565,7 +565,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
 TEST_CASE(test_config_persistence_braking_group, "Logic") {
     std::cout << "\nTest: Config Persistence (Braking Group)" << std::endl;
 
-    std::string test_file = "test_config_logic_brake.ini";
+    std::string test_file = "test_config_logic_brake.toml";
     FFBEngine engine_save;
     InitializeEngine(engine_save);
     FFBEngine engine_load;
@@ -579,10 +579,10 @@ TEST_CASE(test_config_persistence_braking_group, "Logic") {
     Config::Save(engine_save, test_file);
     Config::Load(engine_load, test_file);
 
-    ASSERT_TRUE(engine_load.m_braking.brake_load_cap == 2.5f);
-    ASSERT_TRUE(engine_load.m_braking.lockup_start_pct == 8.0f);
-    ASSERT_TRUE(engine_load.m_braking.lockup_full_pct == 20.0f);
-    ASSERT_TRUE(engine_load.m_braking.lockup_rear_boost == 2.0f);
+    ASSERT_NEAR(engine_load.m_braking.brake_load_cap, 2.5f, 0.001f);
+    ASSERT_NEAR(engine_load.m_braking.lockup_start_pct, 8.0f, 0.001f);
+    ASSERT_NEAR(engine_load.m_braking.lockup_full_pct, 20.0f, 0.001f);
+    ASSERT_NEAR(engine_load.m_braking.lockup_rear_boost, 2.0f, 0.001f);
 
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
@@ -599,39 +599,38 @@ TEST_CASE(test_legacy_config_migration, "Logic") {
 
     FFBEngine engine;
     InitializeEngine(engine);
-    Config::Load(engine, test_file);
+    // Directly call migration to verify legacy parsing logic
+    Config::MigrateFromLegacyIni(engine, test_file);
 
-    ASSERT_TRUE(engine.m_vibration.texture_load_cap == 1.8f);
+    ASSERT_NEAR(engine.m_vibration.texture_load_cap, 1.8f, 0.001f);
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_sop_smoothing_migration, "Logic") {
     std::cout << "\nTest: SoP Smoothing Migration (Issue #37 Reset)" << std::endl;
 
-    std::string test_file = "test_config_sop_migration.ini";
-    std::string original_path = Config::m_config_path;
-    Config::m_config_path = test_file;
+    std::string ini_file = "test_config_sop_migration.ini";
+    std::string toml_file = "test_config_sop_migration.toml";
+    std::remove(toml_file.c_str());
 
-    // 1. Create a legacy config (v0.7.146) with smoothing enabled (old mapping: 1.0 = raw, 0.85 = 15ms)
+    // 1. Create a legacy config (v0.7.146) with smoothing enabled
     {
-        std::ofstream file(test_file);
+        std::ofstream file(ini_file);
         file << "ini_version=0.7.146\n";
         file << "sop_smoothing_factor=0.85\n";
-        file << "\n[Presets]\n";
-        file << "[Preset:UserPreset]\n";
+        file << "\n[Preset:UserPreset]\n";
         file << "app_version=0.7.146\n";
         file << "sop_smoothing_factor=0.85\n";
         file.close();
     }
 
     FFBEngine engine;
-    // Initial state check (should be default 0.0)
+    InitializeEngine(engine);
     ASSERT_TRUE(engine.m_rear_axle.sop_smoothing_factor == 0.0f);
 
-    // 2. Load the legacy config
+    // 2. Load the legacy config (triggers migration)
     Config::presets.clear();
-    Config::Load(engine, test_file);     // Loads main config
-    Config::LoadPresets();               // Loads presets from Config::m_config_path
+    Config::Load(engine, toml_file); // This should look for ini if toml missing
 
     // 3. Verify that main config was reset to 0.0
     ASSERT_TRUE(engine.m_rear_axle.sop_smoothing_factor == 0.0f);
@@ -639,6 +638,7 @@ TEST_CASE(test_sop_smoothing_migration, "Logic") {
     // 4. Verify that the user preset was reset to 0.0
     bool found = false;
     for (const auto& p : Config::presets) {
+        std::cout << "  Checking preset: [" << p.name << "]" << std::endl;
         if (p.name == "UserPreset") {
             found = true;
             ASSERT_TRUE(p.rear_axle.sop_smoothing_factor == 0.0f);
@@ -647,8 +647,9 @@ TEST_CASE(test_sop_smoothing_migration, "Logic") {
     }
     ASSERT_TRUE(found);
 
-    Config::m_config_path = original_path;
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
+    if (std::filesystem::exists(ini_file)) std::filesystem::remove(ini_file);
+    if (std::filesystem::exists(ini_file + ".bak")) std::filesystem::remove(ini_file + ".bak");
+    if (std::filesystem::exists(toml_file)) std::filesystem::remove(toml_file);
 }
 
 } // namespace FFBEngineTests

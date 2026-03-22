@@ -317,14 +317,17 @@ struct Preset {
 
 class Config {
 public:
-    static std::string m_config_path; // Default: "config.ini"
+    static std::string m_config_path; // Default: "config.toml"
     static void Save(const FFBEngine& engine, const std::string& filename = "");
     static void Load(FFBEngine& engine, const std::string& filename = "");
+
+    // Phase 2: Legacy Migration
+    static void MigrateFromLegacyIni(FFBEngine& engine, const std::string& filename);
     
     // Preset Management
     static std::vector<Preset> presets;
     static std::string m_last_preset_name; // NEW (v0.7.14)
-    static void LoadPresets(); // Populates presets vector
+    static void LoadPresets(const std::string& filename = ""); // Populates presets vector
     static void ApplyPreset(int index, FFBEngine& engine);
     
     // NEW: Add a user preset

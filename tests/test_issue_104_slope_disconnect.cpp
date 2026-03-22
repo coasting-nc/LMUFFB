@@ -8,62 +8,56 @@ TEST_CASE(test_slope_config_migration, "Regression") {
     std::cout << "Test: Slope Config Migration (Issue #104)" << std::endl;
 
     // 1. Create a legacy config file
-    std::ofstream file("test_legacy_slope.ini");
-    file << "[Presets]" << std::endl;
-    file << "[Preset:LegacyTest]" << std::endl;
-    file << "slope_negative_threshold=-0.88" << std::endl; // Legacy key
-    file << "slope_detection.enabled=1" << std::endl;
-    file.close();
+    std::string ini_file = "test_legacy_slope.ini";
+    {
+        std::ofstream file(ini_file);
+        file << "[Preset:LegacyTest]" << std::endl;
+        file << "slope_negative_threshold=-0.88" << std::endl; // Legacy key
+        file << "slope_detection_enabled=1" << std::endl;
+        file.close();
+    }
 
-    // 2. Load it
+    // 2. Load it via ImportPreset which still supports legacy INI
     FFBEngine engine;
-    // Reset to defaults first to ensure we don't have lingering state
+    InitializeEngine(engine);
     engine.m_slope_detection.min_threshold = -0.3f;
     
-    Config::m_config_path = "test_legacy_slope.ini";
-    Config::LoadPresets(); // Should parse and migrate
-    Config::ApplyPreset((int)Config::presets.size() - 1, engine); // Apply the last loaded preset (LegacyTest)
+    Config::presets.clear();
+    Config::ImportPreset(ini_file, engine);
+
+    int idx = -1;
+    for(int i=0; i<(int)Config::presets.size(); ++i) {
+        if (Config::presets[i].name == "LegacyTest") { idx = i; break; }
+    }
+    ASSERT_TRUE(idx != -1);
+    Config::ApplyPreset(idx, engine);
 
     // 3. Verify Migration
-    // The legacy key should have populated the new variable
     ASSERT_NEAR(engine.m_slope_detection.min_threshold, -0.88f, 0.001f);
-    
-    // Verify Struct
-    ASSERT_NEAR(Config::presets.back().slope_detection.min_threshold, -0.88f, 0.001f);
+    ASSERT_NEAR(Config::presets[idx].slope_detection.min_threshold, -0.88f, 0.001f);
 
-    std::remove("test_legacy_slope.ini");
+    std::remove(ini_file.c_str());
 }
 
 TEST_CASE(test_slope_persistence_new_key, "Regression") {
-    std::cout << "Test: Slope Persistence New Key (Issue #104)" << std::endl;
+    std::cout << "Test: Slope Persistence (TOML)" << std::endl;
 
     FFBEngine engine;
+    InitializeEngine(engine);
     engine.m_slope_detection.min_threshold = -0.55f;
     engine.m_slope_detection.enabled = true;
 
     // Save to a new file
-    Config::Save(engine, "test_slope_save.ini");
+    std::string test_file = "test_slope_save.toml";
+    Config::Save(engine, test_file);
 
-    // Read back manually to check keys
-    std::ifstream infile("test_slope_save.ini");
-    std::string line;
-    bool found_new_key = false;
-    bool found_old_key = false;
+    ASSERT_TRUE(IsInLog(test_file, "[SlopeDetection]"));
+    ASSERT_TRUE(IsInLog(test_file, "min_threshold"));
 
-    while (std::getline(infile, line)) {
-        if (line.find("slope_min_threshold=-0.55") != std::string::npos) {
-            found_new_key = true;
-        }
-        if (line.find("slope_negative_threshold=") != std::string::npos) {
-            found_old_key = true;
-        }
-    }
-    infile.close();
+    // Verify it doesn't use the legacy flat key
+    ASSERT_FALSE(IsInLog(test_file, "slope_min_threshold"));
 
-    ASSERT_TRUE(found_new_key);
-    ASSERT_TRUE(!found_old_key); // Should NOT write deprecated key
-
-    std::remove("test_slope_save.ini");
+    std::remove(test_file.c_str());
 }
 
 } // namespace FFBEngineTests
