@@ -1,0 +1,64 @@
+[General]
+gain = 1.0
+wheelbase_max_nm = 15.0
+target_rim_nm = 10.0
+min_force = 0.0
+[FrontAxle]
+steering_shaft_gain = 1.0
+steering_shaft_smoothing = 0.0
+understeer_effect = 1.0
+flatspot_suppression = false
+notch_q = 2.0
+flatspot_strength = 1.0
+static_notch_enabled = false
+static_notch_freq = 11.0
+static_notch_width = 2.0
+[RearAxle]
+oversteer_boost = 2.52101
+sop_effect = 1.666
+rear_align_effect = 0.666
+sop_yaw_gain = 0.333
+yaw_kick_threshold = 0.0
+yaw_accel_smoothing = 0.003
+sop_smoothing_factor = 0.0
+sop_scale = 1.59
+[GripEstimation]
+slip_angle_smoothing = 0.003
+chassis_inertia_smoothing = 0.019
+optimal_slip_angle = 0.12
+optimal_slip_ratio = 0.12
+[Braking]
+lockup_enabled = true
+lockup_gain = 0.37479
+brake_load_cap = 2.0
+lockup_freq_scale = 1.0
+lockup_gamma = 1.0
+lockup_start_pct = 1.0
+lockup_full_pct = 7.5
+lockup_prediction_sens = 10.0
+lockup_bump_reject = 0.1
+lockup_rear_boost = 1.0
+abs_pulse_enabled = false
+abs_gain = 2.1
+abs_freq = 25.5
+[Vibration]
+texture_load_cap = 1.5
+slide_enabled = false
+slide_gain = 0.226562
+slide_freq = 1.47
+road_enabled = true
+road_gain = 0.0
+spin_enabled = true
+spin_gain = 0.462185
+spin_freq_scale = 1.8
+scrub_drag_gain = 0.333
+bottoming_enabled = true
+bottoming_gain = 1.0
+bottoming_method = 1
+[Advanced]
+gyro_gain = 0.0
+gyro_smoothing = 0.003
+understeer_affects_sop = false
+road_fallback_scale = 0.05
+speed_gate_lower = 1.0
+speed_gate_upper = 5.0

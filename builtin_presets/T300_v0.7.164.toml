@@ -1,0 +1,116 @@
+app_version = "0.7.165"
+[General]
+gain = 0.559471
+wheelbase_max_nm = 25.1
+target_rim_nm = 24.5
+min_force = 0.02
+[FrontAxle]
+steering_shaft_gain = 0.955947
+ingame_ffb_gain = 1.0
+steering_shaft_smoothing = 0.0
+understeer_effect = 1.0
+torque_source = 0
+torque_passthrough = false
+flatspot_suppression = false
+notch_q = 2.0
+flatspot_strength = 1.0
+static_notch_enabled = false
+static_notch_freq = 11.0
+static_notch_width = 2.0
+[RearAxle]
+oversteer_boost = 0.0
+sop_effect = 0.0
+rear_align_effect = 0.828194
+sop_yaw_gain = 0.418502
+yaw_kick_threshold = 1.01
+unloaded_yaw_gain = 1.0
+unloaded_yaw_threshold = 0.0
+unloaded_yaw_sens = 0.1
+unloaded_yaw_gamma = 0.1
+unloaded_yaw_punch = 0.0
+power_yaw_gain = 1.0
+power_yaw_threshold = 0.0
+power_slip_threshold = 0.0618062
+power_yaw_gamma = 0.2
+power_yaw_punch = 0.0
+yaw_accel_smoothing = 0.001
+sop_smoothing_factor = 0.0
+sop_scale = 1.0
+[LoadForces]
+long_load_effect = 2.68722
+long_load_smoothing = 0.15
+long_load_transform = 0
+lat_load_effect = 2.81938
+lat_load_transform = 2
+[GripEstimation]
+grip_smoothing_steady = 0.05
+grip_smoothing_fast = 0.005
+grip_smoothing_sensitivity = 0.1
+slip_angle_smoothing = 0.002
+chassis_inertia_smoothing = 0.0
+optimal_slip_angle = 0.1
+optimal_slip_ratio = 0.12
+[Advanced]
+gyro_gain = 0.0
+gyro_smoothing = 0.0
+understeer_affects_sop = false
+road_fallback_scale = 0.05
+soft_lock_enabled = false
+soft_lock_stiffness = 20.0
+soft_lock_damping = 0.5
+rest_api_enabled = true
+rest_api_port = 6397
+speed_gate_lower = 1.0
+speed_gate_upper = 5.0
+[SlopeDetection]
+enabled = false
+sg_window = 15
+sensitivity = 0.5
+smoothing_tau = 0.04
+min_threshold = -0.3
+max_threshold = -2.0
+alpha_threshold = 0.02
+decay_rate = 5.0
+confidence_enabled = true
+g_slew_limit = 50.0
+use_torque = true
+torque_sensitivity = 0.5
+confidence_max_rate = 0.1
+[Braking]
+lockup_enabled = true
+lockup_gain = 3.0
+brake_load_cap = 10.0
+lockup_freq_scale = 1.02
+lockup_gamma = 0.1
+lockup_start_pct = 1.0
+lockup_full_pct = 5.0
+lockup_prediction_sens = 10.0
+lockup_bump_reject = 0.1
+lockup_rear_boost = 10.0
+abs_pulse_enabled = false
+abs_gain = 2.0
+abs_freq = 25.5
+[Vibration]
+texture_load_cap = 1.5
+slide_enabled = false
+slide_gain = 0.226562
+slide_freq = 1.0
+road_enabled = false
+road_gain = 0.0
+vibration_gain = 1.0
+spin_enabled = false
+spin_gain = 0.5
+spin_freq_scale = 1.0
+scrub_drag_gain = 0.0
+bottoming_enabled = true
+bottoming_gain = 1.0
+bottoming_method = 0
+[Safety]
+window_duration = 0.0
+gain_reduction = 0.3
+smoothing_tau = 0.2
+spike_detection_threshold = 500.0
+immediate_spike_threshold = 1500.0
+slew_full_scale_time_s = 1.0
+stutter_safety_enabled = false
+stutter_threshold = 1.5

@@ -1,0 +1,31 @@
+[RearAxle]
+sop_yaw_gain = 0.386555
+yaw_kick_threshold = 1.68
+yaw_accel_smoothing = 0.005
+sop_effect = 0.0
+sop_scale = 1.0
+oversteer_boost = 0.0
+rear_align_effect = 0.0
+sop_smoothing_factor = 0.0
+[FrontAxle]
+understeer_effect = 0.0
+[Advanced]
+gyro_gain = 0.0
+[Vibration]
+slide_enabled = false
+slide_gain = 0.0
+road_enabled = false
+road_gain = 0.0
+spin_enabled = false
+spin_gain = 0.0
+scrub_drag_gain = 0.0
+bottoming_enabled = false
+bottoming_gain = 0.0
+bottoming_method = 0
+[Braking]
+lockup_enabled = false
+lockup_gain = 0.0
+abs_pulse_enabled = false
+abs_gain = 0.0
+[GripEstimation]
+slip_angle_smoothing = 0.015

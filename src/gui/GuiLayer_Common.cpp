@@ -365,7 +365,8 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         static std::string preview_buf;
         const char* preview_value = "Custom";
         if (selected_preset >= 0 && selected_preset < (int)Config::presets.size()) {
-            preview_buf = Config::presets[selected_preset].name;
+            const auto& p = Config::presets[selected_preset];
+            preview_buf = (p.is_builtin ? "[Default] " : "") + p.name;
             if (Config::IsEngineDirtyRelativeToPreset(selected_preset, engine)) {
                 preview_buf += "*";
             }
@@ -375,9 +376,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.6f);
         if (ImGui::BeginCombo("Load Preset", preview_value)) {
             for (int i = 0; i < (int)Config::presets.size(); i++) {
+                const auto& p = Config::presets[i];
+                std::string display_name = (p.is_builtin ? "[Default] " : "") + p.name;
                 bool is_selected = (selected_preset == i);
                 ImGui::PushID(i);
-                if (ImGui::Selectable(Config::presets[i].name.c_str(), is_selected)) {
+                if (ImGui::Selectable(display_name.c_str(), is_selected)) {
                     selected_preset = i;
                     Config::ApplyPreset(i, engine);
                 }
@@ -406,14 +409,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::PRESET_SAVE_NEW);
 
+        bool can_save_current = (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin);
+        if (!can_save_current) ImGui::BeginDisabled();
         if (ImGui::Button("Save Current Config")) {
-            if (selected_preset >= 0 && selected_preset < (int)Config::presets.size() && !Config::presets[selected_preset].is_builtin) {
-                Config::AddUserPreset(Config::presets[selected_preset].name, engine);
-            } else {
-                Config::Save(engine);
-            }
+            Config::AddUserPreset(Config::presets[selected_preset].name, engine);
         }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::PRESET_SAVE_CURRENT);
+        if (!can_save_current) ImGui::EndDisabled();
         ImGui::SameLine();
         if (ImGui::Button("Reset Defaults")) {
             Config::ApplyPreset(0, engine);

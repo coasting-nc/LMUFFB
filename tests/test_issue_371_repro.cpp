@@ -39,7 +39,7 @@ TEST_CASE(test_issue_371_repro, "Config") {
     // 6. Reload and check if "MyUserPreset" survived
     std::cout << "Step 3: Reloading to verify persistence..." << std::endl;
     Config::presets.clear();
-    Config::LoadPresets(mock_config);
+    Config::LoadPresets();
 
     bool found = false;
     for (const auto& p : Config::presets) {

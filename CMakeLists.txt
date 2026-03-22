@@ -370,6 +370,9 @@ endforeach()
 
 # Copy Distribution Files & Tools
 add_custom_command(TARGET LMUFFB POST_BUILD
+    # Built-in Presets
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:LMUFFB>/builtin_presets"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/builtin_presets" "$<TARGET_FILE_DIR:LMUFFB>/builtin_presets"
     # README
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/README.txt" "$<TARGET_FILE_DIR:LMUFFB>/README.txt"
     # Tools folder - Clear and create subfolders
