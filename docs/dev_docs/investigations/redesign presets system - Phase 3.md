@@ -113,10 +113,33 @@ The agent must write these tests **BEFORE** implementing the changes.
     *   Assert that `user_presets/Old_Drift.toml` was successfully created on disk.
 
 ## 4. Deliverables
-- [ ] `src/core/BuiltinPresets.h` created with raw TOML strings.
-- [ ] `src/core/Config.cpp` updated (Directory creation, Migration, File I/O).
-- [ ] `src/gui/GuiLayer_Common.cpp` updated (UI prefixes).
-- [ ] `tests/test_toml_presets.cpp` created with the 3 new tests.
-- [ ] `VERSION` incremented.
-- [ ] `CHANGELOG_DEV.md` entry added.
-- [ ] Current implementation plan updated with implementation notes.
+- [x] `src/core/GeneratedBuiltinPresets.h` generated via pre-build script.
+- [x] `src/core/Config.cpp` updated (Embedded Built-ins, Migration, File I/O).
+- [x] `src/gui/GuiLayer_Common.cpp` updated (UI prefixes & protection).
+- [x] `tests/test_toml_presets.cpp` created with 4 new tests.
+- [x] `VERSION` incremented to 0.7.219.
+- [x] `CHANGELOG_DEV.md` entry added.
+- [x] Current implementation plan updated with implementation notes.
+
+## 5. Implementation Notes
+
+### 5.1. Unforeseen Issues
+*   **Asset Bundling in Tests**: The `test_analyzer_bundling_integrity` test initially failed because it relied on the `POST_BUILD` step of the main `LMUFFB` target, which does not run when executing standalone test binaries in CI.
+*   **Validation Clamping**: Several tests (e.g., `test_preset_understeer_only_isolation`) failed because they expected raw values (like `0.0f` for speed gates) that were being clamped to physical minimums (like `0.1f`) by the `Preset::Validate()` method.
+*   **Name Normalization**: Using filenames as preset names introduced mismatches in tests that expected pretty-printed names (e.g., "Thrustmaster T300/TX" vs "Thrustmaster_T300TX").
+
+### 5.2. Plan Deviations
+*   **Embedded String Generation**: Instead of manually maintaining `BuiltinPresets.h` with raw string literals, I implemented a pre-build Python script (`scripts/embed_presets.py`) that automatically generates `src/core/GeneratedBuiltinPresets.h` from `.toml` files in `assets/builtin_presets/`.
+    *   **Rationale**: This allows developers to edit factory presets with full IDE syntax highlighting and validation, while still ensuring the final binary contains immutable settings that the end-user cannot accidentally delete or corrupt.
+*   **CMake Integration**: Switched from `execute_process` to `add_custom_command` for the preset generation.
+    *   **Rationale**: This ensures the header is regenerated during the build if any asset `.toml` changes, without requiring a manual CMake re-configure.
+
+### 5.3. Challenges Encountered
+*   **Test Suite Maintenance**: Updating over 600 regression tests to handle the `LoadPresets` signature change and the new file-based lookup required extensive hardening of the test infrastructure.
+*   **Filename Sanitization**: Balancing Windows-safe filenames with user-friendly UI names required robust de-sanitization logic (replacing underscores with spaces) and prioritising internal `name` keys in the TOML metadata.
+*   **Raw String Delimiters**: Using standard `R"(...)"` caused compilation errors when TOML comments contained parentheses. Switched to a custom delimiter `R"PRESET(...)PRESET"` to guarantee safety.
+
+### 5.4. Recommendations for Future Plans
+*   **Robust Pathing in Tests**: Future plans involving distribution or asset bundling should explicitly include fallback logic in tests to check both build output and source tree paths.
+*   **Validation Awareness**: Implementation plans should account for existing physical validation rules in structs to avoid "Correct Physics vs Expected Test Value" conflicts.
+*   **Generator Scripts**: Standardizing on pre-build scripts for binary assets is a scalable pattern that should be applied to other static resources (icons, sounds, etc.) in the future.
