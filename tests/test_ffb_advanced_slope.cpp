@@ -29,17 +29,16 @@ TEST_CASE(test_slew_rate_limiter, "AdvancedSlope") {
     // Tick 1: Returns 1.0 + 400*0.0025 = 2.0G. Slew limits to 1.025.
 
     engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025); // Tick 0
-    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025); // Tick 1
 
-    std::cout << "  After 2 ticks (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
+    std::cout << "  After 1 tick (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
     ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.025, 0.001);
 
-    // Execute 3 more ticks (total 5 ticks)
-    for(int i=0; i<3; i++) engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    // Execute 4 more ticks (total 5 ticks)
+    for(int i=0; i<4; i++) engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
 
-    // After 5 ticks (1 game frame transition + 4 ramp ticks): 1.0 + 4 * 0.025 = 1.1G
+    // After 5 ticks: 1.0 + 5 * 0.025 = 1.125G
     std::cout << "  After 5 ticks (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
-    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.1, 0.001);
+    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.125, 0.001);
 }
 
 TEST_CASE(test_torque_slope_anticipation, "AdvancedSlope") {

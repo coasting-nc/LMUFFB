@@ -158,6 +158,10 @@ namespace Tooltips {
     inline constexpr const char* FULL_ABOVE = "The speed above which all vibration effects reach\ntheir full configured strength.";
     inline constexpr const char* AUTO_START_LOGGING = "Automatically start telemetry logging when entering a driving session.";
     inline constexpr const char* LOG_PATH = "Directory where .csv telemetry logs will be saved.";
+    inline constexpr const char* AUX_TELEMETRY_RECONSTRUCTION =
+        "Zero Latency: Predictive upsampling for auxiliary channels.\n"
+        "RECOMMENDED.\n"
+        "Smooth: Standard interpolation with 10ms delay.";
 
     // FFB Safety
     inline constexpr const char* SAFETY_WINDOW_DURATION = "How long to remain in safety mode after a trigger (seconds).\nRecommended: 2.0s.";
@@ -194,7 +198,7 @@ namespace Tooltips {
         SLOPE_DETECTION_ENABLE, SLOPE_FILTER_WINDOW, SLOPE_SENSITIVITY, SLOPE_THRESHOLD, SLOPE_OUTPUT_SMOOTHING, SLOPE_ALPHA_THRESHOLD, SLOPE_DECAY_RATE, SLOPE_CONFIDENCE_GATE,
         LOCKUP_VIBRATION, LOCKUP_STRENGTH, BRAKE_LOAD_CAP, VIBRATION_PITCH, LOCKUP_GAMMA, LOCKUP_START_PCT, LOCKUP_FULL_PCT, LOCKUP_PREDICTION_SENS, LOCKUP_BUMP_REJECT, LOCKUP_REAR_BOOST, ABS_PULSE, ABS_PULSE_GAIN, ABS_PULSE_FREQ,
         TEXTURE_LOAD_CAP, VIBRATION_GAIN, SLIDE_RUMBLE, SLIDE_GAIN, SLIDE_PITCH, ROAD_DETAILS, ROAD_GAIN, SPIN_VIBRATION, SPIN_STRENGTH, SPIN_PITCH, SCRUB_DRAG, BOTTOMING_EFFECT, BOTTOMING_STRENGTH, BOTTOMING_LOGIC,
-        MUTE_BELOW, FULL_ABOVE, AUTO_START_LOGGING, LOG_PATH,
+        MUTE_BELOW, FULL_ABOVE, AUTO_START_LOGGING, LOG_PATH, AUX_TELEMETRY_RECONSTRUCTION,
         SAFETY_WINDOW_DURATION, SAFETY_GAIN_REDUCTION, SAFETY_SMOOTHING_TAU, SPIKE_DETECTION_THRESHOLD, IMMEDIATE_SPIKE_THRESHOLD, SAFETY_SLEW_FULL_SCALE_TIME_S,
         STUTTER_SAFETY_ENABLE, STUTTER_THRESHOLD,
         PLOT_SELECTED_TORQUE, PLOT_SHAFT_TORQUE, PLOT_INGAME_FFB,

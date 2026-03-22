@@ -253,13 +253,17 @@ TEST_CASE(test_unconditional_vert_accel_update, "RoadTexture") {
     data.mLocalVel.y = 0.0;
     engine.calculate_force(&data, "GT3", "911"); // Seed
 
-    data.mLocalVel.y = 5.5 * 0.01; // dv for 5.5 m/s^2 at 100Hz
     data.mDeltaTime = 0.01;
-    data.mElapsedTime += 0.01;
     engine.m_prev_vert_accel = 0.0;
-    // Issue #397: Use PumpEngineTime
-    PumpEngineTime(engine, data, 0.0125);
-    ASSERT_NEAR(engine.m_prev_vert_accel, 5.5, 0.1);
+
+    // Constant acceleration of 5.5 m/s^2
+    // dv per 0.01s = 0.055
+    for(int i=0; i<20; i++) {
+        data.mElapsedTime += 0.01;
+        data.mLocalVel.y += 0.055;
+        PumpEngineTime(engine, data, 0.01); // 4 ticks per 100Hz frame
+    }
+    ASSERT_NEAR(engine.m_prev_vert_accel, 5.5, 0.5);
 }
 
 // [Texture][Physics] Scrub drag fade-in

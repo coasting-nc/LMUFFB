@@ -943,6 +943,16 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             ImGui::TreePop();
         }
 
+        if (ImGui::TreeNode("Telemetry Upsampling")) {
+            const char* recon_modes[] = { "Zero Latency (Predictive)", "Smooth (Delayed)" };
+            GuiWidgets::Result res = GuiWidgets::Combo("Aux. Reconstruction", &engine.m_advanced.aux_telemetry_reconstruction, recon_modes, 2, Tooltips::AUX_TELEMETRY_RECONSTRUCTION);
+            if (res.changed) {
+                engine.UpdateUpsamplerModes();
+                Config::Save(engine);
+            }
+            ImGui::TreePop();
+        }
+
         if (ImGui::TreeNode("Telemetry Logger")) {
             if (ImGui::Checkbox("Enable Logging Logic", &Config::m_auto_start_logging)) {
                 Config::Save(engine);

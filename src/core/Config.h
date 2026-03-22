@@ -158,6 +158,7 @@ struct Preset {
         grip_estimation.optimal_slip_ratio = ratio;
         return *this;
     }
+    Preset& SetAuxTelemetryReconstruction(int v) { advanced.aux_telemetry_reconstruction = v; return *this; }
     Preset& SetShaftSmoothing(float v) { front_axle.steering_shaft_smoothing = v; return *this; }
     
     Preset& SetGyroSmoothing(float v) { advanced.gyro_smoothing = v; return *this; }
@@ -259,6 +260,9 @@ struct Preset {
 
         engine.m_safety.m_config = this->safety;
         engine.m_safety.m_config.Validate();
+
+        // Update upsamplers after config move
+        engine.UpdateUpsamplerModes();
 
         // Stage 1 & 2 Normalization (Issue #152 & #153)
         // Initialize session peak from target rim torque to provide a sane starting point.

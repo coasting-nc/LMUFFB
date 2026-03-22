@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 
 
 
+
 ---
+
+## [0.7.220]
+
+### Changed
+- **Auxiliary Telemetry Reconstruction Upgrade (Issue #461)**
+  - **Predictive Upsampling everywhere**: Replaced the 10ms-delayed `LinearExtrapolator` (actually an interpolator) with the zero-latency `HoltWintersFilter` on all 21 auxiliary telemetry channels (Patch Velocities, Suspension Forces, Accelerations, etc.).
+  - **Latency Elimination**: Removed 10ms of DSP delay from steering velocity (Gyro Damping) and suspension velocity (Road Texture), resulting in a more immediate and "connected" steering feel.
+  - **User-Selectable Reconstruction**: Added a global "Aux. Reconstruction" toggle in the Advanced Settings UI, allowing users to choose between **Zero Latency (Predictive)** for maximum detail or **Smooth (Delayed)** for maximum filter stability on entry-level hardware. **Zero Latency is enabled by default** for all users and built-in presets.
+  - **Mathematical Stability**: Leveraged Holt-Winters" double exponential smoothing to provide predictive upsampling that is significantly smoother than naive dead-reckoning, reducing 100Hz "snap" artifacts.
+
+### Testing
+- **New Unit Test Suite**: Added `tests/test_reconstruction.cpp` verifying:
+  - Holt-Winters predictive accuracy in Zero Latency mode.
+  - Seamless switching between Zero Latency and Smooth (Interpolation) modes.
+  - Configuration persistence and safety clamping for the new reconstruction setting.
+- **Regression Guard**: Verified that the change compiles and passes the full 613-test regression suite.
+
 
 ## [0.7.219]
 

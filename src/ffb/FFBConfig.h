@@ -379,6 +379,7 @@ struct AdvancedConfig {
     int rest_api_port = 6397;
     float road_fallback_scale = 0.05f;
     bool understeer_affects_sop = false;
+    int aux_telemetry_reconstruction = 0; // 0: Zero Latency, 1: Smooth
 
     bool Equals(const AdvancedConfig& o, float eps = 0.0001f) const {
         auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
@@ -393,7 +394,8 @@ struct AdvancedConfig {
                rest_api_enabled == o.rest_api_enabled &&
                rest_api_port == o.rest_api_port &&
                is_near(road_fallback_scale, o.road_fallback_scale) &&
-               understeer_affects_sop == o.understeer_affects_sop;
+               understeer_affects_sop == o.understeer_affects_sop &&
+               aux_telemetry_reconstruction == o.aux_telemetry_reconstruction;
     }
 
     void Validate() {
@@ -406,6 +408,7 @@ struct AdvancedConfig {
         speed_gate_upper = (std::max)(0.1f, speed_gate_upper);
         rest_api_port = (std::max)(1, rest_api_port);
         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
+        aux_telemetry_reconstruction = (std::max)(0, (std::min)(1, aux_telemetry_reconstruction));
     }
 };
 

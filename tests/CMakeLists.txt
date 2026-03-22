@@ -159,6 +159,7 @@ set(TEST_SOURCES
     test_refactor_advanced.cpp
     test_refactor_safety.cpp
     test_audit_regressions.cpp
+    test_reconstruction.cpp
     ../src/core/main.cpp
 )
 

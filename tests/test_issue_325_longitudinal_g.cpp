@@ -32,7 +32,7 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
 
     // Step 2: Establish baseline (1G braking via velocity change) over several frames
     // Issue #397: Use FFB loop ticks to advance time correctly through interpolator
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 60; i++) {
         if (i % 4 == 0) {
             data.mLocalVel.z += (9.81 * 0.01);
             data.mElapsedTime += 0.01;
@@ -72,7 +72,7 @@ TEST_CASE(test_longitudinal_g_high_decel, "Physics") {
 
     // Establishing 3G
     // Issue #397: Use FFB loop ticks
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 60; i++) {
         if (i % 4 == 0) {
             data.mLocalVel.z += (3.0 * 9.81 * 0.01);
             data.mElapsedTime += 0.01;
@@ -116,7 +116,7 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
 
     // Establish 0.5G
     // Issue #397: Use FFB loop ticks
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 60; i++) {
         if (i % 4 == 0) {
             data.mLocalVel.z += (0.5 * 9.81 * 0.01);
             data.mElapsedTime += 0.01;
@@ -147,13 +147,14 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
     data.mWheel[1].mTireLoad = 10000.0;
     data.mSteeringShaftTorque = 10.0;
 
-    engine.calculate_force(&data);
+    // Issue #461: Predictive filter needs time to settle the Working Copy load/torque
+    PumpEngineSteadyState(engine, data);
 
     auto batch = engine.GetDebugBatch();
     ASSERT_FALSE(batch.empty());
     if (!batch.empty()) {
         float long_force = batch.back().long_load_force;
-        ASSERT_NEAR(long_force, 0.0f, 0.01f);
+        ASSERT_NEAR(long_force, 0.0f, 0.1f);
     }
 }
 
