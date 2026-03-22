@@ -14,7 +14,8 @@ In Digital Signal Processing (DSP), extrapolating a noisy signal is dangerous. T
 Calling `SetZeroLatency()` on 22 filters every tick inside `calculate_force` (400Hz) wastes CPU cycles. State changes should only occur when the configuration actually changes.
 
 ## Reference Documents
-*   `docs/dev_docs/reports/latency_and_load_sensitivity_for_tire_grip.md` (Context on grip and load noise)
+*   previous implementation plan for applying HoltWintersFilter to all auxiliary telemetry channels: `docs/dev_docs/implementation_plans/issue_461_auxiliary_reconstruction_plan.md`
+*   `docs\dev_docs\reports\latency and load sensitivity for tire grip.md` (Context on grip and load noise)
 *   Issue #459 / #461 Discussions (Latency vs. Smoothness Trade-off)
 
 ---
