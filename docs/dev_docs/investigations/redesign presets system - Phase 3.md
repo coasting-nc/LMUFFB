@@ -61,6 +61,16 @@
     *   If `!p.is_builtin`, display `p.name`.
 *   **Action:** Ensure the "Delete" and "Save Current Config" buttons remain disabled if a built-in preset is currently selected.
 
+
+#### 2.6. Refactor `ImportPreset` and `ExportPreset`
+*   **Action (`ImportPreset`):** Update the function to handle both `.toml` and legacy `.ini` files.
+    *   **Logic:** Check the file extension of the imported file.
+    *   If it is `.toml`, parse it using `toml::parse_file` and `TomlToPreset`.
+    *   If it is `.ini`, route it through a dedicated legacy preset parser (reusing the logic from `MigrateFromLegacyIni`). It must apply the legacy math (100Nm hack, SoP smoothing reset) to the imported data.
+    *   Finally, save the imported preset into the `user_presets/` directory as a new `.toml` file and add it to the `presets` vector in memory.
+*   **Action (`ExportPreset`):** Simplify the export logic.
+    *   **Logic:** Since user presets are now individual files on disk, exporting a preset no longer requires TOML serialization. It simply requires finding the file in `user_presets/<sanitized_name>.toml` and using `std::filesystem::copy_file` to copy it to the user's requested destination.
+
 ## 3. Test Plan (TDD-Ready)
 
 The agent must write these tests **BEFORE** implementing the changes.
@@ -91,6 +101,15 @@ The agent must write these tests **BEFORE** implementing the changes.
     *   Assert that `user_presets/Trapped_Preset.toml` was created on disk.
     *   Load `config.toml` directly from disk into a raw `toml::table`.
     *   Assert that `tbl.contains("Presets") == false` (proving it was cleaned up).
+
+#### Test 4: `test_phase3_legacy_preset_import`
+*   **Goal:** Prove that users can still import old `.ini` presets downloaded from the community, and that they are correctly upgraded and saved as `.toml`.
+*   **Setup:** Create a mock `legacy_import.ini` file containing a `[Preset:Old Drift]` section with legacy values (e.g., `max_torque_ref=50.0`).
+*   **Action:** Call `Config::ImportPreset("legacy_import.ini", engine)`.
+*   **Assertions:**
+    *   Assert that the preset "Old Drift" was added to the `Config::presets` vector.
+    *   Assert that the legacy math was applied (e.g., `wheelbase_max_nm == 15.0f`).
+    *   Assert that `user_presets/Old_Drift.toml` was successfully created on disk.
 
 ## 4. Deliverables
 - [ ] `src/core/BuiltinPresets.h` created with raw TOML strings.
