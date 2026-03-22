@@ -274,6 +274,7 @@ target_include_directories(LMUFFB_Core PUBLIC
     src/io
     src/logging
     src/utils
+    src/ext/toml++
 )
 if(TARGET imgui_vendor)
     target_link_libraries(LMUFFB_Core PUBLIC imgui_vendor)
@@ -290,6 +291,7 @@ target_include_directories(LMUFFB_Core_Fast PUBLIC
     src/io
     src/logging
     src/utils
+    src/ext/toml++
 )
 if(TARGET imgui_vendor)
     target_link_libraries(LMUFFB_Core_Fast PUBLIC imgui_vendor)

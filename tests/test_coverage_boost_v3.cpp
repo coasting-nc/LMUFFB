@@ -81,12 +81,12 @@ TEST_CASE(test_config_malformed_input, "Config") {
 
     // Create config with malformed numeric values
     {
-        std::ofstream ofs("malformed_config.ini");
-        ofs << "gain=abc\nundersteer=def\n";
+        std::ofstream ofs("malformed_config.toml");
+        ofs << "[General]\ngain = \"abc\"\n[FrontAxle]\nundersteer = \"def\"\n";
         ofs.close();
 
-        Config::Load(engine, "malformed_config.ini");
-        std::remove("malformed_config.ini");
+        Config::Load(engine, "malformed_config.toml");
+        std::remove("malformed_config.toml");
     }
 }
 
@@ -99,7 +99,8 @@ TEST_CASE(test_config_migration_logic, "Config") {
         ofs << "understeer=150.0\nmax_torque_ref=100.0\n";
         ofs.close();
 
-        Config::Load(engine, "legacy_config.ini");
+        // Must call MigrateFromLegacyIni directly as Load expects TOML
+        Config::MigrateFromLegacyIni(engine, "legacy_config.ini");
         ASSERT_NEAR(engine.m_front_axle.understeer_effect, 1.5, 0.001);
         ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0, 0.001);
         ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0, 0.001);
@@ -137,47 +138,73 @@ TEST_CASE(test_config_import_preset_error, "Config") {
 
 TEST_CASE(test_config_exhaustive_keys, "Config") {
     FFBEngine engine;
-    // Create config with all possible keys to ensure Load() covers them all
+    // Create config with all possible keys in TOML format to ensure Load() covers them all
     {
-        std::ofstream ofs("exhaustive_config.ini");
-        ofs << "ini_version=1.0\n";
-        ofs << "always_on_top=1\nlast_device_guid=GUID\nlast_preset_name=Preset\n";
-        ofs << "win_pos_x=0\nwin_pos_y=0\nwin_w_small=100\nwin_h_small=100\n";
-        ofs << "win_w_large=200\nwin_h_large=200\nshow_graphs=1\n";
-        ofs << "auto_start_logging=1\nlog_path=logs/\n";
-        ofs << "gain=1.0\nsop_smoothing_factor=0.5\nsop_scale=1.0\n";
-        ofs << "slip_angle_smoothing=0.01\ntexture_load_cap=2.0\nmax_load_factor=2.0\n";
-        ofs << "brake_load_cap=2.0\nsmoothing=0.5\nundersteer=0.5\n";
-        ofs << "base_force_mode=0\ntorque_source=0\ntorque_passthrough=true\n";
-        ofs << "sop=0.5\nmin_force=0.01\noversteer_boost=1.0\nlong_load_effect=0.5\n";
-        ofs << "long_load_smoothing=0.1\ngrip_smoothing_steady=0.01\n";
-        ofs << "grip_smoothing_fast=0.01\ngrip_smoothing_sensitivity=0.1\n";
-        ofs << "lockup_enabled=1\nlockup_gain=1.0\nlockup_start_pct=5.0\n";
-        ofs << "lockup_full_pct=15.0\nlockup_rear_boost=2.0\nlockup_gamma=1.0\n";
-        ofs << "lockup_prediction_sens=50.0\nlockup_bump_reject=1.0\n";
-        ofs << "abs_pulse_enabled=1\nabs_gain=1.0\nspin_enabled=1\nspin_gain=1.0\n";
-        ofs << "slide_enabled=1\nslide_gain=1.0\nslide_freq=1.0\n";
-        ofs << "road_enabled=1\nroad_gain=1.0\nsoft_lock_enabled=1\n";
-        ofs << "soft_lock_stiffness=20.0\nsoft_lock_damping=0.5\ninvert_force=0\n";
-        ofs << "wheelbase_max_nm=15.0\ntarget_rim_nm=10.0\nmax_torque_ref=15.0\n";
-        ofs << "abs_freq=20.0\nlockup_freq_scale=1.0\nspin_freq_scale=1.0\n";
-        ofs << "bottoming_method=0\nscrub_drag_gain=0.1\nrear_align_effect=1.0\n";
-        ofs << "sop_yaw_gain=0.5\nsteering_shaft_gain=1.0\ningame_ffb_gain=1.0\n";
-        ofs << "gyro_gain=0.5\nflatspot_suppression=1\nnotch_q=2.0\n";
-        ofs << "flatspot_strength=1.0\nstatic_notch_enabled=1\nstatic_notch_freq=15.0\n";
-        ofs << "static_notch_width=2.0\nyaw_kick_threshold=0.1\noptimal_slip_angle=0.1\n";
-        ofs << "optimal_slip_ratio=0.12\nslope_detection.enabled=1\nslope_detection.sg_window=15\n";
-        ofs << "slope_detection.sensitivity=1.0\nslope_negative_threshold=-0.5\nslope_detection.smoothing_tau=0.05\n";
-        ofs << "slope_detection.min_threshold=-0.3\nslope_detection.max_threshold=-2.0\nslope_detection.alpha_threshold=0.02\n";
-        ofs << "slope_detection.decay_rate=5.0\nslope_detection.confidence_enabled=1\nsteering_shaft_smoothing=0.01\n";
-        ofs << "gyro_smoothing_factor=0.01\nyaw_accel_smoothing=0.01\nchassis_inertia_smoothing=0.01\n";
-        ofs << "speed_gate_lower=1.0\nspeed_gate_upper=5.0\nroad_fallback_scale=0.05\n";
-        ofs << "understeer_affects_sop=0\nslope_detection.g_slew_limit=50.0\nslope_detection.use_torque=1\n";
-        ofs << "slope_detection.torque_sensitivity=0.5\nslope_detection.confidence_max_rate=0.1\n";
+        std::ofstream ofs("exhaustive_config.toml");
+        ofs << "[System]\n";
+        ofs << "app_version = \"1.0\"\n";
+        ofs << "always_on_top = true\nlast_device_guid = \"GUID\"\nlast_preset_name = \"Preset\"\n";
+        ofs << "win_pos_x = 0\nwin_pos_y = 0\nwin_w_small = 100\nwin_h_small = 100\n";
+        ofs << "win_w_large = 200\nwin_h_large = 200\nshow_graphs = true\n";
+        ofs << "auto_start_logging = true\nlog_path = \"logs/\"\n";
+
+        ofs << "[General]\n";
+        ofs << "gain = 1.0\nmin_force = 0.01\nwheelbase_max_nm = 15.0\ntarget_rim_nm = 10.0\n";
+        ofs << "dynamic_normalization_enabled = true\nauto_load_normalization_enabled = true\n";
+
+        ofs << "[FrontAxle]\n";
+        ofs << "steering_shaft_gain = 1.0\ningame_ffb_gain = 1.0\nsteering_shaft_smoothing = 0.01\n";
+        ofs << "understeer = 0.5\nundersteer_gamma = 1.0\ntorque_source = 0\nsteering_100hz_reconstruction = 0\n";
+        ofs << "torque_passthrough = true\nflatspot_suppression = true\nnotch_q = 2.0\nflatspot_strength = 1.0\n";
+        ofs << "static_notch_enabled = true\nstatic_notch_freq = 15.0\nstatic_notch_width = 2.0\n";
+
+        ofs << "[RearAxle]\n";
+        ofs << "oversteer_boost = 1.0\nsop = 0.5\nsop_scale = 1.0\nsop_smoothing_factor = 0.5\n";
+        ofs << "rear_align_effect = 1.0\nkerb_strike_rejection = 0.1\nsop_yaw_gain = 0.5\nyaw_kick_threshold = 0.1\n";
+        ofs << "yaw_accel_smoothing = 0.01\nunloaded_yaw_gain = 0.1\nunloaded_yaw_threshold = 0.2\nunloaded_yaw_sens = 1.0\n";
+        ofs << "unloaded_yaw_gamma = 0.5\nunloaded_yaw_punch = 0.05\npower_yaw_gain = 0.1\npower_yaw_threshold = 0.2\n";
+        ofs << "power_slip_threshold = 0.1\npower_yaw_gamma = 0.5\npower_yaw_punch = 0.05\n";
+
+        ofs << "[LoadForces]\n";
+        ofs << "lateral_load_effect = 0.5\nlat_load_transform = 0\nlong_load_effect = 0.5\n";
+        ofs << "long_load_smoothing = 0.1\nlong_load_transform = 0\n";
+
+        ofs << "[GripEstimation]\n";
+        ofs << "optimal_slip_angle = 0.1\noptimal_slip_ratio = 0.12\nslip_angle_smoothing = 0.01\n";
+        ofs << "chassis_inertia_smoothing = 0.01\nload_sensitivity_enabled = true\ngrip_smoothing_steady = 0.01\n";
+        ofs << "grip_smoothing_fast = 0.01\ngrip_smoothing_sensitivity = 0.1\n";
+
+        ofs << "[SlopeDetection]\n";
+        ofs << "enabled = true\nsg_window = 15\nsensitivity = 1.0\nsmoothing_tau = 0.05\n";
+        ofs << "alpha_threshold = 0.02\ndecay_rate = 5.0\nconfidence_enabled = true\nconfidence_max_rate = 0.1\n";
+        ofs << "min_threshold = -0.3\nmax_threshold = -2.0\ng_slew_limit = 50.0\nuse_torque = true\ntorque_sensitivity = 0.5\n";
+
+        ofs << "[Braking]\n";
+        ofs << "lockup_enabled = true\nlockup_gain = 1.0\nlockup_start_pct = 5.0\nlockup_full_pct = 15.0\n";
+        ofs << "lockup_rear_boost = 2.0\nlockup_gamma = 1.0\nlockup_prediction_sens = 50.0\nlockup_bump_reject = 1.0\n";
+        ofs << "brake_load_cap = 2.0\nlockup_freq_scale = 1.0\nabs_pulse_enabled = true\nabs_gain = 1.0\nabs_freq = 20.0\n";
+
+        ofs << "[Vibration]\n";
+        ofs << "vibration_gain = 1.0\ntexture_load_cap = 2.0\nslide_enabled = true\nslide_gain = 1.0\n";
+        ofs << "slide_freq = 1.0\nroad_enabled = true\nroad_gain = 1.0\nspin_enabled = true\nspin_gain = 1.0\n";
+        ofs << "spin_freq_scale = 1.0\nscrub_drag_gain = 0.1\nbottoming_enabled = true\nbottoming_gain = 1.0\nbottoming_method = 0\n";
+
+        ofs << "[Advanced]\n";
+        ofs << "gyro_gain = 0.5\ngyro_smoothing = 0.01\nstationary_damping = 0.5\nsoft_lock_enabled = true\n";
+        ofs << "soft_lock_stiffness = 20.0\nsoft_lock_damping = 0.5\nspeed_gate_lower = 1.0\nspeed_gate_upper = 5.0\n";
+        ofs << "rest_api_enabled = true\nrest_api_port = 6397\nroad_fallback_scale = 0.05\nundersteer_affects_sop = false\n";
+
+        ofs << "[Safety]\n";
+        ofs << "window_duration = 0.01\ngain_reduction = 0.3\nsmoothing_tau = 0.2\nspike_detection_threshold = 500.0\n";
+        ofs << "immediate_spike_threshold = 1500.0\nslew_full_scale_time_s = 1.0\nstutter_safety_enabled = true\nstutter_threshold = 1.5\n";
+
+        ofs << "[CurrentPhysics]\n";
+        ofs << "invert_force = false\n";
+
         ofs.close();
 
-        Config::Load(engine, "exhaustive_config.ini");
-        std::remove("exhaustive_config.ini");
+        Config::Load(engine, "exhaustive_config.toml");
+        std::remove("exhaustive_config.toml");
     }
 }
 

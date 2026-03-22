@@ -6,11 +6,9 @@
 #include "src/ffb/FFBEngine.h"
 #include "src/core/Config.h"
 #include "src/Version.h"
+#include <toml.hpp>
 
 namespace FFBEngineTests {
-// Counters are now extern from test_ffb_common.h
-
-// ASSERT macros are reused or redefined if needed, but they use the extern counters
 
 /**
  * Helper to check if a file contains a specific string.
@@ -26,29 +24,53 @@ bool FileContains(const std::string& filename, const std::string& pattern) {
 }
 
 // ----------------------------------------------------------------------------
-// TEST 1: Texture Load Cap in Presets
+// TEST 1: Texture Load Cap in Presets (Phase 2 TOML)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_texture_load_cap_in_presets, "Persistence") {
     std::cout << "Test 1: Texture Load Cap in Presets..." << std::endl;
-    std::remove(Config::m_config_path.c_str());
+    std::string test_file = "test_config_texture.toml";
+    std::string original_path = Config::m_config_path;
+    std::remove(test_file.c_str());
+    Config::m_config_path = test_file;
+
     FFBEngine engine;
-    Preset::ApplyDefaultsToEngine(engine);
+    InitializeEngine(engine);
     
     engine.m_vibration.texture_load_cap = 2.8f;
     
-    // Clear existing presets to be sure
     Config::presets.clear();
     Config::AddUserPreset("TextureCapTest", engine);
+    Config::Save(engine, test_file);
     
-    ASSERT_TRUE(FileContains(Config::m_config_path, "[Preset:TextureCapTest]"));
-    ASSERT_TRUE(FileContains(Config::m_config_path, "texture_load_cap=2.8"));
+    // Explicitly check for file
+    if (!std::filesystem::exists(test_file)) {
+        FAIL_TEST("Test file not created: " << test_file << " (Current Dir: " << std::filesystem::current_path() << ")");
+        return;
+    }
+
+    // In TOML, preset is in [Presets.TextureCapTest]
+    try {
+        toml::table tbl = toml::parse_file(test_file);
+        ASSERT_TRUE(tbl.contains("Presets"));
+        auto presets_tbl = tbl["Presets"].as_table();
+        ASSERT_TRUE(presets_tbl != nullptr);
+        ASSERT_TRUE(presets_tbl->contains("TextureCapTest"));
+
+        auto p_node = (*presets_tbl)["TextureCapTest"].as_table();
+        ASSERT_TRUE(p_node != nullptr);
+        auto vib_node = (*p_node)["Vibration"].as_table();
+        ASSERT_TRUE(vib_node != nullptr);
+        ASSERT_TRUE(vib_node->contains("texture_load_cap"));
+    } catch (const toml::parse_error& err) {
+        FAIL_TEST("TOML parse error: " << err.description());
+    }
     
     FFBEngine engine2;
-    Preset::ApplyDefaultsToEngine(engine2);
-    Config::LoadPresets();
+    InitializeEngine(engine2);
+    Config::LoadPresets(test_file);
     
     int idx = -1;
-    for (int i = 0; i < Config::presets.size(); i++) {
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
         if (Config::presets[i].name == "TextureCapTest") {
             idx = i;
             break;
@@ -60,70 +82,77 @@ TEST_CASE(test_texture_load_cap_in_presets, "Persistence") {
         Config::ApplyPreset(idx, engine2);
         ASSERT_NEAR(engine2.m_vibration.texture_load_cap, 2.8f, 0.001f);
     }
+    Config::m_config_path = original_path;
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
-// TEST 2: Main Config - Speed Gate Persistence
+// TEST 2: Main Config - Speed Gate Persistence (Phase 2 TOML)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_speed_gate_persistence, "Persistence") {
     std::cout << "Test 2: Main Config - Speed Gate Persistence..." << std::endl;
-    Config::presets.clear(); // Clear presets from previous tests
+    Config::presets.clear();
     FFBEngine engine;
-    Preset::ApplyDefaultsToEngine(engine);
+    InitializeEngine(engine);
     
     engine.m_advanced.speed_gate_lower = 2.5f;
     engine.m_advanced.speed_gate_upper = 7.0f;
     
-    Config::Save(engine, "test_config_sg.ini");
+    std::string test_file = "test_config_sg.toml";
+    Config::Save(engine, test_file);
     
-    ASSERT_TRUE(FileContains("test_config_sg.ini", "speed_gate_lower=2.5"));
-    ASSERT_TRUE(FileContains("test_config_sg.ini", "speed_gate_upper=7"));
+    ASSERT_TRUE(FileContains(test_file, "speed_gate_lower"));
+    ASSERT_TRUE(FileContains(test_file, "speed_gate_upper"));
     
     FFBEngine engine2;
-    Preset::ApplyDefaultsToEngine(engine2);
-    Config::Load(engine2, "test_config_sg.ini");
+    InitializeEngine(engine2);
+    Config::Load(engine2, test_file);
     
     ASSERT_NEAR(engine2.m_advanced.speed_gate_lower, 2.5f, 0.001f);
     ASSERT_NEAR(engine2.m_advanced.speed_gate_upper, 7.0f, 0.001f);
     
-    std::remove("test_config_sg.ini");
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
-// TEST 3: Main Config - Road Fallback & Understeer SoP
+// TEST 3: Main Config - Road Fallback & Understeer SoP (Phase 2 TOML)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_advanced_physics_persistence, "Persistence") {
     std::cout << "Test 3: Main Config - Road Fallback & Understeer SoP..." << std::endl;
-    Config::presets.clear(); // Clear presets from previous tests
+    Config::presets.clear();
     FFBEngine engine;
-    Preset::ApplyDefaultsToEngine(engine);
+    InitializeEngine(engine);
     
     engine.m_advanced.road_fallback_scale = 0.12f;
     engine.m_advanced.understeer_affects_sop = true;
     
-    Config::Save(engine, "test_config_ap.ini");
+    std::string test_file = "test_config_ap.toml";
+    Config::Save(engine, test_file);
     
-    ASSERT_TRUE(FileContains("test_config_ap.ini", "road_fallback_scale=0.12"));
-    ASSERT_TRUE(FileContains("test_config_ap.ini", "understeer_affects_sop=1"));
+    ASSERT_TRUE(FileContains(test_file, "road_fallback_scale"));
+    ASSERT_TRUE(FileContains(test_file, "understeer_affects_sop = true"));
     
     FFBEngine engine2;
-    Preset::ApplyDefaultsToEngine(engine2);
-    Config::Load(engine2, "test_config_ap.ini");
+    InitializeEngine(engine2);
+    Config::Load(engine2, test_file);
     
     ASSERT_NEAR(engine2.m_advanced.road_fallback_scale, 0.12f, 0.001f);
     ASSERT_EQ(engine2.m_advanced.understeer_affects_sop, true);
     
-    std::remove("test_config_ap.ini");
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
-// TEST 4: Preset Serialization - All New Fields
+// TEST 4: Preset Serialization - All New Fields (Phase 2 TOML)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_preset_all_fields, "Persistence") {
     std::cout << "Test 4: Preset Serialization - All New Fields..." << std::endl;
-    std::remove(Config::m_config_path.c_str());
+    std::string test_file = "test_config_all.toml";
+    std::remove(test_file.c_str());
+    Config::m_config_path = test_file;
+
     FFBEngine engine;
-    Preset::ApplyDefaultsToEngine(engine);
+    InitializeEngine(engine);
     
     engine.m_vibration.texture_load_cap = 2.2f;
     engine.m_advanced.speed_gate_lower = 3.0f;
@@ -134,19 +163,17 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
     Config::presets.clear();
     Config::AddUserPreset("AllFieldsTest", engine);
     
-    ASSERT_TRUE(FileContains(Config::m_config_path, "[Preset:AllFieldsTest]"));
-    ASSERT_TRUE(FileContains(Config::m_config_path, "texture_load_cap=2.2"));
-    ASSERT_TRUE(FileContains(Config::m_config_path, "speed_gate_lower=3"));
-    ASSERT_TRUE(FileContains(Config::m_config_path, "speed_gate_upper=9"));
-    ASSERT_TRUE(FileContains(Config::m_config_path, "road_fallback_scale=0.08"));
-    ASSERT_TRUE(FileContains(Config::m_config_path, "understeer_affects_sop=1"));
+    ASSERT_TRUE(FileContains(test_file, "AllFieldsTest"));
+    ASSERT_TRUE(FileContains(test_file, "texture_load_cap"));
+    ASSERT_TRUE(FileContains(test_file, "speed_gate_lower"));
+    ASSERT_TRUE(FileContains(test_file, "understeer_affects_sop = true"));
     
     FFBEngine engine2;
-    Preset::ApplyDefaultsToEngine(engine2);
-    Config::LoadPresets();
+    InitializeEngine(engine2);
+    Config::LoadPresets(test_file);
     
     int idx = -1;
-    for (int i = 0; i < Config::presets.size(); i++) {
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
         if (Config::presets[i].name == "AllFieldsTest") {
             idx = i;
             break;
@@ -162,6 +189,7 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
         ASSERT_NEAR(engine2.m_advanced.road_fallback_scale, 0.08f, 0.001f);
         ASSERT_EQ(engine2.m_advanced.understeer_affects_sop, true);
     }
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -169,19 +197,19 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_preset_clamping_brake, "Persistence") {
     std::cout << "Test 5: Preset Clamping - Brake Load Cap..." << std::endl;
+    std::string test_file = "test_clamp_preset_brake.toml";
     
     // Manually write to config file
     {
-        std::ofstream file(Config::m_config_path);
-        file << "[Presets]\n";
-        file << "[Preset:HighBrake]\n";
-        file << "brake_load_cap=8.5\n";
+        std::ofstream file(test_file);
+        file << "[Presets.HighBrake.Braking]\n";
+        file << "brake_load_cap = 8.5\n";
     }
     
-    Config::LoadPresets();
+    Config::LoadPresets(test_file);
     
     int idx = -1;
-    for (int i = 0; i < Config::presets.size(); i++) {
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
         if (Config::presets[i].name == "HighBrake") {
             idx = i;
             break;
@@ -195,6 +223,7 @@ TEST_CASE(test_preset_clamping_brake, "Persistence") {
         Config::ApplyPreset(idx, engine);
         ASSERT_NEAR(engine.m_braking.brake_load_cap, 8.5f, 0.001f);
     }
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -202,19 +231,19 @@ TEST_CASE(test_preset_clamping_brake, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_preset_clamping_lockup, "Persistence") {
     std::cout << "Test 6: Preset Clamping - Lockup Gain..." << std::endl;
+    std::string test_file = "test_clamp_preset_lockup.toml";
     
     // Manually write to config file
     {
-        std::ofstream file(Config::m_config_path);
-        file << "[Presets]\n";
-        file << "[Preset:HighLockup]\n";
-        file << "lockup_gain=2.9\n";
+        std::ofstream file(test_file);
+        file << "[Presets.HighLockup.Braking]\n";
+        file << "lockup_gain = 2.9\n";
     }
     
-    Config::LoadPresets();
+    Config::LoadPresets(test_file);
     
     int idx = -1;
-    for (int i = 0; i < Config::presets.size(); i++) {
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
         if (Config::presets[i].name == "HighLockup") {
             idx = i;
             break;
@@ -228,6 +257,7 @@ TEST_CASE(test_preset_clamping_lockup, "Persistence") {
         Config::ApplyPreset(idx, engine);
         ASSERT_NEAR(engine.m_braking.lockup_gain, 2.9f, 0.001f);
     }
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -236,32 +266,33 @@ TEST_CASE(test_preset_clamping_lockup, "Persistence") {
 TEST_CASE(test_main_config_clamping_brake, "Persistence") {
     std::cout << "Test 7: Main Config Clamping - Brake Load Cap..." << std::endl;
     FFBEngine engine;
+    std::string test_file = "test_clamp_brake.toml";
     
     // Within range
     {
-        std::ofstream file("test_clamp.ini");
-        file << "brake_load_cap=6.5\n";
+        std::ofstream file(test_file);
+        file << "[Braking]\nbrake_load_cap = 6.5\n";
     }
-    Config::Load(engine, "test_clamp.ini");
+    Config::Load(engine, test_file);
     ASSERT_NEAR(engine.m_braking.brake_load_cap, 6.5f, 0.001f);
     
     // Over max
     {
-        std::ofstream file("test_clamp.ini");
-        file << "brake_load_cap=15.0\n";
+        std::ofstream file(test_file);
+        file << "[Braking]\nbrake_load_cap = 15.0\n";
     }
-    Config::Load(engine, "test_clamp.ini");
+    Config::Load(engine, test_file);
     ASSERT_NEAR(engine.m_braking.brake_load_cap, 10.0f, 0.001f);
     
     // Under min
     {
-        std::ofstream file("test_clamp.ini");
-        file << "brake_load_cap=0.5\n";
+        std::ofstream file(test_file);
+        file << "[Braking]\nbrake_load_cap = 0.5\n";
     }
-    Config::Load(engine, "test_clamp.ini");
+    Config::Load(engine, test_file);
     ASSERT_NEAR(engine.m_braking.brake_load_cap, 1.0f, 0.001f);
     
-    std::remove("test_clamp.ini");
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -270,24 +301,25 @@ TEST_CASE(test_main_config_clamping_brake, "Persistence") {
 TEST_CASE(test_main_config_clamping_lockup, "Persistence") {
     std::cout << "Test 8: Main Config Clamping - Lockup Gain..." << std::endl;
     FFBEngine engine;
+    std::string test_file = "test_clamp_lockup.toml";
     
     // Within range
     {
-        std::ofstream file("test_clamp.ini");
-        file << "lockup_gain=2.7\n";
+        std::ofstream file(test_file);
+        file << "[Braking]\nlockup_gain = 2.7\n";
     }
-    Config::Load(engine, "test_clamp.ini");
+    Config::Load(engine, test_file);
     ASSERT_NEAR(engine.m_braking.lockup_gain, 2.7f, 0.001f);
     
     // Over max
     {
-        std::ofstream file("test_clamp.ini");
-        file << "lockup_gain=5.0\n";
+        std::ofstream file(test_file);
+        file << "[Braking]\nlockup_gain = 5.0\n";
     }
-    Config::Load(engine, "test_clamp.ini");
+    Config::Load(engine, test_file);
     ASSERT_NEAR(engine.m_braking.lockup_gain, 3.0f, 0.001f);
     
-    std::remove("test_clamp.ini");
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -295,26 +327,27 @@ TEST_CASE(test_main_config_clamping_lockup, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_configuration_versioning, "Persistence") {
     std::cout << "Test 9: Configuration Versioning..." << std::endl;
-    Config::presets.clear(); // Clear presets from previous tests
+    Config::presets.clear();
     FFBEngine engine;
     
-    Config::Save(engine, "test_version.ini");
-    ASSERT_TRUE(FileContains("test_version.ini", std::string("ini_version=") + LMUFFB_VERSION));
+    std::string test_file = "test_version.toml";
+    Config::Save(engine, test_file);
+    ASSERT_TRUE(FileContains(test_file, "app_version"));
     
-    Config::Load(engine, "test_version.ini");
-    // Check console output manually or assume success if no crash
-    
-    std::remove("test_version.ini");
+    Config::Load(engine, test_file);
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
-// TEST 10: Comprehensive Round-Trip Test
+// TEST 10: Comprehensive Round-Trip Test (Phase 2 TOML)
 // ----------------------------------------------------------------------------
 TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     std::cout << "Test 10: Comprehensive Round-Trip Test..." << std::endl;
-    std::remove(Config::m_config_path.c_str());
+    std::string test_file = "roundtrip.toml";
+    std::remove(test_file.c_str());
+
     FFBEngine engine;
-    Preset::ApplyDefaultsToEngine(engine);
+    InitializeEngine(engine);
     
     engine.m_general.gain = 0.77f;
     engine.m_front_axle.understeer_effect = 0.444f;
@@ -326,11 +359,11 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     engine.m_advanced.road_fallback_scale = 0.11f;
     engine.m_advanced.understeer_affects_sop = true;
     
-    Config::Save(engine, "roundtrip.ini");
+    Config::Save(engine, test_file);
     
     FFBEngine engine2;
-    Preset::ApplyDefaultsToEngine(engine2);
-    Config::Load(engine2, "roundtrip.ini");
+    InitializeEngine(engine2);
+    Config::Load(engine2, test_file);
     
     ASSERT_NEAR(engine2.m_general.gain, 0.77f, 0.001f);
     ASSERT_NEAR(engine2.m_front_axle.understeer_effect, 0.444f, 0.001f);
@@ -344,13 +377,14 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     
     Config::presets.clear();
     Config::AddUserPreset("RoundTrip", engine2);
+    Config::Save(engine2, test_file);
     
     FFBEngine engine3;
-    Preset::ApplyDefaultsToEngine(engine3);
-    Config::LoadPresets();
+    InitializeEngine(engine3);
+    Config::LoadPresets(test_file);
     
     int idx = -1;
-    for (int i = 0; i < Config::presets.size(); i++) {
+    for (int i = 0; i < (int)Config::presets.size(); i++) {
         if (Config::presets[i].name == "RoundTrip") {
             idx = i;
             break;
@@ -371,51 +405,29 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
         ASSERT_EQ(engine3.m_advanced.understeer_affects_sop, true);
     }
     
-    std::remove("roundtrip.ini");
+    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
 // TEST 11: Preset-Engine Synchronization Regression (v0.7.0)
-// 
-// REGRESSION CASE: Fields declared in both Preset and FFBEngine but missing
-// from Preset::Apply() or Preset::UpdateFromEngine() methods.
-//
-// This test verifies that:
-// 1. Preset::ApplyDefaultsToEngine() initializes ALL fields to valid values
-// 2. Preset::Apply() transfers ALL Preset fields to FFBEngine
-// 3. Preset::UpdateFromEngine() captures ALL FFBEngine fields back to Preset
-// 
-// If any field is missing from the synchronization methods, this test will fail.
 // ----------------------------------------------------------------------------
 TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     std::cout << "Test 11: Preset-Engine Synchronization (v0.7.0 Regression)..." << std::endl;
     
-    // --- Part A: ApplyDefaultsToEngine initializes critical fields ---
     FFBEngine engine_defaults;
     Preset::ApplyDefaultsToEngine(engine_defaults);
     
-    // These fields triggered "Invalid X, resetting to default" warnings when missing
     ASSERT_TRUE(engine_defaults.m_grip_estimation.optimal_slip_angle >= 0.01f);
     ASSERT_TRUE(engine_defaults.m_grip_estimation.optimal_slip_ratio >= 0.01f);
-    
-    // Additional smoothing fields (v0.5.7 - v0.5.8)
-    // Note: 0.0 is valid for these, we just check they're not uninitialized garbage
     ASSERT_TRUE(engine_defaults.m_front_axle.steering_shaft_smoothing >= 0.0f);
     ASSERT_TRUE(engine_defaults.m_advanced.gyro_smoothing >= 0.0f);
     ASSERT_TRUE(engine_defaults.m_rear_axle.yaw_accel_smoothing >= 0.0f);
     ASSERT_TRUE(engine_defaults.m_grip_estimation.chassis_inertia_smoothing >= 0.0f);
-    
-    // Slope detection fields (v0.7.0)
     ASSERT_TRUE(engine_defaults.m_slope_detection.sg_window >= 5);
     ASSERT_TRUE(engine_defaults.m_slope_detection.sensitivity >= 0.1f);
     ASSERT_TRUE(engine_defaults.m_slope_detection.smoothing_tau >= 0.001f);
     
-    std::cout << "  [PASS] ApplyDefaultsToEngine initializes critical fields" << std::endl;
-    
-    // --- Part B: Apply() transfers ALL Preset fields to FFBEngine ---
     Preset custom_preset("SyncTest");
-    
-    // Set custom values for ALL synchronizable fields
     custom_preset.general.gain = 0.77f;
     custom_preset.front_axle.understeer_effect = 0.88f;
     custom_preset.rear_axle.sop_effect = 1.11f;
@@ -427,8 +439,6 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     custom_preset.grip_estimation.chassis_inertia_smoothing = 0.035f;
     custom_preset.advanced.road_fallback_scale = 0.12f;
     custom_preset.advanced.understeer_affects_sop = true;
-    
-    // Slope detection (v0.7.0)
     custom_preset.slope_detection.enabled = true;
     custom_preset.slope_detection.sg_window = 21;
     custom_preset.slope_detection.sensitivity = 2.5f;
@@ -438,7 +448,6 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     FFBEngine engine_apply;
     custom_preset.Apply(engine_apply);
     
-    // Verify Apply() worked
     ASSERT_NEAR(engine_apply.m_general.gain, 0.77f, 0.001f);
     ASSERT_NEAR(engine_apply.m_front_axle.understeer_effect, 0.88f, 0.001f);
     ASSERT_NEAR(engine_apply.m_rear_axle.sop_effect, 1.11f, 0.001f);
@@ -450,21 +459,14 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_NEAR(engine_apply.m_grip_estimation.chassis_inertia_smoothing, 0.035f, 0.001f);
     ASSERT_NEAR(engine_apply.m_advanced.road_fallback_scale, 0.12f, 0.001f);
     ASSERT_EQ(engine_apply.m_advanced.understeer_affects_sop, true);
-    
-    // Slope detection (v0.7.0)
     ASSERT_EQ(engine_apply.m_slope_detection.enabled, true);
     ASSERT_EQ(engine_apply.m_slope_detection.sg_window, 21);
     ASSERT_NEAR(engine_apply.m_slope_detection.sensitivity, 2.5f, 0.001f);
     ASSERT_NEAR(engine_apply.m_slope_detection.min_threshold, -0.2f, 0.001f);
     ASSERT_NEAR(engine_apply.m_slope_detection.smoothing_tau, 0.05f, 0.001f);
     
-    std::cout << "  [PASS] Apply() transfers all Preset fields to FFBEngine" << std::endl;
-    
-    // --- Part C: UpdateFromEngine() captures ALL FFBEngine fields ---
     FFBEngine engine_source;
-    Preset::ApplyDefaultsToEngine(engine_source);
-    
-    // Set custom values directly on engine
+    InitializeEngine(engine_source);
     engine_source.m_general.gain = 0.55f;
     engine_source.m_front_axle.understeer_effect = 0.66f;
     engine_source.m_grip_estimation.optimal_slip_angle = 0.22f;
@@ -475,8 +477,6 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     engine_source.m_grip_estimation.chassis_inertia_smoothing = 0.055f;
     engine_source.m_advanced.road_fallback_scale = 0.09f;
     engine_source.m_advanced.understeer_affects_sop = true;
-    
-    // Slope detection (v0.7.0)
     engine_source.m_slope_detection.enabled = true;
     engine_source.m_slope_detection.sg_window = 31;
     engine_source.m_slope_detection.sensitivity = 3.0f;
@@ -486,7 +486,6 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     Preset captured_preset;
     captured_preset.UpdateFromEngine(engine_source);
     
-    // Verify UpdateFromEngine() worked
     ASSERT_NEAR(captured_preset.general.gain, 0.55f, 0.001f);
     ASSERT_NEAR(captured_preset.front_axle.understeer_effect, 0.66f, 0.001f);
     ASSERT_NEAR(captured_preset.grip_estimation.optimal_slip_angle, 0.22f, 0.001f);
@@ -497,25 +496,16 @@ TEST_CASE(test_preset_engine_sync_regression, "Persistence") {
     ASSERT_NEAR(captured_preset.grip_estimation.chassis_inertia_smoothing, 0.055f, 0.001f);
     ASSERT_NEAR(captured_preset.advanced.road_fallback_scale, 0.09f, 0.001f);
     ASSERT_EQ(captured_preset.advanced.understeer_affects_sop, true);
-    
-    // Slope detection (v0.7.0)
     ASSERT_EQ(captured_preset.slope_detection.enabled, true);
     ASSERT_EQ(captured_preset.slope_detection.sg_window, 31);
     ASSERT_NEAR(captured_preset.slope_detection.sensitivity, 3.0f, 0.001f);
     ASSERT_NEAR(captured_preset.slope_detection.min_threshold, -0.3f, 0.001f);
     ASSERT_NEAR(captured_preset.slope_detection.smoothing_tau, 0.08f, 0.001f);
     
-    std::cout << "  [PASS] UpdateFromEngine() captures all FFBEngine fields" << std::endl;
-    
-    // --- Part D: Round-trip integrity ---
-    // Apply captured_preset to a new engine and verify no data loss
     FFBEngine engine_roundtrip;
     captured_preset.Apply(engine_roundtrip);
-    
     ASSERT_NEAR(engine_roundtrip.m_grip_estimation.optimal_slip_angle, 0.22f, 0.001f);
     ASSERT_NEAR(engine_roundtrip.m_slope_detection.sensitivity, 3.0f, 0.001f);
-    
-    std::cout << "  [PASS] Round-trip Apply->UpdateFromEngine->Apply preserves data" << std::endl;
 }
 
 } // namespace FFBEngineTests

@@ -42,6 +42,7 @@ set(TEST_SOURCES
     test_ffb_road_texture.cpp
     test_ffb_lockup_braking.cpp
     test_ffb_config.cpp
+    test_toml_config.cpp
     test_ffb_slip_grip.cpp
     test_ffb_internal.cpp
     test_ffb_coverage_refactor.cpp

@@ -92,8 +92,8 @@ TEST_CASE(test_refactor_slope_detection_validation, "RefactorSafety") {
     bad_preset.slope_detection.sg_window = 2;              // Should clamp to 5 (and then 5 is odd)
     bad_preset.slope_detection.sensitivity = 0.0f;         // Should clamp to 0.1
     bad_preset.slope_detection.smoothing_tau = 0.0f;       // Should clamp to 0.001
-    bad_preset.slope_detection.alpha_threshold = 0.0f;     // Should clamp to 0.001
-    bad_preset.slope_detection.decay_rate = 0.0f;          // Should clamp to 0.1
+    bad_preset.slope_detection.alpha_threshold = 0.0f;     // Should RESET to 0.02 (legacy behavior)
+    bad_preset.slope_detection.decay_rate = 0.0f;          // Should RESET to 5.0 (legacy behavior)
     bad_preset.slope_detection.g_slew_limit = 0.0f;        // Should clamp to 1.0
     bad_preset.slope_detection.torque_sensitivity = 0.0f;  // Should clamp to 0.01
 
@@ -103,8 +103,8 @@ TEST_CASE(test_refactor_slope_detection_validation, "RefactorSafety") {
     ASSERT_EQ(engine.m_slope_detection.sg_window, 5);
     ASSERT_NEAR(engine.m_slope_detection.sensitivity, 0.1f, 0.0001);
     ASSERT_NEAR(engine.m_slope_detection.smoothing_tau, 0.001f, 0.0001);
-    ASSERT_NEAR(engine.m_slope_detection.alpha_threshold, 0.001f, 0.0001);
-    ASSERT_NEAR(engine.m_slope_detection.decay_rate, 0.1f, 0.0001);
+    ASSERT_NEAR(engine.m_slope_detection.alpha_threshold, 0.02f, 0.0001);
+    ASSERT_NEAR(engine.m_slope_detection.decay_rate, 5.0f, 0.0001);
     ASSERT_NEAR(engine.m_slope_detection.g_slew_limit, 1.0f, 0.0001);
     ASSERT_NEAR(engine.m_slope_detection.torque_sensitivity, 0.01f, 0.0001);
 }

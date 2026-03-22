@@ -250,8 +250,15 @@ struct SlopeDetectionConfig {
         if (sg_window % 2 == 0) sg_window++; // Must be odd for SG
         sensitivity = (std::max)(0.1f, sensitivity);
         smoothing_tau = (std::max)(0.001f, smoothing_tau);
-        alpha_threshold = (std::max)(0.001f, alpha_threshold);
-        decay_rate = (std::max)(0.1f, decay_rate);
+
+        // Use soft limits with reset-to-default for alpha and decay (preserving legacy behavior)
+        if (alpha_threshold < 0.001f || alpha_threshold > 0.1f) {
+            alpha_threshold = 0.02f;
+        }
+        if (decay_rate < 0.1f || decay_rate > 20.0f) {
+            decay_rate = 5.0f;
+        }
+
         confidence_max_rate = (std::max)(alpha_threshold + 0.01f, confidence_max_rate);
         g_slew_limit = (std::max)(1.0f, g_slew_limit);
         torque_sensitivity = (std::max)(0.01f, torque_sensitivity);

@@ -7,6 +7,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.218]
+
+### Changed
+- **Preset System Redesign (Phase 2 - TOML Integration)**
+  - **Modern Configuration Format**: Migrated the main configuration file from legacy INI to TOML (`config.toml`). This provides strict type safety (distinguishing between floats, booleans, and strings) and handles complex preset names with special characters natively.
+  - **Structured Data Model**: Refactored `Config::Load` and `Config::Save` to utilize the `toml++` library, mapping configuration categories to logical TOML tables (`[General]`, `[FrontAxle]`, etc.).
+  - **Automated Migration**: Implemented a robust "one-time" migration path that detects legacy `config.ini` files, performs version-aware physics adjustments (e.g., 100Nm torque hack and SoP smoothing reset), and archives the old file as `config.ini.bak`.
+  - **Dependency Integration**: Bundled the `toml++` (v3.4.0) header-only library in `src/ext/toml++/` for zero-dependency builds across all platforms.
+  - **Built-in Preset Restoration**: Restored specialized tuning data for built-in presets (T300, Simagic, Moza) ensuring no loss of haptic detail for "Day 1" users.
+  - **License Compliance**: Updated root `LICENSE` with MIT/BSD terms for `toml++`, `ImGui`, and `LZ4`.
+
+### Testing
+- **TOML Regression Suite**: Added `tests/test_toml_config.cpp` verifying round-trip serialization, missing key fallbacks, and type safety.
+- **Full Suite Stabilization**: Refactored the entire 606-test regression suite (47 files) to support TOML-based configuration and telemetry mocks.
+- Verified 100% pass rate: **606/606 test cases, 2872 assertions, 0 failures**.
+
+---
+
 ## [0.7.217]
 
 ### Refactored

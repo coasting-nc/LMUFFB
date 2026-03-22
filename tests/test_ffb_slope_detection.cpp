@@ -613,14 +613,16 @@ TEST_CASE(test_slope_detection_alpha_threshold_validation, "SlopeDetection") {
     InitializeEngine(engine);
 
     engine.m_slope_detection.alpha_threshold = 0.0001f;
-    Config::Save(engine, "test_val.ini");
-    Config::Load(engine, "test_val.ini");
+    Config::Save(engine, "test_val.toml");
+    Config::Load(engine, "test_val.toml");
     ASSERT_NEAR(engine.m_slope_detection.alpha_threshold, 0.02f, 0.0001);
 
     engine.m_slope_detection.alpha_threshold = 0.5f;
-    Config::Save(engine, "test_val.ini");
-    Config::Load(engine, "test_val.ini");
+    Config::Save(engine, "test_val.toml");
+    Config::Load(engine, "test_val.toml");
     ASSERT_NEAR(engine.m_slope_detection.alpha_threshold, 0.02f, 0.0001);
+
+    std::remove("test_val.toml");
 }
 
 TEST_CASE(test_inverse_lerp_helper, "SlopeDetection") {

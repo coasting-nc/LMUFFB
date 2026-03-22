@@ -19,9 +19,6 @@ TEST_CASE(test_hardware_scaling_structural, "HardwareScaling") {
     // Simulate structural sum of 30.0 Nm (exactly at session peak)
     // di_structural = (30.0 * (1/30.0)) * (10.0 / 20.0) = 0.5
 
-    // We can't easily call calculate_force with precise outputs without mocked telemetry,
-    // so we verify the components of the math.
-
     double structural_sum = 30.0;
     double norm_structural = structural_sum * FFBEngineTestAccess::GetSmoothedStructuralMult(engine);
     ASSERT_NEAR(norm_structural, 1.0, 0.0001);
@@ -56,22 +53,15 @@ TEST_CASE(test_config_migration_max_torque, "HardwareScaling") {
 
     // Case 1: 100 Nm (Legacy Clipping Hack)
     {
-        Preset p;
-        std::string version = "0.7.0";
-        bool needs_save = false;
-        // Use a dummy call to Config::ParsePresetLine logic (re-implemented here for testing or calling actual function)
-        // Since ParsePresetLine is static and private, we'll test via Config::Load or just trust our manual check
-        // Actually, let's test it via Config::Load with a string.
-
         std::string test_file = "test_migration_100.ini";
         {
             std::ofstream file(test_file);
-            // Config::Load expects global settings at top level, no section header needed for basic testing
             file << "max_torque_ref=100.0\n";
         }
 
         FFBEngine engine;
-        Config::Load(engine, test_file);
+        InitializeEngine(engine);
+        Config::MigrateFromLegacyIni(engine, test_file);
 
         ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0f, 0.0001);
         ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0f, 0.0001);
@@ -88,7 +78,8 @@ TEST_CASE(test_config_migration_max_torque, "HardwareScaling") {
         }
 
         FFBEngine engine;
-        Config::Load(engine, test_file);
+        InitializeEngine(engine);
+        Config::MigrateFromLegacyIni(engine, test_file);
 
         ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 20.0f, 0.0001);
         ASSERT_NEAR(engine.m_general.target_rim_nm, 20.0f, 0.0001);
