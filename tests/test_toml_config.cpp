@@ -149,7 +149,9 @@ TEST_CASE(test_builtin_preset_fidelity, "Config") {
         ASSERT_TRUE(found);
     };
 
-    check_preset("Thrustmaster T300/TX", 20.0f, 20.0f); // Default for G25/T300 in LoadPresets is from Preset struct (20/20)
+    // NOTE: Built-in presets for G25, T300 etc inherit from Preset struct defaults (20/20 in tests)
+    // while DD presets (Moza, Simagic) have hardcoded wheelbase/rim values.
+    check_preset("Thrustmaster T300/TX", 20.0f, 20.0f); 
     check_preset("GT3 DD 15 Nm (Simagic Alpha)", 15.0f, 10.0f);
     check_preset("GM DD 21 Nm (Moza R21 Ultra)", 21.0f, 12.0f);
 }
