@@ -1770,20 +1770,15 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
 void FFBEngine::UpdateUpsamplerModes() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
-    static constexpr double DEFAULT_ALPHA = 0.8;
-    static constexpr double DEFAULT_BETA = 0.2;
-    static constexpr double SAFE_ALPHA = 0.5;  // Temporary safe values until we implement https://github.com/coasting-nc/LMUFFB/issues/466
-    static constexpr double SAFE_BETA = 0.0;  // Temporary safe values until we implement https://github.com/coasting-nc/LMUFFB/issues/466
-
     // Steering Shaft Torque (Existing)
-    m_upsample_shaft_torque.Configure(DEFAULT_ALPHA, DEFAULT_BETA); // Default tuning
+    m_upsample_shaft_torque.Configure(0.8, 0.2); // Default tuning
     m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);
 
     // Auxiliary Channels (New)
     bool aux_zero_latency = (m_advanced.aux_telemetry_reconstruction == 0);
 
     auto configure_filter = [&](ffb_math::HoltWintersFilter& filter) {
-        filter.Configure(SAFE_ALPHA, SAFE_BETA); // Stable predictive tuning
+        filter.Configure(0.8, 0.2); // Stable predictive tuning
         filter.SetZeroLatency(aux_zero_latency);
     };
 
