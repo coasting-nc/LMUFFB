@@ -6,6 +6,7 @@
 *   **UX & Sharing:** Storing user presets as individual files in a top-level `user_presets/` folder makes it trivial for users to share, backup, and organize their profiles.
 *   **Integrity:** Embedding built-in presets as raw TOML strings in the C++ binary ensures they cannot be accidentally modified or deleted by the user, preventing support tickets about "broken default FFB".
 *   **UI Clarity:** Prefixing built-in presets in the UI prevents name collisions and makes it immediately obvious to the user which profiles are safe to overwrite and which are factory defaults.
+**Instructions:** in implementing this implementation plan, you must follow the instructions from this document: `gemini_orchestrator\templates\B_developer_prompt.md`
 
 **See also:** 
 * Additional context with initial overview of all the Phases `docs\dev_docs\investigations\redesign presets system.md`
