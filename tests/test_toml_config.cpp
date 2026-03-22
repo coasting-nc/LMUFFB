@@ -109,6 +109,8 @@ TEST_CASE(test_toml_static_loads_numeric_types, "Config") {
     std::string test_file = "test_static_loads.toml";
     {
         std::ofstream file(test_file);
+        file << "[System]\n";
+        file << "app_version = \"0.7.218\"\n";
         file << "[StaticLoads]\n";
         file << "\"Integer Car\" = 1200\n";
         file << "\"Float Car\" = 1350.5\n";
