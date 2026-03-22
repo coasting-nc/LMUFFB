@@ -1776,7 +1776,7 @@ void FFBEngine::UpdateUpsamplerModes() {
     SAFE_BETA = 0.0  // Temporary safe values until we implement # https://github.com/coasting-nc/LMUFFB/issues/466
 
     // Steering Shaft Torque (Existing)
-    m_upsample_shaft_torque.Configure(SAFE_ALPHA, SAFE_BETA); // Default tuning
+    m_upsample_shaft_torque.Configure(DEFAULT_ALPHA, DEFAULT_BETA); // Default tuning
     m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);
 
     // Auxiliary Channels (New)
