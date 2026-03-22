@@ -7,6 +7,10 @@
 *   **Integrity:** Embedding built-in presets as raw TOML strings in the C++ binary ensures they cannot be accidentally modified or deleted by the user, preventing support tickets about "broken default FFB".
 *   **UI Clarity:** Prefixing built-in presets in the UI prevents name collisions and makes it immediately obvious to the user which profiles are safe to overwrite and which are factory defaults.
 
+**See also:** 
+* `docs\dev_docs\investigations\redesign presets system.md`
+* `docs/dev_docs/reports/phase2_toml_integration_implementation_notes.md`
+
 ## 1. Codebase Analysis Summary
 *   **`src/core/Config.h` & `src/core/Config.cpp`:**
     *   `Config::LoadPresets()`: Currently parses the `[Presets]` table from `config.toml` and hardcodes C++ structs for built-ins. Needs to be rewritten to parse embedded TOML strings for built-ins, and iterate the `user_presets/` directory for user files.
