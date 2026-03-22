@@ -1,7 +1,7 @@
 # Implementation Plan - Issue #466: Differentiate among the auxiliary channels: apply different setting for the zero latency reconstruction filter
 
 ## Context
-Following the migration of all auxiliary telemetry channels to the `HoltWintersFilter` (Issue #461), this patch introduces signal-specific tuning. Not all telemetry signals share the same noise profile. Treating smooth driver inputs the same as violent chassis impacts leads to either sluggish responsiveness or dangerous mathematical spikes. This plan categorizes the 22 auxiliary channels into three distinct DSP groups (Driver Inputs, High-Frequency Texture, and Chassis Kinematics) and applies hardcoded `alpha`, `beta`, and `ZeroLatency` rules tailored to their physical characteristics.
+Following the migration of all auxiliary telemetry channels to the `HoltWintersFilter` (Issue #461), this patch introduces signal-specific tuning. Not all telemetry signals share the same noise profile. Treating smooth driver inputs the same as violent chassis impacts leads to either sluggish responsiveness or dangerous mathematical spikes. This plan categorizes the 32 auxiliary channels (covering 22 distinct logical telemetry types) into three distinct DSP groups (Driver Inputs, High-Frequency Texture, and Chassis Kinematics) and applies hardcoded `alpha`, `beta`, and `ZeroLatency` rules tailored to their physical characteristics.
 
 ### Design Rationale
 In Digital Signal Processing (DSP), extrapolating a noisy signal is dangerous. The `HoltWintersFilter` in "Zero Latency" mode uses the signal's trend (derivative) to predict the future. 
@@ -18,9 +18,9 @@ In Digital Signal Processing (DSP), extrapolating a noisy signal is dangerous. T
 ---
 
 ## Codebase Analysis Summary
-*   **`src/ffb/FFBEngine.h`**: Contains the 22 `HoltWintersFilter` instances for auxiliary channels. Needs a state-tracker variable (`m_last_aux_recon_mode`) and a new private method (`ApplyAuxReconstructionMode()`) to handle state changes cleanly.
+*   **`src/ffb/FFBEngine.h`**: Contains the 32 `HoltWintersFilter` instances for auxiliary channels. Needs a state-tracker variable (`m_last_aux_recon_mode`) and a new private method (`ApplyAuxReconstructionMode()`) to handle state changes cleanly.
 *   **`src/ffb/FFBEngine.cpp`**: 
-    *   *Constructor:* Needs to initialize the `alpha` and `beta` parameters for all 22 filters using `Configure()`.
+    *   *Constructor:* Needs to initialize the `alpha` and `beta` parameters for all 32 filters using `Configure()`.
     *   *`calculate_force`:* The 400Hz hot path. Needs to be stripped of unconditional `SetZeroLatency()` calls and replaced with a lightweight state-change detector.
 
 ### Design Rationale
@@ -49,7 +49,7 @@ This targeted approach ensures that the FFB feels raw and detailed where it matt
 *   **Add Method:** Add `void ApplyAuxReconstructionMode();` to the private methods.
 
 ### 2. `src/ffb/FFBEngine.cpp`
-*   **Constructor Updates:** Add `Configure(alpha, beta)` calls for all 22 filters immediately after they are constructed.
+*   **Constructor Updates:** Add `Configure(alpha, beta)` calls for all 32 filters immediately after they are constructed.
     *   *Group 1 (Driver Inputs):* `m_upsample_steering`, `m_upsample_throttle`, `m_upsample_brake`, `m_upsample_brake_pressure[0-3]`. **Tuning:** `Configure(0.95, 0.40)`.
     *   *Group 2 (Texture/Tire):* `m_upsample_vert_deflection[0-3]`, `m_upsample_lat_patch_vel[0-3]`, `m_upsample_long_patch_vel[0-3]`, `m_upsample_rotation[0-3]`. **Tuning:** `Configure(0.80, 0.20)`.
     *   *Group 3 (Chassis/Impacts):* `m_upsample_local_accel_x/y/z`, `m_upsample_local_rot_accel_y`, `m_upsample_local_rot_y`, `m_upsample_susp_force[0-3]`. **Tuning:** `Configure(0.50, 0.00)`.
