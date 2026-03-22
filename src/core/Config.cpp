@@ -197,7 +197,8 @@ static toml::table PresetToToml(const Preset& p) {
         {"rest_api_enabled", p.advanced.rest_api_enabled},
         {"rest_api_port", p.advanced.rest_api_port},
         {"road_fallback_scale", p.advanced.road_fallback_scale},
-        {"understeer_affects_sop", p.advanced.understeer_affects_sop}
+        {"understeer_affects_sop", p.advanced.understeer_affects_sop},
+        {"aux_telemetry_reconstruction", p.advanced.aux_telemetry_reconstruction}
     });
 
     tbl.insert("Safety", toml::table{
@@ -357,6 +358,7 @@ static void TomlToPreset(const toml::table& tbl, Preset& p) {
         p.advanced.rest_api_port = (int)(*ad)["rest_api_port"].value_or((int64_t)baseline.advanced.rest_api_port);
         p.advanced.road_fallback_scale = (float)(*ad)["road_fallback_scale"].value_or((double)baseline.advanced.road_fallback_scale);
         p.advanced.understeer_affects_sop = (*ad)["understeer_affects_sop"].value_or(baseline.advanced.understeer_affects_sop);
+        p.advanced.aux_telemetry_reconstruction = (int)(*ad)["aux_telemetry_reconstruction"].value_or((int64_t)baseline.advanced.aux_telemetry_reconstruction);
     }
 
     if (auto sa = tbl["Safety"].as_table()) {
@@ -548,6 +550,7 @@ bool Config::ParseVibrationLine(const std::string& key, const std::string& value
     if (key == "speed_gate_upper") { current_preset.advanced.speed_gate_upper = std::stof(value); return true; }
     if (key == "road_fallback_scale") { current_preset.advanced.road_fallback_scale = std::stof(value); return true; }
     if (key == "understeer_affects_sop") { current_preset.advanced.understeer_affects_sop = (value == "1" || value == "true"); return true; }
+    if (key == "aux_telemetry_reconstruction") { current_preset.advanced.aux_telemetry_reconstruction = std::stoi(value); return true; }
     return false;
 }
 
@@ -700,6 +703,11 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "speed_gate_upper") { engine.m_advanced.speed_gate_upper = std::stof(value); return true; }
     if (key == "road_fallback_scale") { engine.m_advanced.road_fallback_scale = std::stof(value); return true; }
     if (key == "understeer_affects_sop") { engine.m_advanced.understeer_affects_sop = (value == "1" || value == "true"); return true; }
+    if (key == "aux_telemetry_reconstruction") {
+        engine.m_advanced.aux_telemetry_reconstruction = std::stoi(value);
+        engine.UpdateUpsamplerModes();
+        return true;
+    }
     return false;
 }
 

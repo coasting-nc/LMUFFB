@@ -295,7 +295,7 @@ TEST_CASE(test_missing_telemetry_warnings, "SlipGrip") {
     ASSERT_TRUE(logBuffer.str().find("Warning: Data for mSuspForce") != std::string::npos);
 
     logBuffer.str("");
-    for(int i=0; i<60; i++) {
+    for(int i=0; i<200; i++) {
         data.mElapsedTime += 0.01;
         for(int j=0; j<4; j++) data.mWheel[j].mVerticalTireDeflection = 0.0;
         engine.calculate_force(&data, "GT3", "TestCar_GT3");

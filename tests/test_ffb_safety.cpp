@@ -64,6 +64,7 @@ TEST_CASE(test_ffb_safety_slew_limiter, "Safety") {
     // Normal Mode: 1000 units/s
     // 0 to 1.0 in 1 frame (dt=0.0025) would be 1.0/0.0025 = 400 units/s.
     // So 1000 units/s should allow a 0 to 1.0 jump in a single frame.
+    FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
     double force1 = engine.m_safety.ApplySafetySlew(1.0, dt, false);
     ASSERT_NEAR(force1, 1.0, 0.001);
     std::cout << "  [PASS] Normal mode allows rapid changes (up to 1000 u/s)." << std::endl;

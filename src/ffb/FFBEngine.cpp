@@ -230,7 +230,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // Upsample Steering Shaft Torque (Holt-Winters)
-    m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);
+    // Mode is updated via UpdateUpsamplerModes() on config change
     double shaft_torque = m_upsample_shaft_torque.Process(m_working_info.mSteeringShaftTorque, ffb_dt, is_new_frame);
     m_working_info.mSteeringShaftTorque = shaft_torque;
 
@@ -1765,4 +1765,37 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
         
         ctx.bottoming_crunch = std::sin(m_bottoming_phase) * bump_magnitude * ctx.speed_gate;
     }
+}
+
+void FFBEngine::UpdateUpsamplerModes() {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    // Steering Shaft Torque (Existing)
+    m_upsample_shaft_torque.Configure(0.8, 0.2); // Default tuning
+    m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);
+
+    // Auxiliary Channels (New)
+    bool aux_zero_latency = (m_advanced.aux_telemetry_reconstruction == 0);
+
+    auto configure_filter = [&](ffb_math::HoltWintersFilter& filter) {
+        filter.Configure(0.8, 0.2); // Stable predictive tuning
+        filter.SetZeroLatency(aux_zero_latency);
+    };
+
+    for (int i = 0; i < 4; i++) {
+        configure_filter(m_upsample_lat_patch_vel[i]);
+        configure_filter(m_upsample_long_patch_vel[i]);
+        configure_filter(m_upsample_vert_deflection[i]);
+        configure_filter(m_upsample_susp_force[i]);
+        configure_filter(m_upsample_brake_pressure[i]);
+        configure_filter(m_upsample_rotation[i]);
+    }
+    configure_filter(m_upsample_steering);
+    configure_filter(m_upsample_throttle);
+    configure_filter(m_upsample_brake);
+    configure_filter(m_upsample_local_accel_x);
+    configure_filter(m_upsample_local_accel_y);
+    configure_filter(m_upsample_local_accel_z);
+    configure_filter(m_upsample_local_rot_accel_y);
+    configure_filter(m_upsample_local_rot_y);
 }

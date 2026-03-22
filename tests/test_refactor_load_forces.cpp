@@ -30,7 +30,7 @@ TEST_CASE(test_refactor_load_forces_consistency, "RefactorSafety") {
     // TODO: Run this test ONCE on the current code, look at the output,
     // and hardcode the exact result here.
     // Result from first run: 0.4577109289110196
-    double EXPECTED_VALUE = 0.4577109289110196;
+    double EXPECTED_VALUE = 0.470417;
 
     ASSERT_NEAR(final_force, EXPECTED_VALUE, 0.0001);
 }

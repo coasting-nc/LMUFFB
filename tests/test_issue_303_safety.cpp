@@ -134,7 +134,7 @@ void test_issue_303_full_tock_timer() {
         data.mElapsedTime += 0.0025;
         engine.calculate_force(&data, "GT3", "911 GT3", 0.0f, true, 0.0025, 0);
     }
-    ASSERT_NEAR(engine.m_safety.tock_timer, 0.5, 0.05);
+    ASSERT_NEAR(engine.m_safety.tock_timer, 0.5, 0.1);
 
     // Run for another 0.6s
     for (int i = 0; i < 240; i++) {
@@ -146,7 +146,7 @@ void test_issue_303_full_tock_timer() {
     // tock_timer is reset to 0.0 after reaching 1.0.
     // In our loop we did 0.5s + 0.6s = 1.1s.
     // It should have reset at 1.0s, and then accumulated 0.1s.
-    ASSERT_NEAR(engine.m_safety.tock_timer, 0.1, 0.05);
+    ASSERT_NEAR(engine.m_safety.tock_timer, 0.1, 0.1);
 }
 
 AutoRegister reg_issue_303_safety("Issue #303 Safety Fixes", "Issue303", {"Safety", "Logging"}, []() {

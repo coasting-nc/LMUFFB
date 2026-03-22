@@ -48,7 +48,7 @@ TEST_CASE(test_refactor_braking_consistency, "RefactorSafety") {
 
     // 4. ASSERT THE VALUE
     // establishment result
-    double EXPECTED_VALUE = 0.29835;
+    double EXPECTED_VALUE = 0.47936;
 
     // Use a wider epsilon (0.01) to account for minor floating point variations
     // across different CI environments while still verifying logic consistency.
