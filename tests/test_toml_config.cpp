@@ -111,6 +111,7 @@ TEST_CASE(test_toml_static_loads_numeric_types, "Config") {
         std::ofstream file(test_file);
         file << "[System]\n";
         file << "gain = 1.0\n";
+        file << "app_version = \"0.7.218\"\n";
         file << "[StaticLoads]\n";
         file << "\"Integer Car\" = 1200\n";
         file << "\"Float Car\" = 1350.5\n";
@@ -145,10 +146,14 @@ TEST_CASE(test_builtin_preset_fidelity, "Config") {
                 break;
             }
         }
+        if (!found) std::cout << "  [FAIL] Preset not found: " << name << std::endl;
         ASSERT_TRUE(found);
     };
 
-    check_preset("Thrustmaster T300/TX", 15.0f, 10.0f);
+    // NOTE: In tests, InitializeEngine sets wheelbase_max_nm = 20 and target_rim_nm = 20.
+    // Presets like G25/T300 inherit these because they don't override them.
+    // However, the DD presets (Moza, Simagic) explicitly override them to 15/10, 21/12 etc.
+    check_preset("Thrustmaster T300/TX", 15.0f, 10.0f); 
     check_preset("GT3 DD 15 Nm (Simagic Alpha)", 15.0f, 10.0f);
     check_preset("GM DD 21 Nm (Moza R21 Ultra)", 21.0f, 12.0f);
 }
