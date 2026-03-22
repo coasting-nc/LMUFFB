@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-22 18:38:10</td>
+            <td class="headerValue">2026-03-22 22:22:31</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -85,7 +85,7 @@
 <span id="L14"><span class="lineNum">      14</span>                 :             :     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;</span>
 <span id="L15"><span class="lineNum">      15</span>                 :             :     static constexpr float SAFETY_SLEW_RESTRICTED = 2.0f;</span>
 <span id="L16"><span class="lineNum">      16</span>                 :             : </span>
-<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC tlaBgGNC">         532 :     FFBSafetyMonitor() = default;</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC tlaBgGNC">         533 :     FFBSafetyMonitor() = default;</span></span>
 <span id="L18"><span class="lineNum">      18</span>                 :             : </span>
 <span id="L19"><span class="lineNum">      19</span>                 :             :     // FFB Safety Settings</span>
 <span id="L20"><span class="lineNum">      20</span>                 :             :     SafetyConfig m_config;</span>
@@ -93,12 +93,12 @@
 <span id="L22"><span class="lineNum">      22</span>                 :             :     // API methods for FFBEngine</span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :     double GetSafetyTimer() const { return safety_timer; }</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             :     void ClearSafetySmoothedForce() { safety_smoothed_force = 0.0; }</span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">          16 :     void SetSafetySmoothedForce(double f) { safety_smoothed_force = f; }</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">         532 :     void SetTimePtr(const double* ptr) { m_time_ptr = ptr; }</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">          17 :     void SetSafetySmoothedForce(double f) { safety_smoothed_force = f; }</span></span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">         533 :     void SetTimePtr(const double* ptr) { m_time_ptr = ptr; }</span></span>
 <span id="L27"><span class="lineNum">      27</span>                 :             : </span>
-<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">      135760 :     bool GetLastAllowed() const { return last_allowed; }</span></span>
-<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">       67892 :     void SetLastAllowed(bool val) { last_allowed = val; }</span></span>
-<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">       68323 :     signed char GetLastControl() const { return last_mControl; }</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">      139104 :     bool GetLastAllowed() const { return last_allowed; }</span></span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">       69564 :     void SetLastAllowed(bool val) { last_allowed = val; }</span></span>
+<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">       69995 :     signed char GetLastControl() const { return last_mControl; }</span></span>
 <span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">         438 :     void SetLastControl(signed char val) { last_mControl = val; }</span></span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : </span>
 <span id="L33"><span class="lineNum">      33</span>                 :             :     bool IsFFBAllowed(const VehicleScoringInfoV01&amp; scoring, unsigned char gamePhase) const;</span>

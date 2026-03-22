@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-22 18:38:10</td>
+            <td class="headerValue">2026-03-22 22:22:31</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -244,20 +244,20 @@
 <span id="L173"><span class="lineNum">     173</span>                 :             :     TelemInfoV01 m_working_info; // Persistent storage for upsampled telemetry</span>
 <span id="L174"><span class="lineNum">     174</span>                 :             :     double m_last_telemetry_time = -1.0;</span>
 <span id="L175"><span class="lineNum">     175</span>                 :             : </span>
-<span id="L176"><span class="lineNum">     176</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_lat_patch_vel[4];</span>
-<span id="L177"><span class="lineNum">     177</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_long_patch_vel[4];</span>
-<span id="L178"><span class="lineNum">     178</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_vert_deflection[4];</span>
-<span id="L179"><span class="lineNum">     179</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_susp_force[4];</span>
-<span id="L180"><span class="lineNum">     180</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_brake_pressure[4];</span>
-<span id="L181"><span class="lineNum">     181</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_rotation[4];</span>
-<span id="L182"><span class="lineNum">     182</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_steering;</span>
-<span id="L183"><span class="lineNum">     183</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_throttle;</span>
-<span id="L184"><span class="lineNum">     184</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_brake;</span>
-<span id="L185"><span class="lineNum">     185</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_local_accel_x;</span>
-<span id="L186"><span class="lineNum">     186</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_local_accel_y;</span>
-<span id="L187"><span class="lineNum">     187</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_local_accel_z;</span>
-<span id="L188"><span class="lineNum">     188</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_local_rot_accel_y;</span>
-<span id="L189"><span class="lineNum">     189</span>                 :             :     ffb_math::LinearExtrapolator m_upsample_local_rot_y;</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_lat_patch_vel[4];</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_long_patch_vel[4];</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_vert_deflection[4];</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_susp_force[4];</span>
+<span id="L180"><span class="lineNum">     180</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_brake_pressure[4];</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_rotation[4];</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_steering;</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_throttle;</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_brake;</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_accel_x;</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_accel_y;</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_accel_z;</span>
+<span id="L188"><span class="lineNum">     188</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_rot_accel_y;</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_rot_y;</span>
 <span id="L190"><span class="lineNum">     190</span>                 :             :     ffb_math::HoltWintersFilter  m_upsample_shaft_torque;</span>
 <span id="L191"><span class="lineNum">     191</span>                 :             : </span>
 <span id="L192"><span class="lineNum">     192</span>                 :             :     double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; </span>
@@ -593,20 +593,21 @@
 <span id="L522"><span class="lineNum">     522</span>                 :             :     void UpdateMetadata(const struct SharedMemoryObjectOut&amp; data);</span>
 <span id="L523"><span class="lineNum">     523</span>                 :             :     double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
 <span id="L524"><span class="lineNum">     524</span>                 :             :     void ResetNormalization();</span>
-<span id="L525"><span class="lineNum">     525</span>                 :             : </span>
-<span id="L526"><span class="lineNum">     526</span>                 :             : private:</span>
-<span id="L527"><span class="lineNum">     527</span>                 :             :     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L528"><span class="lineNum">     528</span>                 :             :     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L529"><span class="lineNum">     529</span>                 :             :     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L530"><span class="lineNum">     530</span>                 :             :     void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L531"><span class="lineNum">     531</span>                 :             :     void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L532"><span class="lineNum">     532</span>                 :             :     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L533"><span class="lineNum">     533</span>                 :             :     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L534"><span class="lineNum">     534</span>                 :             :     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L535"><span class="lineNum">     535</span>                 :             :     void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
-<span id="L536"><span class="lineNum">     536</span>                 :             : };</span>
-<span id="L537"><span class="lineNum">     537</span>                 :             : </span>
-<span id="L538"><span class="lineNum">     538</span>                 :             : #endif // FFBENGINE_H</span>
+<span id="L525"><span class="lineNum">     525</span>                 :             :     void UpdateUpsamplerModes();</span>
+<span id="L526"><span class="lineNum">     526</span>                 :             : </span>
+<span id="L527"><span class="lineNum">     527</span>                 :             : private:</span>
+<span id="L528"><span class="lineNum">     528</span>                 :             :     void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L529"><span class="lineNum">     529</span>                 :             :     NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L530"><span class="lineNum">     530</span>                 :             :     NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L531"><span class="lineNum">     531</span>                 :             :     void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L532"><span class="lineNum">     532</span>                 :             :     void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L533"><span class="lineNum">     533</span>                 :             :     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L534"><span class="lineNum">     534</span>                 :             :     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L535"><span class="lineNum">     535</span>                 :             :     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L536"><span class="lineNum">     536</span>                 :             :     void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx);</span>
+<span id="L537"><span class="lineNum">     537</span>                 :             : };</span>
+<span id="L538"><span class="lineNum">     538</span>                 :             : </span>
+<span id="L539"><span class="lineNum">     539</span>                 :             : #endif // FFBENGINE_H</span>
         </pre>
               </td>
             </tr>
