@@ -11,7 +11,7 @@ Following the structural categorization of auxiliary telemetry channels in Patch
 
 ## Reference Documents
 *   `docs\dev_docs\investigations\FFB Telemetry Upsampling Research.md` (Deep Research Report on DSP Architectures)
-*   `docs/dev_docs/implementation_plans/plan_issue_462_aux_channel_differentiation.md` implementation plan that was completed for Patch 2
+*   `docs\dev_docs\implementation_plans\plan_issue_466_aux_channel_differentiation.md` implementation plan that was completed for Patch 2
 *   `docs\dev_docs\reports\HoltWintersFilter recommendations comparison.md`
 *   Issue #461 & #462 (Previous Holt-Winters integration and channel grouping)
 
