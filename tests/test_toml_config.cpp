@@ -89,7 +89,72 @@ TEST_CASE(test_toml_type_safety, "Config") {
     ASSERT_NEAR(engine.m_general.gain, default_gain, 0.0001f);
     ASSERT_TRUE(engine.m_invert_force == state_before);
 
+    // Item 4: System config safe extraction (e.g. win_pos_x as string)
+    {
+        std::ofstream file(test_file);
+        file << "[System]\nwin_pos_x = \"left\"\n";
+        file.close();
+
+        int x_before = 456;
+        Config::win_pos_x = x_before;
+        Config::Load(engine, test_file);
+        ASSERT_TRUE(Config::win_pos_x == x_before);
+    }
+
     std::remove(test_file.c_str());
+}
+
+TEST_CASE(test_toml_static_loads_numeric_types, "Config") {
+    std::cout << "\nTest: TOML StaticLoads Numeric Types (Int/Float mix)" << std::endl;
+    std::string test_file = "test_static_loads.toml";
+    {
+        std::ofstream file(test_file);
+        file << "[System]\n";
+        file << "app_version = \"0.7.218\"\n";
+        file << "[StaticLoads]\n";
+        file << "\"Integer Car\" = 1200\n";
+        file << "\"Float Car\" = 1350.5\n";
+        file.close();
+    }
+
+    FFBEngine engine;
+    Config::m_saved_static_loads.clear();
+    Config::Load(engine, test_file);
+
+    double val = 0.0;
+    ASSERT_TRUE(Config::GetSavedStaticLoad("Integer Car", val));
+    ASSERT_NEAR((float)val, 1200.0f, 0.001f);
+
+    ASSERT_TRUE(Config::GetSavedStaticLoad("Float Car", val));
+    ASSERT_NEAR((float)val, 1350.5f, 0.001f);
+
+    std::remove(test_file.c_str());
+}
+
+TEST_CASE(test_builtin_preset_fidelity, "Config") {
+    std::cout << "\nTest: Built-in Preset Fidelity (T300/Simagic/Moza)" << std::endl;
+    Config::LoadPresets();
+
+    auto check_preset = [](const std::string& name, float expected_max, float expected_target) {
+        bool found = false;
+        for (const auto& p : Config::presets) {
+            if (p.name == name) {
+                found = true;
+                ASSERT_NEAR(p.general.wheelbase_max_nm, expected_max, 0.01f);
+                ASSERT_NEAR(p.general.target_rim_nm, expected_target, 0.01f);
+                break;
+            }
+        }
+        if (!found) std::cout << "  [FAIL] Preset not found: " << name << std::endl;
+        ASSERT_TRUE(found);
+    };
+
+    // NOTE: In tests, InitializeEngine sets wheelbase_max_nm = 20 and target_rim_nm = 20.
+    // Presets like G25/T300 inherit these because they don't override them.
+    // However, the DD presets (Moza, Simagic) explicitly override them to 15/10, 21/12 etc.
+    check_preset("Thrustmaster T300/TX", 15.0f, 10.0f);
+    check_preset("GT3 DD 15 Nm (Simagic Alpha)", 15.0f, 10.0f);
+    check_preset("GM DD 21 Nm (Moza R21 Ultra)", 21.0f, 12.0f);
 }
 
 TEST_CASE(test_toml_preset_bridge, "Config") {
