@@ -131,7 +131,10 @@ TEST_CASE(test_mn_missing_susp_force_warning, "CorePhysics") {
     std::cout << "\nTest: [MagicNumbers] Missing SuspForce warning (>50 frames)" << std::endl;
 
     FFBEngine engine;
-    InitializeEngine(engine);
+    // We don't use InitializeEngine here because it seeds the filters and might interfere with the counter
+    Preset::ApplyDefaultsToEngine(engine);
+    engine.m_advanced.speed_gate_lower = -10.0f;
+    engine.m_advanced.speed_gate_upper = -5.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -142,17 +145,27 @@ TEST_CASE(test_mn_missing_susp_force_warning, "CorePhysics") {
     }
 
     ASSERT_FALSE(engine.m_warned_susp_force);
-    RunNFrames(engine, data, 55);
+
+    // Note: m_upsample_susp_force is Group 3 (Alpha 0.5, Smooth).
+    // It takes several frames to decay below threshold (10N).
+    // Threshold for warning is 50 frames.
+    for(int i=0; i<100; i++) {
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data);
+    }
     ASSERT_TRUE(engine.m_warned_susp_force);
 
-    std::cout << "  SuspForce warning triggered after 55 frames." << std::endl;
+    std::cout << "  SuspForce warning triggered." << std::endl;
 }
 
 TEST_CASE(test_mn_missing_susp_deflection_warning, "CorePhysics") {
     std::cout << "\nTest: [MagicNumbers] Missing SuspDeflection warning (>50 frames)" << std::endl;
 
     FFBEngine engine;
-    InitializeEngine(engine);
+    // We don't use InitializeEngine here because it seeds the filters and might interfere with the counter
+    Preset::ApplyDefaultsToEngine(engine);
+    engine.m_advanced.speed_gate_lower = -10.0f;
+    engine.m_advanced.speed_gate_upper = -5.0f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
@@ -163,10 +176,17 @@ TEST_CASE(test_mn_missing_susp_deflection_warning, "CorePhysics") {
     }
 
     ASSERT_FALSE(engine.m_warned_susp_deflection);
-    RunNFrames(engine, data, 55);
+
+    // Note: m_upsample_susp_force is Group 3 (Alpha 0.5, Smooth).
+    // It takes several frames to decay below threshold (10N).
+    // Threshold for warning is 50 frames.
+    for(int i=0; i<100; i++) {
+        data.mElapsedTime += 0.01;
+        engine.calculate_force(&data);
+    }
     ASSERT_TRUE(engine.m_warned_susp_deflection);
 
-    std::cout << "  SuspDeflection warning triggered after 55 frames." << std::endl;
+    std::cout << "  SuspForce warning triggered." << std::endl;
 }
 
 TEST_CASE(test_mn_missing_lat_force_front_warning, "CorePhysics") {

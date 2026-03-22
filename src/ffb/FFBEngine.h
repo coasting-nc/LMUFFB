@@ -489,6 +489,9 @@ private:
     double m_last_aux_nan_log_time = -999.0;
     double m_last_math_nan_log_time = -999.0;
 
+    int m_last_aux_recon_mode = -1;
+
+    void ApplyAuxReconstructionMode();
     void update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt);
     void InitializeLoadReference(const char* className, const char* vehicleName);
     

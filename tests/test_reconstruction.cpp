@@ -1,8 +1,11 @@
 #include "test_ffb_common.h"
 #include <fstream>
 #include <filesystem>
+#include <iostream>
 
 namespace FFBEngineTests {
+
+// --- Issue #461: Standard Holt-Winters Math Verification ---
 
 TEST_CASE(test_holtwinters_prediction_accuracy, "Math") {
     ffb_math::HoltWintersFilter filter;
@@ -77,4 +80,63 @@ TEST_CASE(test_config_reconstruction_persistence_461, "Config") {
     }
 }
 
+// --- Issue #466: DSP Differentiation Verification ---
+
+TEST_CASE(test_aux_channel_group_initialization, "DSP") {
+    FFBEngine engine;
+
+    // Group 1: Driver Inputs (Alpha 0.95, Beta 0.40)
+    ASSERT_NEAR(engine.m_upsample_steering.GetAlpha(), 0.95, 0.001);
+    ASSERT_NEAR(engine.m_upsample_steering.GetBeta(), 0.40, 0.001);
+    ASSERT_NEAR(engine.m_upsample_throttle.GetAlpha(), 0.95, 0.001);
+    ASSERT_NEAR(engine.m_upsample_brake.GetAlpha(), 0.95, 0.001);
+    for(int i=0; i<4; i++) ASSERT_NEAR(engine.m_upsample_brake_pressure[i].GetAlpha(), 0.95, 0.001);
+
+    // Group 2: Texture/Tire (Alpha 0.80, Beta 0.20)
+    ASSERT_NEAR(engine.m_upsample_vert_deflection[0].GetAlpha(), 0.80, 0.001);
+    ASSERT_NEAR(engine.m_upsample_lat_patch_vel[0].GetAlpha(), 0.80, 0.001);
+    ASSERT_NEAR(engine.m_upsample_long_patch_vel[0].GetAlpha(), 0.80, 0.001);
+    ASSERT_NEAR(engine.m_upsample_rotation[0].GetAlpha(), 0.80, 0.001);
+
+    // Group 3: Chassis/Impacts (Alpha 0.50, Beta 0.00)
+    ASSERT_NEAR(engine.m_upsample_local_accel_x.GetAlpha(), 0.50, 0.001);
+    ASSERT_NEAR(engine.m_upsample_local_accel_x.GetBeta(), 0.00, 0.001);
+    ASSERT_NEAR(engine.m_upsample_local_accel_y.GetAlpha(), 0.50, 0.001);
+    ASSERT_NEAR(engine.m_upsample_local_accel_z.GetAlpha(), 0.50, 0.001);
+    ASSERT_NEAR(engine.m_upsample_local_rot_accel_y.GetAlpha(), 0.50, 0.001);
+    ASSERT_NEAR(engine.m_upsample_local_rot_y.GetAlpha(), 0.50, 0.001);
+    for(int i=0; i<4; i++) ASSERT_NEAR(engine.m_upsample_susp_force[i].GetAlpha(), 0.50, 0.001);
 }
+
+TEST_CASE(test_aux_channel_mode_switching, "DSP") {
+    FFBEngine engine;
+    TelemInfoV01 data = CreateBasicTestTelemetry();
+
+    // Test Mode 0: Zero Latency (User Toggle affects Group 2)
+    engine.m_advanced.aux_telemetry_reconstruction = 0;
+    engine.calculate_force(&data);
+
+    // Group 1: ALWAYS True
+    ASSERT_TRUE(engine.m_upsample_steering.GetZeroLatency());
+
+    // Group 2: User Choice (True in Mode 0)
+    ASSERT_TRUE(engine.m_upsample_vert_deflection[0].GetZeroLatency());
+
+    // Group 3: ALWAYS False
+    ASSERT_FALSE(engine.m_upsample_local_accel_x.GetZeroLatency());
+
+    // Test Mode 1: Smooth (User Toggle affects Group 2)
+    engine.m_advanced.aux_telemetry_reconstruction = 1;
+    engine.calculate_force(&data);
+
+    // Group 1: ALWAYS True
+    ASSERT_TRUE(engine.m_upsample_steering.GetZeroLatency());
+
+    // Group 2: User Choice (False in Mode 1)
+    ASSERT_FALSE(engine.m_upsample_vert_deflection[0].GetZeroLatency());
+
+    // Group 3: ALWAYS False
+    ASSERT_FALSE(engine.m_upsample_local_accel_x.GetZeroLatency());
+}
+
+} // namespace FFBEngineTests

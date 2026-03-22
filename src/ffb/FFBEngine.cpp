@@ -15,7 +15,34 @@ using namespace ffb_math;
 
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
+
+    // Group 1: Driver Inputs (Fast, Smooth) - ALWAYS Zero Latency
+    m_upsample_steering.Configure(0.95, 0.40);
+    m_upsample_throttle.Configure(0.95, 0.40);
+    m_upsample_brake.Configure(0.95, 0.40);
+    for (int i = 0; i < 4; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.40);
+
+    // Group 2: Texture & Slip (Balanced) - TIED TO UI TOGGLE
+    for (int i = 0; i < 4; i++) {
+        m_upsample_vert_deflection[i].Configure(0.80, 0.20);
+        m_upsample_lat_patch_vel[i].Configure(0.80, 0.20);
+        m_upsample_long_patch_vel[i].Configure(0.80, 0.20);
+        m_upsample_rotation[i].Configure(0.80, 0.20);
+    }
+
+    // Group 3: Noisy Chassis & Impacts (Heavily Damped, No Trend) - ALWAYS Smooth
+    m_upsample_local_accel_x.Configure(0.50, 0.0);
+    m_upsample_local_accel_y.Configure(0.50, 0.0);
+    m_upsample_local_accel_z.Configure(0.50, 0.0);
+    m_upsample_local_rot_accel_y.Configure(0.50, 0.0);
+    m_upsample_local_rot_y.Configure(0.50, 0.0);
+    for (int i = 0; i < 4; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);
+
     Preset::ApplyDefaultsToEngine(*this);
+
+    // Initial apply to set m_last_aux_recon_mode and default latencies
+    ApplyAuxReconstructionMode();
+
     m_safety.SetTimePtr(&m_working_info.mElapsedTime);
 }
 
@@ -133,6 +160,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_upsample_local_accel_z.Reset();
         m_upsample_local_rot_accel_y.Reset();
         m_upsample_local_rot_y.Reset();
+        m_slope_buffer_count = 0;
         for (int i = 0; i < 4; i++) {
             m_upsample_lat_patch_vel[i].Reset();
             m_upsample_long_patch_vel[i].Reset();
@@ -160,6 +188,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_derivatives_seeded = false;
     }
     m_was_allowed = allowed;
+
+    // Check for auxiliary reconstruction mode changes
+    if (m_advanced.aux_telemetry_reconstruction != m_last_aux_recon_mode) {
+        ApplyAuxReconstructionMode();
+    }
 
     // --- 1. CORE PHYSICS CRASH DETECTION ---
     // If the chassis or steering itself is NaN, the car is in the void or the session is dead.
@@ -1661,6 +1694,34 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     ctx.road_noise *= ctx.speed_gate;
 }
 
+void FFBEngine::ApplyAuxReconstructionMode() {
+    bool user_wants_raw = (m_advanced.aux_telemetry_reconstruction == 0);
+
+    // Group 1: ALWAYS Zero Latency (Driver Inputs)
+    m_upsample_steering.SetZeroLatency(true);
+    m_upsample_throttle.SetZeroLatency(true);
+    m_upsample_brake.SetZeroLatency(true);
+    for (int i = 0; i < 4; i++) m_upsample_brake_pressure[i].SetZeroLatency(true);
+
+    // Group 2: User Selectable (High-Frequency Texture)
+    for (int i = 0; i < 4; i++) {
+        m_upsample_vert_deflection[i].SetZeroLatency(user_wants_raw);
+        m_upsample_lat_patch_vel[i].SetZeroLatency(user_wants_raw);
+        m_upsample_long_patch_vel[i].SetZeroLatency(user_wants_raw);
+        m_upsample_rotation[i].SetZeroLatency(user_wants_raw);
+    }
+
+    // Group 3: ALWAYS Smooth (Chassis Kinematics)
+    m_upsample_local_accel_x.SetZeroLatency(false);
+    m_upsample_local_accel_y.SetZeroLatency(false);
+    m_upsample_local_accel_z.SetZeroLatency(false);
+    m_upsample_local_rot_accel_y.SetZeroLatency(false);
+    m_upsample_local_rot_y.SetZeroLatency(false);
+    for (int i = 0; i < 4; i++) m_upsample_susp_force[i].SetZeroLatency(false);
+
+    m_last_aux_recon_mode = m_advanced.aux_telemetry_reconstruction;
+}
+
 void FFBEngine::ResetNormalization() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
@@ -1774,28 +1835,6 @@ void FFBEngine::UpdateUpsamplerModes() {
     m_upsample_shaft_torque.Configure(0.8, 0.2); // Default tuning
     m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);
 
-    // Auxiliary Channels (New)
-    bool aux_zero_latency = (m_advanced.aux_telemetry_reconstruction == 0);
-
-    auto configure_filter = [&](ffb_math::HoltWintersFilter& filter) {
-        filter.Configure(0.8, 0.2); // Stable predictive tuning
-        filter.SetZeroLatency(aux_zero_latency);
-    };
-
-    for (int i = 0; i < 4; i++) {
-        configure_filter(m_upsample_lat_patch_vel[i]);
-        configure_filter(m_upsample_long_patch_vel[i]);
-        configure_filter(m_upsample_vert_deflection[i]);
-        configure_filter(m_upsample_susp_force[i]);
-        configure_filter(m_upsample_brake_pressure[i]);
-        configure_filter(m_upsample_rotation[i]);
-    }
-    configure_filter(m_upsample_steering);
-    configure_filter(m_upsample_throttle);
-    configure_filter(m_upsample_brake);
-    configure_filter(m_upsample_local_accel_x);
-    configure_filter(m_upsample_local_accel_y);
-    configure_filter(m_upsample_local_accel_z);
-    configure_filter(m_upsample_local_rot_accel_y);
-    configure_filter(m_upsample_local_rot_y);
+    // Auxiliary Channels (New v0.7.221): Apply differentiated modes
+    ApplyAuxReconstructionMode();
 }

@@ -24,21 +24,28 @@ TEST_CASE(test_slew_rate_limiter, "AdvancedSlope") {
     // v0.7.198 uses fixed 0.0025 internal_dt for slew
     // Max change = limit * 0.0025 = 10 * 0.0025 = 0.025G per tick
 
-    // Execute upsampler ticks.
-    // Tick 0 (is_new_frame): Returns 1.0G (previous frame).
-    // Tick 1: Returns 1.0 + 400*0.0025 = 2.0G. Slew limits to 1.025.
+    // Group 3 is ALWAYS Smooth.
+    // When is_new_frame=true, HoltWinters returns old level (Interpolation mode).
+    // Tick 0 (is_new_frame): m_level is updated to EMA(5.0, alpha=0.5) = 3.0. Trend updated.
+    // Returns previous level 1.0. Slew limited: 1.0.
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
 
-    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025); // Tick 0
+    std::cout << "  After Tick 0 (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
+    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.0, 0.001);
 
-    std::cout << "  After 1 tick (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
+    // Tick 1: returns 1.0 + 0.25 * (3.0 - 1.0) = 1.5. Slew limited: 1.0 + 0.025 = 1.025.
+    engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    std::cout << "  After Tick 1 (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
     ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.025, 0.001);
 
-    // Execute 4 more ticks (total 5 ticks)
-    for(int i=0; i<4; i++) engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    // Ticks 2-4:
+    // Tick 2: 1.0 + 0.50 * 2.0 = 2.0. Slew: 1.025 + 0.025 = 1.050.
+    // Tick 3: 1.0 + 0.75 * 2.0 = 2.5. Slew: 1.050 + 0.025 = 1.075.
+    // Tick 4: 1.0 + 1.00 * 2.0 = 3.0. Slew: 1.075 + 0.025 = 1.100.
+    for(int i=0; i<3; i++) engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
 
-    // After 5 ticks: 1.0 + 5 * 0.025 = 1.125G
-    std::cout << "  After 5 ticks (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
-    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.125, 0.001);
+    std::cout << "  After 5 total ticks (5.0G): Slew limited G = " << engine.m_slope_lat_g_prev << std::endl;
+    ASSERT_NEAR(engine.m_slope_lat_g_prev, 1.100, 0.001);
 }
 
 TEST_CASE(test_torque_slope_anticipation, "AdvancedSlope") {
