@@ -202,6 +202,20 @@ if(WIN32)
     configure_file(${CMAKE_SOURCE_DIR}/icon/lmuffb.ico ${CMAKE_BINARY_DIR}/lmuffb.ico COPYONLY)
 endif()
 
+# Generate Builtin Presets Header
+find_package(Python3 REQUIRED)
+set(GENERATED_PRESETS_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/src/core/GeneratedBuiltinPresets.h")
+file(GLOB BUILTIN_PRESET_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/builtin_presets/*.toml")
+
+add_custom_command(
+    OUTPUT "${GENERATED_PRESETS_HEADER}"
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/embed_presets.py"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/embed_presets.py" ${BUILTIN_PRESET_FILES}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Generating Builtin Presets Header..."
+    VERBATIM
+)
+
 # Read Version
 file(STRINGS "VERSION" LMUFFB_VERSION)
 
@@ -264,7 +278,7 @@ else()
 endif()
 
 # Optimized Core for the Main Application
-add_library(LMUFFB_Core STATIC ${CORE_SOURCES})
+add_library(LMUFFB_Core STATIC ${CORE_SOURCES} ${GENERATED_PRESETS_HEADER})
 target_include_directories(LMUFFB_Core PUBLIC 
     ${CMAKE_CURRENT_BINARY_DIR}/src 
     src/core
@@ -281,7 +295,7 @@ if(TARGET imgui_vendor)
 endif()
 
 # Fast-Compile Core for Tests (Reduced Optimization)
-add_library(LMUFFB_Core_Fast STATIC ${CORE_SOURCES})
+add_library(LMUFFB_Core_Fast STATIC ${CORE_SOURCES} ${GENERATED_PRESETS_HEADER})
 target_include_directories(LMUFFB_Core_Fast PUBLIC 
     ${CMAKE_CURRENT_BINARY_DIR}/src 
     src/core

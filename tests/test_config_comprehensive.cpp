@@ -26,7 +26,8 @@ TEST_CASE(test_config_comprehensive_import, "Config") {
     Config::presets.clear();
     Config::presets.push_back(Preset("Default", true));
 
-    Config::LoadPresets(test_file);
+    // In Phase 3, presets are extracted from config files during Config::Load
+    Config::Load(engine, test_file);
 
     bool found = false;
     for (const auto& p : Config::presets) {

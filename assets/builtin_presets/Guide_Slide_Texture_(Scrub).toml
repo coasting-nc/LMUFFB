@@ -1,0 +1,27 @@
+name = "Guide: Slide Texture (Scrub)"
+[General]
+gain = 1.0
+[FrontAxle]
+understeer_effect = 0.0
+[RearAxle]
+sop_effect = 0.0
+oversteer_boost = 0.0
+rear_align_effect = 0.0
+sop_smoothing_factor = 0.0
+[Vibration]
+slide_enabled = true
+slide_gain = 0.39
+slide_freq = 1.0
+scrub_drag_gain = 1.0
+spin_enabled = false
+spin_gain = 0.0
+road_enabled = false
+road_gain = 0.0
+bottoming_enabled = false
+bottoming_gain = 0.0
+bottoming_method = 0
+[Braking]
+lockup_enabled = false
+lockup_gain = 0.0
+[GripEstimation]
+slip_angle_smoothing = 0.015

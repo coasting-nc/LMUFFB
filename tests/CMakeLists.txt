@@ -43,6 +43,7 @@ set(TEST_SOURCES
     test_ffb_lockup_braking.cpp
     test_ffb_config.cpp
     test_toml_config.cpp
+    test_toml_presets.cpp
     test_ffb_slip_grip.cpp
     test_ffb_internal.cpp
     test_ffb_coverage_refactor.cpp
@@ -211,6 +212,7 @@ if(MSVC)
 else()
     target_compile_options(run_combined_tests PRIVATE -O0)
 endif()
+
 
 # Add to CTest
 add_test(NAME CombinedTests COMMAND run_combined_tests)

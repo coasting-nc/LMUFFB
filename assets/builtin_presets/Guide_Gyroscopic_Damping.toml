@@ -1,0 +1,29 @@
+name = "Guide: Gyroscopic Damping"
+[General]
+gain = 1.0
+[FrontAxle]
+understeer_effect = 0.0
+[RearAxle]
+sop_effect = 0.0
+oversteer_boost = 0.0
+rear_align_effect = 0.0
+sop_yaw_gain = 0.0
+sop_smoothing_factor = 0.0
+[Advanced]
+gyro_gain = 1.0
+[Braking]
+lockup_enabled = false
+lockup_gain = 0.0
+[Vibration]
+spin_enabled = false
+spin_gain = 0.0
+slide_enabled = false
+slide_gain = 0.0
+road_enabled = false
+road_gain = 0.0
+scrub_drag_gain = 0.0
+bottoming_enabled = false
+bottoming_gain = 0.0
+bottoming_method = 0
+[GripEstimation]
+slip_angle_smoothing = 0.015

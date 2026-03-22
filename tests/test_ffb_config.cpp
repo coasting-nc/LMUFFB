@@ -62,7 +62,7 @@ TEST_CASE(test_presets, "Config") {
     // Use a known builtin instead of "Test: SoP Only" which might not exist in production
     int idx = -1;
     for(size_t i=0; i<Config::presets.size(); i++) {
-        if(Config::presets[i].name == "Thrustmaster T300/TX") {
+        if(Config::presets[i].name == "Thrustmaster T300/TX" || Config::presets[i].name == "Thrustmaster_T300TX") {
             idx = (int)i;
             break;
         }
@@ -80,7 +80,7 @@ TEST_CASE(test_preset_initialization, "Config") {
     std::cout << "\nTest: Built-in Preset Fidelity" << std::endl;
     Config::LoadPresets();
     
-    // Updated names to match Config.cpp
+    // In Phase 3, built-in names are restored to their original descriptive strings.
     const char* preset_names[] = {
         "Default",
         "Logitech G25/G27/G29/G920",

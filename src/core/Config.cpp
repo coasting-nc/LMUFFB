@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "Version.h"
+#include "GeneratedBuiltinPresets.h"
 #include "logging/Logger.h"
 #include <fstream>
 #include <sstream>
@@ -65,6 +66,7 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
 static toml::table PresetToToml(const Preset& p) {
     toml::table tbl;
 
+    tbl.insert("name", p.name);
     tbl.insert("app_version", p.app_version);
 
     tbl.insert("General", toml::table{
@@ -215,6 +217,7 @@ static toml::table PresetToToml(const Preset& p) {
 static void TomlToPreset(const toml::table& tbl, Preset& p) {
     auto baseline = p; // Keep defaults for missing keys
 
+    if (auto val = tbl["name"].as_string()) p.name = val->get();
     if (auto val = tbl["app_version"].as_string()) p.app_version = val->get();
 
     if (auto gen = tbl["General"].as_table()) {
@@ -365,6 +368,27 @@ static void TomlToPreset(const toml::table& tbl, Preset& p) {
         p.safety.slew_full_scale_time_s = (float)(*sa)["slew_full_scale_time_s"].value_or((double)baseline.safety.slew_full_scale_time_s);
         p.safety.stutter_safety_enabled = (*sa)["stutter_safety_enabled"].value_or(baseline.safety.stutter_safety_enabled);
         p.safety.stutter_threshold = (float)(*sa)["stutter_threshold"].value_or((double)baseline.safety.stutter_threshold);
+    }
+}
+
+static std::string SanitizeFilename(std::string name) {
+    std::string out = name;
+    // Replace spaces with underscores
+    std::replace(out.begin(), out.end(), ' ', '_');
+    // Remove illegal Windows filename characters (\ / : * ? " < > |)
+    const std::string illegal = "\\/:*?\"<>|";
+    out.erase(std::remove_if(out.begin(), out.end(), [&](char c) {
+        return illegal.find(c) != std::string::npos;
+    }), out.end());
+    return out;
+}
+
+static void SaveUserPresetFile(const Preset& p) {
+    std::string filename = "user_presets/" + SanitizeFilename(p.name) + ".toml";
+    std::filesystem::create_directories("user_presets");
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        file << PresetToToml(p);
     }
 }
 
@@ -802,7 +826,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 return;
             }
         }
-        LoadPresets(filename);
+        LoadPresets();
         return;
     }
 
@@ -811,7 +835,29 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
         toml::table tbl = toml::parse_file(final_path);
         if (tbl.contains("System") || tbl.contains("General") || tbl.contains("Presets") || tbl.contains("FrontAxle")) {
             toml_loaded = true;
-            LoadPresets(filename);
+
+            // Phase 3 One-Time Migration: Extract [Presets] table from config.toml
+            if (tbl.contains("Presets")) {
+                if (auto ps = tbl["Presets"].as_table()) {
+                    Logger::Get().Log("[Config] Migrating [Presets] from %s to individual files...", final_path.c_str());
+                    for (auto& [key, value] : *ps) {
+                        if (auto p_tbl = value.as_table()) {
+                            Preset pr(std::string(key.str()), false);
+                            TomlToPreset(*p_tbl, pr);
+                            SaveUserPresetFile(pr);
+                        }
+                    }
+                }
+                tbl.erase("Presets");
+
+                // Overwrite config.toml without Presets table
+                std::ofstream file(final_path);
+                if (file.is_open()) {
+                    file << tbl;
+                }
+            }
+
+            LoadPresets();
 
             if (auto sys = tbl["System"].as_table()) {
                 if (auto val = (*sys)["always_on_top"].value<bool>()) m_always_on_top = *val;
@@ -914,14 +960,6 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         }
     }
 
-    toml::table presets_tbl;
-    for (const auto& pr : presets) {
-        if (!pr.is_builtin) {
-            presets_tbl.insert(pr.name, PresetToToml(pr));
-        }
-    }
-    tbl.insert("Presets", presets_tbl);
-
     std::ofstream file(final_path);
     if (file.is_open()) {
         file << tbl;
@@ -929,697 +967,72 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
     }
 }
 
-void Config::LoadPresets(const std::string& filename) {
+void Config::LoadPresets() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     presets.clear();
 
-    std::string final_path = filename.empty() ? m_config_path : filename;
-
-    // Built-in presets
-    presets.push_back(Preset("Default", true));
-    presets.push_back(Preset("Logitech G25/G27/G29/G920", true));
-    presets.push_back(Preset("Thrustmaster T300/TX", true).SetMinForce(0.08f).SetShaftSmoothing(0.15f));
-    presets.push_back(Preset("Thrustmaster T-GT/T-GT II", true));
-    presets.push_back(Preset("Thrustmaster TS-PC/TS-XW", true));
-    presets.push_back(Preset("Fanatec CSL DD / GT DD Pro", true));
-    presets.push_back(Preset("Fanatec Podium DD1/DD2", true));
-    presets.push_back(Preset("Simucube 2 Sport/Pro/Ultimate", true));
-    presets.push_back(Preset("Simagic Alpha/Alpha Mini/Alpha U", true));
-    presets.push_back(Preset("Moza R5/R9/R16/R21", true));
-    
-    // 3. T300 v0.7.164 (Issue #322)
-    {
-        Preset p("T300 v0.7.164", true);
-        p.app_version = "0.7.165";
-        p.general.gain = 0.559471f;
-        p.general.wheelbase_max_nm = 25.1f;
-        p.general.target_rim_nm = 24.5f;
-        p.general.min_force = 0.02f;
-        p.front_axle.steering_shaft_gain = 0.955947f;
-        p.front_axle.ingame_ffb_gain = 1.0f;
-        p.front_axle.steering_shaft_smoothing = 0.0f;
-        p.front_axle.understeer_effect = 1.0f;
-        p.front_axle.torque_source = 0;
-        p.front_axle.torque_passthrough = false;
-        p.front_axle.flatspot_suppression = false;
-        p.front_axle.notch_q = 2.0f;
-        p.front_axle.flatspot_strength = 1.0f;
-        p.front_axle.static_notch_enabled = false;
-        p.front_axle.static_notch_freq = 11.0f;
-        p.front_axle.static_notch_width = 2.0f;
-        p.rear_axle.oversteer_boost = 0.0f;
-        p.load_forces.long_load_effect = 2.68722f;
-        p.load_forces.long_load_smoothing = 0.15f;
-        p.load_forces.long_load_transform = 0;
-        p.grip_estimation.grip_smoothing_steady = 0.05f;
-        p.grip_estimation.grip_smoothing_fast = 0.005f;
-        p.grip_estimation.grip_smoothing_sensitivity = 0.1f;
-        p.rear_axle.sop_effect = 0.0f;
-        p.load_forces.lat_load_effect = 2.81938f;
-        p.load_forces.lat_load_transform = 2;
-        p.rear_axle.rear_align_effect = 0.828194f;
-        p.rear_axle.sop_yaw_gain = 0.418502f;
-        p.rear_axle.yaw_kick_threshold = 1.01f;
-        p.rear_axle.unloaded_yaw_gain = 1.0f;
-        p.rear_axle.unloaded_yaw_threshold = 0.0f;
-        p.rear_axle.unloaded_yaw_sens = 0.1f;
-        p.rear_axle.unloaded_yaw_gamma = 0.1f;
-        p.rear_axle.unloaded_yaw_punch = 0.0f;
-        p.rear_axle.power_yaw_gain = 1.0f;
-        p.rear_axle.power_yaw_threshold = 0.0f;
-        p.rear_axle.power_slip_threshold = 0.0618062f;
-        p.rear_axle.power_yaw_gamma = 0.2f;
-        p.rear_axle.power_yaw_punch = 0.0f;
-        p.rear_axle.yaw_accel_smoothing = 0.001f;
-        p.advanced.gyro_gain = 0.0f;
-        p.advanced.gyro_smoothing = 0.0f;
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-        p.rear_axle.sop_scale = 1.0f;
-        p.advanced.understeer_affects_sop = false;
-        p.slope_detection.enabled = false;
-        p.slope_detection.sg_window = 15;
-        p.slope_detection.sensitivity = 0.5f;
-        p.slope_detection.smoothing_tau = 0.04f;
-        p.slope_detection.min_threshold = -0.3f;
-        p.slope_detection.max_threshold = -2.0f;
-        p.slope_detection.alpha_threshold = 0.02f;
-        p.slope_detection.decay_rate = 5.0f;
-        p.slope_detection.confidence_enabled = true;
-        p.slope_detection.g_slew_limit = 50.0f;
-        p.slope_detection.use_torque = true;
-        p.slope_detection.torque_sensitivity = 0.5f;
-        p.slope_detection.confidence_max_rate = 0.1f;
-        p.grip_estimation.slip_angle_smoothing = 0.002f;
-        p.grip_estimation.chassis_inertia_smoothing = 0.0f;
-        p.grip_estimation.optimal_slip_angle = 0.1f;
-        p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.braking.lockup_enabled = true;
-        p.braking.lockup_gain = 3.0f;
-        p.braking.brake_load_cap = 10.0f;
-        p.braking.lockup_freq_scale = 1.02f;
-        p.braking.lockup_gamma = 0.1f;
-        p.braking.lockup_start_pct = 1.0f;
-        p.braking.lockup_full_pct = 5.0f;
-        p.braking.lockup_prediction_sens = 10.0f;
-        p.braking.lockup_bump_reject = 0.1f;
-        p.braking.lockup_rear_boost = 10.0f;
-        p.braking.abs_pulse_enabled = false;
-        p.braking.abs_gain = 2.0f;
-        p.braking.abs_freq = 25.5f;
-        p.vibration.texture_load_cap = 1.5f;
-        p.vibration.slide_enabled = false;
-        p.vibration.slide_gain = 0.226562f;
-        p.vibration.slide_freq = 1.0f;
-        p.vibration.road_enabled = false;
-        p.vibration.road_gain = 0.0f;
-        p.vibration.vibration_gain = 1.0f;
-        p.advanced.road_fallback_scale = 0.05f;
-        p.general.dynamic_normalization_enabled = false;
-        p.general.auto_load_normalization_enabled = false;
-        p.advanced.soft_lock_enabled = false;
-        p.advanced.soft_lock_stiffness = 20.0f;
-        p.advanced.soft_lock_damping = 0.5f;
-        p.vibration.spin_enabled = false;
-        p.vibration.spin_gain = 0.5f;
-        p.vibration.spin_freq_scale = 1.0f;
-        p.vibration.scrub_drag_gain = 0.0f;
-        p.vibration.bottoming_enabled = true;
-        p.vibration.bottoming_gain = 1.0f;
-        p.vibration.bottoming_method = 0;
-        p.advanced.rest_api_enabled = true;
-        p.advanced.rest_api_port = 6397;
-        p.safety.window_duration = 0.0f;
-        p.safety.gain_reduction = 0.3f;
-        p.safety.smoothing_tau = 0.2f;
-        p.safety.spike_detection_threshold = 500.0f;
-        p.safety.immediate_spike_threshold = 1500.0f;
-        p.safety.slew_full_scale_time_s = 1.0f;
-        p.safety.stutter_safety_enabled = false;
-        p.safety.stutter_threshold = 1.5f;
-        p.advanced.speed_gate_lower = 1.0f;
-        p.advanced.speed_gate_upper = 5.0f;
-        presets.push_back(p);
+    // 1. Load Built-in Presets from embedded BUILTIN_PRESETS map
+    for (auto const& [name, content] : BUILTIN_PRESETS) {
+        try {
+            toml::table tbl = toml::parse(content);
+            Preset p("Unnamed", true);
+            TomlToPreset(tbl, p);
+            if (p.name == "Unnamed") {
+                std::string n(name);
+                std::replace(n.begin(), n.end(), '_', ' ');
+                p.name = n;
+            }
+            p.is_builtin = true;
+            p.Validate();
+            presets.push_back(p);
+        } catch (const std::exception& e) {
+            Logger::Get().Log("[Config] Error parsing embedded built-in preset %s: %s", std::string(name).c_str(), e.what());
+        }
     }
 
-    // 4. GT3 DD 15 Nm (Simagic Alpha)
-    {
-        Preset p("GT3 DD 15 Nm (Simagic Alpha)", true);
-        p.general.gain = 1.0f;
-        p.general.wheelbase_max_nm = 15.0f;
-        p.general.target_rim_nm = 10.0f;
-        p.general.min_force = 0.0f;
-        p.front_axle.steering_shaft_gain = 1.0f;
-        p.front_axle.steering_shaft_smoothing = 0.0f;
-        p.front_axle.understeer_effect = 1.0f;
-        p.front_axle.flatspot_suppression = false;
-        p.front_axle.notch_q = 2.0f;
-        p.front_axle.flatspot_strength = 1.0f;
-        p.front_axle.static_notch_enabled = false;
-        p.front_axle.static_notch_freq = 11.0f;
-        p.front_axle.static_notch_width = 2.0f;
-        p.rear_axle.oversteer_boost = 2.52101f;
-        p.rear_axle.sop_effect = 1.666f;
-        p.rear_axle.rear_align_effect = 0.666f;
-        p.rear_axle.sop_yaw_gain = 0.333f;
-        p.rear_axle.yaw_kick_threshold = 0.0f;
-        p.rear_axle.yaw_accel_smoothing = 0.001f;
-        p.advanced.gyro_gain = 0.0f;
-        p.advanced.gyro_smoothing = 0.0f;
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-        p.rear_axle.sop_scale = 1.98f;
-        p.advanced.understeer_affects_sop = false;
-        p.grip_estimation.slip_angle_smoothing = 0.002f;
-        p.grip_estimation.chassis_inertia_smoothing = 0.012f;
-        p.grip_estimation.optimal_slip_angle = 0.1f;
-        p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.braking.lockup_enabled = true;
-        p.braking.lockup_gain = 0.37479f;
-        p.braking.brake_load_cap = 2.0f;
-        p.braking.lockup_freq_scale = 1.0f;
-        p.braking.lockup_gamma = 1.0f;
-        p.braking.lockup_start_pct = 1.0f;
-        p.braking.lockup_full_pct = 7.5f;
-        p.braking.lockup_prediction_sens = 10.0f;
-        p.braking.lockup_bump_reject = 0.1f;
-        p.braking.lockup_rear_boost = 1.0f;
-        p.braking.abs_pulse_enabled = false;
-        p.braking.abs_gain = 2.1f;
-        p.braking.abs_freq = 25.5f;
-        p.vibration.texture_load_cap = 1.5f;
-        p.vibration.slide_enabled = false;
-        p.vibration.slide_gain = 0.226562f;
-        p.vibration.slide_freq = 1.47f;
-        p.vibration.road_enabled = true;
-        p.vibration.road_gain = 0.0f;
-        p.advanced.road_fallback_scale = 0.05f;
-        p.vibration.spin_enabled = true;
-        p.vibration.spin_gain = 0.462185f;
-        p.vibration.spin_freq_scale = 1.8f;
-        p.vibration.scrub_drag_gain = 0.333f;
-        p.vibration.bottoming_enabled = true;
-        p.vibration.bottoming_gain = 1.0f;
-        p.vibration.bottoming_method = 1;
-        p.advanced.speed_gate_lower = 1.0f;
-        p.advanced.speed_gate_upper = 5.0f;
-        presets.push_back(p);
-    }
-    
-    // 5. LMPx/HY DD 15 Nm (Simagic Alpha)
-    {
-        Preset p("LMPx/HY DD 15 Nm (Simagic Alpha)", true);
-        p.general.gain = 1.0f;
-        p.general.wheelbase_max_nm = 15.0f;
-        p.general.target_rim_nm = 10.0f;
-        p.general.min_force = 0.0f;
-        p.front_axle.steering_shaft_gain = 1.0f;
-        p.front_axle.steering_shaft_smoothing = 0.0f;
-        p.front_axle.understeer_effect = 1.0f;
-        p.front_axle.flatspot_suppression = false;
-        p.front_axle.notch_q = 2.0f;
-        p.front_axle.flatspot_strength = 1.0f;
-        p.front_axle.static_notch_enabled = false;
-        p.front_axle.static_notch_freq = 11.0f;
-        p.front_axle.static_notch_width = 2.0f;
-        p.rear_axle.oversteer_boost = 2.52101f;
-        p.rear_axle.sop_effect = 1.666f;
-        p.rear_axle.rear_align_effect = 0.666f;
-        p.rear_axle.sop_yaw_gain = 0.333f;
-        p.rear_axle.yaw_kick_threshold = 0.0f;
-        p.rear_axle.yaw_accel_smoothing = 0.003f;
-        p.advanced.gyro_gain = 0.0f;
-        p.advanced.gyro_smoothing = 0.003f;
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-        p.rear_axle.sop_scale = 1.59f;
-        p.advanced.understeer_affects_sop = false;
-        p.grip_estimation.slip_angle_smoothing = 0.003f;
-        p.grip_estimation.chassis_inertia_smoothing = 0.019f;
-        p.grip_estimation.optimal_slip_angle = 0.12f;
-        p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.braking.lockup_enabled = true;
-        p.braking.lockup_gain = 0.37479f;
-        p.braking.brake_load_cap = 2.0f;
-        p.braking.lockup_freq_scale = 1.0f;
-        p.braking.lockup_gamma = 1.0f;
-        p.braking.lockup_start_pct = 1.0f;
-        p.braking.lockup_full_pct = 7.5f;
-        p.braking.lockup_prediction_sens = 10.0f;
-        p.braking.lockup_bump_reject = 0.1f;
-        p.braking.lockup_rear_boost = 1.0f;
-        p.braking.abs_pulse_enabled = false;
-        p.braking.abs_gain = 2.1f;
-        p.braking.abs_freq = 25.5f;
-        p.vibration.texture_load_cap = 1.5f;
-        p.vibration.slide_enabled = false;
-        p.vibration.slide_gain = 0.226562f;
-        p.vibration.slide_freq = 1.47f;
-        p.vibration.road_enabled = true;
-        p.vibration.road_gain = 0.0f;
-        p.advanced.road_fallback_scale = 0.05f;
-        p.vibration.spin_enabled = true;
-        p.vibration.spin_gain = 0.462185f;
-        p.vibration.spin_freq_scale = 1.8f;
-        p.vibration.scrub_drag_gain = 0.333f;
-        p.vibration.bottoming_enabled = true;
-        p.vibration.bottoming_gain = 1.0f;
-        p.vibration.bottoming_method = 1;
-        p.advanced.speed_gate_lower = 1.0f;
-        p.advanced.speed_gate_upper = 5.0f;
-        presets.push_back(p);
-    }
-    
-    // 6. GM DD 21 Nm (Moza R21 Ultra)
-    {
-        Preset p("GM DD 21 Nm (Moza R21 Ultra)", true);
-        p.general.gain = 1.454f;
-        p.general.wheelbase_max_nm = 21.0f;
-        p.general.target_rim_nm = 12.0f;
-        p.general.min_force = 0.0f;
-        p.front_axle.steering_shaft_gain = 1.989f;
-        p.front_axle.steering_shaft_smoothing = 0.0f;
-        p.front_axle.understeer_effect = 0.638f;
-        p.front_axle.flatspot_suppression = true;
-        p.front_axle.notch_q = 0.57f;
-        p.front_axle.flatspot_strength = 1.0f;
-        p.front_axle.static_notch_enabled = false;
-        p.front_axle.static_notch_freq = 11.0f;
-        p.front_axle.static_notch_width = 2.0f;
-        p.rear_axle.oversteer_boost = 0.0f;
-        p.rear_axle.sop_effect = 0.0f;
-        p.rear_axle.rear_align_effect = 0.29f;
-        p.rear_axle.sop_yaw_gain = 0.0f;
-        p.rear_axle.yaw_kick_threshold = 0.0f;
-        p.rear_axle.yaw_accel_smoothing = 0.015f;
-        p.advanced.gyro_gain = 0.0f;
-        p.advanced.gyro_smoothing = 0.0f;
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-        p.rear_axle.sop_scale = 0.89f;
-        p.advanced.understeer_affects_sop = false;
-        p.grip_estimation.slip_angle_smoothing = 0.002f;
-        p.grip_estimation.chassis_inertia_smoothing = 0.0f;
-        p.grip_estimation.optimal_slip_angle = 0.1f;
-        p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.braking.lockup_enabled = true;
-        p.braking.lockup_gain = 0.977f;
-        p.braking.brake_load_cap = 81.0f;
-        p.braking.lockup_freq_scale = 1.0f;
-        p.braking.lockup_gamma = 1.0f;
-        p.braking.lockup_start_pct = 1.0f;
-        p.braking.lockup_full_pct = 7.5f;
-        p.braking.lockup_prediction_sens = 10.0f;
-        p.braking.lockup_bump_reject = 0.1f;
-        p.braking.lockup_rear_boost = 1.0f;
-        p.braking.abs_pulse_enabled = false;
-        p.braking.abs_gain = 2.1f;
-        p.braking.abs_freq = 25.5f;
-        p.vibration.texture_load_cap = 1.5f;
-        p.vibration.slide_enabled = false;
-        p.vibration.slide_gain = 0.0f;
-        p.vibration.slide_freq = 1.47f;
-        p.vibration.road_enabled = true;
-        p.vibration.road_gain = 0.0f;
-        p.advanced.road_fallback_scale = 0.05f;
-        p.vibration.spin_enabled = true;
-        p.vibration.spin_gain = 0.462185f;
-        p.vibration.spin_freq_scale = 1.8f;
-        p.vibration.scrub_drag_gain = 0.333f;
-        p.vibration.bottoming_enabled = true;
-        p.vibration.bottoming_gain = 1.0f;
-        p.vibration.bottoming_method = 1;
-        p.advanced.speed_gate_lower = 1.0f;
-        p.advanced.speed_gate_upper = 5.0f;
-        presets.push_back(p);
-    }
-    
-    // 7. GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)
-    {
-        // Copy GM preset and add yaw kick
-        Preset p("GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)", true);
-        p.general.gain = 1.454f;
-        p.general.wheelbase_max_nm = 21.0f;
-        p.general.target_rim_nm = 12.0f;
-        p.general.min_force = 0.0f;
-        p.front_axle.steering_shaft_gain = 1.989f;
-        p.front_axle.steering_shaft_smoothing = 0.0f;
-        p.front_axle.understeer_effect = 0.638f;
-        p.front_axle.flatspot_suppression = true;
-        p.front_axle.notch_q = 0.57f;
-        p.front_axle.flatspot_strength = 1.0f;
-        p.front_axle.static_notch_enabled = false;
-        p.front_axle.static_notch_freq = 11.0f;
-        p.front_axle.static_notch_width = 2.0f;
-        p.rear_axle.oversteer_boost = 0.0f;
-        p.rear_axle.sop_effect = 0.0f;
-        p.rear_axle.rear_align_effect = 0.29f;
-        p.rear_axle.sop_yaw_gain = 0.333f;  // ONLY DIFFERENCE: Added yaw kick
-        p.rear_axle.yaw_kick_threshold = 0.0f;
-        p.rear_axle.yaw_accel_smoothing = 0.003f;
-        p.advanced.gyro_gain = 0.0f;
-        p.advanced.gyro_smoothing = 0.0f;
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-        p.rear_axle.sop_scale = 0.89f;
-        p.advanced.understeer_affects_sop = false;
-        p.grip_estimation.slip_angle_smoothing = 0.002f;
-        p.grip_estimation.chassis_inertia_smoothing = 0.0f;
-        p.grip_estimation.optimal_slip_angle = 0.1f;
-        p.grip_estimation.optimal_slip_ratio = 0.12f;
-        p.braking.lockup_enabled = true;
-        p.braking.lockup_gain = 0.977f;
-        p.braking.brake_load_cap = 81.0f;
-        p.braking.lockup_freq_scale = 1.0f;
-        p.braking.lockup_gamma = 1.0f;
-        p.braking.lockup_start_pct = 1.0f;
-        p.braking.lockup_full_pct = 7.5f;
-        p.braking.lockup_prediction_sens = 10.0f;
-        p.braking.lockup_bump_reject = 0.1f;
-        p.braking.lockup_rear_boost = 1.0f;
-        p.braking.abs_pulse_enabled = false;
-        p.braking.abs_gain = 2.1f;
-        p.braking.abs_freq = 25.5f;
-        p.vibration.texture_load_cap = 1.5f;
-        p.vibration.slide_enabled = false;
-        p.vibration.slide_gain = 0.0f;
-        p.vibration.slide_freq = 1.47f;
-        p.vibration.road_enabled = true;
-        p.vibration.road_gain = 0.0f;
-        p.advanced.road_fallback_scale = 0.05f;
-        p.vibration.spin_enabled = true;
-        p.vibration.spin_gain = 0.462185f;
-        p.vibration.spin_freq_scale = 1.8f;
-        p.vibration.scrub_drag_gain = 0.333f;
-        p.vibration.bottoming_enabled = true;
-        p.vibration.bottoming_gain = 1.0f;
-        p.vibration.bottoming_method = 1;
-        p.advanced.speed_gate_lower = 1.0f;
-        p.advanced.speed_gate_upper = 5.0f;
-        presets.push_back(p);
-    }
-    
-    // 8. Test: Game Base FFB Only
-    presets.push_back(Preset("Test: Game Base FFB Only", true)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSoPScale(1.0f)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-    );
-
-    // 9. Test: SoP Only
-    presets.push_back(Preset("Test: SoP Only", true)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.08f)
-        .SetSoPScale(1.0f)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-    );
-
-    // 10. Test: Understeer Only (Updated v0.6.31 for proper effect isolation)
-    presets.push_back(Preset("Test: Understeer Only", true)
-        // PRIMARY EFFECT
-        .SetUndersteer(0.61f)
-        
-        // DISABLE ALL OTHER EFFECTS
-        .SetSoP(0.0f)
-        .SetSoPScale(1.0f)
-        .SetOversteer(0.0f)          // Disable oversteer boost
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)             // Disable yaw kick
-        .SetGyro(0.0f)               // Disable gyro damping
-        
-        // DISABLE ALL TEXTURES
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)        // Disable road texture
-        .SetSpin(false, 0.0f)        // Disable spin
-        .SetLockup(false, 0.0f)      // Disable lockup vibration
-        .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)  // Disable ABS pulse
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        
-        // SMOOTHING
-        .SetSmoothing(0.0f)         // SoP smoothing (doesn't affect test since SoP=0)
-        .SetSlipSmoothing(0.015f)    // Slip angle smoothing (important for grip calculation)
-        
-        // PHYSICS PARAMETERS (Explicit for clarity and future-proofing)
-        .SetOptimalSlip(0.10f, 0.12f)  // Explicit optimal slip thresholds
-        .SetSpeedGate(0.0f, 0.0f)      // Disable speed gate (0 = no gating)
-    );
-
-    // 11. Test: Yaw Kick Only
-    presets.push_back(Preset("Test: Yaw Kick Only", true)
-        // PRIMARY EFFECT
-        .SetSoPYaw(0.386555f)        // Yaw kick at T300 level
-        .SetYawKickThreshold(1.68f)  // T300 threshold
-        .SetYawSmoothing(0.005f)     // T300 smoothing
-        
-        // DISABLE ALL OTHER EFFECTS
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSoPScale(1.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetGyro(0.0f)
-        
-        // DISABLE ALL TEXTURES
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetLockup(false, 0.0f)
-        .SetAdvancedBraking(0.5f, 20.0f, 0.1f, false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        
-        // SMOOTHING
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    // 12. Test: Textures Only
-    presets.push_back(Preset("Test: Textures Only", true)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSoPScale(0.0f)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-        .SetLockup(true, 1.0f)
-        .SetSpin(true, 1.0f)
-        .SetSlide(true, 0.39f)
-        .SetRoad(true, 1.0f)
-        .SetRearAlign(0.0f)
-        .SetBottoming(true, 1.0f, 0)
-    );
-
-    // 13. Test: Rear Align Torque Only
-    presets.push_back(Preset("Test: Rear Align Torque Only", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.90f)
-        .SetSoPYaw(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-    );
-
-    // 14. Test: SoP Base Only
-    presets.push_back(Preset("Test: SoP Base Only", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.08f)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-    );
-
-    // 15. Test: Slide Texture Only
-    presets.push_back(Preset("Test: Slide Texture Only", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(true, 0.39f, 1.0f)
-        .SetRearAlign(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-    );
-
-    // 16. Test: No Effects
-    presets.push_back(Preset("Test: No Effects", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-        .SetSlide(false, 0.0f)
-        .SetRearAlign(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-    );
-
-    // --- NEW GUIDE PRESETS (v0.4.24) ---
-
-    // 17. Guide: Understeer (Front Grip Loss)
-    presets.push_back(Preset("Guide: Understeer (Front Grip)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.61f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    // 18. Guide: Oversteer (Rear Grip Loss)
-    presets.push_back(Preset("Guide: Oversteer (Rear Grip)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.08f)
-        .SetSoPScale(1.0f)
-        .SetRearAlign(0.90f)
-        .SetOversteer(0.65f)
-        .SetSoPYaw(0.0f)
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    // 19. Guide: Slide Texture (Scrubbing)
-    presets.push_back(Preset("Guide: Slide Texture (Scrub)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSlide(true, 0.39f, 1.0f) // Gain 0.39, Freq 1.0 (Rumble)
-        .SetScrub(1.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    // 20. Guide: Braking Lockup
-    presets.push_back(Preset("Guide: Braking Lockup", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetLockup(true, 1.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    // 21. Guide: Traction Loss (Wheel Spin)
-    presets.push_back(Preset("Guide: Traction Loss (Spin)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSpin(true, 1.0f)
-        .SetLockup(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    // 22. Guide: SoP Yaw (Kick)
-    presets.push_back(Preset("Guide: SoP Yaw (Kick)", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(5.0f) // Standard T300 level
-        .SetGyro(0.0f)
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    // 23. Guide: Gyroscopic Damping
-    presets.push_back(Preset("Guide: Gyroscopic Damping", true)
-        .SetGain(1.0f)
-        .SetUndersteer(0.0f)
-        .SetSoP(0.0f)
-        .SetOversteer(0.0f)
-        .SetRearAlign(0.0f)
-        .SetSoPYaw(0.0f)
-        .SetGyro(1.0f) // Max damping
-        .SetLockup(false, 0.0f)
-        .SetSpin(false, 0.0f)
-        .SetSlide(false, 0.0f)
-        .SetRoad(false, 0.0f)
-        .SetScrub(0.0f)
-        .SetBottoming(false, 0.0f, 0)
-        .SetSmoothing(0.0f)
-        .SetSlipSmoothing(0.015f)
-    );
-
-    if (!std::filesystem::exists(final_path)) return;
-
-    bool toml_handled = false;
+    // 2. Load User Presets from user_presets/ directory
+    std::filesystem::create_directories("user_presets");
     try {
-        toml::table tbl = toml::parse_file(final_path);
-        if (tbl.contains("Presets") || tbl.contains("System") || tbl.contains("General")) {
-            toml_handled = true;
-            if (auto ps = tbl["Presets"].as_table()) {
-                for (auto& [key, value] : *ps) {
-                    if (auto p_tbl = value.as_table()) {
-                        Preset pr(std::string(key.str()), false);
-                        TomlToPreset(*p_tbl, pr);
-                        pr.Validate();
-                        presets.push_back(pr);
+        for (const auto& entry : std::filesystem::directory_iterator("user_presets")) {
+            if (entry.is_regular_file() && entry.path().extension() == ".toml") {
+                try {
+                    toml::table tbl = toml::parse_file(entry.path().string());
+                    // The filename is sanitized, but the Preset name should ideally be inside the TOML
+                    // or we use the filename if not present. v0.7.218: user presets are individual tables.
+
+                    // UX: The name in the UI should match the filename or an internal 'name' key.
+                    // Deliverable 2.2 says: set is_builtin = false and add it.
+
+                    Preset p("Unnamed", false);
+                    TomlToPreset(tbl, p);
+
+                    // If TomlToPreset didn't find a name (it doesn't currently look for one in the table root),
+                    // use the filename without extension.
+                    if (p.name == "Unnamed") {
+                        p.name = entry.path().stem().string();
+                        // De-sanitize for UI (replace _ with space is risky, but let's see)
+                        // Actually, Deliverable 2.4 says SanitizeFilename replaces spaces with underscores.
                     }
+
+                    p.is_builtin = false;
+                    p.Validate();
+                    presets.push_back(p);
+                } catch (const std::exception& e) {
+                    Logger::Get().Log("[Config] Error loading user preset %s: %s", entry.path().string().c_str(), e.what());
                 }
             }
         }
     } catch (...) {}
 
-    if (!toml_handled) {
-        // Fallback to legacy
-        FFBEngine dummy;
-        MigrateFromLegacyIni(dummy, final_path);
-    }
+    // 3. Deterministic Sorting: Built-ins first, then "Default" first within that group, then alphabetical.
+    std::sort(presets.begin(), presets.end(), [](const Preset& a, const Preset& b) {
+        if (a.is_builtin != b.is_builtin) return a.is_builtin; // Built-ins first
+        if (a.name == "Default") return true;
+        if (b.name == "Default") return false;
+        return a.name < b.name;
+    });
 }
+
 
 void Config::AddUserPreset(const std::string& name, const FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
@@ -1627,6 +1040,7 @@ void Config::AddUserPreset(const std::string& name, const FFBEngine& engine) {
     for (auto& p : presets) {
         if (p.name == name && !p.is_builtin) {
             p.UpdateFromEngine(engine);
+            SaveUserPresetFile(p);
             found = true;
             break;
         }
@@ -1635,16 +1049,23 @@ void Config::AddUserPreset(const std::string& name, const FFBEngine& engine) {
         Preset p(name, false);
         p.UpdateFromEngine(engine);
         presets.push_back(p);
+        SaveUserPresetFile(p);
     }
     m_last_preset_name = name;
-    Save(engine);
+    Save(engine); // Still save main config to persist last_preset_name
 }
 
 void Config::DeletePreset(int index, const FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     if (index < 0 || index >= (int)presets.size()) return;
     if (presets[index].is_builtin) return;
+
     std::string name = presets[index].name;
+    std::string filename = "user_presets/" + SanitizeFilename(name) + ".toml";
+    if (std::filesystem::exists(filename)) {
+        std::filesystem::remove(filename);
+    }
+
     presets.erase(presets.begin() + index);
     if (m_last_preset_name == name) m_last_preset_name = "Default";
     Save(engine);
@@ -1790,24 +1211,60 @@ void Config::MigrateFromLegacyIni(FFBEngine& engine, const std::string& filename
 
 void Config::ExportPreset(int index, const std::string& filename) {
     if (index < 0 || index >= (int)presets.size()) return;
-    std::ofstream file(filename);
-    if (file.is_open()) {
-        file << toml::table{{"Preset", PresetToToml(presets[index])}};
+
+    if (presets[index].is_builtin) {
+        // For built-ins, we serialize from memory
+        std::ofstream file(filename);
+        if (file.is_open()) {
+            file << PresetToToml(presets[index]);
+        }
+    } else {
+        // For user presets, just copy the file
+        std::string source = "user_presets/" + SanitizeFilename(presets[index].name) + ".toml";
+        if (std::filesystem::exists(source)) {
+            try {
+                std::filesystem::copy_file(source, filename, std::filesystem::copy_options::overwrite_existing);
+            } catch (...) {
+                // Fallback to serialization if copy fails
+                std::ofstream file(filename);
+                if (file.is_open()) {
+                    file << PresetToToml(presets[index]);
+                }
+            }
+        } else {
+            // Should not happen if out-of-sync, but fallback to serialization
+            std::ofstream file(filename);
+            if (file.is_open()) {
+                file << PresetToToml(presets[index]);
+            }
+        }
     }
 }
 
 bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) {
-    try {
-        if (std::filesystem::exists(filename)) {
+    std::string ext = std::filesystem::path(filename).extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    if (ext == ".toml") {
+        try {
             toml::table tbl = toml::parse_file(filename);
-            if (auto p_tbl = tbl["Preset"].as_table()) {
-                Preset p("Imported", false);
-                TomlToPreset(*p_tbl, p);
-                presets.push_back(p);
-                return true;
+            Preset p("Imported", false);
+            TomlToPreset(tbl, p);
+            // If the TOML was exported with the old "Preset" wrapper (from Phase 2), handle it
+            if (tbl.contains("Preset")) {
+                if (auto p_tbl = tbl["Preset"].as_table()) {
+                    TomlToPreset(*p_tbl, p);
+                }
             }
-        }
-    } catch (...) {}
+            if (p.name == "Imported" || p.name == "Unnamed") {
+                p.name = std::filesystem::path(filename).stem().string();
+            }
+            p.Validate();
+            SaveUserPresetFile(p);
+            presets.push_back(p);
+            return true;
+        } catch (...) {}
+    }
 
     // Fallback to legacy INI import
     std::ifstream file(filename);
@@ -1851,6 +1308,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
             current_preset.general.gain *= (15.0f / legacy_torque_val);
         }
         current_preset.Validate();
+        SaveUserPresetFile(current_preset);
         presets.push_back(current_preset);
         imported = true;
     }

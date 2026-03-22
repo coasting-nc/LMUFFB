@@ -59,3 +59,4 @@ test_gui.csv/**
 test_*.ini
 test_*.log
 test_*.txt
+src/core/GeneratedBuiltinPresets.h

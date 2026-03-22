@@ -198,9 +198,9 @@ TEST_CASE(test_preset_understeer_only_isolation, "Understeer") {
     ASSERT_NEAR(p.grip_estimation.optimal_slip_angle, 0.10f, 0.001f);    // Optimal slip angle threshold
     ASSERT_NEAR(p.grip_estimation.optimal_slip_ratio, 0.12f, 0.001f);    // Optimal slip ratio threshold
     
-    // VERIFY: Speed gate is disabled (0.0 = no gating)
+    // VERIFY: Speed gate is disabled (0.0 = no gating, but upper clamped to 0.1f)
     ASSERT_NEAR(p.advanced.speed_gate_lower, 0.0f, 0.001f);       // Speed gate disabled
-    ASSERT_NEAR(p.advanced.speed_gate_upper, 0.0f, 0.001f);       // Speed gate disabled
+    ASSERT_NEAR(p.advanced.speed_gate_upper, 0.1f, 0.001f);       // Speed gate disabled (clamped to min)
     
     std::cout << "[PASS] 'Test: Understeer Only' preset properly isolates understeer effect" << std::endl;
     g_tests_passed++;

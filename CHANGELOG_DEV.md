@@ -7,6 +7,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.219]
+
+### Changed
+- **Preset System Redesign (Phase 3 - Externalizing User Presets)**
+  - **One-File-Per-Preset Architecture**: Transitioned user presets from being stored within the main `config.toml` to individual `.toml` files in a dedicated `user_presets/` directory. This simplifies sharing, backup, and manual organization of profiles.
+  - **Embedded Built-in Presets**: Built-in factory presets are now embedded as read-only TOML strings within the C++ binary. This ensures that default configurations are always available and cannot be accidentally modified or deleted by the user.
+  - **Automated Migration**: Implemented a one-time migration path that extracts existing user presets from the `[Presets]` table in `config.toml` and saves them as individual files in `user_presets/`, then cleans up the main configuration file.
+  - **Enhanced Import/Export**: Simplified preset sharing by utilizing direct file copying for exports. The import system now supports both modern `.toml` and legacy `.ini` formats, including version-aware physics upgrades for community-created profiles.
+  - **UI Clarity**: Added a `[Default]` prefix to built-in presets in the UI dropdown to clearly distinguish factory settings from user-created profiles. Overwriting factory presets is now explicitly disabled to preserve data integrity.
+  - **Robust File Handling**: Implemented filename sanitization to ensure compatibility across all Windows filesystem characters.
+
+### Testing
+- **New Preset Suite**: Added `tests/test_toml_presets.cpp` verifying embedded string parsing, individual file I/O, migration logic, and legacy INI import.
+- **Regression Guard**: Updated existing configuration and persistence tests to align with the new externalized architecture.
+- Verified 100% pass rate: **612/612 test cases passed**.
+
+---
+
 ## [0.7.218]
 
 ### Changed

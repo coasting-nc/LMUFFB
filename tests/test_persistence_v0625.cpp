@@ -48,26 +48,26 @@ TEST_CASE(test_texture_load_cap_in_presets, "Persistence") {
         return;
     }
 
-    // In TOML, preset is in [Presets.TextureCapTest]
-    try {
-        toml::table tbl = toml::parse_file(test_file);
-        ASSERT_TRUE(tbl.contains("Presets"));
-        auto presets_tbl = tbl["Presets"].as_table();
-        ASSERT_TRUE(presets_tbl != nullptr);
-        ASSERT_TRUE(presets_tbl->contains("TextureCapTest"));
+    // In Phase 3, preset is in its own file user_presets/TextureCapTest.toml
+    std::string preset_file = "user_presets/TextureCapTest.toml";
+    if (!std::filesystem::exists(preset_file)) {
+        FAIL_TEST("User preset file not created: " << preset_file);
+        return;
+    }
 
-        auto p_node = (*presets_tbl)["TextureCapTest"].as_table();
-        ASSERT_TRUE(p_node != nullptr);
-        auto vib_node = (*p_node)["Vibration"].as_table();
+    try {
+        toml::table tbl = toml::parse_file(preset_file);
+        ASSERT_TRUE(tbl.contains("Vibration"));
+        auto vib_node = tbl["Vibration"].as_table();
         ASSERT_TRUE(vib_node != nullptr);
         ASSERT_TRUE(vib_node->contains("texture_load_cap"));
     } catch (const toml::parse_error& err) {
-        FAIL_TEST("TOML parse error: " << err.description());
+        FAIL_TEST("TOML parse error in preset: " << err.description());
     }
     
     FFBEngine engine2;
     InitializeEngine(engine2);
-    Config::LoadPresets(test_file);
+    Config::LoadPresets();
     
     int idx = -1;
     for (int i = 0; i < (int)Config::presets.size(); i++) {
@@ -170,7 +170,7 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
     
     FFBEngine engine2;
     InitializeEngine(engine2);
-    Config::LoadPresets(test_file);
+    Config::LoadPresets();
     
     int idx = -1;
     for (int i = 0; i < (int)Config::presets.size(); i++) {
@@ -197,16 +197,17 @@ TEST_CASE(test_preset_all_fields, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_preset_clamping_brake, "Persistence") {
     std::cout << "Test 5: Preset Clamping - Brake Load Cap..." << std::endl;
-    std::string test_file = "test_clamp_preset_brake.toml";
+    std::string test_file = "user_presets/HighBrake.toml";
+    std::filesystem::create_directories("user_presets");
     
     // Manually write to config file
     {
         std::ofstream file(test_file);
-        file << "[Presets.HighBrake.Braking]\n";
+        file << "[Braking]\n";
         file << "brake_load_cap = 8.5\n";
     }
     
-    Config::LoadPresets(test_file);
+    Config::LoadPresets();
     
     int idx = -1;
     for (int i = 0; i < (int)Config::presets.size(); i++) {
@@ -231,16 +232,17 @@ TEST_CASE(test_preset_clamping_brake, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_preset_clamping_lockup, "Persistence") {
     std::cout << "Test 6: Preset Clamping - Lockup Gain..." << std::endl;
-    std::string test_file = "test_clamp_preset_lockup.toml";
+    std::string test_file = "user_presets/HighLockup.toml";
+    std::filesystem::create_directories("user_presets");
     
     // Manually write to config file
     {
         std::ofstream file(test_file);
-        file << "[Presets.HighLockup.Braking]\n";
+        file << "[Braking]\n";
         file << "lockup_gain = 2.9\n";
     }
     
-    Config::LoadPresets(test_file);
+    Config::LoadPresets();
     
     int idx = -1;
     for (int i = 0; i < (int)Config::presets.size(); i++) {
@@ -381,7 +383,7 @@ TEST_CASE(test_comprehensive_roundtrip, "Persistence") {
     
     FFBEngine engine3;
     InitializeEngine(engine3);
-    Config::LoadPresets(test_file);
+    Config::LoadPresets();
     
     int idx = -1;
     for (int i = 0; i < (int)Config::presets.size(); i++) {

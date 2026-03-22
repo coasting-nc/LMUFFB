@@ -14,16 +14,16 @@ TEST_CASE(test_preset_version_persistence, "Config") {
     p.name = "VersionTestPreset";
     p.app_version = "0.7.147"; // Use the fixed version to avoid migration
     
-    // 2. Save it to a temporary INI
-    const char* test_file = "test_version_presets.ini";
-    std::string original_path = Config::m_config_path;
-    Config::m_config_path = test_file;
+    // 2. Save it to user_presets as TOML
+    if (std::filesystem::exists("user_presets")) std::filesystem::remove_all("user_presets");
+    std::filesystem::create_directories("user_presets");
+    std::string test_file = "user_presets/VersionTestPreset.toml";
     
     {
         std::ofstream file(test_file);
-        file << "[Preset:VersionTestPreset]\n";
-        file << "app_version=" << p.app_version << "\n";
-        file << "gain=1.0\n";
+        file << "name = \"VersionTestPreset\"\n";
+        file << "app_version = \"" << p.app_version << "\"\n";
+        file << "[General]\ngain = 1.0\n";
         file.close();
     }
 
@@ -48,17 +48,17 @@ TEST_CASE(test_preset_version_persistence, "Config") {
         FAIL_TEST("VersionTestPreset not found after loading.");
     }
 
-    Config::m_config_path = original_path;
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_legacy_preset_migration, "Config") {
     std::cout << "\nTest: Legacy Preset Migration" << std::endl;
     
-    const char* test_file = "test_legacy_presets.ini";
-    std::string original_path = Config::m_config_path;
-    Config::m_config_path = test_file;
+    // In Phase 3, legacy presets are imported via ImportPreset,
+    // or migrated from config.toml. Direct LoadPresets only sees user_presets/*.toml.
+    // Let's use ImportPreset to verify migration logic.
     
+    std::string test_file = "test_legacy_presets.ini";
     {
         std::ofstream file(test_file);
         file << "[Preset:LegacyPreset]\n";
@@ -66,8 +66,8 @@ TEST_CASE(test_legacy_preset_migration, "Config") {
         file.close();
     }
 
-    // Load presets - should trigger migration
-    Config::LoadPresets();
+    FFBEngine engine;
+    Config::ImportPreset(test_file, engine);
     
     bool found = false;
     for (const auto& preset : Config::presets) {
@@ -87,7 +87,6 @@ TEST_CASE(test_legacy_preset_migration, "Config") {
         FAIL_TEST("LegacyPreset not found.");
     }
 
-    Config::m_config_path = original_path;
     if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
