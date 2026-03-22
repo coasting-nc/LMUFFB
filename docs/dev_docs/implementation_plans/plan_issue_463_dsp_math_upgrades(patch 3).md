@@ -1,7 +1,7 @@
-# Implementation Plan - Issue #463: DSP Mathematical Upgrades & Time-Aware Telemetry Upsampling
+# Implementation Plan - DSP Mathematical Upgrades & Time-Aware Telemetry Upsampling
 
 ## Context
-Following the structural categorization of auxiliary telemetry channels in Patch 2 (Issue #462), this patch (Patch 3) implements critical mathematical corrections to the `HoltWintersFilter` and the channel tuning parameters. Based on deep research into vehicle dynamics DSP, the current implementation is vulnerable to telemetry jitter (variable 100Hz frame times) and catastrophic extrapolation overshoot during dropped frames. This patch upgrades the filter to be "Time-Aware", introduces "Trend Damping" to safely arrest runaway extrapolation, and corrects the Alpha/Beta tuning parameters to respect Nyquist-Shannon sampling limits.
+Following the structural categorization of auxiliary telemetry channels in Patch 2 (Issue #466), this patch (Patch 3) implements critical mathematical corrections to the `HoltWintersFilter` and the channel tuning parameters. Based on deep research into vehicle dynamics DSP, the current implementation is vulnerable to telemetry jitter (variable 100Hz frame times) and catastrophic extrapolation overshoot during dropped frames. This patch upgrades the filter to be "Time-Aware", introduces "Trend Damping" to safely arrest runaway extrapolation, and corrects the Alpha/Beta tuning parameters to respect Nyquist-Shannon sampling limits.
 
 ## Design Rationale
 **Why upgrade the math?**
@@ -13,7 +13,7 @@ Following the structural categorization of auxiliary telemetry channels in Patch
 *   `docs\dev_docs\investigations\FFB Telemetry Upsampling Research.md` (Deep Research Report on DSP Architectures)
 *   `docs\dev_docs\implementation_plans\plan_issue_466_aux_channel_differentiation.md` implementation plan that was completed for Patch 2
 *   `docs\dev_docs\reports\HoltWintersFilter recommendations comparison.md`
-*   Issue #461 & #462 (Previous Holt-Winters integration and channel grouping)
+*   Issue #461 & #466 (Previous Holt-Winters integration and channel grouping)
 
 
 ---
