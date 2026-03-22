@@ -32,17 +32,17 @@
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">134</td>
-            <td class="headerCovTableEntry">134</td>
+            <td class="headerCovTableEntry">85</td>
+            <td class="headerCovTableEntry">85</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-22 16:00:16</td>
+            <td class="headerValue">2026-03-22 18:32:15</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
-            <td class="headerCovTableEntry">32</td>
-            <td class="headerCovTableEntry">32</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntry">12</td>
           </tr>
           <tr>
             <td></td>
@@ -111,18 +111,18 @@
 <span id="L40"><span class="lineNum">      40</span>                 :             :     SafetyConfig safety;</span>
 <span id="L41"><span class="lineNum">      41</span>                 :             : </span>
 <span id="L42"><span class="lineNum">      42</span>                 :             :     // 2. Constructors</span>
-<span id="L43"><span class="lineNum">      43</span>         [<span class="tlaGBC" title="Branch 0 was taken 2294 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        6882 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
-<span id="L44"><span class="lineNum">      44</span>   [<span class="tlaGBC" title="Branch 0 was taken 1540 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1540 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        7700 :     Preset() : name(&quot;Unnamed&quot;), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading</span></span>
+<span id="L43"><span class="lineNum">      43</span>         [<span class="tlaGBC" title="Branch 0 was taken 2484 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        7452 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
+<span id="L44"><span class="lineNum">      44</span>   [<span class="tlaGBC" title="Branch 0 was taken 1545 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1545 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        7725 :     Preset() : name(&quot;Unnamed&quot;), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading</span></span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : </span>
 <span id="L46"><span class="lineNum">      46</span>                 :             :     // 3. Fluent Setters (The &quot;Python Dictionary&quot; feel)</span>
-<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">         748 :     Preset&amp; SetGain(float v) { general.gain = v; return *this; }</span></span>
-<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        1088 :     Preset&amp; SetUndersteer(float v) { front_axle.understeer_effect = v; return *this; }</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :     Preset&amp; SetGain(float v) { general.gain = v; return *this; }</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :     Preset&amp; SetUndersteer(float v) { front_axle.understeer_effect = v; return *this; }</span>
 <span id="L49"><span class="lineNum">      49</span>                 :             :     Preset&amp; SetUndersteerGamma(float v) { front_axle.understeer_gamma = v; return *this; }</span>
-<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaGNC">        1088 :     Preset&amp; SetSoP(float v) { rear_axle.sop_effect = v; return *this; }</span></span>
-<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">         408 :     Preset&amp; SetSoPScale(float v) { rear_axle.sop_scale = v; return *this; }</span></span>
-<span id="L52"><span class="lineNum">      52</span>                 :<span class="tlaGNC">        1088 :     Preset&amp; SetSmoothing(float v) { rear_axle.sop_smoothing_factor = v; return *this; }</span></span>
-<span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">          68 :     Preset&amp; SetMinForce(float v) { general.min_force = v; return *this; }</span></span>
-<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">         612 :     Preset&amp; SetOversteer(float v) { rear_axle.oversteer_boost = v; return *this; }</span></span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :     Preset&amp; SetSoP(float v) { rear_axle.sop_effect = v; return *this; }</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :     Preset&amp; SetSoPScale(float v) { rear_axle.sop_scale = v; return *this; }</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :     Preset&amp; SetSmoothing(float v) { rear_axle.sop_smoothing_factor = v; return *this; }</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :     Preset&amp; SetMinForce(float v) { general.min_force = v; return *this; }</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :     Preset&amp; SetOversteer(float v) { rear_axle.oversteer_boost = v; return *this; }</span>
 <span id="L55"><span class="lineNum">      55</span>                 :             :     Preset&amp; SetLongitudinalLoad(float v) { load_forces.long_load_effect = v; return *this; }</span>
 <span id="L56"><span class="lineNum">      56</span>                 :             :     Preset&amp; SetLongitudinalLoadSmoothing(float v) { load_forces.long_load_smoothing = v; return *this; }</span>
 <span id="L57"><span class="lineNum">      57</span>                 :             :     Preset&amp; SetLongitudinalLoadTransform(int v) { load_forces.long_load_transform = v; return *this; }</span>
@@ -132,30 +132,30 @@
 <span id="L61"><span class="lineNum">      61</span>                 :             :         grip_estimation.grip_smoothing_sensitivity = sens;</span>
 <span id="L62"><span class="lineNum">      62</span>                 :             :         return *this;</span>
 <span id="L63"><span class="lineNum">      63</span>                 :             :     }</span>
-<span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaGNC">        1088 :     Preset&amp; SetSlipSmoothing(float v) { grip_estimation.slip_angle_smoothing = v; return *this; }</span></span>
+<span id="L64"><span class="lineNum">      64</span>                 :             :     Preset&amp; SetSlipSmoothing(float v) { grip_estimation.slip_angle_smoothing = v; return *this; }</span>
 <span id="L65"><span class="lineNum">      65</span>                 :             :     </span>
-<span id="L66"><span class="lineNum">      66</span>                 :<span class="tlaGNC">         680 :     Preset&amp; SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { </span></span>
-<span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC">         680 :         braking.lockup_enabled = enabled;</span></span>
-<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">         680 :         braking.lockup_gain = g;</span></span>
-<span id="L69"><span class="lineNum">      69</span>                 :<span class="tlaGNC">         680 :         braking.lockup_start_pct = start;</span></span>
-<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">         680 :         braking.lockup_full_pct = full;</span></span>
-<span id="L71"><span class="lineNum">      71</span>                 :<span class="tlaGNC">         680 :         braking.lockup_rear_boost = boost;</span></span>
-<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">         680 :         return *this; </span></span>
+<span id="L66"><span class="lineNum">      66</span>                 :             :     Preset&amp; SetLockup(bool enabled, float g, float start = 5.0f, float full = 15.0f, float boost = 1.5f) { </span>
+<span id="L67"><span class="lineNum">      67</span>                 :             :         braking.lockup_enabled = enabled;</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             :         braking.lockup_gain = g;</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :         braking.lockup_start_pct = start;</span>
+<span id="L70"><span class="lineNum">      70</span>                 :             :         braking.lockup_full_pct = full;</span>
+<span id="L71"><span class="lineNum">      71</span>                 :             :         braking.lockup_rear_boost = boost;</span>
+<span id="L72"><span class="lineNum">      72</span>                 :             :         return *this; </span>
 <span id="L73"><span class="lineNum">      73</span>                 :             :     }</span>
 <span id="L74"><span class="lineNum">      74</span>                 :             :     Preset&amp; SetBrakeCap(float v) { braking.brake_load_cap = v; return *this; }</span>
-<span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">         680 :     Preset&amp; SetSpin(bool enabled, float g, float scale = 1.0f) { </span></span>
-<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">         680 :         vibration.spin_enabled = enabled;</span></span>
-<span id="L77"><span class="lineNum">      77</span>                 :<span class="tlaGNC">         680 :         vibration.spin_gain = g;</span></span>
-<span id="L78"><span class="lineNum">      78</span>                 :<span class="tlaGNC">         680 :         vibration.spin_freq_scale = scale;</span></span>
-<span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">         680 :         return *this; </span></span>
+<span id="L75"><span class="lineNum">      75</span>                 :             :     Preset&amp; SetSpin(bool enabled, float g, float scale = 1.0f) { </span>
+<span id="L76"><span class="lineNum">      76</span>                 :             :         vibration.spin_enabled = enabled;</span>
+<span id="L77"><span class="lineNum">      77</span>                 :             :         vibration.spin_gain = g;</span>
+<span id="L78"><span class="lineNum">      78</span>                 :             :         vibration.spin_freq_scale = scale;</span>
+<span id="L79"><span class="lineNum">      79</span>                 :             :         return *this; </span>
 <span id="L80"><span class="lineNum">      80</span>                 :             :     }</span>
-<span id="L81"><span class="lineNum">      81</span>                 :<span class="tlaGNC">        1088 :     Preset&amp; SetSlide(bool enabled, float g, float f = 1.0f) { </span></span>
-<span id="L82"><span class="lineNum">      82</span>                 :<span class="tlaGNC">        1088 :         vibration.slide_enabled = enabled;</span></span>
-<span id="L83"><span class="lineNum">      83</span>                 :<span class="tlaGNC">        1088 :         vibration.slide_gain = g;</span></span>
-<span id="L84"><span class="lineNum">      84</span>                 :<span class="tlaGNC">        1088 :         vibration.slide_freq = f;</span></span>
-<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">        1088 :         return *this; </span></span>
+<span id="L81"><span class="lineNum">      81</span>                 :             :     Preset&amp; SetSlide(bool enabled, float g, float f = 1.0f) { </span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :         vibration.slide_enabled = enabled;</span>
+<span id="L83"><span class="lineNum">      83</span>                 :             :         vibration.slide_gain = g;</span>
+<span id="L84"><span class="lineNum">      84</span>                 :             :         vibration.slide_freq = f;</span>
+<span id="L85"><span class="lineNum">      85</span>                 :             :         return *this; </span>
 <span id="L86"><span class="lineNum">      86</span>                 :             :     }</span>
-<span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaGNC">         680 :     Preset&amp; SetRoad(bool enabled, float g) { vibration.road_enabled = enabled; vibration.road_gain = g; return *this; }</span></span>
+<span id="L87"><span class="lineNum">      87</span>                 :             :     Preset&amp; SetRoad(bool enabled, float g) { vibration.road_enabled = enabled; vibration.road_gain = g; return *this; }</span>
 <span id="L88"><span class="lineNum">      88</span>                 :             :     Preset&amp; SetVibrationGain(float v) { vibration.vibration_gain = v; return *this; }</span>
 <span id="L89"><span class="lineNum">      89</span>                 :             :     Preset&amp; SetDynamicNormalization(bool enabled) { general.dynamic_normalization_enabled = enabled; return *this; }</span>
 <span id="L90"><span class="lineNum">      90</span>                 :             : </span>
@@ -172,17 +172,17 @@
 <span id="L101"><span class="lineNum">     101</span>                 :             :         return *this;</span>
 <span id="L102"><span class="lineNum">     102</span>                 :             :     }</span>
 <span id="L103"><span class="lineNum">     103</span>                 :             :     </span>
-<span id="L104"><span class="lineNum">     104</span>                 :<span class="tlaGNC">        1088 :     Preset&amp; SetBottoming(bool enabled, float gain, int method) {</span></span>
-<span id="L105"><span class="lineNum">     105</span>                 :<span class="tlaGNC">        1088 :         vibration.bottoming_enabled = enabled;</span></span>
-<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">        1088 :         vibration.bottoming_gain = gain;</span></span>
-<span id="L107"><span class="lineNum">     107</span>                 :<span class="tlaGNC">        1088 :         vibration.bottoming_method = method;</span></span>
-<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">        1088 :         return *this;</span></span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :     Preset&amp; SetBottoming(bool enabled, float gain, int method) {</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             :         vibration.bottoming_enabled = enabled;</span>
+<span id="L106"><span class="lineNum">     106</span>                 :             :         vibration.bottoming_gain = gain;</span>
+<span id="L107"><span class="lineNum">     107</span>                 :             :         vibration.bottoming_method = method;</span>
+<span id="L108"><span class="lineNum">     108</span>                 :             :         return *this;</span>
 <span id="L109"><span class="lineNum">     109</span>                 :             :     }</span>
-<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">         612 :     Preset&amp; SetScrub(float v) { vibration.scrub_drag_gain = v; return *this; }</span></span>
-<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">        1088 :     Preset&amp; SetRearAlign(float v) { rear_axle.rear_align_effect = v; return *this; }</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :             :     Preset&amp; SetScrub(float v) { vibration.scrub_drag_gain = v; return *this; }</span>
+<span id="L111"><span class="lineNum">     111</span>                 :             :     Preset&amp; SetRearAlign(float v) { rear_axle.rear_align_effect = v; return *this; }</span>
 <span id="L112"><span class="lineNum">     112</span>                 :             :     Preset&amp; SetKerbStrikeRejection(float v) { rear_axle.kerb_strike_rejection = v; return *this; }</span>
-<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">         618 :     Preset&amp; SetSoPYaw(float v) { rear_axle.sop_yaw_gain = v; return *this; }</span></span>
-<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">         408 :     Preset&amp; SetGyro(float v) { advanced.gyro_gain = v; return *this; }</span></span>
+<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">           6 :     Preset&amp; SetSoPYaw(float v) { rear_axle.sop_yaw_gain = v; return *this; }</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :             :     Preset&amp; SetGyro(float v) { advanced.gyro_gain = v; return *this; }</span>
 <span id="L115"><span class="lineNum">     115</span>                 :             :     Preset&amp; SetStationaryDamping(float v) { advanced.stationary_damping = v; return *this; }</span>
 <span id="L116"><span class="lineNum">     116</span>                 :             :     </span>
 <span id="L117"><span class="lineNum">     117</span>                 :             :     Preset&amp; SetShaftGain(float v) { front_axle.steering_shaft_gain = v; return *this; }</span>
@@ -202,7 +202,7 @@
 <span id="L131"><span class="lineNum">     131</span>                 :             :         front_axle.static_notch_width = width;</span>
 <span id="L132"><span class="lineNum">     132</span>                 :             :         return *this;</span>
 <span id="L133"><span class="lineNum">     133</span>                 :             :     }</span>
-<span id="L134"><span class="lineNum">     134</span>                 :<span class="tlaGNC">          69 :     Preset&amp; SetYawKickThreshold(float v) { rear_axle.yaw_kick_threshold = v; return *this; }</span></span>
+<span id="L134"><span class="lineNum">     134</span>                 :<span class="tlaGNC">           1 :     Preset&amp; SetYawKickThreshold(float v) { rear_axle.yaw_kick_threshold = v; return *this; }</span></span>
 <span id="L135"><span class="lineNum">     135</span>                 :             : </span>
 <span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">           2 :     Preset&amp; SetUnloadedYawKick(float gain, float threshold, float sens, float gamma, float punch) {</span></span>
 <span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">           2 :         rear_axle.unloaded_yaw_gain = gain;</span></span>
@@ -222,17 +222,17 @@
 <span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">           5 :         return *this;</span></span>
 <span id="L152"><span class="lineNum">     152</span>                 :             :     }</span>
 <span id="L153"><span class="lineNum">     153</span>                 :             : </span>
-<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">          74 :     Preset&amp; SetSpeedGate(float lower, float upper) { advanced.speed_gate_lower = lower; advanced.speed_gate_upper = upper; return *this; }</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">           6 :     Preset&amp; SetSpeedGate(float lower, float upper) { advanced.speed_gate_lower = lower; advanced.speed_gate_upper = upper; return *this; }</span></span>
 <span id="L155"><span class="lineNum">     155</span>                 :             : </span>
-<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">          68 :     Preset&amp; SetOptimalSlip(float angle, float ratio) {</span></span>
-<span id="L157"><span class="lineNum">     157</span>                 :<span class="tlaGNC">          68 :         grip_estimation.optimal_slip_angle = angle;</span></span>
-<span id="L158"><span class="lineNum">     158</span>                 :<span class="tlaGNC">          68 :         grip_estimation.optimal_slip_ratio = ratio;</span></span>
-<span id="L159"><span class="lineNum">     159</span>                 :<span class="tlaGNC">          68 :         return *this;</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :             :     Preset&amp; SetOptimalSlip(float angle, float ratio) {</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :         grip_estimation.optimal_slip_angle = angle;</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :         grip_estimation.optimal_slip_ratio = ratio;</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             :         return *this;</span>
 <span id="L160"><span class="lineNum">     160</span>                 :             :     }</span>
-<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">          68 :     Preset&amp; SetShaftSmoothing(float v) { front_axle.steering_shaft_smoothing = v; return *this; }</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :             :     Preset&amp; SetShaftSmoothing(float v) { front_axle.steering_shaft_smoothing = v; return *this; }</span>
 <span id="L162"><span class="lineNum">     162</span>                 :             :     </span>
 <span id="L163"><span class="lineNum">     163</span>                 :             :     Preset&amp; SetGyroSmoothing(float v) { advanced.gyro_smoothing = v; return *this; }</span>
-<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">          68 :     Preset&amp; SetYawSmoothing(float v) { rear_axle.yaw_accel_smoothing = v; return *this; }</span></span>
+<span id="L164"><span class="lineNum">     164</span>                 :             :     Preset&amp; SetYawSmoothing(float v) { rear_axle.yaw_accel_smoothing = v; return *this; }</span>
 <span id="L165"><span class="lineNum">     165</span>                 :             :     Preset&amp; SetChassisSmoothing(float v) { grip_estimation.chassis_inertia_smoothing = v; return *this; }</span>
 <span id="L166"><span class="lineNum">     166</span>                 :             :     </span>
 <span id="L167"><span class="lineNum">     167</span>                 :             :     Preset&amp; SetSlopeDetection(bool enabled, int window = 15, float min_thresh = -0.3f, float max_thresh = -2.0f, float tau = 0.04f) {</span>
@@ -280,92 +280,92 @@
 <span id="L209"><span class="lineNum">     209</span>                 :             :     // âš ï¸ IMPORTANT: Default parameters (abs_f, lockup_f) must match Config.h defaults!</span>
 <span id="L210"><span class="lineNum">     210</span>                 :             :     // When changing Config.h defaults, update these values to match.</span>
 <span id="L211"><span class="lineNum">     211</span>                 :             :     // Current: abs_f=25.5, lockup_f=1.02 (GT3 DD 15 Nm defaults - v0.6.35)</span>
-<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC">         136 :     Preset&amp; SetAdvancedBraking(float gamma, float sens, float bump, bool abs, float abs_g, float abs_f = 25.5f, float lockup_f = 1.02f) {</span></span>
-<span id="L213"><span class="lineNum">     213</span>                 :<span class="tlaGNC">         136 :         braking.lockup_gamma = gamma;</span></span>
-<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC">         136 :         braking.lockup_prediction_sens = sens;</span></span>
-<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">         136 :         braking.lockup_bump_reject = bump;</span></span>
-<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaGNC">         136 :         braking.abs_pulse_enabled = abs;</span></span>
-<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">         136 :         braking.abs_gain = abs_g;</span></span>
-<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">         136 :         braking.abs_freq = abs_f;</span></span>
-<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">         136 :         braking.lockup_freq_scale = lockup_f;</span></span>
-<span id="L220"><span class="lineNum">     220</span>                 :<span class="tlaGNC">         136 :         return *this;</span></span>
+<span id="L212"><span class="lineNum">     212</span>                 :             :     Preset&amp; SetAdvancedBraking(float gamma, float sens, float bump, bool abs, float abs_g, float abs_f = 25.5f, float lockup_f = 1.02f) {</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             :         braking.lockup_gamma = gamma;</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             :         braking.lockup_prediction_sens = sens;</span>
+<span id="L215"><span class="lineNum">     215</span>                 :             :         braking.lockup_bump_reject = bump;</span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :         braking.abs_pulse_enabled = abs;</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             :         braking.abs_gain = abs_g;</span>
+<span id="L218"><span class="lineNum">     218</span>                 :             :         braking.abs_freq = abs_f;</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             :         braking.lockup_freq_scale = lockup_f;</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :         return *this;</span>
 <span id="L221"><span class="lineNum">     221</span>                 :             :     }</span>
 <span id="L222"><span class="lineNum">     222</span>                 :             : </span>
 <span id="L223"><span class="lineNum">     223</span>                 :             :     // 4. Static method to apply defaults to FFBEngine (Single Source of Truth)</span>
 <span id="L224"><span class="lineNum">     224</span>                 :             :     // This is called by FFBEngine constructor to initialize with T300 defaults</span>
-<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">         944 :     static void ApplyDefaultsToEngine(FFBEngine&amp; engine) {</span></span>
-<span id="L226"><span class="lineNum">     226</span>         [<span class="tlaGBC" title="Branch 0 was taken 944 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         944 :         Preset defaults; // Uses default member initializers (T300 values)</span></span>
-<span id="L227"><span class="lineNum">     227</span>         [<span class="tlaGBC" title="Branch 0 was taken 944 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         944 :         defaults.Apply(engine);</span></span>
-<span id="L228"><span class="lineNum">     228</span>                 :<span class="tlaGNC">         944 :     }</span></span>
+<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">         949 :     static void ApplyDefaultsToEngine(FFBEngine&amp; engine) {</span></span>
+<span id="L226"><span class="lineNum">     226</span>         [<span class="tlaGBC" title="Branch 0 was taken 949 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         949 :         Preset defaults; // Uses default member initializers (T300 values)</span></span>
+<span id="L227"><span class="lineNum">     227</span>         [<span class="tlaGBC" title="Branch 0 was taken 949 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         949 :         defaults.Apply(engine);</span></span>
+<span id="L228"><span class="lineNum">     228</span>                 :<span class="tlaGNC">         949 :     }</span></span>
 <span id="L229"><span class="lineNum">     229</span>                 :             : </span>
 <span id="L230"><span class="lineNum">     230</span>                 :             :     // Apply this preset to an engine instance</span>
 <span id="L231"><span class="lineNum">     231</span>                 :             :     // v0.7.16: Added comprehensive safety clamping to prevent crashes/NaN from invalid config values</span>
-<span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaGNC">        1028 :     void Apply(FFBEngine&amp; engine) const {</span></span>
-<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">        1028 :         engine.m_general = this-&gt;general;</span></span>
-<span id="L234"><span class="lineNum">     234</span>                 :<span class="tlaGNC">        1028 :         engine.m_general.Validate();</span></span>
+<span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaGNC">        1035 :     void Apply(FFBEngine&amp; engine) const {</span></span>
+<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">        1035 :         engine.m_general = this-&gt;general;</span></span>
+<span id="L234"><span class="lineNum">     234</span>                 :<span class="tlaGNC">        1035 :         engine.m_general.Validate();</span></span>
 <span id="L235"><span class="lineNum">     235</span>                 :             : </span>
-<span id="L236"><span class="lineNum">     236</span>                 :<span class="tlaGNC">        1028 :         engine.m_front_axle = this-&gt;front_axle;</span></span>
-<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaGNC">        1028 :         engine.m_front_axle.Validate();</span></span>
+<span id="L236"><span class="lineNum">     236</span>                 :<span class="tlaGNC">        1035 :         engine.m_front_axle = this-&gt;front_axle;</span></span>
+<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaGNC">        1035 :         engine.m_front_axle.Validate();</span></span>
 <span id="L238"><span class="lineNum">     238</span>                 :             : </span>
-<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">        1028 :         engine.m_rear_axle = this-&gt;rear_axle;</span></span>
-<span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">        1028 :         engine.m_rear_axle.Validate();</span></span>
+<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">        1035 :         engine.m_rear_axle = this-&gt;rear_axle;</span></span>
+<span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">        1035 :         engine.m_rear_axle.Validate();</span></span>
 <span id="L241"><span class="lineNum">     241</span>                 :             : </span>
-<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC">        1028 :         engine.m_load_forces = this-&gt;load_forces;</span></span>
-<span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC">        1028 :         engine.m_load_forces.Validate();</span></span>
+<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC">        1035 :         engine.m_load_forces = this-&gt;load_forces;</span></span>
+<span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC">        1035 :         engine.m_load_forces.Validate();</span></span>
 <span id="L244"><span class="lineNum">     244</span>                 :             : </span>
-<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">        1028 :         engine.m_grip_estimation = this-&gt;grip_estimation;</span></span>
-<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">        1028 :         engine.m_grip_estimation.Validate();</span></span>
+<span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">        1035 :         engine.m_grip_estimation = this-&gt;grip_estimation;</span></span>
+<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">        1035 :         engine.m_grip_estimation.Validate();</span></span>
 <span id="L247"><span class="lineNum">     247</span>                 :             : </span>
-<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">        1028 :         engine.m_slope_detection = this-&gt;slope_detection;</span></span>
-<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC">        1028 :         engine.m_slope_detection.Validate();</span></span>
+<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">        1035 :         engine.m_slope_detection = this-&gt;slope_detection;</span></span>
+<span id="L249"><span class="lineNum">     249</span>                 :<span class="tlaGNC">        1035 :         engine.m_slope_detection.Validate();</span></span>
 <span id="L250"><span class="lineNum">     250</span>                 :             : </span>
-<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC">        1028 :         engine.m_braking = this-&gt;braking;</span></span>
-<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">        1028 :         engine.m_braking.Validate();</span></span>
+<span id="L251"><span class="lineNum">     251</span>                 :<span class="tlaGNC">        1035 :         engine.m_braking = this-&gt;braking;</span></span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">        1035 :         engine.m_braking.Validate();</span></span>
 <span id="L253"><span class="lineNum">     253</span>                 :             : </span>
-<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaGNC">        1028 :         engine.m_vibration = this-&gt;vibration;</span></span>
-<span id="L255"><span class="lineNum">     255</span>                 :<span class="tlaGNC">        1028 :         engine.m_vibration.Validate();</span></span>
+<span id="L254"><span class="lineNum">     254</span>                 :<span class="tlaGNC">        1035 :         engine.m_vibration = this-&gt;vibration;</span></span>
+<span id="L255"><span class="lineNum">     255</span>                 :<span class="tlaGNC">        1035 :         engine.m_vibration.Validate();</span></span>
 <span id="L256"><span class="lineNum">     256</span>                 :             : </span>
-<span id="L257"><span class="lineNum">     257</span>                 :<span class="tlaGNC">        1028 :         engine.m_advanced = this-&gt;advanced;</span></span>
-<span id="L258"><span class="lineNum">     258</span>                 :<span class="tlaGNC">        1028 :         engine.m_advanced.Validate();</span></span>
+<span id="L257"><span class="lineNum">     257</span>                 :<span class="tlaGNC">        1035 :         engine.m_advanced = this-&gt;advanced;</span></span>
+<span id="L258"><span class="lineNum">     258</span>                 :<span class="tlaGNC">        1035 :         engine.m_advanced.Validate();</span></span>
 <span id="L259"><span class="lineNum">     259</span>                 :             : </span>
-<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">        1028 :         engine.m_safety.m_config = this-&gt;safety;</span></span>
-<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC">        1028 :         engine.m_safety.m_config.Validate();</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">        1035 :         engine.m_safety.m_config = this-&gt;safety;</span></span>
+<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC">        1035 :         engine.m_safety.m_config.Validate();</span></span>
 <span id="L262"><span class="lineNum">     262</span>                 :             : </span>
 <span id="L263"><span class="lineNum">     263</span>                 :             :         // Stage 1 &amp; 2 Normalization (Issue #152 &amp; #153)</span>
 <span id="L264"><span class="lineNum">     264</span>                 :             :         // Initialize session peak from target rim torque to provide a sane starting point.</span>
-<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">        1028 :         engine.m_session_peak_torque = (std::max)(1.0, (double)engine.m_general.target_rim_nm);</span></span>
-<span id="L266"><span class="lineNum">     266</span>                 :<span class="tlaGNC">        1028 :         engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;</span></span>
-<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">        1028 :     }</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">        1035 :         engine.m_session_peak_torque = (std::max)(1.0, (double)engine.m_general.target_rim_nm);</span></span>
+<span id="L266"><span class="lineNum">     266</span>                 :<span class="tlaGNC">        1035 :         engine.m_smoothed_structural_mult = 1.0 / engine.m_session_peak_torque;</span></span>
+<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">        1035 :     }</span></span>
 <span id="L268"><span class="lineNum">     268</span>                 :             : </span>
 <span id="L269"><span class="lineNum">     269</span>                 :             :     // NEW: Ensure values are within safe ranges (v0.7.16)</span>
-<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">          35 :     void Validate() {</span></span>
-<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">          35 :         general.Validate();</span></span>
-<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaGNC">          35 :         front_axle.Validate();</span></span>
-<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">          35 :         rear_axle.Validate();</span></span>
-<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">          35 :         load_forces.Validate();</span></span>
-<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">          35 :         grip_estimation.Validate();</span></span>
-<span id="L276"><span class="lineNum">     276</span>                 :<span class="tlaGNC">          35 :         slope_detection.Validate();</span></span>
-<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">          35 :         braking.Validate();</span></span>
-<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaGNC">          35 :         vibration.Validate();</span></span>
-<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">          35 :         advanced.Validate();</span></span>
-<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">          35 :         safety.Validate();</span></span>
-<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC">          35 :     }</span></span>
+<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">        2324 :     void Validate() {</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">        2324 :         general.Validate();</span></span>
+<span id="L272"><span class="lineNum">     272</span>                 :<span class="tlaGNC">        2324 :         front_axle.Validate();</span></span>
+<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">        2324 :         rear_axle.Validate();</span></span>
+<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">        2324 :         load_forces.Validate();</span></span>
+<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">        2324 :         grip_estimation.Validate();</span></span>
+<span id="L276"><span class="lineNum">     276</span>                 :<span class="tlaGNC">        2324 :         slope_detection.Validate();</span></span>
+<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">        2324 :         braking.Validate();</span></span>
+<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaGNC">        2324 :         vibration.Validate();</span></span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">        2324 :         advanced.Validate();</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">        2324 :         safety.Validate();</span></span>
+<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC">        2324 :     }</span></span>
 <span id="L282"><span class="lineNum">     282</span>                 :             : </span>
 <span id="L283"><span class="lineNum">     283</span>                 :             :     // NEW: Capture current engine state into this preset</span>
-<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">         509 :     void UpdateFromEngine(const FFBEngine&amp; engine) {</span></span>
-<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">         509 :         general = engine.m_general;</span></span>
-<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaGNC">         509 :         front_axle = engine.m_front_axle;</span></span>
-<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaGNC">         509 :         rear_axle = engine.m_rear_axle;</span></span>
-<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC">         509 :         load_forces = engine.m_load_forces;</span></span>
-<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">         509 :         grip_estimation = engine.m_grip_estimation;</span></span>
-<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">         509 :         slope_detection = engine.m_slope_detection;</span></span>
-<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">         509 :         braking = engine.m_braking;</span></span>
-<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">         509 :         vibration = engine.m_vibration;</span></span>
-<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaGNC">         509 :         advanced = engine.m_advanced;</span></span>
-<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">         509 :         safety = engine.m_safety.m_config;</span></span>
+<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">         514 :     void UpdateFromEngine(const FFBEngine&amp; engine) {</span></span>
+<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">         514 :         general = engine.m_general;</span></span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaGNC">         514 :         front_axle = engine.m_front_axle;</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaGNC">         514 :         rear_axle = engine.m_rear_axle;</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC">         514 :         load_forces = engine.m_load_forces;</span></span>
+<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">         514 :         grip_estimation = engine.m_grip_estimation;</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">         514 :         slope_detection = engine.m_slope_detection;</span></span>
+<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">         514 :         braking = engine.m_braking;</span></span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">         514 :         vibration = engine.m_vibration;</span></span>
+<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaGNC">         514 :         advanced = engine.m_advanced;</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">         514 :         safety = engine.m_safety.m_config;</span></span>
 <span id="L295"><span class="lineNum">     295</span>                 :             : </span>
-<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">         509 :         app_version = LMUFFB_VERSION;</span></span>
-<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">         509 :     }</span></span>
+<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">         514 :         app_version = LMUFFB_VERSION;</span></span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">         514 :     }</span></span>
 <span id="L298"><span class="lineNum">     298</span>                 :             : </span>
 <span id="L299"><span class="lineNum">     299</span>                 :<span class="tlaGNC">         472 :     bool Equals(const Preset&amp; p) const {</span></span>
 <span id="L300"><span class="lineNum">     300</span>                 :<span class="tlaGNC">         472 :         const float eps = 0.0001f;</span></span>
@@ -398,7 +398,7 @@
 <span id="L327"><span class="lineNum">     327</span>                 :             :     // Preset Management</span>
 <span id="L328"><span class="lineNum">     328</span>                 :             :     static std::vector&lt;Preset&gt; presets;</span>
 <span id="L329"><span class="lineNum">     329</span>                 :             :     static std::string m_last_preset_name; // NEW (v0.7.14)</span>
-<span id="L330"><span class="lineNum">     330</span>                 :             :     static void LoadPresets(const std::string&amp; filename = &quot;&quot;); // Populates presets vector</span>
+<span id="L330"><span class="lineNum">     330</span>                 :             :     static void LoadPresets(); // Populates presets vector</span>
 <span id="L331"><span class="lineNum">     331</span>                 :             :     static void ApplyPreset(int index, FFBEngine&amp; engine);</span>
 <span id="L332"><span class="lineNum">     332</span>                 :             :     </span>
 <span id="L333"><span class="lineNum">     333</span>                 :             :     // NEW: Add a user preset</span>

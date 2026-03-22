@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-22 16:00:16</td>
+            <td class="headerValue">2026-03-22 18:32:15</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">75.0&nbsp;%</td>
@@ -71,15 +71,15 @@
 <pre class="source">
 <span id="L1"><span class="lineNum">       1</span>                 :             : #include &quot;FFBDebugBuffer.h&quot;</span>
 <span id="L2"><span class="lineNum">       2</span>                 :             : </span>
-<span id="L3"><span class="lineNum">       3</span>                 :<span class="tlaGNC tlaBgGNC">         521 : FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}</span></span>
+<span id="L3"><span class="lineNum">       3</span>                 :<span class="tlaGNC tlaBgGNC">         523 : FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}</span></span>
 <span id="L4"><span class="lineNum">       4</span>                 :             : </span>
-<span id="L5"><span class="lineNum">       5</span>                 :<span class="tlaGNC">       67889 : void FFBDebugBuffer::Push(const FFBSnapshot&amp; snap) {</span></span>
-<span id="L6"><span class="lineNum">       6</span>         [<span class="tlaGBC" title="Branch 0 was taken 67889 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       67889 :     std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</span></span>
-<span id="L7"><span class="lineNum">       7</span>         [<span class="tlaGBC" title="Branch 0 was taken 53544 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14345 times"> + </span>]:<span class="tlaGNC">       67889 :     if (m_buffer.size() &gt;= m_capacity) {</span></span>
+<span id="L5"><span class="lineNum">       5</span>                 :<span class="tlaGNC">       67892 : void FFBDebugBuffer::Push(const FFBSnapshot&amp; snap) {</span></span>
+<span id="L6"><span class="lineNum">       6</span>         [<span class="tlaGBC" title="Branch 0 was taken 67892 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       67892 :     std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</span></span>
+<span id="L7"><span class="lineNum">       7</span>         [<span class="tlaGBC" title="Branch 0 was taken 53544 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 14348 times"> + </span>]:<span class="tlaGNC">       67892 :     if (m_buffer.size() &gt;= m_capacity) {</span></span>
 <span id="L8"><span class="lineNum">       8</span>                 :<span class="tlaGNC">       53544 :         return; </span></span>
 <span id="L9"><span class="lineNum">       9</span>                 :             :     }</span>
-<span id="L10"><span class="lineNum">      10</span>         [<span class="tlaGBC" title="Branch 0 was taken 14345 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       14345 :     m_buffer.push_back(snap);</span></span>
-<span id="L11"><span class="lineNum">      11</span>         [<span class="tlaGBC" title="Branch 0 was taken 14345 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 53544 times"> + </span>]:<span class="tlaGNC">       67889 : }</span></span>
+<span id="L10"><span class="lineNum">      10</span>         [<span class="tlaGBC" title="Branch 0 was taken 14348 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       14348 :     m_buffer.push_back(snap);</span></span>
+<span id="L11"><span class="lineNum">      11</span>         [<span class="tlaGBC" title="Branch 0 was taken 14348 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 53544 times"> + </span>]:<span class="tlaGNC">       67892 : }</span></span>
 <span id="L12"><span class="lineNum">      12</span>                 :             : </span>
 <span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC">         305 : std::vector&lt;FFBSnapshot&gt; FFBDebugBuffer::GetBatch() {</span></span>
 <span id="L14"><span class="lineNum">      14</span>         [<span class="tlaGBC" title="Branch 0 was taken 305 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         305 :     std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</span></span>
