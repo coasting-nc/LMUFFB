@@ -254,6 +254,10 @@ private:
     bool m_initialized = false;
     bool m_zero_latency = true; // Mode toggle
 
+    // Time-Awareness & Safety State
+    double m_accumulated_time = 0.01; // Tracks actual time between 100Hz frames
+    double m_trend_damping = 0.95;    // Multiplier applied to trend during extrapolation
+
     // Tuning Parameters
     double m_alpha = 0.8; // Level weight (Higher = less lag)
     double m_beta = 0.2;  // Trend weight
@@ -280,21 +284,37 @@ public:
             m_prev_level = raw_input;
             m_trend = 0.0;
             m_time_since_update = 0.0;
+            m_accumulated_time = 0.0;
             m_initialized = true;
             return raw_input;
         }
+
+        m_time_since_update += dt;
+        m_accumulated_time += dt;
 
         if (is_new_frame) {
             double old_level = m_level;
             m_prev_level = m_level; // Save for interpolation start point
 
+            // Time-Aware Update: Use actual measured interval for derivative logic
+            // Divide by zero protection (dt should be > 0 on new frame)
+            double interval = (m_accumulated_time > 1e-6) ? m_accumulated_time : m_game_tick;
+
+            // CRITICAL SAFETY: Clamp interval to sensible bounds [1ms, 50ms]
+            // Prevents massive game stutters from corrupting future derivative math
+            interval = std::clamp(interval, 0.001, 0.050);
+
             // Update Level: Balance between the raw input and our previous prediction
-            m_level = m_alpha * raw_input + (1.0 - m_alpha) * (m_level + m_trend * m_game_tick);
+            m_level = m_alpha * raw_input + (1.0 - m_alpha) * (m_level + m_trend * interval);
 
             // Update Trend: Balance between the new observed slope and the old trend
-            m_trend = m_beta * ((m_level - old_level) / m_game_tick) + (1.0 - m_beta) * m_trend;
+            m_trend = m_beta * ((m_level - old_level) / interval) + (1.0 - m_beta) * m_trend;
+
+            // Dynamically update game tick for sub-frame interpolation accuracy
+            m_game_tick = interval;
 
             m_time_since_update = 0.0;
+            m_accumulated_time = 0.0;
 
             if (m_zero_latency) {
                 return m_level;
@@ -302,7 +322,8 @@ public:
                 return m_prev_level; // Start interpolation from previous level
             }
         } else {
-            m_time_since_update += dt;
+            // Trend Damping: Safely arrest runaway extrapolation during dropped frames
+            m_trend *= m_trend_damping;
         }
 
         if (m_zero_latency) {
@@ -321,6 +342,7 @@ public:
 
     void Reset() {
         m_level = m_prev_level = m_trend = m_time_since_update = 0.0;
+        m_accumulated_time = 0.01;
         m_initialized = false;
     }
 };

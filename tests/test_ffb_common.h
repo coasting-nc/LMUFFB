@@ -471,6 +471,9 @@ public:
     static void SetLastOutputForce(FFBEngine& e, double val) { 
         e.m_safety.SetSafetySmoothedForce(val);
     }
+    static void SetShaftTorqueUpsamplerConfig(FFBEngine& e, double alpha, double beta) {
+        e.m_upsample_shaft_torque.Configure(alpha, beta);
+    }
     static void SetDerivativesSeeded(FFBEngine& e, bool val) { e.m_derivatives_seeded = val; }
 
     static void ResetSafety(FFBEngine& engine) {

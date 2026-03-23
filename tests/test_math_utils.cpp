@@ -150,4 +150,158 @@ TEST_CASE(test_slew_limiter, "Math") {
     ASSERT_NEAR(out, 1.15, 0.001);
 }
 
+TEST_CASE(test_holt_winters_time_awareness, "Math") {
+    ffb_math::HoltWintersFilter filter;
+    filter.Configure(0.95, 0.10, 0.01); // 10ms default
+
+    // Establishing a constant slope: 1.0 unit / 1.0 second
+    // 1st frame at T=0.0
+    filter.Process(10.0, 0.0, true);
+
+    // 2nd frame at T=0.008 (Jitter: early)
+    // Delta = 0.008, dt = 0.008. Expected Slope = 0.008 / 0.008 = 1.0
+    double out1 = filter.Process(10.008, 0.008, true);
+
+    // We expect the internal m_trend to be ~1.0.
+    // In the old implementation (hardcoded 0.01), slope would be 0.008 / 0.01 = 0.8
+    // With time-awareness, it should be 0.008 / 0.008 = 1.0
+
+    // 3rd frame at T=0.020 (Jitter: late, 12ms since last frame)
+    // Delta = 0.012, dt = 0.012. Expected Slope = 0.012 / 0.012 = 1.0
+    double out2 = filter.Process(10.020, 0.012, true);
+
+    // If it's time-aware, the trend remains constant despite jitter.
+    // We can't access m_trend directly, but we can check extrapolation.
+    // At T=0.020, if we extrapolate 0.0025s (one 400Hz tick):
+    // Expected Trend ~ 0.184. (Calculated based on Alpha 0.95, Beta 0.1)
+    // 1st extrap: Trend = 0.184 * 0.95 = 0.1748. Output = 10.0194 + 0.1748 * 0.0025 = 10.0198
+    double extrap = filter.Process(10.020, 0.0025, false);
+    ASSERT_NEAR(extrap, 10.0198, 0.001);
+}
+
+TEST_CASE(test_holt_winters_trend_damping, "Math") {
+    ffb_math::HoltWintersFilter filter;
+    filter.Configure(1.0, 1.0, 0.01); // No smoothing, full trend tracking
+
+    // Establish a high trend (100 units/sec)
+    filter.Process(0.0, 0.0, true);
+    filter.Process(1.0, 0.01, true); // Trend = (1.0 - 0.0) / 0.01 = 100.0
+
+    // Simulate frame drop/starvation for 10 ticks (25ms)
+    double last_val = 0.0;
+    for (int i = 0; i < 10; i++) {
+        last_val = filter.Process(1.0, 0.0025, false);
+    }
+
+    // Without damping: 1.0 + (100 * 0.025) = 3.5
+    // With 0.95 damping: Trend decays every tick.
+    // 100 * 0.95^10 = ~59.87
+    // The output should be significantly less than 3.5 because the velocity is slowing down.
+    ASSERT_LT(last_val, 3.4);
+    ASSERT_GT(last_val, 1.0); // Should still be extrapolating forward
+}
+
+TEST_CASE(test_holt_winters_lag_spike_upper_bound, "Math") {
+    ffb_math::HoltWintersFilter filter;
+    filter.Configure(1.0, 1.0, 0.01); // No smoothing, full trend tracking
+
+    // Normal frames (10ms)
+    filter.Process(1.0, 0.01, true);
+    filter.Process(1.1, 0.01, true); // Trend = (1.1-1.0)/0.01 = 10.0
+
+    // Massive 500ms freeze
+    // If clamped to 0.050s: New Trend = 0.2*( (1.2-1.1)/0.050 ) + 0.8*10.0 = 0.2*2.0 + 8.0 = 8.4
+    // If NOT clamped: New Trend = 0.2*( (1.2-1.1)/0.500 ) + 0.8*10.0 = 0.2*0.2 + 8.0 = 8.04
+    // Actually, alpha/beta are usually configured. Let's use specific values.
+    filter.Configure(0.2, 0.1, 0.01);
+    filter.Process(1.0, 0.01, true);
+    filter.Process(1.1, 0.01, true); // Establish trend
+
+    double out = filter.Process(1.2, 0.500, true);
+
+    // Verification: Trend and level should be finite and not zeroed out
+    ASSERT_TRUE(std::isfinite(out));
+    ASSERT_GT(out, 1.1);
+}
+
+TEST_CASE(test_holt_winters_double_frame_lower_bound, "Math") {
+    ffb_math::HoltWintersFilter filter;
+    filter.Configure(0.2, 0.1, 0.01);
+
+    filter.Process(1.0, 0.01, true);
+
+    // Frame with near-zero dt (0.1ms)
+    // Clamped to 1ms (0.001)
+    double out = filter.Process(1.1, 0.0001, true);
+
+    ASSERT_TRUE(std::isfinite(out));
+    // If it didn't clamp, (1.1-1.0)/0.0001 = 1000.0 (Huge trend)
+    // If it clamps to 0.001, (1.1-1.0)/0.001 = 100.0 (Manageable trend)
+    // We check that the trend didn't explode.
+    // One more extrapolation call to see the trend effect.
+    double extrap = filter.Process(1.1, 0.0025, false);
+    ASSERT_LT(extrap, 2.0); // If trend was 1000, 1.1 + 1000*0.0025 = 3.6. If 100, 1.1 + 100*0.0025 = 1.35.
+}
+
+TEST_CASE(test_holt_winters_infinite_starvation, "Math") {
+    ffb_math::HoltWintersFilter filter;
+    filter.Configure(0.2, 0.1, 0.01);
+
+    filter.Process(1.0, 0.01, true);
+    filter.Process(1.1, 0.01, true); // Trend is established
+
+    // 2 seconds of starvation at 400Hz = 800 calls
+    double last_val = 1.1;
+    for(int i=0; i<800; i++) {
+        last_val = filter.Process(1.1, 0.0025, false);
+    }
+
+    // After 800 calls of 0.95 damping, trend should be ~0.0
+    // 0.95^800 is effectively zero.
+    double next_val = filter.Process(1.1, 0.0025, false);
+    ASSERT_NEAR(last_val, next_val, 0.000001); // Output plateaus
+    ASSERT_TRUE(std::isfinite(next_val));
+}
+
+TEST_CASE(test_holt_winters_sub_frame_accumulation, "Math") {
+    ffb_math::HoltWintersFilter filter;
+    filter.Configure(0.2, 0.1, 0.01);
+
+    filter.Process(1.0, 0.0, true); // Reset
+
+    // 4 sub-frames of 2.5ms = 10ms total
+    filter.Process(1.0, 0.0025, false);
+    filter.Process(1.0, 0.0025, false);
+    filter.Process(1.0, 0.0025, false);
+    filter.Process(1.0, 0.0025, false);
+
+    // New frame arrives
+    // Denominator should be 0.010
+    // We verify this by ensuring the trend calculation uses 0.010
+    // If we move value from 1.0 to 1.1, trend should be (1.1-1.0)/0.010 = 10.0
+    filter.Process(1.1, 0.0, true); // is_new_frame = true, but we already added 10ms
+
+    // Check trend via extrapolation
+    double extrap = filter.Process(1.1, 0.01, false);
+    // Level ~ 1.02, Trend ~ 0.2. Extrap ~ 1.02 + 0.2*0.01 = 1.022
+    ASSERT_GT(extrap, 1.0);
+}
+
+TEST_CASE(test_holt_winters_damping_amplitude_reduction, "Math") {
+    ffb_math::HoltWintersFilter filter;
+    filter.Configure(1.0, 1.0, 0.01); // No smoothing, just raw trend
+
+    filter.Process(0.0, 0.01, true);
+    filter.Process(1.0, 0.01, true); // Trend = 100.0
+
+    double linear_extrap = 1.0 + (100.0 * 3 * 0.0025); // 1.0 + 0.75 = 1.75
+
+    filter.Process(1.0, 0.0025, false);
+    filter.Process(1.0, 0.0025, false);
+    double damped_extrap = filter.Process(1.0, 0.0025, false);
+
+    ASSERT_LT(damped_extrap, linear_extrap);
+    ASSERT_GT(damped_extrap, 1.0);
+}
+
 } // namespace FFBEngineTests

@@ -85,15 +85,20 @@ TEST_CASE(test_config_reconstruction_persistence_461, "Config") {
 TEST_CASE(test_aux_channel_group_initialization, "DSP") {
     FFBEngine engine;
 
-    // Group 1: Driver Inputs (Alpha 0.95, Beta 0.40)
+    // Set to "Smooth" mode to verify the corrected Beta values (Zero Latency mode forces Beta to 0.0)
+    engine.m_advanced.aux_telemetry_reconstruction = 1;
+    engine.UpdateUpsamplerModes();
+
+    // Group 1: Driver Inputs (Alpha 0.95, Beta 0.10) - Corrected in Patch 3
     ASSERT_NEAR(engine.m_upsample_steering.GetAlpha(), 0.95, 0.001);
-    ASSERT_NEAR(engine.m_upsample_steering.GetBeta(), 0.40, 0.001);
+    ASSERT_NEAR(engine.m_upsample_steering.GetBeta(), 0.10, 0.001);
     ASSERT_NEAR(engine.m_upsample_throttle.GetAlpha(), 0.95, 0.001);
     ASSERT_NEAR(engine.m_upsample_brake.GetAlpha(), 0.95, 0.001);
     for(int i=0; i<4; i++) ASSERT_NEAR(engine.m_upsample_brake_pressure[i].GetAlpha(), 0.95, 0.001);
 
-    // Group 2: Texture/Tire (Alpha 0.80, Beta 0.20)
+    // Group 2: Texture/Tire (Alpha 0.80, Beta 0.05) - Corrected in Patch 3
     ASSERT_NEAR(engine.m_upsample_vert_deflection[0].GetAlpha(), 0.80, 0.001);
+    ASSERT_NEAR(engine.m_upsample_vert_deflection[0].GetBeta(), 0.05, 0.001);
     ASSERT_NEAR(engine.m_upsample_lat_patch_vel[0].GetAlpha(), 0.80, 0.001);
     ASSERT_NEAR(engine.m_upsample_long_patch_vel[0].GetAlpha(), 0.80, 0.001);
     ASSERT_NEAR(engine.m_upsample_rotation[0].GetAlpha(), 0.80, 0.001);
@@ -137,6 +142,35 @@ TEST_CASE(test_aux_channel_mode_switching, "DSP") {
 
     // Group 3: ALWAYS False
     ASSERT_FALSE(engine.m_upsample_local_accel_x.GetZeroLatency());
+}
+
+TEST_CASE(test_group2_dynamic_beta_forcing, "Reconstruction") {
+    FFBEngine engine;
+
+    // Default mode (User-Selected) - Smoothing is ON by default
+    engine.m_advanced.aux_telemetry_reconstruction = 1; // Smooth
+    engine.UpdateUpsamplerModes();
+
+    // Group 2 Check: Should be 0.05
+    ASSERT_NEAR(engine.m_upsample_vert_deflection[0].GetBeta(), 0.05, 0.0001);
+    ASSERT_FALSE(engine.m_upsample_vert_deflection[0].GetZeroLatency());
+
+    // Toggle to Zero Latency
+    engine.m_advanced.aux_telemetry_reconstruction = 0; // Zero Latency
+    engine.UpdateUpsamplerModes();
+
+    // Group 2 Check: Should be forced to 0.0 to prevent Nyquist ringing
+    ASSERT_NEAR(engine.m_upsample_vert_deflection[0].GetBeta(), 0.0, 0.0001);
+    ASSERT_TRUE(engine.m_upsample_vert_deflection[0].GetZeroLatency());
+
+    // Group 1 Check: Should remain 0.10 regardless
+    ASSERT_NEAR(engine.m_upsample_steering.GetBeta(), 0.10, 0.0001);
+}
+
+TEST_CASE(test_main_ffb_beta_initialization, "DSP") {
+    FFBEngine engine;
+    // Steering Shaft Torque should have Beta = 0.10 (Proactive Safety Fix)
+    ASSERT_NEAR(engine.m_upsample_shaft_torque.GetBeta(), 0.10, 0.001);
 }
 
 } // namespace FFBEngineTests
