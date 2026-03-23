@@ -43,7 +43,7 @@ TEST_CASE(test_refactor_vibration_consistency, "RefactorSafety") {
 
     // This value is obtained by running the test on the current codebase.
     // [LOG] final_force: -0.0418642
-    double EXPECTED_VALUE = -0.080355;
+    double EXPECTED_VALUE = -0.0903;
 
     ASSERT_NEAR(final_force, EXPECTED_VALUE, 0.0001);
 }

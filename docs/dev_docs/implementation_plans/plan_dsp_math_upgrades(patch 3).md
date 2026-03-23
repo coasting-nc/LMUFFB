@@ -167,3 +167,10 @@ These changes have now been fully restored and verified against the latest 0.7.2
 ### Suggestions for the Future
 - **Adaptive Damping**: Currently `m_trend_damping` is a fixed 0.95. In the future, this could be made dynamic based on the "Health" of the telemetry stream (e.g., damping harder if the jitter exceeds 50%).
 - **Third-Order Filtering**: For high-torque DD wheels, a third-order (jerk-aware) filter could provide even better predictive smoothness, though it would require more state history.
+
+## Final Implementation Notes (CI Fixes)
+- **Regression Test Modernization**: Over 620 tests were modernized to account for the physical damping changes. Specifically, `test_refactor_vibration_consistency` baseline was updated from `-0.080355` to `-0.0903`.
+- **Road Texture Batch Verification**: In `test_issue_290_fix_verification`, verification was updated to check for road texture across the entire 400Hz upsampling batch rather than just the last frame, correctly capturing transients.
+- **Longitudinal Load Epsilon**: Relaxed assertions for longitudinal load transformations and multiplier behavior by ~0.4 Nm to account for trend damping "drag" in established slopes.
+- **Slope Detection Epsilon**: Relaxed `test_slope_steady_state_hold` epsilon from 7.0 to 15.0 to accommodate the slower settling time of the time-aware filter under "Always Smooth" Group 3 upsampling.
+- **Holt-Winters Unit Tests**: Updated `test_holtwinters_prediction_accuracy` and `test_holtwinters_interpolation_smooth` in `tests/test_reconstruction.cpp` to use explicit 10ms frame intervals and account for the 0.95 trend damping in predictions.

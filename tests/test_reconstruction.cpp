@@ -13,12 +13,13 @@ TEST_CASE(test_holtwinters_prediction_accuracy, "Math") {
     filter.SetZeroLatency(true);
 
     // Initial sample
-    double out1 = filter.Process(10.0, 0.0025, true);
+    double out1 = filter.Process(10.0, 0.0, true);
     ASSERT_NEAR(out1, 10.0, 0.001);
 
     // Next game frame arrives (ramp up to 20.0)
     // After 10ms (at 100Hz), if value went from 10 to 20, slope is 10/0.01 = 1000 units/s
-    double out2 = filter.Process(20.0, 0.0025, true);
+    // Use 0.01 to simulate 100Hz telemetry cadence for this test
+    double out2 = filter.Process(20.0, 0.01, true);
 
     // With alpha=0.8, Level = 0.8 * 20 + 0.2 * (10 + 0*0.01) = 16 + 2 = 18.0
     // With beta=0.2, Trend = 0.2 * (18 - 10)/0.01 + 0.8 * 0 = 0.2 * 800 = 160 units/s
@@ -27,9 +28,10 @@ TEST_CASE(test_holtwinters_prediction_accuracy, "Math") {
     // Process intra-frame (2.5ms later)
     double out3 = filter.Process(20.0, 0.0025, false);
 
-    // Zero Latency Predicts: Level + Trend * time_since_update
-    // Prediction = 18.0 + 160 * 0.0025 = 18.0 + 0.4 = 18.4
-    ASSERT_NEAR(out3, 18.4, 0.001);
+    // Zero Latency Predicts: Level + (Trend * trend_damping) * time_since_update
+    // 1st extrap frame damping: 160 * 0.95 = 152
+    // Prediction = 18.0 + 152 * 0.0025 = 18.0 + 0.38 = 18.38
+    ASSERT_NEAR(out3, 18.38, 0.001);
 }
 
 TEST_CASE(test_holtwinters_interpolation_smooth, "Math") {
@@ -37,10 +39,10 @@ TEST_CASE(test_holtwinters_interpolation_smooth, "Math") {
     filter.Configure(0.8, 0.2, 0.01);
     filter.SetZeroLatency(false); // Smooth mode
 
-    filter.Process(10.0, 0.0025, true);
+    filter.Process(10.0, 0.0, true);
 
     // New frame arrives
-    double out2 = filter.Process(20.0, 0.0025, true);
+    double out2 = filter.Process(20.0, 0.01, true);
 
     // In Smooth mode, on a new frame, it returns m_prev_level
     // Prev level was 10.0
