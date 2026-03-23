@@ -67,7 +67,9 @@ TEST_CASE(test_guid_string_conversion, "Logic") {
 TEST_CASE(test_config_persistence_guid, "Logic") {
     std::cout << "\nTest: Config Persistence (Last Device GUID)" << std::endl;
 
-    std::string test_file = "test_config_logic_guid.toml";
+    TestDirectoryGuard temp_dir("tmp_logic_guid");
+    std::string test_file = temp_dir.path() + "/config_guid.toml";
+    
     FFBEngine engine;
 
     std::string fake_guid = "{12345678-1234-1234-1234-1234567890AB}";
@@ -78,13 +80,14 @@ TEST_CASE(test_config_persistence_guid, "Logic") {
     Config::Load(engine, test_file);
 
     ASSERT_EQ_STR(Config::m_last_device_guid, fake_guid);
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_config_always_on_top_persistence, "Logic") {
     std::cout << "\nTest: Config Persistence (Always on Top)" << std::endl;
 
-    std::string test_file = "test_config_logic_top.toml";
+    TestDirectoryGuard temp_dir("tmp_logic_top");
+    std::string test_file = temp_dir.path() + "/config_top.toml";
+    
     FFBEngine engine;
 
     Config::m_always_on_top = true;
@@ -93,14 +96,18 @@ TEST_CASE(test_config_always_on_top_persistence, "Logic") {
     Config::Load(engine, test_file);
 
     ASSERT_TRUE(Config::m_always_on_top == true);
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_preset_management_system, "Logic") {
     std::cout << "\nTest: Preset Management System" << std::endl;
 
+    TestDirectoryGuard temp_dir("tmp_logic_preset");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     Config::presets.clear();
-    Config::m_config_path = "test_config_logic_preset.toml";
+    std::string original_config_path = Config::m_config_path;
+    Config::m_config_path = temp_dir.path() + "/config_preset.toml";
 
     FFBEngine engine;
     InitializeEngine(engine);
@@ -122,7 +129,9 @@ TEST_CASE(test_preset_management_system, "Logic") {
         }
     }
     ASSERT_TRUE(found);
-    if (std::filesystem::exists(Config::m_config_path)) std::filesystem::remove(Config::m_config_path);
+
+    Config::m_config_path = original_config_path;
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_window_title_extraction, "Logic") {
@@ -398,7 +407,9 @@ TEST_CASE(test_latency_display_regression, "Logic") {
 TEST_CASE(test_window_config_persistence_logic, "Logic") {
     std::cout << "\nTest: Window Config Persistence (Size/Position/State)" << std::endl;
 
-    std::string test_file = "test_config_logic_window.toml";
+    TestDirectoryGuard temp_dir("tmp_logic_window");
+    std::string test_file = temp_dir.path() + "/window.toml";
+    
     FFBEngine engine;
 
     Config::win_pos_x = 250;
@@ -428,8 +439,6 @@ TEST_CASE(test_window_config_persistence_logic, "Logic") {
     ASSERT_TRUE(Config::win_w_large == 1500);
     ASSERT_TRUE(Config::win_h_large == 950);
     ASSERT_TRUE(Config::show_graphs == true);
-
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_defaults_consistency, "Logic") {
@@ -592,7 +601,9 @@ TEST_CASE(test_defaults_consistency, "Logic") {
 TEST_CASE(test_config_persistence_braking_group, "Logic") {
     std::cout << "\nTest: Config Persistence (Braking Group)" << std::endl;
 
-    std::string test_file = "test_config_logic_brake.toml";
+    TestDirectoryGuard temp_dir("tmp_logic_brake");
+    std::string test_file = temp_dir.path() + "/brake.toml";
+    
     FFBEngine engine_save;
     InitializeEngine(engine_save);
     FFBEngine engine_load;
@@ -610,14 +621,14 @@ TEST_CASE(test_config_persistence_braking_group, "Logic") {
     ASSERT_NEAR(engine_load.m_braking.lockup_start_pct, 8.0f, 0.001f);
     ASSERT_NEAR(engine_load.m_braking.lockup_full_pct, 20.0f, 0.001f);
     ASSERT_NEAR(engine_load.m_braking.lockup_rear_boost, 2.0f, 0.001f);
-
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_legacy_config_migration, "Logic") {
     std::cout << "\nTest: Legacy Config Migration (Load Cap)" << std::endl;
 
-    std::string test_file = "test_config_logic_legacy.ini";
+    TestDirectoryGuard temp_dir("tmp_logic_legacy");
+    std::string test_file = temp_dir.path() + "/legacy.ini";
+    
     {
         std::ofstream file(test_file);
         file << "max_load_factor=1.8\n";
@@ -630,15 +641,17 @@ TEST_CASE(test_legacy_config_migration, "Logic") {
     Config::MigrateFromLegacyIni(engine, test_file);
 
     ASSERT_NEAR(engine.m_vibration.texture_load_cap, 1.8f, 0.001f);
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
 }
 
 TEST_CASE(test_sop_smoothing_migration, "Logic") {
     std::cout << "\nTest: SoP Smoothing Migration (Issue #37 Reset)" << std::endl;
 
-    std::string ini_file = "test_config_sop_migration.ini";
-    std::string toml_file = "test_config_sop_migration.toml";
-    std::remove(toml_file.c_str());
+    TestDirectoryGuard temp_dir("tmp_logic_sop_migration");
+    std::string ini_file = temp_dir.path() + "/migration.ini";
+    std::string toml_file = temp_dir.path() + "/migration.toml";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
 
     // 1. Create a legacy config (v0.7.146) with smoothing enabled
     {
@@ -674,9 +687,7 @@ TEST_CASE(test_sop_smoothing_migration, "Logic") {
     }
     ASSERT_TRUE(found);
 
-    if (std::filesystem::exists(ini_file)) std::filesystem::remove(ini_file);
-    if (std::filesystem::exists(ini_file + ".bak")) std::filesystem::remove(ini_file + ".bak");
-    if (std::filesystem::exists(toml_file)) std::filesystem::remove(toml_file);
+    Config::m_user_presets_path = original_user_presets;
 }
 
 } // namespace FFBEngineTests

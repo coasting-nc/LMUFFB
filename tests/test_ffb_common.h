@@ -56,6 +56,24 @@ public:
     std::string path() const { return m_path; }
 };
 
+/**
+ * Scoped helper to save and automatically restore Config paths.
+ * Robust against test failures (ASSERT_*).
+ */
+class ScopedConfigPathGuard {
+    std::string m_old_config_path;
+    std::string m_old_user_presets_path;
+public:
+    ScopedConfigPathGuard() {
+        m_old_config_path = Config::m_config_path;
+        m_old_user_presets_path = Config::m_user_presets_path;
+    }
+    ~ScopedConfigPathGuard() {
+        Config::m_config_path = m_old_config_path;
+        Config::m_user_presets_path = m_old_user_presets_path;
+    }
+};
+
 // --- Test Counters (defined in test_ffb_common.cpp) ---
 extern int g_tests_passed;
 extern int g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO;

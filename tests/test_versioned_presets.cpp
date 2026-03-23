@@ -16,7 +16,7 @@ TEST_CASE(test_preset_version_persistence, "Config") {
     
     // 2. Save it to user_presets as TOML
     TestDirectoryGuard temp_dir("tmp_test_version_persistence");
-    std::string original_user_presets = Config::m_user_presets_path;
+    ScopedConfigPathGuard path_guard;
     Config::m_user_presets_path = temp_dir.path() + "/user_presets";
     
     std::filesystem::create_directories(Config::m_user_presets_path);
@@ -50,8 +50,6 @@ TEST_CASE(test_preset_version_persistence, "Config") {
     if (!found) {
         FAIL_TEST("VersionTestPreset not found after loading.");
     }
-
-    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_legacy_preset_migration, "Config") {
@@ -62,7 +60,7 @@ TEST_CASE(test_legacy_preset_migration, "Config") {
     // Let's use ImportPreset to verify migration logic.
     
     TestDirectoryGuard temp_dir("tmp_test_legacy_migration");
-    std::string original_user_presets = Config::m_user_presets_path;
+    ScopedConfigPathGuard path_guard;
     Config::m_user_presets_path = temp_dir.path() + "/user_presets";
     
     std::string test_file = temp_dir.path() + "/test_legacy_presets.ini";
@@ -93,8 +91,6 @@ TEST_CASE(test_legacy_preset_migration, "Config") {
     if (!found) {
         FAIL_TEST("LegacyPreset not found.");
     }
-
-    Config::m_user_presets_path = original_user_presets;
 }
 
 } // namespace FFBEngineTests

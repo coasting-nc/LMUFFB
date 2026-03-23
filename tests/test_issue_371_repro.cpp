@@ -8,7 +8,11 @@ namespace FFBEngineTests {
 TEST_CASE(test_issue_371_repro, "Config") {
     std::cout << "\nTest: Issue #371 Repro (Imported profiles don't save)" << std::endl;
 
-    std::string mock_config = "repro_371_config.toml";
+    TestDirectoryGuard temp_dir("repro_371");
+    std::string mock_config = temp_dir.path() + "/config.toml";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
 
     // 1. Create a mock config.toml with a user-defined preset
     {
@@ -51,15 +55,13 @@ TEST_CASE(test_issue_371_repro, "Config") {
 
     // Restore original path
     Config::m_config_path = original_path;
+    Config::m_user_presets_path = original_user_presets;
 
     if (found) {
         std::cout << "[INFO] Preset found. Bug NOT reproduced or already fixed." << std::endl;
     } else {
         std::cout << "[REPRO] Preset LOST! Bug successfully reproduced." << std::endl;
     }
-
-    // Clean up
-    if (std::filesystem::exists(mock_config)) std::filesystem::remove(mock_config);
 
     ASSERT_TRUE(found);
 }

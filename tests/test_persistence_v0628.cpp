@@ -43,9 +43,14 @@ int GetLineNumber(const std::string& filename, const std::string& pattern) {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_load_stops_at_presets, "Persistence") {
     std::cout << "Test 1: Load Isolation..." << std::endl;
+    TestDirectoryGuard temp_dir("tmp_v0628_isolation");
+    ScopedConfigPathGuard path_guard;
+
+    std::string test_file = temp_dir.path() + "/isolation.toml";
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     Config::presets.clear();
     
-    std::string test_file = "test_isolation.toml";
     {
         std::ofstream file(test_file);
         file << "[General]\ngain = 0.5\n";
@@ -57,8 +62,6 @@ TEST_CASE(test_load_stops_at_presets, "Persistence") {
     
     // Config::Load should only load the main settings, not presets
     ASSERT_NEAR(engine.m_general.gain, 0.5f, 0.001f);
-    
-    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -66,11 +69,15 @@ TEST_CASE(test_load_stops_at_presets, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_save_order, "Persistence") {
     std::cout << "Test 2: Category Verification (TOML)..." << std::endl;
+    TestDirectoryGuard temp_dir("tmp_v0628_order");
+    ScopedConfigPathGuard path_guard;
+
+    std::string test_file = temp_dir.path() + "/order.toml";
+
     Config::presets.clear();
     FFBEngine engine;
     InitializeEngine(engine);
     
-    std::string test_file = "test_order.toml";
     Config::Save(engine, test_file);
     
     try {
@@ -88,8 +95,6 @@ TEST_CASE(test_save_order, "Persistence") {
     } catch (const toml::parse_error& err) {
         FAIL_TEST("TOML parse error: " << err.description());
     }
-    
-    std::remove(test_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -97,9 +102,11 @@ TEST_CASE(test_save_order, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_legacy_keys, "Persistence") {
     std::cout << "Test 3: Legacy Key Support..." << std::endl;
+    TestDirectoryGuard temp_dir("tmp_v0628_legacy");
+    std::string ini_file = temp_dir.path() + "/test_legacy.ini";
+
     Config::presets.clear();
     
-    std::string ini_file = "test_legacy.ini";
     {
         std::ofstream file(ini_file);
         file << "smoothing=0.1\n";
@@ -112,8 +119,6 @@ TEST_CASE(test_legacy_keys, "Persistence") {
     
     ASSERT_NEAR(engine.m_rear_axle.sop_smoothing_factor, 0.1f, 0.001f);
     ASSERT_NEAR(engine.m_vibration.texture_load_cap, 2.0f, 0.001f);
-    
-    std::remove(ini_file.c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -121,18 +126,18 @@ TEST_CASE(test_legacy_keys, "Persistence") {
 // ----------------------------------------------------------------------------
 TEST_CASE(test_structure_comments, "Persistence") {
     std::cout << "Test 4: TOML Headers..." << std::endl;
+    TestDirectoryGuard temp_dir("tmp_v0628_headers");
+    std::string test_file = temp_dir.path() + "/headers.toml";
+
     Config::presets.clear();
     FFBEngine engine;
     
-    std::string test_file = "test_headers.toml";
     Config::Save(engine, test_file);
     
     ASSERT_TRUE(FileContains(test_file, "[System]"));
     ASSERT_TRUE(FileContains(test_file, "[General]"));
     ASSERT_TRUE(FileContains(test_file, "[FrontAxle]"));
     ASSERT_TRUE(FileContains(test_file, "[RearAxle]"));
-    
-    std::remove(test_file.c_str());
 }
 
 } // namespace FFBEngineTests

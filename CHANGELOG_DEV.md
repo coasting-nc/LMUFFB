@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -61,7 +61,7 @@ All notable changes to this project will be documented in this file.
 - **Refactored the preset system** to make it more robust, and address issues in importing and saving presets.
   - It now uses .toml text files instead of .ini files for presets.
   - Each user preset is now saved as an individual *.toml text file inside the user_presets/ folder, to make it easier to share and import.
-  - When you launch the app, all your existing settings and custom profiles will be seamlessly upgraded to the new (and more reliable) format.
+  - When you launch the app, all your existing settings and custom profiles will be seamlessly upgraded to the new format.
   - If you need more details, here is a more detailed guide on how presets work now: [docs\user_guides\New Preset System Explained.md](https://github.com/coasting-nc/LMUFFB/blob/main/docs/user_guides/New%20Preset%20System%20Explained.md)
 
 ---

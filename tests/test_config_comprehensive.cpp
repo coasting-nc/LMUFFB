@@ -5,7 +5,12 @@ namespace FFBEngineTests {
 TEST_CASE(test_config_comprehensive_import, "Config") {
     std::cout << "\nTest: Comprehensive Config Import (TOML)" << std::endl;
 
-    const char* test_file = "tmp_comprehensive_import.toml";
+    TestDirectoryGuard temp_dir("tmp_comprehensive_import");
+    std::string test_file = temp_dir.path() + "/import.toml";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     {
         std::ofstream file(test_file);
         file << "[Presets.Comprehensive]\n";
@@ -40,13 +45,19 @@ TEST_CASE(test_config_comprehensive_import, "Config") {
         }
     }
     ASSERT_TRUE(found);
-    std::remove(test_file);
+
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_config_comprehensive_load_v2, "Config") {
     std::cout << "\nTest: Comprehensive Config Load V2 (TOML)" << std::endl;
 
-    const char* test_file = "tmp_comprehensive_v2.toml";
+    TestDirectoryGuard temp_dir("tmp_comprehensive_v2");
+    std::string test_file = temp_dir.path() + "/v2.toml";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     {
         std::ofstream file(test_file);
         file << "[System]\n";
@@ -77,7 +88,7 @@ TEST_CASE(test_config_comprehensive_load_v2, "Config") {
     ASSERT_TRUE(Config::GetSavedStaticLoad("Ferrari 488 GTE", saved_load));
     ASSERT_NEAR(saved_load, 4200.5, 0.001);
 
-    std::remove(test_file);
+    Config::m_user_presets_path = original_user_presets;
 }
 
 } // namespace FFBEngineTests

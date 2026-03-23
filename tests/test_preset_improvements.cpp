@@ -6,12 +6,19 @@ namespace FFBEngineTests {
 
 TEST_CASE(test_last_preset_persistence, "Presets") {
     std::cout << "\nTest: Last Preset Persistence" << std::endl;
+    TestDirectoryGuard temp_dir("tmp_last_preset");
+    std::string test_file = temp_dir.path() + "/config.toml";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     FFBEngine engine;
     Config::LoadPresets();
 
     // 1. Apply a preset
     if (Config::presets.size() < 2) {
         std::cout << "[SKIP] Not enough presets for test" << std::endl;
+        Config::m_user_presets_path = original_user_presets;
         return;
     }
 
@@ -19,15 +26,15 @@ TEST_CASE(test_last_preset_persistence, "Presets") {
     std::string applied_name = Config::presets[1].name;
 
     // 2. Save config
-    Config::Save(engine, "test_preset_persistence.ini");
+    Config::Save(engine, test_file);
 
     // 3. Clear and reload
     Config::m_last_preset_name = "";
-    Config::Load(engine, "test_preset_persistence.ini");
+    Config::Load(engine, test_file);
 
     ASSERT_TRUE(Config::m_last_preset_name == applied_name);
 
-    if (std::filesystem::exists("test_preset_persistence.ini")) std::filesystem::remove("test_preset_persistence.ini");
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_engine_dirty_detection, "Presets") {
@@ -54,6 +61,10 @@ TEST_CASE(test_engine_dirty_detection, "Presets") {
 
 TEST_CASE(test_duplicate_preset, "Presets") {
     std::cout << "\nTest: Duplicate Preset" << std::endl;
+    TestDirectoryGuard temp_dir("tmp_duplicate_preset");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     FFBEngine engine;
     Config::LoadPresets();
     size_t initial_count = Config::presets.size();
@@ -71,10 +82,15 @@ TEST_CASE(test_duplicate_preset, "Presets") {
         }
     }
     ASSERT_TRUE(found_copy);
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_delete_user_preset, "Presets") {
     std::cout << "\nTest: Delete User Preset" << std::endl;
+    TestDirectoryGuard temp_dir("tmp_delete_preset");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     FFBEngine engine;
     Config::LoadPresets();
 
@@ -98,17 +114,26 @@ TEST_CASE(test_delete_user_preset, "Presets") {
     size_t count_before_builtin_delete = Config::presets.size();
     Config::DeletePreset(0, engine); // Default is builtin
     ASSERT_TRUE(Config::presets.size() == count_before_builtin_delete);
+
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_delete_preset_preserves_global_config, "Presets") {
     std::cout << "\nTest: Delete Preset Preserves Global Config" << std::endl;
+    TestDirectoryGuard temp_dir("tmp_preserve_global");
+    std::string test_file = temp_dir.path() + "/preservation.toml";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     FFBEngine engine;
     Config::LoadPresets();
 
     // 1. Set a non-default global value
     engine.m_general.gain = 0.55f;
-    Config::Save(engine, "test_preservation.ini");
-    Config::m_config_path = "test_preservation.ini";
+    Config::Save(engine, test_file);
+    std::string original_config_path = Config::m_config_path;
+    Config::m_config_path = test_file;
 
     // 2. Add and then delete a preset
     Config::AddUserPreset("TempPreset", engine);
@@ -125,16 +150,20 @@ TEST_CASE(test_delete_preset_preserves_global_config, "Presets") {
 
     // 3. Reload and verify global value
     FFBEngine engine2;
-    Config::Load(engine2, "test_preservation.ini");
+    Config::Load(engine2, test_file);
 
     ASSERT_NEAR(engine2.m_general.gain, 0.55f, 0.001);
 
-    if (std::filesystem::exists("test_preservation.ini")) std::filesystem::remove("test_preservation.ini");
-    Config::m_config_path = "config.ini"; // Reset
+    Config::m_config_path = original_config_path;
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_add_user_preset_updates_existing, "Presets") {
     std::cout << "\nTest: Add User Preset Updates Existing" << std::endl;
+    TestDirectoryGuard temp_dir("tmp_update_preset");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     FFBEngine engine;
     Config::LoadPresets();
 
@@ -160,10 +189,18 @@ TEST_CASE(test_add_user_preset_updates_existing, "Presets") {
     }
     ASSERT_TRUE(index != -1);
     ASSERT_NEAR(Config::presets[index].general.gain, 0.75f, 0.001);
+
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
     std::cout << "\nTest: Global Save Does Not Update Presets" << std::endl;
+    TestDirectoryGuard temp_dir("tmp_global_save_isolation");
+    std::string test_file = temp_dir.path() + "/global_save.toml";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     FFBEngine engine;
     Config::LoadPresets();
 
@@ -182,12 +219,12 @@ TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
     engine.m_general.gain = original_gain + 0.1f;
 
     // 3. Call global Save (simulating what happens when selected_preset == -1)
-    Config::Save(engine, "test_global_save.ini");
+    Config::Save(engine, test_file);
 
     // 4. Reload presets from file (to be sure)
     Config::presets.clear();
     std::string old_path = Config::m_config_path;
-    Config::m_config_path = "test_global_save.ini";
+    Config::m_config_path = test_file;
     Config::LoadPresets();
 
     // 5. Verify the preset in the file still has original gain
@@ -201,8 +238,8 @@ TEST_CASE(test_global_save_does_not_update_presets, "Presets") {
     ASSERT_TRUE(new_index != -1);
     ASSERT_NEAR(Config::presets[new_index].general.gain, original_gain, 0.001);
 
-    if (std::filesystem::exists("test_global_save.ini")) std::filesystem::remove("test_global_save.ini");
     Config::m_config_path = old_path;
+    Config::m_user_presets_path = original_user_presets;
 }
 
 } // namespace FFBEngineTests

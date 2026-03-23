@@ -7,8 +7,13 @@ namespace FFBEngineTests {
 TEST_CASE(test_slope_config_migration, "Regression") {
     std::cout << "Test: Slope Config Migration (Issue #104)" << std::endl;
 
+    TestDirectoryGuard temp_dir("tmp_slope_migration");
+    std::string ini_file = temp_dir.path() + "/test_legacy_slope.ini";
+    
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+
     // 1. Create a legacy config file
-    std::string ini_file = "test_legacy_slope.ini";
     {
         std::ofstream file(ini_file);
         file << "[Preset:LegacyTest]" << std::endl;
@@ -36,11 +41,14 @@ TEST_CASE(test_slope_config_migration, "Regression") {
     ASSERT_NEAR(engine.m_slope_detection.min_threshold, -0.88f, 0.001f);
     ASSERT_NEAR(Config::presets[idx].slope_detection.min_threshold, -0.88f, 0.001f);
 
-    std::remove(ini_file.c_str());
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_slope_persistence_new_key, "Regression") {
     std::cout << "Test: Slope Persistence (TOML)" << std::endl;
+
+    TestDirectoryGuard temp_dir("tmp_slope_persistence");
+    std::string test_file = temp_dir.path() + "/test_slope_save.toml";
 
     FFBEngine engine;
     InitializeEngine(engine);
@@ -48,7 +56,6 @@ TEST_CASE(test_slope_persistence_new_key, "Regression") {
     engine.m_slope_detection.enabled = true;
 
     // Save to a new file
-    std::string test_file = "test_slope_save.toml";
     Config::Save(engine, test_file);
 
     ASSERT_TRUE(IsInLog(test_file, "[SlopeDetection]"));
@@ -56,8 +63,6 @@ TEST_CASE(test_slope_persistence_new_key, "Regression") {
 
     // Verify it doesn't use the legacy flat key
     ASSERT_FALSE(IsInLog(test_file, "slope_min_threshold"));
-
-    std::remove(test_file.c_str());
 }
 
 } // namespace FFBEngineTests
