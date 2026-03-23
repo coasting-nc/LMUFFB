@@ -9,6 +9,8 @@
 #include "AsyncLogger.h"
 #include "VehicleUtils.h"
 #include "HealthMonitor.h"
+#include <shellapi.h>
+#include <windows.h>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -151,8 +153,14 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
                         else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
                     }
 
-                    std::string cmd = "start cmd /c \"set PYTHONPATH=" + python_path + " && python -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\" & pause\"";
-                    system(cmd.c_str());
+                    // Windows Defender false positive mitigation :
+                    // Replacing  `system()`  with `ShellExecuteW` or `CreateProcessW`.
+                    // See docs\dev_docs\reports\av_detection_investigation_v0.7.222(pt.2).md
+                    std::wstring wPythonPath = fs::path(python_path).wstring();
+                    std::wstring wLogFile = fs::path(log_file).wstring();
+                    std::wstring wArgs = L"/c \"set PYTHONPATH=" + wPythonPath + L" && python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\" & pause\"";
+                    
+                    ShellExecuteW(NULL, L"open", L"cmd.exe", wArgs.c_str(), NULL, SW_SHOWNORMAL);
                 }
             }
             ImGui::EndMenu();

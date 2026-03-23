@@ -63,3 +63,177 @@ I see you have already removed the `GetActiveWindowTitle()` implementation in `D
 3. **Move `BUILTIN_PRESETS`** out of the header file and into your `res.rc` file as `RCDATA`.
 4. **Submit the False Positive:** Because ML detections are cloud-based, once a file is flagged, the hash is burned. Compile your new version (v0.7.223), zip it, and submit it to the [Microsoft Security Intelligence Submission Portal](https://www.microsoft.com/en-us/wdsi/filesubmission) as a "Software Developer". Microsoft usually clears these within 24-48 hours, which trains their ML model that your specific combination of DirectInput + Shared Memory is safe.
 5. **Code Signing (Long Term):** Ultimately, any unsigned C++ application that reads shared memory, hooks background input, and opens local network ports will eventually get flagged by heuristics. Purchasing an EV or Standard Code Signing Certificate is the only permanent fix.
+
+# Follow up question
+
+Regarding this mitigation: "Instead of compiling massive raw string literals directly into your C++ headers, move the TOML presets into a Windows Resource File (.rc)."
+
+I think I am using c++ 17. I am alreading embedding an icon using  resource.rc. Tell me in more detail how can I embed the .toml files there.
+I was told there was a limitation about doing this, but now I think that was wrong information. Please tell me in detail how to achieve this.
+
+
+# Answer
+
+
+
+
+The "limitation" you likely heard about regarding embedding text files in Windows resources usually refers to one of two things:
+
+1. **The Null-Termination Trap:** When Windows loads a custom resource (like a `.toml` file), it loads the exact raw bytes from the disk. It does **not** automatically append a null-terminator (`\0`) at the end. If you try to pass that raw memory pointer directly to a function expecting a standard C-string, it will read out of bounds and crash. 
+2. **Cross-Platform Compatibility:** `.rc` files are strictly for Windows. Since your codebase has Linux support (`LinuxMock.h`, `GuiLayer_Linux.cpp`), moving exclusively to `.rc` files would break your Linux build unless you keep a fallback.
+
+Since you are using **C++17**, we can completely bypass the null-termination trap using `std::string_view`, which takes a pointer and an exact size. 
+
+Here is the step-by-step guide to embedding your `.toml` presets into your `resource.rc` file and loading them safely in `Config.cpp`.
+
+### Step 1: Save your presets as actual `.toml` files
+Create a folder in your project (e.g., `assets/presets/`) and save your preset strings into actual files like `Default.toml`, `GT3_DD_15_Nm.toml`, etc.
+
+### Step 2: Define Resource IDs in `resource.h`
+Open your `src/gui/resource.h` file and define unique integer IDs for your new `RCDATA` (Raw Data) resources.
+
+```cpp
+// src/gui/resource.h
+#define IDI_ICON1                       1
+
+// Define unique IDs for your presets (starting from 101 is standard)
+#define IDR_PRESET_DEFAULT              101
+#define IDR_PRESET_FANATEC_CSL          102
+#define IDR_PRESET_FANATEC_PODIUM       103
+#define IDR_PRESET_MOZA_R21_YAW         104
+#define IDR_PRESET_MOZA_R21             105
+#define IDR_PRESET_SIMAGIC_GT3          106
+// ... add the rest of your presets
+```
+
+### Step 3: Add the files to your `.rc` file
+Open your `res.rc` file and declare the files as `RCDATA`. The compiler will embed the exact bytes of these files into the `.rdata` section of your executable.
+
+```rc
+// res.rc
+#include "src/gui/resource.h"
+
+IDI_ICON1 ICON "icon.ico"
+
+// Embed the TOML files as raw data
+IDR_PRESET_DEFAULT        RCDATA "assets/presets/Default.toml"
+IDR_PRESET_FANATEC_CSL    RCDATA "assets/presets/Fanatec_CSL_DD.toml"
+IDR_PRESET_FANATEC_PODIUM RCDATA "assets/presets/Fanatec_Podium.toml"
+IDR_PRESET_MOZA_R21_YAW   RCDATA "assets/presets/Moza_R21_Yaw.toml"
+IDR_PRESET_MOZA_R21       RCDATA "assets/presets/Moza_R21.toml"
+IDR_PRESET_SIMAGIC_GT3    RCDATA "assets/presets/Simagic_GT3.toml"
+// ... add the rest
+```
+
+### Step 4: Write a safe C++17 Resource Loader
+In `src/core/Config.cpp`, add a helper function to load the resource. By returning a `std::string_view`, we tell `toml++` exactly how many bytes to parse, completely avoiding the null-termination issue.
+
+Add this near the top of `Config.cpp`:
+
+```cpp
+#include <optional>
+#include <string_view>
+
+#ifdef _WIN32
+#include <windows.h>
+#include "../gui/resource.h" // Adjust path to your resource.h
+
+// Helper to safely load raw binary/text data from a Windows PE resource
+std::optional<std::string_view> LoadTextResource(int resourceId) {
+    HMODULE hModule = GetModuleHandle(nullptr);
+    
+    // Find the resource by ID and type (RT_RCDATA)
+    HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(resourceId), RT_RCDATA);
+    if (!hResource) return std::nullopt;
+
+    // Load it into memory
+    HGLOBAL hMemory = LoadResource(hModule, hResource);
+    if (!hMemory) return std::nullopt;
+
+    // Get the exact size in bytes
+    DWORD dwSize = SizeofResource(hModule, hResource);
+    
+    // Get the pointer to the first byte
+    void* pData = LockResource(hMemory);
+    if (!pData || dwSize == 0) return std::nullopt;
+
+    // Return a string_view (Pointer + Size). No null-terminator required!
+    return std::string_view(static_cast<const char*>(pData), dwSize);
+}
+#endif
+```
+
+### Step 5: Update `Config::LoadPresets()`
+Now, modify your `LoadPresets()` function to use the Windows API to load the presets instead of the massive `BUILTIN_PRESETS` map. 
+
+To maintain Linux compatibility, you can wrap the new logic in `#ifdef _WIN32` and keep the old `GeneratedBuiltinPresets.h` logic as the `#else` fallback for Linux.
+
+```cpp
+void Config::LoadPresets() {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    presets.clear();
+
+#ifdef _WIN32
+    // 1. Load Built-in Presets from Windows Resources
+    std::vector<std::pair<int, std::string>> resource_presets = {
+        { IDR_PRESET_DEFAULT, "Default" },
+        { IDR_PRESET_FANATEC_CSL, "Fanatec CSL DD / GT DD Pro" },
+        { IDR_PRESET_FANATEC_PODIUM, "Fanatec Podium DD1/DD2" },
+        { IDR_PRESET_MOZA_R21_YAW, "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)" },
+        { IDR_PRESET_MOZA_R21, "GM DD 21 Nm (Moza R21 Ultra)" },
+        { IDR_PRESET_SIMAGIC_GT3, "GT3 DD 15 Nm (Simagic Alpha)" }
+        // ... map the rest of your IDs to their display names
+    };
+
+    for (const auto& [resId, name] : resource_presets) {
+        auto content = LoadTextResource(resId);
+        if (content) {
+            try {
+                // toml::parse accepts std::string_view directly in C++17
+                toml::table tbl = toml::parse(*content);
+                Preset p("Unnamed", true);
+                TomlToPreset(tbl, p);
+                
+                if (p.name == "Unnamed") {
+                    p.name = name;
+                }
+                p.is_builtin = true;
+                p.Validate();
+                presets.push_back(p);
+            } catch (const std::exception& e) {
+                Logger::Get().Log("[Config] Error parsing resource preset %s: %s", name.c_str(), e.what());
+            }
+        } else {
+            Logger::Get().Log("[Config] Failed to load resource ID %d", resId);
+        }
+    }
+#else
+    // 1. Linux Fallback: Load Built-in Presets from embedded BUILTIN_PRESETS map
+    for (auto const& [name, content] : BUILTIN_PRESETS) {
+        try {
+            toml::table tbl = toml::parse(content);
+            Preset p("Unnamed", true);
+            TomlToPreset(tbl, p);
+            if (p.name == "Unnamed") {
+                std::string n(name);
+                std::replace(n.begin(), n.end(), '_', ' ');
+                p.name = n;
+            }
+            p.is_builtin = true;
+            p.Validate();
+            presets.push_back(p);
+        } catch (const std::exception& e) {
+            Logger::Get().Log("[Config] Error parsing embedded built-in preset %s: %s", std::string(name).c_str(), e.what());
+        }
+    }
+#endif
+
+    // 2. Load User Presets from user_presets/ directory
+    // ... (Keep your existing user preset loading code here) ...
+```
+
+### Why this helps with Windows Defender
+By moving the raw text out of the C++ header and into the `.rc` file:
+1. The compiler places the data into the `.rsrc` section of the PE (Portable Executable) file instead of the `.rdata` section.
+2. AV scanners expect to see arbitrary data (like icons, manifests, and custom files) in the `.rsrc` section. 
+3. When massive blocks of high-entropy text are found in the `.rdata` section (where compiled C++ strings go), ML heuristics often flag it as an obfuscated payload or a packed binary. Moving it to `.rsrc` normalizes the binary's structure.
