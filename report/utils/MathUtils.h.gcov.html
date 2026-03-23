@@ -31,13 +31,13 @@
             <td class="headerValue">coverage_filtered.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryHi">99.2&nbsp;%</td>
-            <td class="headerCovTableEntry">129</td>
-            <td class="headerCovTableEntry">128</td>
+            <td class="headerCovTableEntryHi">99.3&nbsp;%</td>
+            <td class="headerCovTableEntry">137</td>
+            <td class="headerCovTableEntry">136</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-22 23:54:39</td>
+            <td class="headerValue">2026-03-23 09:10:03</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -49,9 +49,9 @@
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryHi">91.7&nbsp;%</td>
-            <td class="headerCovTableEntry">36</td>
-            <td class="headerCovTableEntry">33</td>
+            <td class="headerCovTableEntryMed">89.5&nbsp;%</td>
+            <td class="headerCovTableEntry">38</td>
+            <td class="headerCovTableEntry">34</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
                 </table>
@@ -325,80 +325,102 @@
 <span id="L254"><span class="lineNum">     254</span>                 :             :     bool m_initialized = false;</span>
 <span id="L255"><span class="lineNum">     255</span>                 :             :     bool m_zero_latency = true; // Mode toggle</span>
 <span id="L256"><span class="lineNum">     256</span>                 :             : </span>
-<span id="L257"><span class="lineNum">     257</span>                 :             :     // Tuning Parameters</span>
-<span id="L258"><span class="lineNum">     258</span>                 :             :     double m_alpha = 0.8; // Level weight (Higher = less lag)</span>
-<span id="L259"><span class="lineNum">     259</span>                 :             :     double m_beta = 0.2;  // Trend weight</span>
-<span id="L260"><span class="lineNum">     260</span>                 :             :     double m_game_tick = 0.01; // Default 100Hz</span>
-<span id="L261"><span class="lineNum">     261</span>                 :             : </span>
-<span id="L262"><span class="lineNum">     262</span>                 :             : public:</span>
-<span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">       17874 :     void Configure(double alpha, double beta, double game_tick = 0.01) {</span></span>
-<span id="L264"><span class="lineNum">     264</span>                 :<span class="tlaGNC">       17874 :         m_alpha = std::clamp(alpha, 0.01, 1.0);</span></span>
-<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">       17874 :         m_beta = std::clamp(beta, 0.0, 1.0);</span></span>
-<span id="L266"><span class="lineNum">     266</span>                 :<span class="tlaGNC">       17874 :         m_game_tick = (std::max)(0.0001, game_tick);</span></span>
-<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">       17874 :     }</span></span>
-<span id="L268"><span class="lineNum">     268</span>                 :             : </span>
-<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">       51153 :     void SetZeroLatency(bool zero_latency) {</span></span>
-<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">       51153 :         m_zero_latency = zero_latency;</span></span>
-<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">       51153 :     }</span></span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :     // Time-Awareness &amp; Safety State</span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :     double m_accumulated_time = 0.01; // Tracks actual time between 100Hz frames</span>
+<span id="L259"><span class="lineNum">     259</span>                 :             :     double m_trend_damping = 0.95;    // Multiplier applied to trend during extrapolation</span>
+<span id="L260"><span class="lineNum">     260</span>                 :             : </span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :     // Tuning Parameters</span>
+<span id="L262"><span class="lineNum">     262</span>                 :             :     double m_alpha = 0.8; // Level weight (Higher = less lag)</span>
+<span id="L263"><span class="lineNum">     263</span>                 :             :     double m_beta = 0.2;  // Trend weight</span>
+<span id="L264"><span class="lineNum">     264</span>                 :             :     double m_game_tick = 0.01; // Default 100Hz</span>
+<span id="L265"><span class="lineNum">     265</span>                 :             : </span>
+<span id="L266"><span class="lineNum">     266</span>                 :             : public:</span>
+<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">       54131 :     void Configure(double alpha, double beta, double game_tick = 0.01) {</span></span>
+<span id="L268"><span class="lineNum">     268</span>                 :<span class="tlaGNC">       54131 :         m_alpha = std::clamp(alpha, 0.01, 1.0);</span></span>
+<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">       54131 :         m_beta = std::clamp(beta, 0.0, 1.0);</span></span>
+<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">       54131 :         m_game_tick = (std::max)(0.0001, game_tick);</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">       54131 :     }</span></span>
 <span id="L272"><span class="lineNum">     272</span>                 :             : </span>
-<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">          20 :     double GetAlpha() const { return m_alpha; }</span></span>
-<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">           2 :     double GetBeta() const { return m_beta; }</span></span>
-<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">           6 :     bool GetZeroLatency() const { return m_zero_latency; }</span></span>
+<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">       51382 :     void SetZeroLatency(bool zero_latency) {</span></span>
+<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">       51382 :         m_zero_latency = zero_latency;</span></span>
+<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">       51382 :     }</span></span>
 <span id="L276"><span class="lineNum">     276</span>                 :             : </span>
-<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">     2298524 :     double Process(double raw_input, double dt, bool is_new_frame) {</span></span>
-<span id="L278"><span class="lineNum">     278</span>         [<span class="tlaGBC" title="Branch 0 was taken 15150 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2283374 times"> + </span>]:<span class="tlaGNC">     2298524 :         if (!m_initialized) {</span></span>
-<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">       15150 :             m_level = raw_input;</span></span>
-<span id="L280"><span class="lineNum">     280</span>                 :<span class="tlaGNC">       15150 :             m_prev_level = raw_input;</span></span>
-<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC">       15150 :             m_trend = 0.0;</span></span>
-<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaGNC">       15150 :             m_time_since_update = 0.0;</span></span>
-<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">       15150 :             m_initialized = true;</span></span>
-<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">       15150 :             return raw_input;</span></span>
-<span id="L285"><span class="lineNum">     285</span>                 :             :         }</span>
-<span id="L286"><span class="lineNum">     286</span>                 :             : </span>
-<span id="L287"><span class="lineNum">     287</span>         [<span class="tlaGBC" title="Branch 0 was taken 983898 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1299476 times"> + </span>]:<span class="tlaGNC">     2283374 :         if (is_new_frame) {</span></span>
-<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC">      983898 :             double old_level = m_level;</span></span>
-<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">      983898 :             m_prev_level = m_level; // Save for interpolation start point</span></span>
-<span id="L290"><span class="lineNum">     290</span>                 :             : </span>
-<span id="L291"><span class="lineNum">     291</span>                 :             :             // Update Level: Balance between the raw input and our previous prediction</span>
-<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">      983898 :             m_level = m_alpha * raw_input + (1.0 - m_alpha) * (m_level + m_trend * m_game_tick);</span></span>
-<span id="L293"><span class="lineNum">     293</span>                 :             : </span>
-<span id="L294"><span class="lineNum">     294</span>                 :             :             // Update Trend: Balance between the new observed slope and the old trend</span>
-<span id="L295"><span class="lineNum">     295</span>                 :<span class="tlaGNC">      983898 :             m_trend = m_beta * ((m_level - old_level) / m_game_tick) + (1.0 - m_beta) * m_trend;</span></span>
-<span id="L296"><span class="lineNum">     296</span>                 :             : </span>
-<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">      983898 :             m_time_since_update = 0.0;</span></span>
+<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">          20 :     double GetAlpha() const { return m_alpha; }</span></span>
+<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaGNC">           7 :     double GetBeta() const { return m_beta; }</span></span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaGNC">           8 :     bool GetZeroLatency() const { return m_zero_latency; }</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :             : </span>
+<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC">     2299363 :     double Process(double raw_input, double dt, bool is_new_frame) {</span></span>
+<span id="L282"><span class="lineNum">     282</span>         [<span class="tlaGBC" title="Branch 0 was taken 15157 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2284206 times"> + </span>]:<span class="tlaGNC">     2299363 :         if (!m_initialized) {</span></span>
+<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">       15157 :             m_level = raw_input;</span></span>
+<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">       15157 :             m_prev_level = raw_input;</span></span>
+<span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">       15157 :             m_trend = 0.0;</span></span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaGNC">       15157 :             m_time_since_update = 0.0;</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaGNC">       15157 :             m_accumulated_time = 0.0;</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC">       15157 :             m_initialized = true;</span></span>
+<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">       15157 :             return raw_input;</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :             :         }</span>
+<span id="L291"><span class="lineNum">     291</span>                 :             : </span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">     2284206 :         m_time_since_update += dt;</span></span>
+<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaGNC">     2284206 :         m_accumulated_time += dt;</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :             : </span>
+<span id="L295"><span class="lineNum">     295</span>         [<span class="tlaGBC" title="Branch 0 was taken 983909 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1300297 times"> + </span>]:<span class="tlaGNC">     2284206 :         if (is_new_frame) {</span></span>
+<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">      983909 :             double old_level = m_level;</span></span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">      983909 :             m_prev_level = m_level; // Save for interpolation start point</span></span>
 <span id="L298"><span class="lineNum">     298</span>                 :             : </span>
-<span id="L299"><span class="lineNum">     299</span>         [<span class="tlaGBC" title="Branch 0 was taken 715546 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 268352 times"> + </span>]:<span class="tlaGNC">      983898 :             if (m_zero_latency) {</span></span>
-<span id="L300"><span class="lineNum">     300</span>                 :<span class="tlaGNC">      715546 :                 return m_level;</span></span>
-<span id="L301"><span class="lineNum">     301</span>                 :             :             } else {</span>
-<span id="L302"><span class="lineNum">     302</span>                 :<span class="tlaGNC">      268352 :                 return m_prev_level; // Start interpolation from previous level</span></span>
-<span id="L303"><span class="lineNum">     303</span>                 :             :             }</span>
-<span id="L304"><span class="lineNum">     304</span>                 :             :         } else {</span>
-<span id="L305"><span class="lineNum">     305</span>                 :<span class="tlaGNC">     1299476 :             m_time_since_update += dt;</span></span>
-<span id="L306"><span class="lineNum">     306</span>                 :             :         }</span>
-<span id="L307"><span class="lineNum">     307</span>                 :             : </span>
-<span id="L308"><span class="lineNum">     308</span>         [<span class="tlaGBC" title="Branch 0 was taken 945073 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 354403 times"> + </span>]:<span class="tlaGNC">     1299476 :         if (m_zero_latency) {</span></span>
-<span id="L309"><span class="lineNum">     309</span>                 :             :             // Predict current state based on previous trend (Extrapolation)</span>
-<span id="L310"><span class="lineNum">     310</span>                 :<span class="tlaGNC">      945073 :             return m_level + m_trend * m_time_since_update;</span></span>
-<span id="L311"><span class="lineNum">     311</span>                 :             :         } else {</span>
-<span id="L312"><span class="lineNum">     312</span>                 :             :             // Smoothly blend between prev_level and level (Interpolation)</span>
-<span id="L313"><span class="lineNum">     313</span>         [<span class="tlaGBC" title="Branch 0 was taken 354349 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 54 times"> + </span>]:<span class="tlaGNC">      354403 :             if (m_time_since_update &lt;= m_game_tick) {</span></span>
-<span id="L314"><span class="lineNum">     314</span>                 :<span class="tlaGNC">      354349 :                 double t = m_time_since_update / m_game_tick;</span></span>
-<span id="L315"><span class="lineNum">     315</span>                 :<span class="tlaGNC">      354349 :                 return m_prev_level + t * (m_level - m_prev_level);</span></span>
-<span id="L316"><span class="lineNum">     316</span>                 :             :             } else {</span>
-<span id="L317"><span class="lineNum">     317</span>                 :<span class="tlaGNC">          54 :                 return m_level; // Hold target if game stutters</span></span>
-<span id="L318"><span class="lineNum">     318</span>                 :             :             }</span>
-<span id="L319"><span class="lineNum">     319</span>                 :             :         }</span>
-<span id="L320"><span class="lineNum">     320</span>                 :             :     }</span>
-<span id="L321"><span class="lineNum">     321</span>                 :             : </span>
-<span id="L322"><span class="lineNum">     322</span>                 :<span class="tlaGNC">       14817 :     void Reset() {</span></span>
-<span id="L323"><span class="lineNum">     323</span>                 :<span class="tlaGNC">       14817 :         m_level = m_prev_level = m_trend = m_time_since_update = 0.0;</span></span>
-<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">       14817 :         m_initialized = false;</span></span>
-<span id="L325"><span class="lineNum">     325</span>                 :<span class="tlaGNC">       14817 :     }</span></span>
-<span id="L326"><span class="lineNum">     326</span>                 :             : };</span>
-<span id="L327"><span class="lineNum">     327</span>                 :             : </span>
-<span id="L328"><span class="lineNum">     328</span>                 :             : } // namespace ffb_math</span>
-<span id="L329"><span class="lineNum">     329</span>                 :             : </span>
-<span id="L330"><span class="lineNum">     330</span>                 :             : #endif // MATH_UTILS_H</span>
+<span id="L299"><span class="lineNum">     299</span>                 :             :             // Time-Aware Update: Use actual measured interval for derivative logic</span>
+<span id="L300"><span class="lineNum">     300</span>                 :             :             // Divide by zero protection (dt should be &gt; 0 on new frame)</span>
+<span id="L301"><span class="lineNum">     301</span>         [<span class="tlaGBC" title="Branch 0 was taken 983909 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">      983909 :             double interval = (m_accumulated_time &gt; 1e-6) ? m_accumulated_time : m_game_tick;</span></span>
+<span id="L302"><span class="lineNum">     302</span>                 :             : </span>
+<span id="L303"><span class="lineNum">     303</span>                 :             :             // CRITICAL SAFETY: Clamp interval to sensible bounds [1ms, 50ms]</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             :             // Prevents massive game stutters from corrupting future derivative math</span>
+<span id="L305"><span class="lineNum">     305</span>                 :<span class="tlaGNC">      983909 :             interval = std::clamp(interval, 0.001, 0.050);</span></span>
+<span id="L306"><span class="lineNum">     306</span>                 :             : </span>
+<span id="L307"><span class="lineNum">     307</span>                 :             :             // Update Level: Balance between the raw input and our previous prediction</span>
+<span id="L308"><span class="lineNum">     308</span>                 :<span class="tlaGNC">      983909 :             m_level = m_alpha * raw_input + (1.0 - m_alpha) * (m_level + m_trend * interval);</span></span>
+<span id="L309"><span class="lineNum">     309</span>                 :             : </span>
+<span id="L310"><span class="lineNum">     310</span>                 :             :             // Update Trend: Balance between the new observed slope and the old trend</span>
+<span id="L311"><span class="lineNum">     311</span>                 :<span class="tlaGNC">      983909 :             m_trend = m_beta * ((m_level - old_level) / interval) + (1.0 - m_beta) * m_trend;</span></span>
+<span id="L312"><span class="lineNum">     312</span>                 :             : </span>
+<span id="L313"><span class="lineNum">     313</span>                 :             :             // Dynamically update game tick for sub-frame interpolation accuracy</span>
+<span id="L314"><span class="lineNum">     314</span>                 :<span class="tlaGNC">      983909 :             m_game_tick = interval;</span></span>
+<span id="L315"><span class="lineNum">     315</span>                 :             : </span>
+<span id="L316"><span class="lineNum">     316</span>                 :<span class="tlaGNC">      983909 :             m_time_since_update = 0.0;</span></span>
+<span id="L317"><span class="lineNum">     317</span>                 :<span class="tlaGNC">      983909 :             m_accumulated_time = 0.0;</span></span>
+<span id="L318"><span class="lineNum">     318</span>                 :             : </span>
+<span id="L319"><span class="lineNum">     319</span>         [<span class="tlaGBC" title="Branch 0 was taken 715557 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 268352 times"> + </span>]:<span class="tlaGNC">      983909 :             if (m_zero_latency) {</span></span>
+<span id="L320"><span class="lineNum">     320</span>                 :<span class="tlaGNC">      715557 :                 return m_level;</span></span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :             } else {</span>
+<span id="L322"><span class="lineNum">     322</span>                 :<span class="tlaGNC">      268352 :                 return m_prev_level; // Start interpolation from previous level</span></span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :             }</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             :         } else {</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             :             // Trend Damping: Safely arrest runaway extrapolation during dropped frames</span>
+<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">     1300297 :             m_trend *= m_trend_damping;</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :             :         }</span>
+<span id="L328"><span class="lineNum">     328</span>                 :             : </span>
+<span id="L329"><span class="lineNum">     329</span>         [<span class="tlaGBC" title="Branch 0 was taken 945894 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 354403 times"> + </span>]:<span class="tlaGNC">     1300297 :         if (m_zero_latency) {</span></span>
+<span id="L330"><span class="lineNum">     330</span>                 :             :             // Predict current state based on previous trend (Extrapolation)</span>
+<span id="L331"><span class="lineNum">     331</span>                 :<span class="tlaGNC">      945894 :             return m_level + m_trend * m_time_since_update;</span></span>
+<span id="L332"><span class="lineNum">     332</span>                 :             :         } else {</span>
+<span id="L333"><span class="lineNum">     333</span>                 :             :             // Smoothly blend between prev_level and level (Interpolation)</span>
+<span id="L334"><span class="lineNum">     334</span>         [<span class="tlaGBC" title="Branch 0 was taken 352306 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2097 times"> + </span>]:<span class="tlaGNC">      354403 :             if (m_time_since_update &lt;= m_game_tick) {</span></span>
+<span id="L335"><span class="lineNum">     335</span>                 :<span class="tlaGNC">      352306 :                 double t = m_time_since_update / m_game_tick;</span></span>
+<span id="L336"><span class="lineNum">     336</span>                 :<span class="tlaGNC">      352306 :                 return m_prev_level + t * (m_level - m_prev_level);</span></span>
+<span id="L337"><span class="lineNum">     337</span>                 :             :             } else {</span>
+<span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaGNC">        2097 :                 return m_level; // Hold target if game stutters</span></span>
+<span id="L339"><span class="lineNum">     339</span>                 :             :             }</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             :         }</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             :     }</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             : </span>
+<span id="L343"><span class="lineNum">     343</span>                 :<span class="tlaGNC">       14817 :     void Reset() {</span></span>
+<span id="L344"><span class="lineNum">     344</span>                 :<span class="tlaGNC">       14817 :         m_level = m_prev_level = m_trend = m_time_since_update = 0.0;</span></span>
+<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaGNC">       14817 :         m_accumulated_time = 0.01;</span></span>
+<span id="L346"><span class="lineNum">     346</span>                 :<span class="tlaGNC">       14817 :         m_initialized = false;</span></span>
+<span id="L347"><span class="lineNum">     347</span>                 :<span class="tlaGNC">       14817 :     }</span></span>
+<span id="L348"><span class="lineNum">     348</span>                 :             : };</span>
+<span id="L349"><span class="lineNum">     349</span>                 :             : </span>
+<span id="L350"><span class="lineNum">     350</span>                 :             : } // namespace ffb_math</span>
+<span id="L351"><span class="lineNum">     351</span>                 :             : </span>
+<span id="L352"><span class="lineNum">     352</span>                 :             : #endif // MATH_UTILS_H</span>
         </pre>
               </td>
             </tr>

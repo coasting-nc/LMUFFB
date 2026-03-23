@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-22 23:54:39</td>
+            <td class="headerValue">2026-03-23 09:10:03</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -547,19 +547,19 @@
 <span id="L469"><span class="lineNum">     469</span>                 :             :     // require restructuring the call site instead.</span>
 <span id="L470"><span class="lineNum">     470</span>                 :<span class="tlaGNC">       65844 :     bool shadow_mode = (m_slope_detection.enabled == false);</span></span>
 <span id="L471"><span class="lineNum">     471</span>                 :             :     (void)shadow_mode; // Retained for documentation; see call site in calculate_axle_grip</span>
-<span id="L472"><span class="lineNum">     472</span>         [<span class="tlaGBC" title="Branch 0 was taken 5244 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 60600 times"> + </span>]:<span class="tlaGNC">       65844 :     if (std::abs(dAlpha_dt) &gt; (double)m_slope_detection.alpha_threshold) {</span></span>
-<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">        5244 :         m_slope_hold_timer = SLOPE_HOLD_TIME;</span></span>
-<span id="L474"><span class="lineNum">     474</span>                 :<span class="tlaGNC">        5244 :         m_debug_slope_num = dG_dt * dAlpha_dt;</span></span>
-<span id="L475"><span class="lineNum">     475</span>                 :<span class="tlaGNC">        5244 :         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;</span></span>
-<span id="L476"><span class="lineNum">     476</span>                 :<span class="tlaGNC">        5244 :         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;</span></span>
-<span id="L477"><span class="lineNum">     477</span>                 :<span class="tlaGNC">        5244 :         m_slope_current = std::clamp(m_debug_slope_raw, -20.0, 20.0);</span></span>
+<span id="L472"><span class="lineNum">     472</span>         [<span class="tlaGBC" title="Branch 0 was taken 4782 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 61062 times"> + </span>]:<span class="tlaGNC">       65844 :     if (std::abs(dAlpha_dt) &gt; (double)m_slope_detection.alpha_threshold) {</span></span>
+<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">        4782 :         m_slope_hold_timer = SLOPE_HOLD_TIME;</span></span>
+<span id="L474"><span class="lineNum">     474</span>                 :<span class="tlaGNC">        4782 :         m_debug_slope_num = dG_dt * dAlpha_dt;</span></span>
+<span id="L475"><span class="lineNum">     475</span>                 :<span class="tlaGNC">        4782 :         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;</span></span>
+<span id="L476"><span class="lineNum">     476</span>                 :<span class="tlaGNC">        4782 :         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;</span></span>
+<span id="L477"><span class="lineNum">     477</span>                 :<span class="tlaGNC">        4782 :         m_slope_current = std::clamp(m_debug_slope_raw, -20.0, 20.0);</span></span>
 <span id="L478"><span class="lineNum">     478</span>                 :             :     } else {</span>
 <span id="L479"><span class="lineNum">     479</span>                 :             :         // Decay phase: use physical 'dt' to ensure correct time advancement</span>
-<span id="L480"><span class="lineNum">     480</span>                 :<span class="tlaGNC">       60600 :         m_slope_hold_timer -= dt;</span></span>
-<span id="L481"><span class="lineNum">     481</span>         [<span class="tlaGBC" title="Branch 0 was taken 58037 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2563 times"> + </span>]:<span class="tlaGNC">       60600 :         if (m_slope_hold_timer &lt;= 0.0) {</span></span>
-<span id="L482"><span class="lineNum">     482</span>                 :<span class="tlaGNC">       58037 :             m_slope_hold_timer = 0.0;</span></span>
-<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">       58037 :             m_slope_current += (double)m_slope_detection.decay_rate * dt * (0.0 - m_slope_current);</span></span>
-<span id="L484"><span class="lineNum">     484</span>         [<span class="tlaGBC" title="Branch 0 was taken 49251 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8786 times"> + </span>]:<span class="tlaGNC">       58037 :             if (std::abs(m_slope_current) &lt; 0.0001) m_slope_current = 0.0;</span></span>
+<span id="L480"><span class="lineNum">     480</span>                 :<span class="tlaGNC">       61062 :         m_slope_hold_timer -= dt;</span></span>
+<span id="L481"><span class="lineNum">     481</span>         [<span class="tlaGBC" title="Branch 0 was taken 58525 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2537 times"> + </span>]:<span class="tlaGNC">       61062 :         if (m_slope_hold_timer &lt;= 0.0) {</span></span>
+<span id="L482"><span class="lineNum">     482</span>                 :<span class="tlaGNC">       58525 :             m_slope_hold_timer = 0.0;</span></span>
+<span id="L483"><span class="lineNum">     483</span>                 :<span class="tlaGNC">       58525 :             m_slope_current += (double)m_slope_detection.decay_rate * dt * (0.0 - m_slope_current);</span></span>
+<span id="L484"><span class="lineNum">     484</span>         [<span class="tlaGBC" title="Branch 0 was taken 48322 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10203 times"> + </span>]:<span class="tlaGNC">       58525 :             if (std::abs(m_slope_current) &lt; 0.0001) m_slope_current = 0.0;</span></span>
 <span id="L485"><span class="lineNum">     485</span>                 :             :         }</span>
 <span id="L486"><span class="lineNum">     486</span>                 :             :     }</span>
 <span id="L487"><span class="lineNum">     487</span>                 :             : </span>
@@ -569,12 +569,12 @@
 <span id="L491"><span class="lineNum">     491</span>                 :<span class="tlaGNC">       65053 :         double dTorque_dt = calculate_sg_derivative(m_slope_torque_buffer, m_slope_buffer_count, m_slope_detection.sg_window, internal_dt, m_slope_buffer_index);</span></span>
 <span id="L492"><span class="lineNum">     492</span>                 :<span class="tlaGNC">       65053 :         double dSteer_dt = calculate_sg_derivative(m_slope_steer_buffer, m_slope_buffer_count, m_slope_detection.sg_window, internal_dt, m_slope_buffer_index);</span></span>
 <span id="L493"><span class="lineNum">     493</span>                 :             : </span>
-<span id="L494"><span class="lineNum">     494</span>         [<span class="tlaGBC" title="Branch 0 was taken 1391 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 63662 times"> + </span>]:<span class="tlaGNC">       65053 :         if (std::abs(dSteer_dt) &gt; (double)m_slope_detection.alpha_threshold) { // Unified threshold for steering movement</span></span>
-<span id="L495"><span class="lineNum">     495</span>                 :<span class="tlaGNC">        1391 :             m_debug_slope_torque_num = dTorque_dt * dSteer_dt;</span></span>
-<span id="L496"><span class="lineNum">     496</span>                 :<span class="tlaGNC">        1391 :             m_debug_slope_torque_den = (dSteer_dt * dSteer_dt) + 0.000001;</span></span>
-<span id="L497"><span class="lineNum">     497</span>                 :<span class="tlaGNC">        1391 :             m_slope_torque_current = std::clamp(m_debug_slope_torque_num / m_debug_slope_torque_den, -50.0, 50.0);</span></span>
+<span id="L494"><span class="lineNum">     494</span>         [<span class="tlaGBC" title="Branch 0 was taken 1501 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 63552 times"> + </span>]:<span class="tlaGNC">       65053 :         if (std::abs(dSteer_dt) &gt; (double)m_slope_detection.alpha_threshold) { // Unified threshold for steering movement</span></span>
+<span id="L495"><span class="lineNum">     495</span>                 :<span class="tlaGNC">        1501 :             m_debug_slope_torque_num = dTorque_dt * dSteer_dt;</span></span>
+<span id="L496"><span class="lineNum">     496</span>                 :<span class="tlaGNC">        1501 :             m_debug_slope_torque_den = (dSteer_dt * dSteer_dt) + 0.000001;</span></span>
+<span id="L497"><span class="lineNum">     497</span>                 :<span class="tlaGNC">        1501 :             m_slope_torque_current = std::clamp(m_debug_slope_torque_num / m_debug_slope_torque_den, -50.0, 50.0);</span></span>
 <span id="L498"><span class="lineNum">     498</span>                 :             :         } else {</span>
-<span id="L499"><span class="lineNum">     499</span>                 :<span class="tlaGNC">       63662 :             m_slope_torque_current += (double)m_slope_detection.decay_rate * dt * (0.0 - m_slope_torque_current);</span></span>
+<span id="L499"><span class="lineNum">     499</span>                 :<span class="tlaGNC">       63552 :             m_slope_torque_current += (double)m_slope_detection.decay_rate * dt * (0.0 - m_slope_torque_current);</span></span>
 <span id="L500"><span class="lineNum">     500</span>                 :             :         }</span>
 <span id="L501"><span class="lineNum">     501</span>                 :             :     } else {</span>
 <span id="L502"><span class="lineNum">     502</span>                 :<span class="tlaGNC">         791 :         m_slope_torque_current = 20.0; // Positive value means no grip loss detected</span></span>
@@ -590,9 +590,9 @@
 <span id="L512"><span class="lineNum">     512</span>                 :<span class="tlaGNC">       65844 :     double loss_percent_torque = 0.0;</span></span>
 <span id="L513"><span class="lineNum">     513</span>   [<span class="tlaGBC" title="Branch 0 was taken 65840 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 65053 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 787 times"> + </span>]:<span class="tlaGNC">       65844 :     volatile bool use_torque_fusion = (m_slope_detection.use_torque &amp;&amp; data != nullptr);</span></span>
 <span id="L514"><span class="lineNum">     514</span>         [<span class="tlaGBC" title="Branch 0 was taken 65053 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 791 times"> + </span>]:<span class="tlaGNC">       65844 :     if (use_torque_fusion) {</span></span>
-<span id="L515"><span class="lineNum">     515</span>         [<span class="tlaGBC" title="Branch 0 was taken 286 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 64767 times"> + </span>]:<span class="tlaGNC">       65053 :         if (m_slope_torque_current &lt; 0.0) {</span></span>
-<span id="L516"><span class="lineNum">     516</span>                 :<span class="tlaGNC">         286 :             loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_detection.torque_sensitivity;</span></span>
-<span id="L517"><span class="lineNum">     517</span>                 :<span class="tlaGNC">         286 :             loss_percent_torque = (std::max)(0.0, (std::min)(1.0, loss_percent_torque));</span></span>
+<span id="L515"><span class="lineNum">     515</span>         [<span class="tlaGBC" title="Branch 0 was taken 179 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 64874 times"> + </span>]:<span class="tlaGNC">       65053 :         if (m_slope_torque_current &lt; 0.0) {</span></span>
+<span id="L516"><span class="lineNum">     516</span>                 :<span class="tlaGNC">         179 :             loss_percent_torque = std::abs(m_slope_torque_current) * (double)m_slope_detection.torque_sensitivity;</span></span>
+<span id="L517"><span class="lineNum">     517</span>                 :<span class="tlaGNC">         179 :             loss_percent_torque = (std::max)(0.0, (std::min)(1.0, loss_percent_torque));</span></span>
 <span id="L518"><span class="lineNum">     518</span>                 :             :         }</span>
 <span id="L519"><span class="lineNum">     519</span>                 :             :     }</span>
 <span id="L520"><span class="lineNum">     520</span>                 :             : </span>
