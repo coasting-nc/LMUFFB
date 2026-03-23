@@ -10,7 +10,6 @@
 // Platform-Specific Headers
 #ifdef _WIN32
 #include <windows.h>
-#include <psapi.h>
 #include <dinput.h>
 #include <iomanip> // For std::hex
 #include <string>

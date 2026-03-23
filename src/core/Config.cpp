@@ -830,7 +830,8 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 Logger::Get().Log("[Config] TOML not found, migrating legacy INI: %s", ini_path.c_str());
                 MigrateFromLegacyIni(engine, ini_path);
                 Save(engine, final_path);
-                try { std::filesystem::rename(ini_path, ini_path + ".bak"); } catch (...) {}
+                // v0.7.223: Disable automatic renaming to reduce ransomware-like behavioral flags
+                // try { std::filesystem::rename(ini_path, ini_path + ".bak"); } catch (...) {}
                 return;
             }
         }
