@@ -40,19 +40,16 @@ TEST_CASE(test_phase3_user_preset_file_io, "Presets") {
     FFBEngine engine;
     InitializeEngine(engine);
 
-    // Ensure user_presets directory is clean for this test
-    if (fs::exists("user_presets")) {
-        fs::remove_all("user_presets");
-    }
-    fs::create_directories("user_presets");
+    TestDirectoryGuard temp_dir("tmp_test_user_presets");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
 
     std::string preset_name = "My Crazy Wheel: V2!";
     Config::AddUserPreset(preset_name, engine);
 
     // Verify file existence (sanitized name)
-    // Proposed: "My Crazy Wheel: V2!" -> "My_Crazy_Wheel__V2_.toml"
     bool file_found = false;
-    for (const auto& entry : fs::directory_iterator("user_presets")) {
+    for (const auto& entry : fs::directory_iterator(Config::m_user_presets_path)) {
         if (entry.path().extension() == ".toml") {
             file_found = true;
             std::cout << "Found sanitized file: " << entry.path().filename().string() << std::endl;
@@ -72,14 +69,16 @@ TEST_CASE(test_phase3_user_preset_file_io, "Presets") {
         }
     }
     ASSERT_TRUE(found_in_memory);
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_phase3_migration_from_config_toml, "Presets") {
     std::cout << "\nTest: Phase 3 - Migration from config.toml" << std::endl;
 
-    std::string test_config = "config_migration.toml";
-    if (fs::exists("user_presets")) fs::remove_all("user_presets");
-    fs::create_directories("user_presets");
+    TestDirectoryGuard temp_dir("tmp_test_migration");
+    std::string test_config = temp_dir.path() + "/config_migration.toml";
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
 
     // Create a mock config.toml with a [Presets] table
     {
@@ -102,15 +101,14 @@ TEST_CASE(test_phase3_migration_from_config_toml, "Presets") {
     Config::Load(engine, test_config);
 
     // 1. Assert file created
-    // Sanitized: "Trapped Preset" -> "Trapped_Preset.toml"
-    ASSERT_TRUE(fs::exists("user_presets/Trapped_Preset.toml"));
+    ASSERT_TRUE(fs::exists(Config::m_user_presets_path + "/Trapped_Preset.toml"));
 
     // 2. Assert [Presets] removed from config.toml file on disk
     toml::table tbl = toml::parse_file(test_config);
     ASSERT_FALSE(tbl.contains("Presets"));
 
     Config::m_config_path = old_path;
-    fs::remove(test_config);
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_phase3_legacy_preset_import, "Presets") {
@@ -118,10 +116,11 @@ TEST_CASE(test_phase3_legacy_preset_import, "Presets") {
 
     FFBEngine engine;
     InitializeEngine(engine);
-    if (fs::exists("user_presets")) fs::remove_all("user_presets");
-    fs::create_directories("user_presets");
+    TestDirectoryGuard temp_dir("tmp_test_legacy_import");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
 
-    std::string ini_file = "legacy_import.ini";
+    std::string ini_file = temp_dir.path() + "/legacy_import.ini";
     {
         std::ofstream f(ini_file);
         f << "[Preset:Old Drift]\n";
@@ -142,9 +141,8 @@ TEST_CASE(test_phase3_legacy_preset_import, "Presets") {
         }
     }
     ASSERT_TRUE(found);
-    ASSERT_TRUE(fs::exists("user_presets/Old_Drift.toml"));
-
-    fs::remove(ini_file);
+    ASSERT_TRUE(fs::exists(Config::m_user_presets_path + "/Old_Drift.toml"));
+    Config::m_user_presets_path = original_user_presets;
 }
 
 } // namespace FFBEngineTests

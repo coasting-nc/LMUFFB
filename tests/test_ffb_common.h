@@ -11,6 +11,7 @@
 #include <random>
 #include <sstream>
 #include <functional>
+#include <filesystem>
 
 #include "../src/ffb/FFBEngine.h"
 #include "../src/io/lmu_sm_interface/InternalsPlugin.hpp"
@@ -36,6 +37,24 @@ public:
 };
 
 namespace FFBEngineTests {
+
+/**
+ * Scoped helper to create and automatically cleanup a test directory.
+ */
+class TestDirectoryGuard {
+    std::string m_path;
+public:
+    explicit TestDirectoryGuard(const std::string& path) : m_path(path) {
+        if (std::filesystem::exists(m_path)) std::filesystem::remove_all(m_path);
+        std::filesystem::create_directories(m_path);
+    }
+    ~TestDirectoryGuard() {
+        try {
+            if (std::filesystem::exists(m_path)) std::filesystem::remove_all(m_path);
+        } catch (...) {}
+    }
+    std::string path() const { return m_path; }
+};
 
 // --- Test Counters (defined in test_ffb_common.cpp) ---
 extern int g_tests_passed;

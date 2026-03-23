@@ -236,6 +236,7 @@ set(LMUFFB_VERSION_COMMA "${VERSION_MAJOR},${VERSION_MINOR},${VERSION_PATCH},0")
 # Auto-generate versioned files in the BUILD directory
 configure_file(src/core/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/Version.h @ONLY)
 if(WIN32)
+    set(LMUFFB_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     configure_file(src/gui/res.rc.in ${CMAKE_CURRENT_BINARY_DIR}/src/res.rc @ONLY)
 endif()
 

@@ -1,4 +1,4 @@
-name = "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)"
+name = "GM DD 21 Nm (Moza R21 Ultra)"
 [General]
 gain = 1.454
 wheelbase_max_nm = 21.0
@@ -18,9 +18,9 @@ static_notch_width = 2.0
 oversteer_boost = 0.0
 sop_effect = 0.0
 rear_align_effect = 0.29
-sop_yaw_gain = 0.333
+sop_yaw_gain = 0.0
 yaw_kick_threshold = 0.0
-yaw_accel_smoothing = 0.003
+yaw_accel_smoothing = 0.015
 sop_smoothing_factor = 0.0
 sop_scale = 0.89
 [GripEstimation]

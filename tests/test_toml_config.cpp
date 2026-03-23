@@ -20,7 +20,8 @@ TEST_CASE(test_toml_roundtrip_serialization, "Config") {
     engine1.m_advanced.gyro_gain = 0.901f;
     engine1.m_safety.m_config.gain_reduction = 0.25f;
 
-    std::string test_file = "test_roundtrip.toml";
+    TestDirectoryGuard temp_dir("tmp_test_roundtrip_config");
+    std::string test_file = temp_dir.path() + "/test_roundtrip.toml";
     Config::Save(engine1, test_file);
 
     FFBEngine engine2;
@@ -37,13 +38,12 @@ TEST_CASE(test_toml_roundtrip_serialization, "Config") {
     ASSERT_NEAR(engine1.m_vibration.vibration_gain, engine2.m_vibration.vibration_gain, 0.0001f);
     ASSERT_NEAR(engine1.m_advanced.gyro_gain, engine2.m_advanced.gyro_gain, 0.0001f);
     ASSERT_NEAR(engine1.m_safety.m_config.gain_reduction, engine2.m_safety.m_config.gain_reduction, 0.0001f);
-
-    std::remove(test_file.c_str());
 }
 
 TEST_CASE(test_toml_missing_keys_fallback, "Config") {
     std::cout << "\nTest: TOML Missing Keys Fallback" << std::endl;
-    std::string test_file = "test_missing.toml";
+    TestDirectoryGuard temp_dir("tmp_test_missing");
+    std::string test_file = temp_dir.path() + "/test_missing.toml";
     {
         std::ofstream file(test_file);
         file << "[General]\ngain = 0.5\n";
@@ -61,13 +61,12 @@ TEST_CASE(test_toml_missing_keys_fallback, "Config") {
 
     ASSERT_NEAR(engine.m_general.gain, 0.5f, 0.0001f);
     ASSERT_NEAR(engine.m_front_axle.understeer_effect, 0.123f, 0.0001f);
-
-    std::remove(test_file.c_str());
 }
 
 TEST_CASE(test_toml_type_safety, "Config") {
     std::cout << "\nTest: TOML Type Safety (Invalid Data)" << std::endl;
-    std::string test_file = "test_bad_types.toml";
+    TestDirectoryGuard temp_dir("tmp_test_bad_types");
+    std::string test_file = temp_dir.path() + "/test_bad_types.toml";
     {
         std::ofstream file(test_file);
         file << "[General]\ngain = \"high\"\n";
@@ -100,13 +99,12 @@ TEST_CASE(test_toml_type_safety, "Config") {
         Config::Load(engine, test_file);
         ASSERT_TRUE(Config::win_pos_x == x_before);
     }
-
-    std::remove(test_file.c_str());
 }
 
 TEST_CASE(test_toml_static_loads_numeric_types, "Config") {
     std::cout << "\nTest: TOML StaticLoads Numeric Types (Int/Float mix)" << std::endl;
-    std::string test_file = "test_static_loads.toml";
+    TestDirectoryGuard temp_dir("tmp_test_static_loads");
+    std::string test_file = temp_dir.path() + "/test_static_loads.toml";
     {
         std::ofstream file(test_file);
         file << "[System]\n";
@@ -128,8 +126,6 @@ TEST_CASE(test_toml_static_loads_numeric_types, "Config") {
     
     ASSERT_TRUE(Config::GetSavedStaticLoad("Float Car", val));
     ASSERT_NEAR((float)val, 1350.5f, 0.001f);
-
-    std::remove(test_file.c_str());
 }
 
 TEST_CASE(test_builtin_preset_fidelity, "Config") {
@@ -163,7 +159,9 @@ TEST_CASE(test_toml_preset_bridge, "Config") {
     FFBEngine engine;
     InitializeEngine(engine);
     
-    if (std::filesystem::exists("user_presets")) std::filesystem::remove_all("user_presets");
+    TestDirectoryGuard temp_dir("tmp_test_preset_bridge");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
 
     Config::presets.clear();
     Config::presets.push_back(Preset("Default", true));
@@ -186,16 +184,17 @@ TEST_CASE(test_toml_preset_bridge, "Config") {
         }
     }
     ASSERT_TRUE(found);
-    ASSERT_TRUE(std::filesystem::exists("user_presets/CustomUserPreset.toml"));
+    ASSERT_TRUE(std::filesystem::exists(Config::m_user_presets_path + "/CustomUserPreset.toml"));
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_toml_migration_from_ini, "Config") {
     std::cout << "\nTest: Migration from config.ini to config.toml" << std::endl;
     
-    // 1. Create a legacy config.ini
-    std::string ini_file = "config.ini";
-    std::string toml_file = "config.toml";
-    std::remove(toml_file.c_str()); // Ensure it doesn't exist
+    TestDirectoryGuard temp_dir("tmp_test_migration_ini");
+    std::string ini_file = temp_dir.path() + "/config.ini";
+    std::string toml_file = temp_dir.path() + "/config.toml";
+    std::string original_config = Config::m_config_path;
 
     {
         std::ofstream file(ini_file);
@@ -227,9 +226,8 @@ TEST_CASE(test_toml_migration_from_ini, "Config") {
     // 5. Verify it's valid TOML and has the values
     toml::table tbl = toml::parse_file(toml_file);
     ASSERT_NEAR((float)((*tbl.get_as<toml::table>("General"))["gain"].value_or(0.0)), 0.65f, 0.0001f);
-
-    std::remove(ini_file.c_str());
-    std::remove(toml_file.c_str());
+    
+    Config::m_config_path = original_config;
 }
 
 } // namespace FFBEngineTests

@@ -1,13 +1,12 @@
-name = "Guide: Oversteer (Rear Grip)"
+name = "Guide: Understeer (Front Grip)"
 [General]
 gain = 1.0
 [FrontAxle]
-understeer_effect = 0.0
+understeer_effect = 0.61
 [RearAxle]
-sop_effect = 0.08
-sop_scale = 1.0
-rear_align_effect = 0.90
-oversteer_boost = 0.65
+sop_effect = 0.0
+oversteer_boost = 0.0
+rear_align_effect = 0.0
 sop_yaw_gain = 0.0
 sop_smoothing_factor = 0.0
 [Advanced]

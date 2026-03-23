@@ -15,9 +15,12 @@ TEST_CASE(test_preset_version_persistence, "Config") {
     p.app_version = "0.7.147"; // Use the fixed version to avoid migration
     
     // 2. Save it to user_presets as TOML
-    if (std::filesystem::exists("user_presets")) std::filesystem::remove_all("user_presets");
-    std::filesystem::create_directories("user_presets");
-    std::string test_file = "user_presets/VersionTestPreset.toml";
+    TestDirectoryGuard temp_dir("tmp_test_version_persistence");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+    
+    std::filesystem::create_directories(Config::m_user_presets_path);
+    std::string test_file = Config::m_user_presets_path + "/VersionTestPreset.toml";
     
     {
         std::ofstream file(test_file);
@@ -48,7 +51,7 @@ TEST_CASE(test_preset_version_persistence, "Config") {
         FAIL_TEST("VersionTestPreset not found after loading.");
     }
 
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
+    Config::m_user_presets_path = original_user_presets;
 }
 
 TEST_CASE(test_legacy_preset_migration, "Config") {
@@ -58,7 +61,11 @@ TEST_CASE(test_legacy_preset_migration, "Config") {
     // or migrated from config.toml. Direct LoadPresets only sees user_presets/*.toml.
     // Let's use ImportPreset to verify migration logic.
     
-    std::string test_file = "test_legacy_presets.ini";
+    TestDirectoryGuard temp_dir("tmp_test_legacy_migration");
+    std::string original_user_presets = Config::m_user_presets_path;
+    Config::m_user_presets_path = temp_dir.path() + "/user_presets";
+    
+    std::string test_file = temp_dir.path() + "/test_legacy_presets.ini";
     {
         std::ofstream file(test_file);
         file << "[Preset:LegacyPreset]\n";
@@ -87,7 +94,7 @@ TEST_CASE(test_legacy_preset_migration, "Config") {
         FAIL_TEST("LegacyPreset not found.");
     }
 
-    if (std::filesystem::exists(test_file)) std::filesystem::remove(test_file);
+    Config::m_user_presets_path = original_user_presets;
 }
 
 } // namespace FFBEngineTests

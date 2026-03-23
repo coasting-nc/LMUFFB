@@ -1,10 +1,28 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 
 
 
+
+---
+
+## [0.7.223] - 2026-03-23
+
+### Fixed
+- **Windows Defender Heuristic False Positives Remediation (Issue #500)**
+  - **Replaced `system()` with `ShellExecuteW`**: Mitigated a critical behavioral trigger (`Win32/Wacapew.A!ml`) by using the native Windows API for launching the log analyzer. Non-Windows platforms continue to use `system()` for compatibility.
+  - **Moved Built-in Presets to Windows Resources**: Drastically reduced binary entropy by moving large TOML string literals from the `.rdata` section into a Windows Resource File (`.rc`). This eliminates a primary signal used by static analysis heuristic engines.
+  - **Relocated Assets**: Moved built-in `.toml` presets from `src/core/builtin_presets/` to `assets/builtin_presets/` for improved project structure.
+  - **Robust Resource Loading**: Implemented a dedicated `LoadTextResource` helper in `Config.cpp` using `std::string_view` for safe and efficient parsing of embedded resources.
+  - **Hardened Resource Paths**: Fixed build failures by using CMake-driven absolute paths in `res.rc`, ensuring reliable compilation across different build directory structures.
+  - **Softened Migration Logic**: Disabled automatic `.bak` file renaming during the config transition to avoid "ransomware-like" behavioral patterns during first-run.
+  - **Cleaned Up Suspicious Imports**: Removed unnecessary `<psapi.h>` inclusion to reduce the application's suspicion score.
+- **Test Suite Isolation & Cleanup (Issue #502)**
+  - **Implemented `TestDirectoryGuard`**: Introduced an RAII-based utility to ensure all test-generated files are isolated in temporary directories and automatically purged after execution.
+  - **Eliminated File Pollution**: Fixed multiple tests that were incorrectly writing `config.toml`, `test_config_all.toml`, and other artifacts to the project root or `user_presets/` directory.
+- **Improved Cross-Platform Compatibility**: Added preprocessor guards to ensure that Windows-specific AV mitigations do not break the Linux build.
 
 ---
 

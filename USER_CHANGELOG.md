@@ -2,6 +2,20 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 23, 2026[/b][/size]
+[b]Version 0.7.223 - Anti-Virus Heuristic Mitigations & Test Isolation[/b]
+
+[b]New release[/b] (0.7.223): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Windows Defender Mitigations[/b]: This release addresses reported "False Positive" detections by Windows Defender ([i]Win32/Wacapew.A!ml[/i]). We have replaced legacy [i]system()[/i] calls with native Windows APIs and moved built-in presets into the official Windows Resource section of the executable. This reduces the "malware suspicion score" and improves overall security.
+[*][b]Improved Preset Loading[/b]: Built-in presets are now loaded using a high-performance C++17 resource loader ([i]std::string_view[/i]), ensuring safer parsing and better memory efficiency.
+[*][b]Relocated Assets[/b]: Consolidated internal preset files into a dedicated [i]assets/[/i] directory for a cleaner project structure.
+[*][b]Test Suite Hardening[/b]: Significantly improved our automated testing infrastructure to ensure no temporary files are left behind during development or validation.
+[/list]
+
+---
+
 [size=5][b]March 14, 2026[/b][/size]
 [b]Version 0.7.187 - Ccache Build Optimization[/b]
 

@@ -1,6 +1,13 @@
 #include "Config.h"
 #include "Version.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <string_view>
+#include <optional>
+#include "../gui/resource.h"
+#else
 #include "GeneratedBuiltinPresets.h"
+#endif
 #include "logging/Logger.h"
 #include <fstream>
 #include <sstream>
@@ -18,6 +25,7 @@ std::string Config::m_last_preset_name = "Default";
 std::string Config::m_config_path = "config.toml";
 bool Config::m_auto_start_logging = false;
 std::string Config::m_log_path = "logs/";
+std::string Config::m_user_presets_path = "user_presets";
 
 // Window Geometry Defaults (v0.5.5)
 int Config::win_pos_x = 100;
@@ -33,6 +41,31 @@ std::recursive_mutex Config::m_static_loads_mutex;
 std::atomic<bool> Config::m_needs_save{ false };
 
 std::vector<Preset> Config::presets;
+    
+#ifdef _WIN32
+// Helper to safely load raw binary/text data from a Windows PE resource
+static std::optional<std::string_view> LoadTextResource(int resourceId) {
+    HMODULE hModule = GetModuleHandle(nullptr);
+    
+    // Find the resource by ID and type (RT_RCDATA)
+    HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(resourceId), RT_RCDATA);
+    if (!hResource) return std::nullopt;
+
+    // Load it into memory
+    HGLOBAL hMemory = LoadResource(hModule, hResource);
+    if (!hMemory) return std::nullopt;
+
+    // Get the exact size in bytes
+    DWORD dwSize = SizeofResource(hModule, hResource);
+    
+    // Get the pointer to the first byte
+    void* pData = LockResource(hMemory);
+    if (!pData || dwSize == 0) return std::nullopt;
+
+    // Return a string_view (Pointer + Size). No null-terminator required!
+    return std::string_view(static_cast<const char*>(pData), dwSize);
+}
+#endif
 
 // Helper to compare semantic version strings
 static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
@@ -386,8 +419,8 @@ static std::string SanitizeFilename(std::string name) {
 }
 
 static void SaveUserPresetFile(const Preset& p) {
-    std::string filename = "user_presets/" + SanitizeFilename(p.name) + ".toml";
-    std::filesystem::create_directories("user_presets");
+    std::string filename = Config::m_user_presets_path + "/" + SanitizeFilename(p.name) + ".toml";
+    std::filesystem::create_directories(Config::m_user_presets_path);
     std::ofstream file(filename);
     if (file.is_open()) {
         file << PresetToToml(p);
@@ -980,7 +1013,62 @@ void Config::LoadPresets() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     presets.clear();
 
-    // 1. Load Built-in Presets from embedded BUILTIN_PRESETS map
+#ifdef _WIN32
+    // 1. Load Built-in Presets from Windows Resources
+    static const std::vector<std::pair<int, std::string>> resource_presets = {
+        { IDR_PRESET_DEFAULT, "Default" },
+        { IDR_PRESET_FANATEC_CSL_DD__GT_DD_PRO, "Fanatec CSL DD / GT DD Pro" },
+        { IDR_PRESET_FANATEC_PODIUM_DD1DD2, "Fanatec Podium DD1/DD2" },
+        { IDR_PRESET_GM___YAW_KICK_DD_21_NM__MOZA_R21_ULTRA_, "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)" },
+        { IDR_PRESET_GM_DD_21_NM__MOZA_R21_ULTRA_, "GM DD 21 Nm (Moza R21 Ultra)" },
+        { IDR_PRESET_GT3_DD_15_NM__SIMAGIC_ALPHA_, "GT3 DD 15 Nm (Simagic Alpha)" },
+        { IDR_PRESET_GUIDE_BRAKING_LOCKUP, "Guide: Braking & Lockup" },
+        { IDR_PRESET_GUIDE_GYROSCOPIC_DAMPING, "Guide: Gyroscopic Damping" },
+        { IDR_PRESET_GUIDE_OVERSTEER__REAR_GRIP_, "Guide: Oversteer (Rear Grip)" },
+        { IDR_PRESET_GUIDE_SLIDE_TEXTURE__SCRUB_, "Guide: Slide & Texture (Scrub)" },
+        { IDR_PRESET_GUIDE_SOP_YAW__KICK_, "Guide: SoP & Yaw (Kick)" },
+        { IDR_PRESET_GUIDE_TRACTION_LOSS__SPIN_, "Guide: Traction Loss (Spin)" },
+        { IDR_PRESET_GUIDE_UNDERSTEER__FRONT_GRIP_, "Guide: Understeer (Front Grip)" },
+        { IDR_PRESET_LMPXHY_DD_15_NM__SIMAGIC_ALPHA_, "LMPx/HY DD 15 Nm (Simagic Alpha)" },
+        { IDR_PRESET_LOGITECH_G25G27G29G920, "Logitech G25/G27/G29/G920" },
+        { IDR_PRESET_MOZA_R5R9R16R21, "Moza R5 / R9 / R16 / R21" },
+        { IDR_PRESET_SIMAGIC_ALPHAALPHA_MINIALPHA_U, "Simagic Alpha / Alpha Mini / Alpha U" },
+        { IDR_PRESET_SIMUCUBE_2_SPORTPROULTIMATE, "Simucube 2 Sport / Pro / Ultimate" },
+        { IDR_PRESET_T300_V0_7_164, "Thrustmaster T300 (v0.7.164 Optimized)" },
+        { IDR_PRESET_TEST_GAME_BASE_FFB_ONLY, "Test: Game Base FFB Only" },
+        { IDR_PRESET_TEST_NO_EFFECTS, "Test: No Effects" },
+        { IDR_PRESET_TEST_REAR_ALIGN_TORQUE_ONLY, "Test: Rear Align Torque Only" },
+        { IDR_PRESET_TEST_SLIDE_TEXTURE_ONLY, "Test: Slide & Texture Only" },
+        { IDR_PRESET_TEST_SOP_BASE_ONLY, "Test: SoP Base Only" },
+        { IDR_PRESET_TEST_SOP_ONLY, "Test: SoP Only" },
+        { IDR_PRESET_TEST_TEXTURES_ONLY, "Test: Textures Only" },
+        { IDR_PRESET_TEST_UNDERSTEER_ONLY, "Test: Understeer Only" },
+        { IDR_PRESET_TEST_YAW_KICK_ONLY, "Test: Yaw Kick Only" },
+        { IDR_PRESET_THRUSTMASTER_T_GTT_GT_II, "Thrustmaster T-GT / T-GT II" },
+        { IDR_PRESET_THRUSTMASTER_T300TX, "Thrustmaster T300 / TX" },
+        { IDR_PRESET_THRUSTMASTER_TS_PCTS_XW, "Thrustmaster TS-PC / TS-XW" }
+    };
+
+    for (const auto& [resId, displayName] : resource_presets) {
+        auto content = LoadTextResource(resId);
+        if (content) {
+            try {
+                toml::table tbl = toml::parse(*content);
+                Preset p("Unnamed", true);
+                TomlToPreset(tbl, p);
+                if (p.name == "Unnamed") {
+                    p.name = displayName;
+                }
+                p.is_builtin = true;
+                p.Validate();
+                presets.push_back(p);
+            } catch (const std::exception& e) {
+                Logger::Get().Log("[Config] Error parsing built-in preset resource %d: %s", resId, e.what());
+            }
+        }
+    }
+#else
+    // 1. Load Built-in Presets from embedded BUILTIN_PRESETS map (Linux)
     for (auto const& [name, content] : BUILTIN_PRESETS) {
         try {
             toml::table tbl = toml::parse(content);
@@ -998,11 +1086,12 @@ void Config::LoadPresets() {
             Logger::Get().Log("[Config] Error parsing embedded built-in preset %s: %s", std::string(name).c_str(), e.what());
         }
     }
+#endif
 
-    // 2. Load User Presets from user_presets/ directory
-    std::filesystem::create_directories("user_presets");
+    // 2. Load User Presets from m_user_presets_path directory
+    std::filesystem::create_directories(m_user_presets_path);
     try {
-        for (const auto& entry : std::filesystem::directory_iterator("user_presets")) {
+        for (const auto& entry : std::filesystem::directory_iterator(m_user_presets_path)) {
             if (entry.is_regular_file() && entry.path().extension() == ".toml") {
                 try {
                     toml::table tbl = toml::parse_file(entry.path().string());
@@ -1070,7 +1159,7 @@ void Config::DeletePreset(int index, const FFBEngine& engine) {
     if (presets[index].is_builtin) return;
 
     std::string name = presets[index].name;
-    std::string filename = "user_presets/" + SanitizeFilename(name) + ".toml";
+    std::string filename = m_user_presets_path + "/" + SanitizeFilename(name) + ".toml";
     if (std::filesystem::exists(filename)) {
         std::filesystem::remove(filename);
     }

@@ -81,12 +81,13 @@ TEST_CASE(test_config_malformed_input, "Config") {
 
     // Create config with malformed numeric values
     {
-        std::ofstream ofs("malformed_config.toml");
+        TestDirectoryGuard temp_dir("tmp_test_malformed");
+        std::string test_file = temp_dir.path() + "/malformed_config.toml";
+        std::ofstream ofs(test_file);
         ofs << "[General]\ngain = \"abc\"\n[FrontAxle]\nundersteer = \"def\"\n";
         ofs.close();
 
-        Config::Load(engine, "malformed_config.toml");
-        std::remove("malformed_config.toml");
+        Config::Load(engine, test_file);
     }
 }
 
@@ -95,17 +96,17 @@ TEST_CASE(test_config_migration_logic, "Config") {
 
     // Test legacy understeer migration (> 2.0)
     {
-        std::ofstream ofs("legacy_config.ini");
+        TestDirectoryGuard temp_dir("tmp_test_legacy");
+        std::string test_file = temp_dir.path() + "/legacy_config.ini";
+        std::ofstream ofs(test_file);
         ofs << "understeer=150.0\nmax_torque_ref=100.0\n";
         ofs.close();
 
         // Must call MigrateFromLegacyIni directly as Load expects TOML
-        Config::MigrateFromLegacyIni(engine, "legacy_config.ini");
+        Config::MigrateFromLegacyIni(engine, test_file);
         ASSERT_NEAR(engine.m_front_axle.understeer_effect, 1.5, 0.001);
         ASSERT_NEAR(engine.m_general.wheelbase_max_nm, 15.0, 0.001);
         ASSERT_NEAR(engine.m_general.target_rim_nm, 10.0, 0.001);
-
-        std::remove("legacy_config.ini");
     }
 }
 
@@ -140,7 +141,9 @@ TEST_CASE(test_config_exhaustive_keys, "Config") {
     FFBEngine engine;
     // Create config with all possible keys in TOML format to ensure Load() covers them all
     {
-        std::ofstream ofs("exhaustive_config.toml");
+        TestDirectoryGuard temp_dir("tmp_test_exhaustive");
+        std::string test_file = temp_dir.path() + "/exhaustive_config.toml";
+        std::ofstream ofs(test_file);
         ofs << "[System]\n";
         ofs << "app_version = \"1.0\"\n";
         ofs << "always_on_top = true\nlast_device_guid = \"GUID\"\nlast_preset_name = \"Preset\"\n";
@@ -203,8 +206,7 @@ TEST_CASE(test_config_exhaustive_keys, "Config") {
 
         ofs.close();
 
-        Config::Load(engine, "exhaustive_config.toml");
-        std::remove("exhaustive_config.toml");
+        Config::Load(engine, test_file);
     }
 }
 

@@ -322,6 +322,7 @@ struct Preset {
 class Config {
 public:
     static std::string m_config_path; // Default: "config.toml"
+    static std::string m_user_presets_path; // Default: "user_presets"
     static void Save(const FFBEngine& engine, const std::string& filename = "");
     static void Load(FFBEngine& engine, const std::string& filename = "");
 

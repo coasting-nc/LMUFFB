@@ -19,8 +19,9 @@ TEST_CASE_TAGGED(test_logger_start_stop, "Diagnostics", {"Logger"}) {
     info.track_name = "TestTrack";
     info.app_version = "0.7.3-test";
     
+    TestDirectoryGuard temp_dir("tmp_test_logs_start_stop");
     // Start logging
-    AsyncLogger::Get().Start(info, "test_logs");
+    AsyncLogger::Get().Start(info, temp_dir.path());
     
     ASSERT_TRUE(AsyncLogger::Get().IsLogging() == true);
     
@@ -40,7 +41,8 @@ TEST_CASE_TAGGED(test_logger_frame_logging, "Diagnostics", {"Logger"}) {
     info.track_name = "TestTrack";
     info.app_version = "0.7.3-test";
     
-    AsyncLogger::Get().Start(info, "test_logs");
+    TestDirectoryGuard temp_dir("tmp_test_logs_frame");
+    AsyncLogger::Get().Start(info, temp_dir.path());
     
     LogFrame frame = {};
     // v0.7.126: Decimation removed. 40 ticks = 40 frames.
@@ -67,7 +69,8 @@ TEST_CASE_TAGGED(test_logger_marker, "Diagnostics", {"Logger"}) {
     info.track_name = "TestTrack";
     info.app_version = "0.7.3-test";
     
-    AsyncLogger::Get().Start(info, "test_logs");
+    TestDirectoryGuard temp_dir("tmp_test_logs_marker");
+    AsyncLogger::Get().Start(info, temp_dir.path());
     
     // Tick 1: Logged!
     LogFrame frame = {};
@@ -96,7 +99,8 @@ TEST_CASE_TAGGED(test_logger_filename_sanitization, "Diagnostics", {"Logger"}) {
     info.track_name = "Spa/Belgium<Test>";     // Contains invalid chars
     info.app_version = "0.7.9-test";
     
-    AsyncLogger::Get().Start(info, "test_logs");
+    TestDirectoryGuard temp_dir("tmp_test_logs_sanitize");
+    AsyncLogger::Get().Start(info, temp_dir.path());
     
     std::string full_path = AsyncLogger::Get().GetFilename();
     std::cout << "Generated filename: " << full_path << std::endl;
@@ -145,8 +149,9 @@ TEST_CASE_TAGGED(test_logger_performance_impact, "Diagnostics", {"Logger"}) {
     auto end_no_log = std::chrono::high_resolution_clock::now();
     auto duration_no_log = std::chrono::duration_cast<std::chrono::microseconds>(end_no_log - start_no_log).count();
     
+    TestDirectoryGuard temp_dir("tmp_test_logs_perf");
     // Measure with logging
-    AsyncLogger::Get().Start(info, "test_logs");
+    AsyncLogger::Get().Start(info, temp_dir.path());
     auto start_with_log = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < iterations; i++) {
         if (AsyncLogger::Get().IsLogging()) {
@@ -177,7 +182,8 @@ TEST_CASE_TAGGED(test_logger_header_version_check, "Diagnostics", {"Logger"}) {
     info.track_name = "TestTrack";
     info.app_version = LMUFFB_VERSION;
     
-    AsyncLogger::Get().Start(info, "test_logs");
+    TestDirectoryGuard temp_dir("tmp_test_logs_header");
+    AsyncLogger::Get().Start(info, temp_dir.path());
     std::string filename = AsyncLogger::Get().GetFilename();
     AsyncLogger::Get().Stop();
     
@@ -194,7 +200,6 @@ TEST_CASE_TAGGED(test_logger_header_version_check, "Diagnostics", {"Logger"}) {
     ASSERT_TRUE(line.find(expected_start) == 0);
     
     file.close();
-    std::remove(filename.c_str());
 }
 
 } // namespace FFBEngineTests
