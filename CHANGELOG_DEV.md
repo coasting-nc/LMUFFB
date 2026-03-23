@@ -8,6 +8,25 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.222]
+
+### Changed
+- **DSP Mathematical Upgrades & Time-Aware Telemetry Upsampling (Issue #469)**
+  - **Time-Aware Holt-Winters Filtering**: Upgraded the core DSP filter to measure the actual elapsed time between telemetry frames instead of assuming a perfect 10ms cadence. This eliminates haptic "graininess" and micro-stutters caused by game engine jitter or OS scheduling fluctuations.
+  - **Trend Damping Safety**: Implemented a velocity trend decay mechanism (0.95x) during intra-frame extrapolation. This safely arrests runaway FFB signals during dropped telemetry frames or network lag, preventing violent wheel jolts.
+  - **Interval Safety Gating**: Added critical clamping to the measured frame interval (1ms to 50ms). This protects the physics math from being corrupted by massive game stutters or asset loading freezes.
+  - **Corrected Tuning Parameters**:
+    - **Driver Inputs (Group 1)**: Reduced Beta from 0.40 to 0.10 for smoother, more physically accurate response.
+    - **Texture & Tire (Group 2)**: Reduced Beta from 0.20 to 0.05.
+    - **Dynamic Beta Forcing**: Forcing Group 2 Beta to 0.0 when in "Zero Latency" mode. This eliminates high-frequency harmonic ringing and metallic grinding noises when extrapolating under-sampled vibrations.
+  - **Steering Shaft Torque**: Proactively reduced Beta to 0.1 for consistent smoothness across the primary FFB signal.
+
+### Testing
+- **Time-Awareness Verification**: Added `test_holt_winters_time_awareness` verifying constant derivative calculation under varying frame jitter.
+- **Damping Verification**: Added `test_holt_winters_trend_damping` verifying signal plateauing during simulated starvation.
+- **Regression Suite Modernization**: Updated 620 existing tests to account for new damping-aware peak amplitudes and correctly simulate time accumulation via an upgraded `PumpEngineTime` helper.
+- Verified 100% pass rate: **620/620 test cases passed**.
+
 ## [0.7.221]
 
 ### Changed

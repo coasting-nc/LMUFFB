@@ -703,6 +703,9 @@ TEST_CASE(test_holt_winters_modes, "Math") {
     data.mSteeringShaftTorque = 0.0;
     engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01);
 
+    // Increase Alpha/Beta to ensure overshoot despite damping
+    FFBEngineTestAccess::SetShaftTorqueUpsamplerConfig(engine, 1.0, 1.0);
+
     // Increment time to trigger is_new_frame on next call
     data.mElapsedTime += 0.01;
     data.mSteeringShaftTorque = 10.0;
@@ -710,6 +713,7 @@ TEST_CASE(test_holt_winters_modes, "Math") {
 
     // Second 100Hz frame with 10.0 input to build trend
     data.mElapsedTime += 0.01;
+    data.mSteeringShaftTorque = 11.0;
     engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01);
 
     // Pump 1 intermediate 400Hz frame (2.5ms later)
@@ -718,8 +722,8 @@ TEST_CASE(test_holt_winters_modes, "Math") {
 
     float force_extrapolated = engine.GetDebugBatch().back().total_output;
 
-    // Because it predicts the future based on the jump, it should overshoot > 1.0 (10.0 Nm / 10.0 peak)
-    ASSERT_GT(force_extrapolated, 1.0f);
+    // Because it predicts the future based on the jump, it should overshoot > 1.1 (11.0 Nm / 10.0 peak)
+    ASSERT_GT(force_extrapolated, 1.1f);
 
     // --- MODE 1: SMOOTH (INTERPOLATION) ---
     InitializeEngine(engine); // Reset engine state

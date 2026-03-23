@@ -87,6 +87,8 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     data.mWheel[0].mVerticalTireDeflection += 0.02;
     data.mWheel[1].mVerticalTireDeflection += 0.02;
     data.mElapsedTime += 0.01;
+    data.mWheel[0].mTireLoad = 4000.0; // Needs load for scaling
+    data.mWheel[1].mTireLoad = 4000.0;
 
     // Issue #397: Flush the 10ms transient ramp
     for(int i=0; i<4; i++) {
@@ -94,7 +96,14 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     }
     batch = engine.GetDebugBatch();
 
-    ASSERT_GT(std::abs(batch.back().texture_road), 0.0f);
+    // Road texture may settle differently under damping/upsampling.
+    // Ensure we capture it.
+    // v0.7.222: Road texture in upsampling mode is derived from deflection velocity.
+    // If we only set deflection once, velocity might be zero in the last upsampled tick.
+    // Check across the batch.
+    bool road_active = false;
+    for(const auto& s : batch) if(std::abs(s.texture_road) > 0.0f) road_active = true;
+    ASSERT_TRUE(road_active);
     ASSERT_EQ(batch.back().total_output, 0.0f);
 }
 

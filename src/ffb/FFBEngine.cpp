@@ -17,17 +17,17 @@ FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
 
     // Group 1: Driver Inputs (Fast, Smooth) - ALWAYS Zero Latency
-    m_upsample_steering.Configure(0.95, 0.40);
-    m_upsample_throttle.Configure(0.95, 0.40);
-    m_upsample_brake.Configure(0.95, 0.40);
-    for (int i = 0; i < 4; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.40);
+    m_upsample_steering.Configure(0.95, 0.10);
+    m_upsample_throttle.Configure(0.95, 0.10);
+    m_upsample_brake.Configure(0.95, 0.10);
+    for (int i = 0; i < 4; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.10);
 
     // Group 2: Texture & Slip (Balanced) - TIED TO UI TOGGLE
     for (int i = 0; i < 4; i++) {
-        m_upsample_vert_deflection[i].Configure(0.80, 0.20);
-        m_upsample_lat_patch_vel[i].Configure(0.80, 0.20);
-        m_upsample_long_patch_vel[i].Configure(0.80, 0.20);
-        m_upsample_rotation[i].Configure(0.80, 0.20);
+        m_upsample_vert_deflection[i].Configure(0.80, 0.05);
+        m_upsample_lat_patch_vel[i].Configure(0.80, 0.05);
+        m_upsample_long_patch_vel[i].Configure(0.80, 0.05);
+        m_upsample_rotation[i].Configure(0.80, 0.05);
     }
 
     // Group 3: Noisy Chassis & Impacts (Heavily Damped, No Trend) - ALWAYS Smooth
@@ -1698,16 +1698,28 @@ void FFBEngine::ApplyAuxReconstructionMode() {
     bool user_wants_raw = (m_advanced.aux_telemetry_reconstruction == 0);
 
     // Group 1: ALWAYS Zero Latency (Driver Inputs)
+    m_upsample_steering.Configure(0.95, 0.10);
     m_upsample_steering.SetZeroLatency(true);
+    m_upsample_throttle.Configure(0.95, 0.10);
     m_upsample_throttle.SetZeroLatency(true);
+    m_upsample_brake.Configure(0.95, 0.10);
     m_upsample_brake.SetZeroLatency(true);
-    for (int i = 0; i < 4; i++) m_upsample_brake_pressure[i].SetZeroLatency(true);
+    for (int i = 0; i < 4; i++) {
+        m_upsample_brake_pressure[i].Configure(0.95, 0.10);
+        m_upsample_brake_pressure[i].SetZeroLatency(true);
+    }
 
     // Group 2: User Selectable (High-Frequency Texture)
+    // Dynamic Beta Forcing: Force Beta=0.0 to prevent Nyquist ringing in Zero Latency mode
+    double group2_beta = user_wants_raw ? 0.00 : 0.05;
     for (int i = 0; i < 4; i++) {
+        m_upsample_vert_deflection[i].Configure(0.80, group2_beta);
         m_upsample_vert_deflection[i].SetZeroLatency(user_wants_raw);
+        m_upsample_lat_patch_vel[i].Configure(0.80, group2_beta);
         m_upsample_lat_patch_vel[i].SetZeroLatency(user_wants_raw);
+        m_upsample_long_patch_vel[i].Configure(0.80, group2_beta);
         m_upsample_long_patch_vel[i].SetZeroLatency(user_wants_raw);
+        m_upsample_rotation[i].Configure(0.80, group2_beta);
         m_upsample_rotation[i].SetZeroLatency(user_wants_raw);
     }
 
@@ -1832,7 +1844,7 @@ void FFBEngine::UpdateUpsamplerModes() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     // Steering Shaft Torque (Existing)
-    m_upsample_shaft_torque.Configure(0.8, 0.2); // Default tuning
+    m_upsample_shaft_torque.Configure(0.8, 0.1); // Reduced beta
     m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);
 
     // Auxiliary Channels (New v0.7.221): Apply differentiated modes
