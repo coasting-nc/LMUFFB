@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.235]
+
+### Changed
+- **Unity Build Main Expansion (Phase 1 Completion)**:
+  - Whitelisted `src/physics/SteeringUtils.cpp` into the CMake `UNITY_READY_MAIN` pipeline, compiling it seamlessly alongside `VehicleUtils.cpp` to improve core engine compilation speed.
+  - Fully decoupled and encapsulated `CalculateSoftLock` into the standalone `LMUFFB::SteeringUtils` module, bypassing MSVC C2888 declaration errors and resolving the architectural violation for the monolithic `FFBEngine` class.
+  - Completed Phase 1 (Leaf Utility Modules) of the Unity Build Refactoring Plan.
+
+---
 ## [0.7.234]
 
 ### Changed

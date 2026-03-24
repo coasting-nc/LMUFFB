@@ -281,6 +281,7 @@ endif()
 # 1. Define the whitelist of files we have verified to be Unity-safe
 set(UNITY_READY_MAIN
     VehicleUtils.cpp
+    SteeringUtils.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist

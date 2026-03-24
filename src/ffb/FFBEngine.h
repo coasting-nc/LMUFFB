@@ -536,7 +536,6 @@ private:
     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext& ctx);
 };
 
 #endif // FFBENGINE_H

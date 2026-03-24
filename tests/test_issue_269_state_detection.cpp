@@ -67,7 +67,7 @@ TEST_CASE_TAGGED(test_issue_269_soft_lock_preservation, "Functional", (std::vect
     ASSERT_NE(force_muted, 0.0);
     // Invert force is true by default in engine, so if steering is 1.1, soft lock is positive Nm,
     // but calculation depends on wheelbase_max_nm etc.
-    // FFBEngine::calculate_soft_lock sets ctx.soft_lock_force.
+    // LMUFFB::SteeringUtils::CalculateSoftLock sets ctx.soft_lock_force.
     // If allowed=false, output_force is zeroed, but ctx.soft_lock_force is preserved.
 }
 

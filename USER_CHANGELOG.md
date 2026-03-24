@@ -3,6 +3,18 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.235 - Core Efficiency & Milestone 1 Completion[/b]
+
+[b]New release[/b] (0.7.235): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Milestone 1 Completion[/b]: Completed the first major phase of the application's underlying structural reorganization.
+[*][b]Faster Processing[/b]: Integrated the `SteeringUtils` component module into the new high-speed compilation track, meaning new testing modifications and improvements to steering mechanics can be built into updates noticeably faster, accelerating future development.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
 [b]Version 0.7.234 - Advanced Namespace Consolidation[/b]
 
 [b]New release[/b] (0.7.234): https://github.com/coasting-nc/LMUFFB/releases

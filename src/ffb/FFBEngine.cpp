@@ -3,6 +3,7 @@
 #include "StringUtils.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
+#include "../physics/SteeringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
 #include <mutex>
@@ -761,7 +762,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     calculate_slide_texture(upsampled_data, ctx);
     calculate_road_texture(upsampled_data, ctx);
     calculate_suspension_bottoming(upsampled_data, ctx);
-    calculate_soft_lock(upsampled_data, ctx);
+    LMUFFB::SteeringUtils::CalculateSoftLock(upsampled_data, ctx, m_advanced, m_general, m_safety, m_steering_velocity_smoothed);
 
     // v0.7.78 FIX: Support stationary/garage soft lock (Issue #184)
     // If not allowed (e.g. in garage or AI driving), mute all forces EXCEPT Soft Lock.
@@ -1781,7 +1782,7 @@ void FFBEngine::ResetNormalization() {
 }
 
 // Helper: Calculate Suspension Bottoming (v0.6.22)
-// NOTE: calculate_soft_lock has been moved to SteeringUtils.cpp.
+// NOTE: calculate_soft_lock has been moved to SteeringUtils.h/cpp.
 void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     if (!m_vibration.bottoming_enabled) return;
     bool triggered = false;

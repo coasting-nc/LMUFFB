@@ -21,6 +21,7 @@
 #include "../src/io/GameConnector.h"
 #include "../src/utils/StringUtils.h"
 #include "../src/io/RestApiProvider.h"
+#include "../src/physics/SteeringUtils.h"
 #include "test_performance_types.h"
 
 class RestApiProviderTestAccess {
@@ -506,7 +507,7 @@ public:
         e.calculate_suspension_bottoming(data, ctx);
     }
     static void CallCalculateSoftLock(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
-        e.calculate_soft_lock(data, ctx);
+        LMUFFB::SteeringUtils::CalculateSoftLock(data, ctx, e.m_advanced, e.m_general, e.m_safety, e.m_steering_velocity_smoothed);
     }
     static void SetScrubDragGain(FFBEngine& e, float val) { e.m_vibration.scrub_drag_gain = val; }
     static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_vibration.bottoming_enabled = val; }
