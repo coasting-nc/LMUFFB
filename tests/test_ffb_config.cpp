@@ -164,7 +164,7 @@ TEST_CASE(test_config_safety_clamping, "Config") {
     std::remove("tmp_unsafe.toml");
 }
 
-TEST_CASE(test_config_migration_logic, "Config") {
+TEST_CASE(test_config_migration_logic_ffb, "Config") {
     std::cout << "\nTest: Config Migration Logic (INI -> Engine)" << std::endl;
 
     FFBEngine engine;

@@ -1,10 +1,24 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 
 
 
+
+---
+
+## [0.7.227]
+
+### Fixed
+- **Resolved Unity Build Name Clashes**:
+  - Renamed multiple duplicate `TEST_CASE` names that were causing redefinition errors in larger unity batches (`test_legacy_config_migration`, `test_config_migration_logic`, and `test_unconditional_vert_accel_update`).
+  - This allows the test suite to be bundled into significantly larger unity chunks without symbol pollution.
+
+### Changed
+- **Enhanced Unity Build Performance**:
+  - Optimized the test suite build speed by increasing the `UNITY_BUILD_BATCH_SIZE` from 15 to **100**.
+  - Reduced the number of generated translation units for the test suite, resulting in faster CI/CD and local compilation by minimizing redundant header parsing.
 
 ---
 

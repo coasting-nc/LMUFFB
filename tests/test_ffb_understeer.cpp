@@ -139,7 +139,7 @@ TEST_CASE(test_understeer_effect_scaling, "Understeer") {
     ASSERT_TRUE(f0 > f1 && f1 > f2);
 }
 
-TEST_CASE(test_legacy_config_migration, "Understeer") {
+TEST_CASE(test_understeer_legacy_migration, "Understeer") {
     std::cout << "\nTest: Legacy Config Migration" << std::endl;
     
     float legacy_val = 50.0f; 

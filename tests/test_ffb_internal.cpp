@@ -445,7 +445,7 @@ TEST_CASE(test_signal_conditioning_helper, "Internal") {
     ASSERT_NEAR(result, 10.0, 0.01);
 }
 
-TEST_CASE(test_unconditional_vert_accel_update, "Internal") {
+TEST_CASE(test_unconditional_vert_accel_internal, "Internal") {
     std::cout << "\nTest: Unconditional m_prev_vert_accel Update (v0.6.36)" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);

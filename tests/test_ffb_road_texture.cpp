@@ -242,7 +242,7 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
 }
 
 // [Physics][Integration] Unconditional vertical accel update
-TEST_CASE(test_unconditional_vert_accel_update, "RoadTexture") {
+TEST_CASE(test_unconditional_vert_accel_road, "RoadTexture") {
     std::cout << "\nTest: Unconditional m_prev_vert_accel Update (v0.6.36) [Physics][Integration]" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);

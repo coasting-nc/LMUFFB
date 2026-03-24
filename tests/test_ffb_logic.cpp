@@ -623,7 +623,7 @@ TEST_CASE(test_config_persistence_braking_group, "Logic") {
     ASSERT_NEAR(engine_load.m_braking.lockup_rear_boost, 2.0f, 0.001f);
 }
 
-TEST_CASE(test_legacy_config_migration, "Logic") {
+TEST_CASE(test_logic_legacy_migration, "Logic") {
     std::cout << "\nTest: Legacy Config Migration (Load Cap)" << std::endl;
 
     TestDirectoryGuard temp_dir("tmp_logic_legacy");

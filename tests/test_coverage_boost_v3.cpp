@@ -91,7 +91,7 @@ TEST_CASE(test_config_malformed_input, "Config") {
     }
 }
 
-TEST_CASE(test_config_migration_logic, "Config") {
+TEST_CASE(test_config_migration_logic_coverage, "Config") {
     FFBEngine engine;
 
     // Test legacy understeer migration (> 2.0)
