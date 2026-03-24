@@ -53,7 +53,7 @@ void GameConnector::_DisconnectLocked() {
 
 bool GameConnector::TryConnect() {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    if (m_connected) return true;
+    if (IsConnected()) return true;
 
     // Ensure we don't leak handles from a previous partial/failed attempt
     _DisconnectLocked();
