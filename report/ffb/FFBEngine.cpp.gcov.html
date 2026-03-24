@@ -31,13 +31,13 @@
             <td class="headerValue">coverage_filtered.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntryHi">99.4&nbsp;%</td>
+            <td class="headerCovTableEntryHi">99.3&nbsp;%</td>
             <td class="headerCovTableEntry">1065</td>
-            <td class="headerCovTableEntry">1059</td>
+            <td class="headerCovTableEntry">1058</td>
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-24 13:05:40</td>
+            <td class="headerValue">2026-03-24 13:32:20</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -49,9 +49,9 @@
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntryMed">76.1&nbsp;%</td>
+            <td class="headerCovTableEntryMed">76.0&nbsp;%</td>
             <td class="headerCovTableEntry">828</td>
-            <td class="headerCovTableEntry">630</td>
+            <td class="headerCovTableEntry">629</td>
           </tr>
                   <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
                 </table>
@@ -708,13 +708,13 @@
 <span id="L623"><span class="lineNum">     623</span>                 :<span class="tlaGNC">       69652 :     double compressed_load_factor = x;</span></span>
 <span id="L624"><span class="lineNum">     624</span>                 :             : </span>
 <span id="L625"><span class="lineNum">     625</span>                 :             :     // 3. Apply Compression</span>
-<span id="L626"><span class="lineNum">     626</span>         [<span class="tlaGBC" title="Branch 0 was taken 5341 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 64311 times"> + </span>]:<span class="tlaGNC">       69652 :     if (x &gt; upper_bound) {</span></span>
+<span id="L626"><span class="lineNum">     626</span>         [<span class="tlaGBC" title="Branch 0 was taken 5309 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 64343 times"> + </span>]:<span class="tlaGNC">       69652 :     if (x &gt; upper_bound) {</span></span>
 <span id="L627"><span class="lineNum">     627</span>                 :             :         // Linear compressed region</span>
-<span id="L628"><span class="lineNum">     628</span>                 :<span class="tlaGNC">        5341 :         compressed_load_factor = T + ((x - T) / R);</span></span>
-<span id="L629"><span class="lineNum">     629</span>         [<span class="tlaGBC" title="Branch 0 was taken 4942 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 59369 times"> + </span>]:<span class="tlaGNC">       64311 :     } else if (x &gt; lower_bound) {</span></span>
+<span id="L628"><span class="lineNum">     628</span>                 :<span class="tlaGNC">        5309 :         compressed_load_factor = T + ((x - T) / R);</span></span>
+<span id="L629"><span class="lineNum">     629</span>         [<span class="tlaGBC" title="Branch 0 was taken 4944 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 59399 times"> + </span>]:<span class="tlaGNC">       64343 :     } else if (x &gt; lower_bound) {</span></span>
 <span id="L630"><span class="lineNum">     630</span>                 :             :         // Quadratic soft-knee transition</span>
-<span id="L631"><span class="lineNum">     631</span>                 :<span class="tlaGNC">        4942 :         double diff = x - lower_bound;</span></span>
-<span id="L632"><span class="lineNum">     632</span>                 :<span class="tlaGNC">        4942 :         compressed_load_factor = x + (((1.0 / R) - 1.0) * (diff * diff)) / (DUAL_DIVISOR * W);</span></span>
+<span id="L631"><span class="lineNum">     631</span>                 :<span class="tlaGNC">        4944 :         double diff = x - lower_bound;</span></span>
+<span id="L632"><span class="lineNum">     632</span>                 :<span class="tlaGNC">        4944 :         compressed_load_factor = x + (((1.0 / R) - 1.0) * (diff * diff)) / (DUAL_DIVISOR * W);</span></span>
 <span id="L633"><span class="lineNum">     633</span>                 :             :     }</span>
 <span id="L634"><span class="lineNum">     634</span>                 :             : </span>
 <span id="L635"><span class="lineNum">     635</span>                 :             :     // 4. EMA Smoothing on the vibration multiplier (100ms time constant)</span>
@@ -1850,17 +1850,17 @@
 <span id="L1762"><span class="lineNum">    1762</span>                 :<span class="tlaGNC">         149 :     double saved_rear_load = 0.0;</span></span>
 <span id="L1763"><span class="lineNum">    1763</span>         [<span class="tlaGBC" title="Branch 0 was taken 149 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         149 :     std::string vName = m_metadata.GetVehicleName();</span></span>
 <span id="L1764"><span class="lineNum">    1764</span>                 :             :     </span>
-<span id="L1765"><span class="lineNum">    1765</span>   [<span class="tlaGBC" title="Branch 0 was taken 149 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 74 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 75 times"> + </span>]:<span class="tlaGNC">         149 :     if (Config::GetSavedStaticLoad(vName, saved_front_load)) {</span></span>
-<span id="L1766"><span class="lineNum">    1766</span>                 :<span class="tlaGNC">          74 :         m_static_front_load = saved_front_load;</span></span>
+<span id="L1765"><span class="lineNum">    1765</span>   [<span class="tlaGBC" title="Branch 0 was taken 149 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 75 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 74 times"> + </span>]:<span class="tlaGNC">         149 :     if (Config::GetSavedStaticLoad(vName, saved_front_load)) {</span></span>
+<span id="L1766"><span class="lineNum">    1766</span>                 :<span class="tlaGNC">          75 :         m_static_front_load = saved_front_load;</span></span>
 <span id="L1767"><span class="lineNum">    1767</span>                 :             :         </span>
-<span id="L1768"><span class="lineNum">    1768</span>   [<span class="tlaGBC" title="Branch 0 was taken 74 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 74 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          74 :         if (Config::GetSavedStaticLoad(vName + &quot;_rear&quot;, saved_rear_load)) {</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 67 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 7 times"> + </span>]
-<span id="L1769"><span class="lineNum">    1769</span>                 :<span class="tlaGNC">          67 :             m_static_rear_load = saved_rear_load;</span></span>
+<span id="L1768"><span class="lineNum">    1768</span>   [<span class="tlaGBC" title="Branch 0 was taken 75 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 75 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          75 :         if (Config::GetSavedStaticLoad(vName + &quot;_rear&quot;, saved_rear_load)) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 75 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
+<span id="L1769"><span class="lineNum">    1769</span>                 :<span class="tlaGNC">          75 :             m_static_rear_load = saved_rear_load;</span></span>
 <span id="L1770"><span class="lineNum">    1770</span>                 :             :         } else {</span>
-<span id="L1771"><span class="lineNum">    1771</span>                 :<span class="tlaGNC">           7 :             m_static_rear_load = m_auto_peak_front_load * 0.5;</span></span>
+<span id="L1771"><span class="lineNum">    1771</span>                 :<span class="tlaUNC tlaBgUNC">           0 :             m_static_rear_load = m_auto_peak_front_load * 0.5;</span></span>
 <span id="L1772"><span class="lineNum">    1772</span>                 :             :         }</span>
 <span id="L1773"><span class="lineNum">    1773</span>                 :             :         </span>
-<span id="L1774"><span class="lineNum">    1774</span>                 :<span class="tlaGNC">          74 :         m_static_load_latched = true;</span></span>
+<span id="L1774"><span class="lineNum">    1774</span>                 :<span class="tlaGNC tlaBgGNC">          75 :         m_static_load_latched = true;</span></span>
 <span id="L1775"><span class="lineNum">    1775</span>                 :             :     }</span>
 <span id="L1776"><span class="lineNum">    1776</span>                 :             : </span>
 <span id="L1777"><span class="lineNum">    1777</span>                 :<span class="tlaGNC">         149 :     m_smoothed_vibration_mult = 1.0;</span></span>

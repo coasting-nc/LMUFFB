@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-24 13:05:40</td>
+            <td class="headerValue">2026-03-24 13:32:20</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -111,7 +111,7 @@
 <span id="L40"><span class="lineNum">      40</span>                 :             :     SafetyConfig safety;</span>
 <span id="L41"><span class="lineNum">      41</span>                 :             : </span>
 <span id="L42"><span class="lineNum">      42</span>                 :             :     // 2. Constructors</span>
-<span id="L43"><span class="lineNum">      43</span>         [<span class="tlaGBC" title="Branch 0 was taken 2383 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        7149 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
+<span id="L43"><span class="lineNum">      43</span>         [<span class="tlaGBC" title="Branch 0 was taken 2384 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        7152 :     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}</span></span>
 <span id="L44"><span class="lineNum">      44</span>   [<span class="tlaGBC" title="Branch 0 was taken 1551 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1551 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        7755 :     Preset() : name(&quot;Unnamed&quot;), is_builtin(false), app_version(LMUFFB_VERSION) {} // Default constructor for file loading</span></span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : </span>
 <span id="L46"><span class="lineNum">      46</span>                 :             :     // 3. Fluent Setters (The &quot;Python Dictionary&quot; feel)</span>
@@ -356,20 +356,20 @@
 <span id="L285"><span class="lineNum">     285</span>                 :<span class="tlaGNC">        2220 :     }</span></span>
 <span id="L286"><span class="lineNum">     286</span>                 :             : </span>
 <span id="L287"><span class="lineNum">     287</span>                 :             :     // NEW: Capture current engine state into this preset</span>
-<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC">         516 :     void UpdateFromEngine(const FFBEngine&amp; engine) {</span></span>
-<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">         516 :         general = engine.m_general;</span></span>
-<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">         516 :         front_axle = engine.m_front_axle;</span></span>
-<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">         516 :         rear_axle = engine.m_rear_axle;</span></span>
-<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">         516 :         load_forces = engine.m_load_forces;</span></span>
-<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaGNC">         516 :         grip_estimation = engine.m_grip_estimation;</span></span>
-<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">         516 :         slope_detection = engine.m_slope_detection;</span></span>
-<span id="L295"><span class="lineNum">     295</span>                 :<span class="tlaGNC">         516 :         braking = engine.m_braking;</span></span>
-<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">         516 :         vibration = engine.m_vibration;</span></span>
-<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">         516 :         advanced = engine.m_advanced;</span></span>
-<span id="L298"><span class="lineNum">     298</span>                 :<span class="tlaGNC">         516 :         safety = engine.m_safety.m_config;</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :<span class="tlaGNC">         517 :     void UpdateFromEngine(const FFBEngine&amp; engine) {</span></span>
+<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">         517 :         general = engine.m_general;</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">         517 :         front_axle = engine.m_front_axle;</span></span>
+<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">         517 :         rear_axle = engine.m_rear_axle;</span></span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">         517 :         load_forces = engine.m_load_forces;</span></span>
+<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaGNC">         517 :         grip_estimation = engine.m_grip_estimation;</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">         517 :         slope_detection = engine.m_slope_detection;</span></span>
+<span id="L295"><span class="lineNum">     295</span>                 :<span class="tlaGNC">         517 :         braking = engine.m_braking;</span></span>
+<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">         517 :         vibration = engine.m_vibration;</span></span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">         517 :         advanced = engine.m_advanced;</span></span>
+<span id="L298"><span class="lineNum">     298</span>                 :<span class="tlaGNC">         517 :         safety = engine.m_safety.m_config;</span></span>
 <span id="L299"><span class="lineNum">     299</span>                 :             : </span>
-<span id="L300"><span class="lineNum">     300</span>                 :<span class="tlaGNC">         516 :         app_version = LMUFFB_VERSION;</span></span>
-<span id="L301"><span class="lineNum">     301</span>                 :<span class="tlaGNC">         516 :     }</span></span>
+<span id="L300"><span class="lineNum">     300</span>                 :<span class="tlaGNC">         517 :         app_version = LMUFFB_VERSION;</span></span>
+<span id="L301"><span class="lineNum">     301</span>                 :<span class="tlaGNC">         517 :     }</span></span>
 <span id="L302"><span class="lineNum">     302</span>                 :             : </span>
 <span id="L303"><span class="lineNum">     303</span>                 :<span class="tlaGNC">         472 :     bool Equals(const Preset&amp; p) const {</span></span>
 <span id="L304"><span class="lineNum">     304</span>                 :<span class="tlaGNC">         472 :         const float eps = 0.0001f;</span></span>
