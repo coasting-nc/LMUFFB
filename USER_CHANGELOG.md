@@ -3,6 +3,17 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.225 - Automated Security Scans[/b]
+
+[b]New release[/b] (0.7.225): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Added Automated Security Scans[/b]: To ensure the safety of every release, we have integrated Windows Defender into our automated build pipeline. Every version of lmuFFB is now scanned for threats immediately after it is compiled. If any security issue is detected, the build will automatically fail and the binary will not be released.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
 [b]Version 0.7.224 - ShellExecuteW Behavioral Hardening[/b]
 
 [b]New release[/b] (0.7.224): https://github.com/coasting-nc/LMUFFB/releases

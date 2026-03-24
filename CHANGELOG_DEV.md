@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -8,7 +8,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.7.224] 
+## [0.7.225]
+
+### Added
+- **Automated Windows Defender Scanning (CI/CD)**:
+  - Integrated `MpCmdRun.exe` into GitHub Actions workflows (`windows-build-and-test.yml` and `manual-release.yml`) to perform static analysis of the compiled executable.
+  - Implemented pre-test scanning to block artifact distribution if heuristic or signature threats are detected during build.
+  - Added "silent quarantine" detection: the workflow now fails immediately if the build-generated binary is deleted by real-time protection before the manual scan begins.
+
+---
+
+## [0.7.224]
 
 ### Fixed
 - **Hardened ShellExecuteW Implementation (Issue #500 follow-up)**

@@ -55,6 +55,35 @@ jobs:
           cmake -S . -B build
           cmake --build build --config Release --clean-first
 
+      - name: Windows Defender Scan
+        shell: pwsh
+        run: |
+          $exePath = "build\Release\LMUFFB.exe"
+          
+          # 1. Check if the file even exists. If Defender caught it during compilation, 
+          # it might have already silently quarantined/deleted it.
+          if (-not (Test-Path $exePath)) {
+              Write-Error "Executable not found! It may have been quarantined by Defender during the build."
+              exit 1
+          }
+          
+          $absPath = (Resolve-Path $exePath).Path
+          Write-Host "Scanning $absPath with Windows Defender..."
+          
+          # 2. Run the Defender command-line utility (ScanType 3 is a custom file/directory scan)
+          & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$absPath"
+          
+          # 3. Check the exit code. 
+          # 0 = Clean, 2 = Threat Detected
+          if ($LASTEXITCODE -eq 2) {
+              Write-Error "Windows Defender detected a threat! Workflow failed."
+              exit 1
+          } elseif ($LASTEXITCODE -eq 0) {
+              Write-Host "Windows Defender scan passed. No threats detected."
+          } else {
+              Write-Warning "Windows Defender scan returned unexpected exit code: $LASTEXITCODE"
+          }
+
       - name: Run Tests
         shell: pwsh
         run: |
