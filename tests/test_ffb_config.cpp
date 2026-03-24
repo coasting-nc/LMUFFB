@@ -23,7 +23,7 @@ TEST_CASE(test_config_persistence, "Config") {
 TEST_CASE(test_channel_stats, "Config") {
     std::cout << "\nTest: Channel Stats Logic" << std::endl;
     
-    ChannelStats stats;
+    LMUFFB::ChannelStats stats;
     
     // Sequence: 10, 20, 30
     stats.Update(10.0);

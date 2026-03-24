@@ -105,3 +105,102 @@ These files tie everything together and represent the most deeply coupled module
 2. **`extern "C"` Blocks:** If you have `extern "C"` declarations for C-APIs or plugin structures, be extremely careful not to wrap them inside a C++ namespace. They expect strict C-linkage and normally must remain global.
 3. **Forward Declarations:** If a header forward-declares a type from another file (e.g., `class FFBEngine;`), make sure the forward declaration is now correctly placed inside the matching `LMUFFB` namespace block, not floating globally.
 4. **Macros:** Macros (`#define`) do not respect namespaces. During this refactoring, convert local `.cpp` macros into `constexpr` variables inside your anonymous namespace to prevent macro leakage during the final Unity chunk concatenation.
+
+## 5. Handling Vendor Files and Proprietary Game APIs
+
+When refactoring the codebase, you will naturally encounter third-party vendor code (e.g., `src/ext/toml++/toml.hpp`, `vendor/lz4`, `vendor/imgui`) and proprietary game interface headers (`src/io/lmu_sm_interface/SharedMemoryInterface.hpp`, `PluginObjects.hpp`, `InternalsPlugin.hpp`).
+
+### Do we enforce the same refactoring rules on these files?
+
+**Absolutely NOT.** You must strictly exempt these files from the "Rigorous Namespace Usage" policy. Attempting to modify them carries severe risks:
+
+1. **Proprietary Game Files:** The 3 files located in `src/io/lmu_sm_interface/` define the exact memory layout (ABI), external linkages, and API contract expected by the actual game engine. Wrapping them in a C++ namespace or changing their internal linkage will break the plugin structure. The game will fail to load or communicate with your plugin.
+2. **Vendor Libraries:** Modifying complex libraries like `imgui` or `toml++` makes it extremely painful to update them to newer versions. Fortunately, modern libraries (like `toml++` and `imgui`) already responsibly encapsulate their code within their own namespaces (`toml::`, `ImGui::`). C-libraries (like `lz4`) are inherently designed to operate in the global scope.
+
+### How to manage them in a Unity Build
+
+Since we cannot (and should not) refactor these external files to conform to our internal namespace rules, we manage them via build configuration and rigid `#include` discipline:
+
+1. **Standalone Compilation for Vendor `.cpp` Files:**
+   If a vendor library requires compiling source files (e.g., `imgui.cpp`, `lz4.c`), we simply exclude them from our Unity build chunk. We flag them in CMake so they compile normally as standalone translation units:
+   ```cmake
+   set_source_files_properties(vendor/imgui/imgui.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+   ```
+   This ensures that any chaotic internal macros or static variables inside vendor implementations cannot clash with our `LMUFFB` internals during the unity chunking phase.
+
+2. **Strict `#include` Isolation for Headers:**
+   When including `SharedMemoryInterface.hpp`, `toml.hpp`, or `imgui.h` in our newly refactored files, **always** place the `#include` directive *outside* and *above* the `namespace LMUFFB { ... }` block. 
+   
+   *Correct:*
+   ```cpp
+   #include <toml++/toml.hpp>
+   #include "io/lmu_sm_interface/SharedMemoryInterface.hpp"
+   
+   namespace LMUFFB {
+       // Our code safely uses them without mutating their intended scope.
+   }
+   ```
+   
+   *Incorrect (Catastrophic):*
+   ```cpp
+   namespace LMUFFB {
+       #include "io/lmu_sm_interface/SharedMemoryInterface.hpp" // Disastrous!
+   }
+   ```
+
+By treating vendor code and proprietary APIs as immutable global resources, we preserve direct update paths and maintain game ABI continuity, while applying our rigorous standards exclusively to the code we own.
+
+## 6. Progress Checklist
+
+This section tracks the progress made towards fully refactoring the main code and enabling it to compile under Unity builds.
+
+### 6.1 Unity Build Infrastructure Support
+- [ ] Add `UNITY_READY_MAIN` whitelist logic to `src/CMakeLists.txt` for incremental `.cpp` chunking.
+- [ ] Apply `SKIP_UNITY_BUILD_INCLUSION` automatically to unrefactored `.cpp` files in `src/CMakeLists.txt`.
+- [ ] Ensure vendor modules (`imgui.cpp`, etc.) are explicitly excluded from Unity inclusion.
+
+### 6.2 Phase 1: Leaf Utility Modules (Headers & Source)
+- [x] Refactored `logging/PerfStats.h` (Wrapped `ChannelStats` in `namespace LMUFFB`).
+- [ ] Refactor `utils/MathUtils.h` (Currently using `namespace ffb_math`).
+- [ ] Refactor `logging/RateMonitor.h`.
+- [ ] Refactor `physics/VehicleUtils.h` & `.cpp` (First viable `.cpp` file for `UNITY_READY_MAIN`).
+- [ ] Refactor `physics/SteeringUtils.cpp`.
+
+### 6.3 Phase 2: Core Data Structures
+- [ ] Refactor `core/Config.h` & `.cpp`.
+- [ ] Refactor `ffb/FFBConfig.h`.
+- [ ] Refactor `ffb/FFBSnapshot.h`.
+- [ ] Wrap isolated I/O wrappers (`io/rF2/rF2Data.h`).
+
+### 6.4 Phase 3: Core Logic (FFB & Physics)
+- [ ] Refactor `ffb/UpSampler.h` & `.cpp`.
+- [ ] Refactor `ffb/FFBSafetyMonitor.h` & `.cpp`.
+- [ ] Refactor `ffb/FFBDebugBuffer.h` & `.cpp`.
+- [ ] Refactor `physics/GripLoadEstimation.cpp`.
+- [ ] Refactor `ffb/FFBEngine.h` & `.cpp` (The central consumer).
+
+### 6.5 Phase 4: OS Boundaries & Subsystems
+- [ ] Refactor `ffb/DirectInputFFB.h` & `.cpp`.
+- [ ] Refactor `gui/DXGIUtils.h` & `.cpp`.
+- [ ] Refactor `io/RestApiProvider.h` & `.cpp`.
+- [ ] Refactor `logging/AsyncLogger.h` & `.cpp`.
+
+### 6.6 Phase 5: UI & Final Integration
+- [ ] Refactor `gui/Tooltips.h` & `gui/GuiWidgets.h`.
+- [ ] Refactor `gui/GuiLayer_*.cpp`.
+- [ ] Refactor `io/GameConnector.h` & `.cpp`.
+- [ ] Finalize `core/main.cpp` (Retaining global `main()` declaration).
+
+---
+
+## 7. Questions & Answers
+
+### Q: Why wasn't the Makefile (CMakeLists) updated during the first refactoring? I thought we could enable a Unity build for `src/logging/PerfStats.h` immediately.
+**A:** CMake's Unity builds exclusively process **Translation Units** (source files like `.cpp` or `.c`). Header files (`.h` and `.hpp`) are never compiled directly on their own; they are textually inserted by the preprocessor when a `.cpp` file includes them. Because `PerfStats.h` is a header-only structure with no corresponding `.cpp` source, there is no discrete file to attach a `UNITY_BUILD_INCLUSION` property to. The header automatically begins reaping the benefits of the Unity batch build the moment a `.cpp` file that uses it (e.g., `VehicleUtils.cpp` or `FFBEngine.cpp`) is moved into the `UNITY_READY_MAIN` source whitelist.
+
+### Q: Should we have specialized namespaces for each file, "module", or group of files? Why was `PerfStats.h` put directly in the `LMUFFB` namespace rather than a more specific one?
+**A:** **Yes**, the architectural end goal (Step 3 of the Refactoring Plan) strictly encourages enforcing subsystem namespaces like `LMUFFB::Logging::ChannelStats` or `LMUFFB::Physics::VehicleUtils`.
+
+For the demonstrative "first refactoring", it was temporarily attached to the global `LMUFFB` root namespace instead of a specialized `LMUFFB::Logging` namespace for the following practical reasons:
+1. **Incremental Pragmatism:** The immediate goal was proving "Global Namespace Elimination" while guaranteeing zero build failures. Creating a deep submodule hierarchy out the gate generates a cascade of complex naming updates across non-refactored monolithic classes like `FFBEngine`. 
+2. **Current Coupling:** In the current unrefactored state, `FFBEngine` utilizes `ChannelStats` heavily inside its own global definition. When `FFBEngine` itself eventually undergoes the 5-step process (Phase 3), the utility modules like `PerfStats` will be neatly transitioned down into their final `LMUFFB::Logging` domain, leaving a vastly cleaner set of `using namespace` scopes inside the final class implementations.

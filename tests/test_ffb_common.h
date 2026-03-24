@@ -470,7 +470,7 @@ public:
     static void SetFlatspotStrength(FFBEngine& e, float val) { e.m_front_axle.flatspot_strength = val; }
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_braking.abs_pulse_enabled = val; }
     static void SetLastLogTime(FFBEngine& e, std::chrono::steady_clock::time_point t) { e.last_log_time = t; }
-    static ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
+    static LMUFFB::ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
     static void SetRestApiEnabled(FFBEngine& e, bool val) { e.m_advanced.rest_api_enabled = val; }
     static void SetRestApiPort(FFBEngine& e, int val) { e.m_advanced.rest_api_port = val; }
     

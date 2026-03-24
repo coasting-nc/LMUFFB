@@ -315,10 +315,10 @@ public:
     FFBSafetyMonitor m_safety;
 
     // Telemetry Stats
-    ChannelStats s_torque;
-    ChannelStats s_front_load;
-    ChannelStats s_front_grip;
-    ChannelStats s_lat_g;
+    LMUFFB::ChannelStats s_torque;
+    LMUFFB::ChannelStats s_front_load;
+    LMUFFB::ChannelStats s_front_grip;
+    LMUFFB::ChannelStats s_lat_g;
     std::chrono::steady_clock::time_point last_log_time;
 
     // Thread-Safe Buffer (Producer-Consumer)

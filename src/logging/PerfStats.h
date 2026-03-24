@@ -4,6 +4,8 @@
 #include <cmath>
 #include <limits>
 
+namespace LMUFFB {
+
 // Stats helper
 struct ChannelStats {
     // Session-wide stats (Persistent)
@@ -50,5 +52,7 @@ struct ChannelStats {
     double Avg() { return interval_count > 0 ? interval_sum / interval_count : 0.0; }
     void Reset() { ResetInterval(); }
 };
+
+} // namespace LMUFFB
 
 #endif // PERF_STATS_H
