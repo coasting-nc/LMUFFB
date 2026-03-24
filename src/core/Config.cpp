@@ -19,6 +19,8 @@
 
 extern std::recursive_mutex g_engine_mutex;
 
+namespace LMUFFB {
+
 bool Config::m_always_on_top = true;
 std::string Config::m_last_device_guid = "";
 std::string Config::m_last_preset_name = "Default";
@@ -1422,3 +1424,5 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
         Save(engine);
     }
 }
+
+} // namespace LMUFFB

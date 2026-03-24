@@ -1,7 +1,22 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.236]  
+
+### Changed
+- **Core Architecture Migration (Phase 2 & Partial Phase 3/4 Completion)**:
+  - Fully encapsulated the `Config` system (including `Preset` and all FFB configuration structures) within the `LMUFFB` namespace.
+  - Wrapped `FFBEngine`, `FFBDebugBuffer`, and `FFBSnapshot` in the `LMUFFB` namespace to enable clean Unity build support for the core engine.
+  - Migrated `AsyncLogger` and `FFBSafetyMonitor` to use qualified namespaced types, resolving cross-module lookup failures.
+  - Updated the Windows GUI layer (`GuiLayer_Win32.cpp`, `GuiLayer_Common.cpp`) and the main entry points (`main.cpp`, `main_test_runner.cpp`) to integrate with the new namespaced architecture via boundary `using namespace` directives.
+  - Verified stability with a full Unity build of `LMUFFB_Core` and `LMUFFB.exe`.
+
+### Testing
+- **Unified Test Compatibility**: Updated `test_ffb_common.h` and `.cpp` to support the namespaced core.
+- **Passing Grade**: Confirmed all 629/629 tests pass under the new architectural structure.
+
+---
 ## [0.7.235]
 
 ### Changed

@@ -10,6 +10,8 @@
 #include <atomic>
 #include "Version.h"
 
+namespace LMUFFB {
+
 struct Preset {
     std::string name;
     bool is_builtin = false;
@@ -391,8 +393,7 @@ private:
     static void WritePresetFields(std::ofstream& file, const Preset& p);
 };
 
-
-
+} // namespace LMUFFB
 
 #endif
 

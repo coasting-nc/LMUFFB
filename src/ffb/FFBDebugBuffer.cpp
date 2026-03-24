@@ -1,5 +1,7 @@
 #include "FFBDebugBuffer.h"
 
+namespace LMUFFB {
+
 FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}
 
 void FFBDebugBuffer::Push(const FFBSnapshot& snap) {
@@ -21,3 +23,5 @@ size_t FFBDebugBuffer::Size() const {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_buffer.size();
 }
+
+} // namespace LMUFFB

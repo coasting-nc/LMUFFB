@@ -22,8 +22,8 @@
 #define NOINLINE __attribute__((noinline))
 #endif
 
-// Bring common math into scope
-using namespace LMUFFB;
+// Bring common math into scope (Removed for Unity Build support)
+// using namespace LMUFFB;
 // Default FFB calculation timestep. Used by FFBCalculationContext (defined before
 // FFBEngine, so cannot reference FFBEngine::DEFAULT_CALC_DT directly).
 // Note: FFBEngine also has a private member of the same name; this file-scope
@@ -60,7 +60,7 @@ struct GripResult {
     double slip_angle;      // Calculated slip angle (if approximated)
 };
 
-struct Preset;
+namespace LMUFFB { struct Preset; class FFBDebugBuffer; }
 
 namespace FFBEngineTests { class FFBEngineTestAccess; }
 
@@ -115,15 +115,15 @@ public:
     static constexpr int STR_BUF_64 = 64;
 
     // Settings (GUI Sliders)
-    GeneralConfig m_general;
-    FrontAxleConfig m_front_axle;
-    RearAxleConfig m_rear_axle;
-    LoadForcesConfig m_load_forces;
-    GripEstimationConfig m_grip_estimation;
-    SlopeDetectionConfig m_slope_detection;
-    BrakingConfig m_braking;
-    VibrationConfig m_vibration;
-    AdvancedConfig m_advanced;
+    LMUFFB::GeneralConfig m_general;
+    LMUFFB::FrontAxleConfig m_front_axle;
+    LMUFFB::RearAxleConfig m_rear_axle;
+    LMUFFB::LoadForcesConfig m_load_forces;
+    LMUFFB::GripEstimationConfig m_grip_estimation;
+    LMUFFB::SlopeDetectionConfig m_slope_detection;
+    LMUFFB::BrakingConfig m_braking;
+    LMUFFB::VibrationConfig m_vibration;
+    LMUFFB::AdvancedConfig m_advanced;
 
     // Configurable Smoothing & Caps (v0.3.9)
     bool m_invert_force = true;
@@ -249,8 +249,8 @@ public:
     double m_sop_load_smoothed = 0.0; // New v0.7.121
     
     // Filter Instances (v0.4.41)
-    BiquadNotch m_notch_filter;
-    BiquadNotch m_static_notch_filter;
+    LMUFFB::BiquadNotch m_notch_filter;
+    LMUFFB::BiquadNotch m_static_notch_filter;
 
     // Slope Detection Buffers (Circular) - v0.7.0
     static constexpr int SLOPE_BUFFER_MAX = 41;  
@@ -322,10 +322,10 @@ public:
     std::chrono::steady_clock::time_point last_log_time;
 
     // Thread-Safe Buffer (Producer-Consumer)
-    FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
+    LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class FFBEngineTests::FFBEngineTestAccess;
-    friend struct Preset;
+    friend struct LMUFFB::Preset;
 
     FFBEngine();
 

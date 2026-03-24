@@ -5,6 +5,8 @@
 #include <mutex>
 #include "FFBSnapshot.h"
 
+namespace LMUFFB {
+
 class FFBDebugBuffer {
 public:
     explicit FFBDebugBuffer(size_t capacity);
@@ -20,5 +22,7 @@ private:
     std::vector<FFBSnapshot> m_buffer;
     size_t m_capacity;
 };
+
+} // namespace LMUFFB
 
 #endif // FFDBEBUG_BUFFER_H

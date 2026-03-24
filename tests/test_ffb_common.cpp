@@ -1,6 +1,8 @@
 #include "test_ffb_common.h"
 #include "../src/io/GameConnector.h"
 
+using namespace LMUFFB;
+
 namespace FFBEngineTests {
 
 // --- Global Test Counters ---

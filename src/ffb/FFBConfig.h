@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cmath>
 
+namespace LMUFFB {
+
 struct GeneralConfig {
     float gain = 1.0f;
     float min_force = 0.0f;
@@ -444,5 +446,7 @@ struct SafetyConfig {
         stutter_threshold = (std::max)(1.01f, stutter_threshold);
     }
 };
+
+} // namespace LMUFFB
 
 #endif // FFBCONFIG_H

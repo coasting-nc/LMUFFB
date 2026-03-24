@@ -18,6 +18,8 @@
 #include "Logger.h"    // Added Logger
 #include "RateMonitor.h"
 #include "HealthMonitor.h"
+
+using namespace LMUFFB;
 #include "UpSampler.h"
 #include "TimeUtils.h"
 #include <optional>

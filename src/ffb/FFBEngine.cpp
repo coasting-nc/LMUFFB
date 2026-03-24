@@ -39,7 +39,7 @@ FFBEngine::FFBEngine() {
     m_upsample_local_rot_y.Configure(0.50, 0.0);
     for (int i = 0; i < 4; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);
 
-    Preset::ApplyDefaultsToEngine(*this);
+    LMUFFB::Preset::ApplyDefaultsToEngine(*this);
 
     // Initial apply to set m_last_aux_recon_mode and default latencies
     ApplyAuxReconstructionMode();

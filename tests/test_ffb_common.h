@@ -24,6 +24,8 @@
 #include "../src/physics/SteeringUtils.h"
 #include "test_performance_types.h"
 
+using namespace LMUFFB;
+
 class RestApiProviderTestAccess {
 public:
     static void SetFallbackRange(float val) {

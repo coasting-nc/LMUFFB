@@ -17,7 +17,7 @@ public:
     FFBSafetyMonitor() = default;
 
     // FFB Safety Settings
-    SafetyConfig m_config;
+    LMUFFB::SafetyConfig m_config;
 
     // API methods for FFBEngine
     double GetSafetyTimer() const { return safety_timer; }

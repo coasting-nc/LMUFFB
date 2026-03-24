@@ -282,6 +282,10 @@ endif()
 set(UNITY_READY_MAIN
     VehicleUtils.cpp
     SteeringUtils.cpp
+    Config.cpp
+    FFBDebugBuffer.cpp
+    FFBSafetyMonitor.cpp
+    FFBEngine.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist

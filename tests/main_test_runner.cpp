@@ -13,6 +13,8 @@
 #include "src/logging/Logger.h"
 #include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
+using namespace LMUFFB;
+
 #ifdef _WIN32
 #include <windows.h>
 #endif

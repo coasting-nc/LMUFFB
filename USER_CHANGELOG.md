@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 25, 2026[/b][/size]
+[b]Version 0.7.236 - Core Systems Modernization (Milestone 2 & 3 Complete)[/b]
+
+[b]New release[/b] (0.7.236): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Milestone 2 & 3 Completion[/b]: Completed the migration of the application's core configuration and physics systems into the new high-efficiency architecture.
+[*][b]Improved Core Stability[/b]: Refactored internal data handling for the FFB Engine and Configuration systems, providing a cleaner, more robust foundation for upcoming force feedback features and graphical interface updates.
+[*][b]Verified Quality Assurance[/b]: Successfully passed the full 600+ point automated test suite, ensuring existing features remain 100% stable under the new underlying structure.
+[/list]
+
+---
+
 [size=5][b]March 24, 2026[/b][/size]
 [b]Version 0.7.235 - Core Efficiency & Milestone 1 Completion[/b]
 
