@@ -135,46 +135,7 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
                 }
 
                 if (found) {
-                    std::string log_file = latest_path.string();
-                    
-                    // Get executable directory to find tools/ relative to the binary
-                    fs::path exe_dir = fs::current_path();
-#ifdef _WIN32
-                    char buffer[MAX_PATH];
-                    if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) {
-                        exe_dir = fs::path(buffer).parent_path();
-                    }
-#endif
-                    
-                    // Robust PYTHONPATH lookup
-                    std::string python_path = (exe_dir / "tools").string();
-                    if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) {
-                        // Dev environment fallbacks from CWD
-                        if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools";
-                        else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools";
-                        else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
-                    }
-
-                    // Windows Defender false positive mitigation :
-                    // Replacing  `system()`  with `ShellExecuteW` or `CreateProcessW`.
-                    // See docs\dev_docs\reports\av_detection_investigation_v0.7.222(pt.2).md
-#ifdef _WIN32
-                    // 1. Set the environment variable natively in the C++ process.
-                    // cmd.exe and python.exe will automatically inherit this.
-                    std::wstring wPythonPath = fs::path(python_path).wstring();
-                    SetEnvironmentVariableW(L"PYTHONPATH", wPythonPath.c_str());
-
-                    // 2. Build a clean, unchained command. 
-                    // /k tells cmd.exe to run the command and KEEP the window open (replacing the need for '& pause')
-                    std::wstring wLogFile = fs::path(log_file).wstring();
-                    std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
-                    
-                    // 3. Execute
-                    ShellExecuteW(NULL, L"open", L"cmd.exe", wArgs.c_str(), NULL, SW_SHOWNORMAL);
-#else
-                    std::string cmd = "PYTHONPATH=" + python_path + " python3 -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\"";
-                    system(cmd.c_str());
-#endif
+                    LaunchLogAnalyzer(latest_path.string());
                 }
             }
             ImGui::EndMenu();
@@ -182,6 +143,72 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
         ImGui::EndMainMenuBar();
     }
 }
+
+#ifdef LMUFFB_UNIT_TEST
+class GuiLayerTestAccess {
+public:
+    static void GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd);
+};
+
+static std::wstring g_last_shell_execute_args;
+static std::string g_last_system_cmd;
+void GuiLayerTestAccess::GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd) {
+    wArgs = g_last_shell_execute_args;
+    cmd = g_last_system_cmd;
+}
+#endif
+
+void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
+    namespace fs = std::filesystem;
+
+    // Get executable directory to find tools/ relative to the binary
+    fs::path exe_dir = fs::current_path();
+#ifdef _WIN32
+    char buffer[MAX_PATH];
+    if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) {
+        exe_dir = fs::path(buffer).parent_path();
+    }
+#endif
+
+    // Robust PYTHONPATH lookup
+    std::string python_path = (exe_dir / "tools").string();
+    if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) {
+        // Dev environment fallbacks from CWD
+        if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools";
+        else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools";
+        else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
+    }
+
+    // Windows Defender false positive mitigation :
+    // See docs\dev_docs\reports\av_detection_investigation_v0.7.222(pt.2).md
+#ifdef _WIN32
+    // 1. Set the environment variable natively in the C++ process.
+    // cmd.exe and python.exe will automatically inherit this.
+    std::wstring wPythonPath = fs::path(python_path).wstring();
+    SetEnvironmentVariableW(L"PYTHONPATH", wPythonPath.c_str());
+
+    // 2. Build a clean, unchained command. 
+    // /k tells cmd.exe to run the command and KEEP the window open (replacing the need for '& pause')
+    std::wstring wLogFile = fs::path(log_file).wstring();
+    std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
+
+#ifdef LMUFFB_UNIT_TEST
+    g_last_shell_execute_args = wArgs;
+#else
+    // 3. Execute
+    ShellExecuteW(NULL, L"open", L"cmd.exe", wArgs.c_str(), NULL, SW_SHOWNORMAL);
+#endif
+#else
+    std::string cmd = "PYTHONPATH=" + python_path + " python3 -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\"";
+#ifdef LMUFFB_UNIT_TEST
+    g_last_system_cmd = cmd;
+#else
+    system(cmd.c_str());
+#endif
+#endif
+}
+
+
 
 
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
