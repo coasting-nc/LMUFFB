@@ -77,28 +77,49 @@ jobs:
             exit 1
         }
         
-        # 1. Copy to Temp folder to bypass GitHub's D:\a\ workspace exclusions
-        $tempPath = Join-Path $env:TEMP "LMUFFB_scan.exe"
+        # 1. Create a dedicated scan directory at the root of C: to avoid workspace exclusions
+        $scanDir = "C:\AV_Scan"
+        New-Item -ItemType Directory -Path $scanDir -Force | Out-Null
+        $tempPath = Join-Path $scanDir "LMUFFB_scan.exe"
         Copy-Item -Path $exePath -Destination $tempPath -Force
+        
+        # 2. Force Defender to remove exclusions that GitHub Actions sets up for performance
+        Write-Host "Temporarily modifying Defender exclusions to force a scan..."
+        try {
+            # Remove our specific folder and the .exe extension from the whitelist
+            Remove-MpPreference -ExclusionPath $scanDir -ErrorAction SilentlyContinue
+            Remove-MpPreference -ExclusionExtension ".exe" -ErrorAction SilentlyContinue
+        } catch {
+            Write-Warning "Could not modify Defender exclusions. Scan might still be skipped."
+        }
+        
+        # Print current exclusions so we can see what GitHub is hiding
+        $prefs = Get-MpPreference
+        Write-Host "`n--- Current GitHub Runner Exclusions ---"
+        Write-Host "Excluded Paths: $($prefs.ExclusionPath)"
+        Write-Host "Excluded Extensions: $($prefs.ExclusionExtension)"
+        Write-Host "Excluded Processes: $($prefs.ExclusionProcess)"
+        Write-Host "----------------------------------------`n"
         
         Write-Host "Scanning $tempPath with Windows Defender..."
         
-        # 2. Run the scan
+        # 3. Run the scan
         & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$tempPath"
         $scanExitCode = $LASTEXITCODE
         
-        # 3. (Optional Verbosity) Print the Defender log file
+        # 4. Print the Defender log file with correct UTF-16 encoding
         $logPath = "$env:LOCALAPPDATA\Temp\MpCmdRun.log"
         if (Test-Path $logPath) {
             Write-Host "`n--- Windows Defender Detailed Log ---"
-            Get-Content $logPath | Select-Object -Last 15
+            # -Encoding Unicode fixes the garbled text and missing newlines
+            Get-Content $logPath -Encoding Unicode | Select-Object -Last 20
             Write-Host "-----------------------------------`n"
         }
         
-        # 4. Cleanup the temp file
-        Remove-Item -Path $tempPath -Force
+        # 5. Cleanup
+        Remove-Item -Path $scanDir -Recurse -Force
         
-        # 5. Evaluate results
+        # 6. Evaluate results
         if ($scanExitCode -eq 2) {
             Write-Error "❌ Windows Defender detected a threat! Workflow failed."
             exit 1

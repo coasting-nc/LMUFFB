@@ -161,6 +161,93 @@ Here is the updated step for your `.yml` file:
 Run this updated step, and you should see the scan take a few seconds and output the actual engine verification logs!
 
 
+# More Fixes to Defender Checks
+
+The garbled text and the "skipped" message are actually two separate quirks of how Windows Defender operates inside a GitHub Actions environment.
+
+### 1. Why is the text garbled? (The Encoding Issue)
+Windows Defender writes its log files (`MpCmdRun.log`) using **UTF-16 LE (Unicode)** encoding. By default, PowerShell's `Get-Content` command assumes files are standard UTF-8 or ASCII. When it reads a UTF-16 file without being told, it misinterprets the line breaks, causing sentences to mash together (e.g., `...found threat.Scanning...`). 
+
+We can fix this easily by adding `-Encoding Unicode` to the `Get-Content` command.
+
+### 2. Why was the scan skipped?
+To make builds run as fast as possible, GitHub heavily optimizes their Windows runners. One of the things they do is add massive **Exclusion Lists** to Windows Defender. They often exclude entire drives, specific extensions (like `.exe`), or specific processes (like the GitHub `runner.exe` or `pwsh.exe`). 
+
+If Defender sees that a file matches an exclusion rule, or if it was created by an excluded process, `MpCmdRun.exe` will instantly skip it.
+
+### The Fix
+Because GitHub Actions runners run with Administrator privileges, we can temporarily force Defender to drop its exclusions for our specific scan folder and the `.exe` extension, run the scan, and print the current exclusion list so you can see exactly what GitHub is doing behind the scenes.
+
+Here is the updated, highly verbose, and forced-scan YAML step:
+
+```yaml
+    - name: Windows Defender Scan
+      shell: pwsh
+      run: |
+        $exePath = "build\Release\LMUFFB.exe"
+        
+        if (-not (Test-Path $exePath)) {
+            Write-Error "Executable not found! It may have been quarantined during the build."
+            exit 1
+        }
+        
+        # 1. Create a dedicated scan directory at the root of C: to avoid workspace exclusions
+        $scanDir = "C:\AV_Scan"
+        New-Item -ItemType Directory -Path $scanDir -Force | Out-Null
+        $tempPath = Join-Path $scanDir "LMUFFB_scan.exe"
+        Copy-Item -Path $exePath -Destination $tempPath -Force
+        
+        # 2. Force Defender to remove exclusions that GitHub Actions sets up for performance
+        Write-Host "Temporarily modifying Defender exclusions to force a scan..."
+        try {
+            # Remove our specific folder and the .exe extension from the whitelist
+            Remove-MpPreference -ExclusionPath $scanDir -ErrorAction SilentlyContinue
+            Remove-MpPreference -ExclusionExtension ".exe" -ErrorAction SilentlyContinue
+        } catch {
+            Write-Warning "Could not modify Defender exclusions. Scan might still be skipped."
+        }
+        
+        # Print current exclusions so we can see what GitHub is hiding
+        $prefs = Get-MpPreference
+        Write-Host "`n--- Current GitHub Runner Exclusions ---"
+        Write-Host "Excluded Paths: $($prefs.ExclusionPath)"
+        Write-Host "Excluded Extensions: $($prefs.ExclusionExtension)"
+        Write-Host "Excluded Processes: $($prefs.ExclusionProcess)"
+        Write-Host "----------------------------------------`n"
+        
+        Write-Host "Scanning $tempPath with Windows Defender..."
+        
+        # 3. Run the scan
+        & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$tempPath"
+        $scanExitCode = $LASTEXITCODE
+        
+        # 4. Print the Defender log file with correct UTF-16 encoding
+        $logPath = "$env:LOCALAPPDATA\Temp\MpCmdRun.log"
+        if (Test-Path $logPath) {
+            Write-Host "`n--- Windows Defender Detailed Log ---"
+            # -Encoding Unicode fixes the garbled text and missing newlines
+            Get-Content $logPath -Encoding Unicode | Select-Object -Last 20
+            Write-Host "-----------------------------------`n"
+        }
+        
+        # 5. Cleanup
+        Remove-Item -Path $scanDir -Recurse -Force
+        
+        # 6. Evaluate results
+        if ($scanExitCode -eq 2) {
+            Write-Error "❌ Windows Defender detected a threat! Workflow failed."
+            exit 1
+        } elseif ($scanExitCode -eq 0) {
+            Write-Host "✅ Windows Defender scan passed. No threats detected."
+        } else {
+            Write-Warning "⚠️ Windows Defender scan returned unexpected exit code: $scanExitCode"
+        }
+```
+
+### What to expect now:
+1. **Clean Logs:** The log output at the end will be properly formatted with correct line breaks.
+2. **Exclusion Visibility:** You will see a block printed out showing exactly what paths and extensions GitHub has told Defender to ignore.
+3. **Forced Scan:** By moving the file to `C:\AV_Scan` and explicitly telling Defender `Remove-MpPreference -ExclusionPath C:\AV_Scan`, it should bypass the runner's optimizations and actually scan the bytes of your executable.
 
 # Adding VirusTotal Scan
 
