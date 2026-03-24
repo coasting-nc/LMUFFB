@@ -9,6 +9,7 @@ extern std::chrono::steady_clock::time_point g_mock_time;
 extern bool g_use_mock_time;
 #endif
 
+namespace LMUFFB {
 namespace TimeUtils {
     /**
      * @brief A simple interface for providing the current time.
@@ -20,6 +21,7 @@ namespace TimeUtils {
 #endif
         return std::chrono::steady_clock::now();
     }
-}
+} // namespace TimeUtils
+} // namespace LMUFFB
 
 #endif // TIMEOUTILS_H

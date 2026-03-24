@@ -161,8 +161,8 @@ This section tracks the progress made towards fully refactoring the main code an
 
 ### 6.2 Phase 1: Leaf Utility Modules (Headers & Source)
 - [x] Refactored `logging/PerfStats.h` (Wrapped `ChannelStats` in `namespace LMUFFB`).
-- [ ] Refactor `utils/MathUtils.h` (Currently using `namespace ffb_math`).
-- [ ] Refactor `logging/RateMonitor.h`.
+- [x] Refactor `utils/MathUtils.h` (Consolidated `ffb_math` into `namespace LMUFFB`).
+- [x] Refactor `utils/TimeUtils.h` & `logging/RateMonitor.h` (Wrapped in `namespace LMUFFB`).
 - [x] Refactor `physics/VehicleUtils.h` & `.cpp` (First viable `.cpp` file for `UNITY_READY_MAIN`).
 - [ ] Refactor `physics/SteeringUtils.cpp`.
 

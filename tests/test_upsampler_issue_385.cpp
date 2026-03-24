@@ -4,7 +4,7 @@
 
 namespace FFBEngineTests {
 
-using namespace ffb_math;
+using namespace LMUFFB;
 
 // Regression test for Issue #385: Reversed convolution and incorrect phase advancement
 TEST_CASE(test_upsampler_issue_385_regression, "UpSamplerPart2") {

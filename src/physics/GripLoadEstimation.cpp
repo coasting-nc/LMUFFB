@@ -24,7 +24,6 @@ extern std::recursive_mutex g_engine_mutex;
 #include <cmath>
 #include "StringUtils.h"
 
-using namespace ffb_math;
 using namespace LMUFFB;
 
 // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)

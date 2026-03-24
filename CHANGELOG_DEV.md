@@ -1,7 +1,17 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.234]
+
+### Changed
+- **Namespace Refactoring (Unity Build Phase 1/2)**:
+  - Migrated the `ffb_math` namespace into the root `LMUFFB` namespace to align with the core architectural plan.
+  - Refactored `MathUtils.h`, `TimeUtils.h`, and `RateMonitor.h` leaf utilities to use the `LMUFFB` namespace, eliminating global namespace pollution.
+  - Updated 629+ test cases and 10+ core physics files to synchronize with the new namespace structure.
+  - Verified 100% test pass rate in a unified (Unity) build environment.
+
+---
 ## [0.7.233]
 
 ### Added

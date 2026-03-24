@@ -11,7 +11,6 @@ extern std::recursive_mutex g_engine_mutex;
 #include <algorithm>
 #include <cmath>
 
-using namespace ffb_math;
 using namespace LMUFFB;
 
 FFBEngine::FFBEngine() {

@@ -5,6 +5,7 @@
 #include <atomic>
 #include "../utils/TimeUtils.h"
 
+namespace LMUFFB {
 /**
  * @brief Simple utility to monitor event frequency (Hz) over a 1-second sliding window.
  */
@@ -49,5 +50,6 @@ private:
     std::chrono::steady_clock::time_point m_startTime;
     std::atomic<long> m_lastRateScaled; // Rate multiplied by 100 for atomic storage
 };
+} // namespace LMUFFB
 
 #endif // RATEMONITOR_H

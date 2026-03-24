@@ -4,7 +4,7 @@
 
 namespace FFBEngineTests {
 
-using namespace ffb_math;
+using namespace LMUFFB;
 
 // Regression test for Issue #393: Phase Alignment (The "Stutter" Bug)
 // Currently, the resampler shifts its history buffer as soon as a new physics sample arrives.

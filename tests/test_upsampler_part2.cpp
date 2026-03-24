@@ -5,7 +5,7 @@
 
 namespace FFBEngineTests {
 
-using namespace ffb_math;
+using namespace LMUFFB;
 
 // 1. DC Gain Test: Constant input (1.0) should result in constant output (1.0) after filter delay.
 TEST_CASE(test_upsampler_dc_gain, "UpSamplerPart2") {

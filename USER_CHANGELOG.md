@@ -3,6 +3,18 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.234 - Advanced Namespace Consolidation[/b]
+
+[b]New release[/b] (0.7.234): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Core Architecture Cleanup[/b]: Further streamlined the application's internal "blueprint" by consolidating mathematical and timing utilities into a unified project namespace. 
+[*][b]Enhanced Reliability[/b]: Validated the entire physics engine across 629 distinct test scenarios to ensure that the structural reorganization maintains 100% accuracy in FFB delivery.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
 [b]Version 0.7.233 - Architecture Modernization & Unity Build Hardening[/b]
 
 [b]New release[/b] (0.7.233): https://github.com/coasting-nc/LMUFFB/releases

@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <array>
 
-namespace ffb_math {
+namespace LMUFFB {
 
 // Mathematical Constants
 static constexpr double PI = 3.14159265358979323846;
@@ -347,6 +347,6 @@ public:
     }
 };
 
-} // namespace ffb_math
+} // namespace LMUFFB
 
 #endif // MATH_UTILS_H

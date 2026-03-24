@@ -4,7 +4,7 @@
 namespace FFBEngineTests {
 
 TEST_CASE(test_biquad_notch_stability, "Math") {
-    ffb_math::BiquadNotch filter;
+    LMUFFB::BiquadNotch filter;
 
     // Normal update
     filter.Update(10.0, 400.0, 2.0); // 10Hz notch at 400Hz
@@ -29,51 +29,51 @@ TEST_CASE(test_biquad_notch_stability, "Math") {
 }
 
 TEST_CASE(test_biquad_clamping, "Math") {
-    ffb_math::BiquadNotch filter;
+    LMUFFB::BiquadNotch filter;
 
     // Low frequency clamping (min 1.0Hz)
     filter.Update(0.1, 400.0, 1.0);
-    ASSERT_NEAR(filter.b0, 1.0 / (1.0 + std::sin(2.0*ffb_math::PI*1.0/400.0)/(2.0*1.0)), 0.0001);
+    ASSERT_NEAR(filter.b0, 1.0 / (1.0 + std::sin(2.0*LMUFFB::PI*1.0/400.0)/(2.0*1.0)), 0.0001);
 
     // High frequency clamping (max 0.49 * sample_rate)
     filter.Update(300.0, 400.0, 1.0); // 300Hz > 196Hz (400*0.49)
-    ASSERT_NEAR(filter.b0, 1.0 / (1.0 + std::sin(2.0*ffb_math::PI*196.0/400.0)/(2.0*1.0)), 0.0001);
+    ASSERT_NEAR(filter.b0, 1.0 / (1.0 + std::sin(2.0*LMUFFB::PI*196.0/400.0)/(2.0*1.0)), 0.0001);
 }
 
 TEST_CASE(test_inverse_lerp_behavior, "Math") {
     // Normal range
-    ASSERT_NEAR(ffb_math::inverse_lerp(0.0, 10.0, 5.0), 0.5, 0.001);
+    ASSERT_NEAR(LMUFFB::inverse_lerp(0.0, 10.0, 5.0), 0.5, 0.001);
     
     // Clamping
-    ASSERT_NEAR(ffb_math::inverse_lerp(0.0, 10.0, 15.0), 1.0, 0.001);
-    ASSERT_NEAR(ffb_math::inverse_lerp(0.0, 10.0, -5.0), 0.0, 0.001);
+    ASSERT_NEAR(LMUFFB::inverse_lerp(0.0, 10.0, 15.0), 1.0, 0.001);
+    ASSERT_NEAR(LMUFFB::inverse_lerp(0.0, 10.0, -5.0), 0.0, 0.001);
     
     // Inverse range (min > max)
-    ASSERT_NEAR(ffb_math::inverse_lerp(10.0, 0.0, 5.0), 0.5, 0.001);
+    ASSERT_NEAR(LMUFFB::inverse_lerp(10.0, 0.0, 5.0), 0.5, 0.001);
     
     // Degenerate case (zero range): Implementation returns 1.0 if val >= min, else 0.0
-    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 5.0, 5.0), 1.0, 0.001);
-    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 5.0, 4.0), 0.0, 0.001); // value < min -> 0.0
-    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 5.0, 6.0), 1.0, 0.001); // value >= min -> 1.0
+    ASSERT_NEAR(LMUFFB::inverse_lerp(5.0, 5.0, 5.0), 1.0, 0.001);
+    ASSERT_NEAR(LMUFFB::inverse_lerp(5.0, 5.0, 4.0), 0.0, 0.001); // value < min -> 0.0
+    ASSERT_NEAR(LMUFFB::inverse_lerp(5.0, 5.0, 6.0), 1.0, 0.001); // value >= min -> 1.0
 
     // Inverse degenerate case (near-zero range, min > max): Implementation returns 1.0 if val <= min
-    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 4.999999, 5.0), 1.0, 0.001); // value <= min -> 1.0
-    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 4.999999, 5.1), 0.0, 0.001); // value > min -> 0.0
-    ASSERT_NEAR(ffb_math::inverse_lerp(5.0, 4.999999, 4.0), 1.0, 0.001); // value <= min -> 1.0
+    ASSERT_NEAR(LMUFFB::inverse_lerp(5.0, 4.999999, 5.0), 1.0, 0.001); // value <= min -> 1.0
+    ASSERT_NEAR(LMUFFB::inverse_lerp(5.0, 4.999999, 5.1), 0.0, 0.001); // value > min -> 0.0
+    ASSERT_NEAR(LMUFFB::inverse_lerp(5.0, 4.999999, 4.0), 1.0, 0.001); // value <= min -> 1.0
 }
 
 TEST_CASE(test_smoothstep_behavior, "Math") {
-    ASSERT_NEAR(ffb_math::smoothstep(0.0, 10.0, 0.0), 0.0, 0.001);
-    ASSERT_NEAR(ffb_math::smoothstep(0.0, 10.0, 10.0), 1.0, 0.001);
-    ASSERT_NEAR(ffb_math::smoothstep(0.0, 10.0, 5.0), 0.5, 0.001); // Symmetry at center
+    ASSERT_NEAR(LMUFFB::smoothstep(0.0, 10.0, 0.0), 0.0, 0.001);
+    ASSERT_NEAR(LMUFFB::smoothstep(0.0, 10.0, 10.0), 1.0, 0.001);
+    ASSERT_NEAR(LMUFFB::smoothstep(0.0, 10.0, 5.0), 0.5, 0.001); // Symmetry at center
     
     // Clamping
-    ASSERT_NEAR(ffb_math::smoothstep(0.0, 10.0, 15.0), 1.0, 0.001);
-    ASSERT_NEAR(ffb_math::smoothstep(0.0, 10.0, -5.0), 0.0, 0.001);
+    ASSERT_NEAR(LMUFFB::smoothstep(0.0, 10.0, 15.0), 1.0, 0.001);
+    ASSERT_NEAR(LMUFFB::smoothstep(0.0, 10.0, -5.0), 0.0, 0.001);
 
     // Degenerate case (zero range): Implementation returns 1.0 if x >= edge0, else 0.0
-    ASSERT_NEAR(ffb_math::smoothstep(5.0, 5.0, 5.0), 1.0, 0.001); // x >= edge0
-    ASSERT_NEAR(ffb_math::smoothstep(5.0, 5.0, 4.0), 0.0, 0.001); // x < edge0
+    ASSERT_NEAR(LMUFFB::smoothstep(5.0, 5.0, 5.0), 1.0, 0.001); // x >= edge0
+    ASSERT_NEAR(LMUFFB::smoothstep(5.0, 5.0, 4.0), 0.0, 0.001); // x < edge0
 }
 
 TEST_CASE(test_sg_derivative_ramp, "Math") {
@@ -91,7 +91,7 @@ TEST_CASE(test_sg_derivative_ramp, "Math") {
     
     // Latest sample is at (index - 1) = 40.
     // SG derivative should be 2.0
-    double deriv = ffb_math::calculate_sg_derivative(buffer, 41, window, dt, index);
+    double deriv = LMUFFB::calculate_sg_derivative(buffer, 41, window, dt, index);
     ASSERT_NEAR(deriv, 2.0, 0.001);
 }
 
@@ -102,15 +102,15 @@ TEST_CASE(test_sg_derivative_buffer_states, "Math") {
     int index = 0;
     
     // Empty buffer
-    double deriv = ffb_math::calculate_sg_derivative(buffer, 0, window, dt, index);
+    double deriv = LMUFFB::calculate_sg_derivative(buffer, 0, window, dt, index);
     ASSERT_NEAR(deriv, 0.0, 0.001);
     
     // 1-sample buffer
-    deriv = ffb_math::calculate_sg_derivative(buffer, 1, window, dt, index);
+    deriv = LMUFFB::calculate_sg_derivative(buffer, 1, window, dt, index);
     ASSERT_NEAR(deriv, 0.0, 0.001);
     
     // Half-full ( < window)
-    deriv = ffb_math::calculate_sg_derivative(buffer, 7, window, dt, index);
+    deriv = LMUFFB::calculate_sg_derivative(buffer, 7, window, dt, index);
     ASSERT_NEAR(deriv, 0.0, 0.001);
 }
 
@@ -119,17 +119,17 @@ TEST_CASE(test_adaptive_smoothing, "Math") {
     double dt = 0.0025; // 400Hz
     
     // Test slow smoothing (input near zero)
-    double out1 = ffb_math::apply_adaptive_smoothing(0.1, prev_out, dt, 0.05, 0.005, 1.0);
+    double out1 = LMUFFB::apply_adaptive_smoothing(0.1, prev_out, dt, 0.05, 0.005, 1.0);
     ASSERT_NEAR(out1, 0.00476, 0.001);
     
     // Test fast response (large delta)
     prev_out = 0.0;
-    double out2 = ffb_math::apply_adaptive_smoothing(10.0, prev_out, dt, 0.05, 0.005, 1.0);
+    double out2 = LMUFFB::apply_adaptive_smoothing(10.0, prev_out, dt, 0.05, 0.005, 1.0);
     ASSERT_NEAR(out2, 3.333, 0.01);
 
     // Test extreme sensitivity: Implementation handles sensitivity=0 by clamping t to 1.0
     prev_out = 0.0;
-    double out3 = ffb_math::apply_adaptive_smoothing(0.1, prev_out, dt, 0.05, 0.005, 0.0);
+    double out3 = LMUFFB::apply_adaptive_smoothing(0.1, prev_out, dt, 0.05, 0.005, 0.0);
     ASSERT_NEAR(out3, 0.0333, 0.001);
 }
 
@@ -141,17 +141,17 @@ TEST_CASE(test_slew_limiter, "Math") {
     // max change = 10 * 0.01 = 0.1
     
     // Attempt large jump (1.0 -> 5.0)
-    double out = ffb_math::apply_slew_limiter(5.0, prev_val, limit, dt);
+    double out = LMUFFB::apply_slew_limiter(5.0, prev_val, limit, dt);
     ASSERT_NEAR(out, 1.1, 0.001);
     ASSERT_NEAR(prev_val, 1.1, 0.001);
     
     // Small jump (1.1 -> 1.15)
-    out = ffb_math::apply_slew_limiter(1.15, prev_val, limit, dt);
+    out = LMUFFB::apply_slew_limiter(1.15, prev_val, limit, dt);
     ASSERT_NEAR(out, 1.15, 0.001);
 }
 
 TEST_CASE(test_holt_winters_time_awareness, "Math") {
-    ffb_math::HoltWintersFilter filter;
+    LMUFFB::HoltWintersFilter filter;
     filter.Configure(0.95, 0.10, 0.01); // 10ms default
 
     // Establishing a constant slope: 1.0 unit / 1.0 second
@@ -180,7 +180,7 @@ TEST_CASE(test_holt_winters_time_awareness, "Math") {
 }
 
 TEST_CASE(test_holt_winters_trend_damping, "Math") {
-    ffb_math::HoltWintersFilter filter;
+    LMUFFB::HoltWintersFilter filter;
     filter.Configure(1.0, 1.0, 0.01); // No smoothing, full trend tracking
 
     // Establish a high trend (100 units/sec)
@@ -202,7 +202,7 @@ TEST_CASE(test_holt_winters_trend_damping, "Math") {
 }
 
 TEST_CASE(test_holt_winters_lag_spike_upper_bound, "Math") {
-    ffb_math::HoltWintersFilter filter;
+    LMUFFB::HoltWintersFilter filter;
     filter.Configure(1.0, 1.0, 0.01); // No smoothing, full trend tracking
 
     // Normal frames (10ms)
@@ -225,7 +225,7 @@ TEST_CASE(test_holt_winters_lag_spike_upper_bound, "Math") {
 }
 
 TEST_CASE(test_holt_winters_double_frame_lower_bound, "Math") {
-    ffb_math::HoltWintersFilter filter;
+    LMUFFB::HoltWintersFilter filter;
     filter.Configure(0.2, 0.1, 0.01);
 
     filter.Process(1.0, 0.01, true);
@@ -244,7 +244,7 @@ TEST_CASE(test_holt_winters_double_frame_lower_bound, "Math") {
 }
 
 TEST_CASE(test_holt_winters_infinite_starvation, "Math") {
-    ffb_math::HoltWintersFilter filter;
+    LMUFFB::HoltWintersFilter filter;
     filter.Configure(0.2, 0.1, 0.01);
 
     filter.Process(1.0, 0.01, true);
@@ -264,7 +264,7 @@ TEST_CASE(test_holt_winters_infinite_starvation, "Math") {
 }
 
 TEST_CASE(test_holt_winters_sub_frame_accumulation, "Math") {
-    ffb_math::HoltWintersFilter filter;
+    LMUFFB::HoltWintersFilter filter;
     filter.Configure(0.2, 0.1, 0.01);
 
     filter.Process(1.0, 0.0, true); // Reset
@@ -288,7 +288,7 @@ TEST_CASE(test_holt_winters_sub_frame_accumulation, "Math") {
 }
 
 TEST_CASE(test_holt_winters_damping_amplitude_reduction, "Math") {
-    ffb_math::HoltWintersFilter filter;
+    LMUFFB::HoltWintersFilter filter;
     filter.Configure(1.0, 1.0, 0.01); // No smoothing, just raw trend
 
     filter.Process(0.0, 0.01, true);
