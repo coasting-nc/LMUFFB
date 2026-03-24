@@ -3,6 +3,17 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.226 - Lateral Load Persistence Fix[/b]
+
+[b]New release[/b] (0.7.226): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Fixed Lateral Load Persistence[/b]: Resolved an issue where high Lateral Load settings (above 200%) were not correctly saved and would reset to 200% upon reloading the app. You can now reliably use the full 0-1000% range for strong chassis load feedback.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
 [b]Version 0.7.225 - Automated Security Scans[/b]
 
 [b]New release[/b] (0.7.225): https://github.com/coasting-nc/LMUFFB/releases

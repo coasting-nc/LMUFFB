@@ -8,6 +8,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.226]
+
+### Fixed
+- **Fixed Lateral Load Slider Persistence (Issue #475)**:
+  - Resolved a discrepancy where the `Lateral Load` setting was incorrectly clamped to 2.0 during configuration validation, while the GUI allowed values up to 10.0.
+  - Updated `LoadForcesConfig::Validate()` to use the correct upper bound of 10.0, ensuring that high gain settings for chassis load feedback are correctly persisted after application reload.
+
+---
+
 ## [0.7.225]
 
 ### Added
