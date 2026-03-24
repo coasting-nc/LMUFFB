@@ -3,6 +3,52 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.229 - CI Coverage Refinement[/b]
+
+[b]New release[/b] (0.7.229): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]CI/CD Improvements[/b]: Refined the automated code coverage reports to exclude external libraries ([i]toml++[/i]). This ensures our quality metrics more accurately reflect the health of the core application code.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.228 - Test Suite Performance & Stability[/b]
+
+[b]New release[/b] (0.7.228): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Maximized Build Performance[/b]: Completed the transition of our automated test suite to a high-speed "Unity" build system. This drastically reduces compilation times for our verification tools.
+[*][b]Linux Stability Fix[/b]: Resolved a rare stability issue on Linux systems that was only triggered during high-speed automated runs.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.227 - Unity Build Optimization[/b]
+
+[b]New release[/b] (0.7.227): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Optimized Build Pipeline[/b]: Refined our build system to handle larger chunks of code at once, further speeding up the development and release process.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.226 - Expanded Automation Coverage[/b]
+
+[b]New release[/b] (0.7.226): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Expanded Unity Build Support[/b]: Integrated over 150 project files into our high-speed compilation pipeline, ensuring faster updates and more robust CI builds.
+[*][b]Test Suite Hardening[/b]: Improved the reliability of our internal physics verification tools to ensure 100% accuracy in high-performance environments.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
 [b]Version 0.7.225 - Automated Security Scans[/b]
 
 [b]New release[/b] (0.7.225): https://github.com/coasting-nc/LMUFFB/releases

@@ -1,10 +1,17 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 
 
 
+
+---
+
+## [0.7.229]
+
+### Changed
+- **CI/CD Coverage Refinement**: Excluded the `src/ext/toml++/` header-only library from the Linux code coverage reports. This ensures that only original project code is measured, providing a more accurate representation of the codebase's test coverage metrics.
 
 ---
 
