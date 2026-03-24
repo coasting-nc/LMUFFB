@@ -10,6 +10,8 @@
 #include <mutex>
 #include <chrono>
 
+using namespace LMUFFB;
+
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
