@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-24 22:43:18</td>
+            <td class="headerValue">2026-03-24 23:01:12</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -69,68 +69,79 @@
               <td>
 <pre class="sourceHeading">             Branch data     Line data    Source code</pre>
 <pre class="source">
-<span id="L1"><span class="lineNum">       1</span>                 :             : #include &quot;FFBEngine.h&quot;</span>
-<span id="L2"><span class="lineNum">       2</span>                 :             : #include &quot;Logger.h&quot;</span>
+<span id="L1"><span class="lineNum">       1</span>                 :             : #include &quot;SteeringUtils.h&quot;</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : #include &quot;../logging/Logger.h&quot;</span>
 <span id="L3"><span class="lineNum">       3</span>                 :             : #include &lt;cmath&gt;</span>
 <span id="L4"><span class="lineNum">       4</span>                 :             : #include &lt;algorithm&gt;</span>
 <span id="L5"><span class="lineNum">       5</span>                 :             : </span>
-<span id="L6"><span class="lineNum">       6</span>                 :             : // ---------------------------------------------------------------------------</span>
-<span id="L7"><span class="lineNum">       7</span>                 :             : // Steering &amp; Wheel Mechanics methods have been moved from FFBEngine.cpp.</span>
-<span id="L8"><span class="lineNum">       8</span>                 :             : // This includes the Soft Lock logic which prevents the wheel from rotating</span>
-<span id="L9"><span class="lineNum">       9</span>                 :             : // beyond the car's physical steering rack limits.</span>
-<span id="L10"><span class="lineNum">      10</span>                 :             : // ---------------------------------------------------------------------------</span>
-<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
-<span id="L12"><span class="lineNum">      12</span>                 :             : // Helper: Calculate Soft Lock (v0.7.61 - Issue #117)</span>
-<span id="L13"><span class="lineNum">      13</span>                 :             : // Provides a progressive spring-damping force when the wheel exceeds 100% lock.</span>
-<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC tlaBgGNC">       69654 : void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext&amp; ctx) {</span></span>
-<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">       69654 :     ctx.soft_lock_force = 0.0;</span></span>
-<span id="L16"><span class="lineNum">      16</span>         [<span class="tlaGBC" title="Branch 0 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 69626 times"> + </span>]:<span class="tlaGNC">       69654 :     if (!m_advanced.soft_lock_enabled) return;</span></span>
-<span id="L17"><span class="lineNum">      17</span>                 :             : </span>
-<span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">       69626 :     double steer = data-&gt;mUnfilteredSteering;</span></span>
-<span id="L19"><span class="lineNum">      19</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 69624 times"> + </span>]:<span class="tlaGNC">       69626 :     if (!std::isfinite(steer)) return;</span></span>
-<span id="L20"><span class="lineNum">      20</span>                 :             : </span>
-<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC">       69624 :     double abs_steer = std::abs(steer);</span></span>
-<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 976 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 68648 times"> + </span>]:<span class="tlaGNC">       69624 :     if (abs_steer &gt; 1.0) {</span></span>
-<span id="L23"><span class="lineNum">      23</span>         [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 960 times"> + </span>]:<span class="tlaGNC">         976 :         if (!m_safety.was_soft_locked) {</span></span>
-<span id="L24"><span class="lineNum">      24</span>   [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          16 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Engaged: Steering %.1f%%&quot;, steer * 100.0);</span></span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">          16 :             m_safety.was_soft_locked = true;</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :             :         }</span>
-<span id="L27"><span class="lineNum">      27</span>                 :             : </span>
-<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">         976 :         double excess = abs_steer - 1.0;</span></span>
-<span id="L29"><span class="lineNum">      29</span>         [<span class="tlaGBC" title="Branch 0 was taken 965 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11 times"> + </span>]:<span class="tlaGNC">         976 :         double sign = (steer &gt; 0.0) ? 1.0 : -1.0;</span></span>
-<span id="L30"><span class="lineNum">      30</span>                 :             : </span>
-<span id="L31"><span class="lineNum">      31</span>                 :             :         // NEW: Steep Spring Ramp reaching hardware max torque quickly.</span>
-<span id="L32"><span class="lineNum">      32</span>                 :             :         // This ensures the soft lock feels like a solid wall that doesn't &quot;give&quot;</span>
-<span id="L33"><span class="lineNum">      33</span>                 :             :         // under pressure, even at zero velocity.</span>
-<span id="L34"><span class="lineNum">      34</span>                 :             :         // At stiffness 20 (default), reaches 100% force at 0.25% excess.</span>
-<span id="L35"><span class="lineNum">      35</span>                 :             :         // At stiffness 100 (max), reaches 100% force at 0.05% excess.</span>
-<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">         976 :         double stiffness = (double)(std::max)(1.0f, m_advanced.soft_lock_stiffness);</span></span>
-<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">         976 :         double excess_for_max = 5.0 / (stiffness * 100.0);</span></span>
-<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">         976 :         double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)m_general.wheelbase_max_nm * 2.0;</span></span>
-<span id="L39"><span class="lineNum">      39</span>                 :             : </span>
-<span id="L40"><span class="lineNum">      40</span>                 :             :         // Damping Force: opposes movement to prevent bouncing.</span>
-<span id="L41"><span class="lineNum">      41</span>                 :             :         // Scaled by hardware torque to remain relevant across all wheelbases.</span>
-<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">         976 :         double damping_nm = m_steering_velocity_smoothed * m_advanced.soft_lock_damping * (double)m_general.wheelbase_max_nm * 0.1;</span></span>
-<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">         976 :         damping_nm = std::clamp(damping_nm, -(double)m_general.wheelbase_max_nm * 0.5, (double)m_general.wheelbase_max_nm * 0.5);</span></span>
-<span id="L44"><span class="lineNum">      44</span>                 :             : </span>
-<span id="L45"><span class="lineNum">      45</span>                 :             :         // Total Soft Lock force (opposing the steering direction)</span>
-<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">         976 :         ctx.soft_lock_force = -(spring_nm * sign + damping_nm);</span></span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : namespace LMUFFB {</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : namespace SteeringUtils {</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : </span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : // ---------------------------------------------------------------------------</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : // Steering &amp; Wheel Mechanics methods</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : // This includes the Soft Lock logic which prevents the wheel from rotating</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : // beyond the car's physical steering rack limits.</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : // ---------------------------------------------------------------------------</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : </span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : // Helper: Calculate Soft Lock (v0.7.61 - Issue #117)</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : // Provides a progressive spring-damping force when the wheel exceeds 100% lock.</span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC tlaBgGNC">       69654 : void CalculateSoftLock(const TelemInfoV01* data, </span></span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :                        FFBCalculationContext&amp; ctx, </span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :                        const AdvancedConfig&amp; advanced_cfg, </span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :                        const GeneralConfig&amp; general_cfg, </span>
+<span id="L21"><span class="lineNum">      21</span>                 :             :                        FFBSafetyMonitor&amp; safety, </span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :                        double steering_velocity_smoothed) {</span>
+<span id="L23"><span class="lineNum">      23</span>                 :<span class="tlaGNC">       69654 :     ctx.soft_lock_force = 0.0;</span></span>
+<span id="L24"><span class="lineNum">      24</span>         [<span class="tlaGBC" title="Branch 0 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 69626 times"> + </span>]:<span class="tlaGNC">       69654 :     if (!advanced_cfg.soft_lock_enabled) return;</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : </span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">       69626 :     double steer = data-&gt;mUnfilteredSteering;</span></span>
+<span id="L27"><span class="lineNum">      27</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 69624 times"> + </span>]:<span class="tlaGNC">       69626 :     if (!std::isfinite(steer)) return;</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : </span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">       69624 :     double abs_steer = std::abs(steer);</span></span>
+<span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 976 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 68648 times"> + </span>]:<span class="tlaGNC">       69624 :     if (abs_steer &gt; 1.0) {</span></span>
+<span id="L31"><span class="lineNum">      31</span>         [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 960 times"> + </span>]:<span class="tlaGNC">         976 :         if (!safety.was_soft_locked) {</span></span>
+<span id="L32"><span class="lineNum">      32</span>   [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          16 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Engaged: Steering %.1f%%&quot;, steer * 100.0);</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">          16 :             safety.was_soft_locked = true;</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :         }</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             : </span>
+<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">         976 :         double excess = abs_steer - 1.0;</span></span>
+<span id="L37"><span class="lineNum">      37</span>         [<span class="tlaGBC" title="Branch 0 was taken 965 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 11 times"> + </span>]:<span class="tlaGNC">         976 :         double sign = (steer &gt; 0.0) ? 1.0 : -1.0;</span></span>
+<span id="L38"><span class="lineNum">      38</span>                 :             : </span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :         // NEW: Steep Spring Ramp reaching hardware max torque quickly.</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :         // This ensures the soft lock feels like a solid wall that doesn't &quot;give&quot;</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :         // under pressure, even at zero velocity.</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :         // At stiffness 20 (default), reaches 100% force at 0.25% excess.</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :         // At stiffness 100 (max), reaches 100% force at 0.05% excess.</span>
+<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">         976 :         double stiffness = (double)(std::max)(1.0f, advanced_cfg.soft_lock_stiffness);</span></span>
+<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">         976 :         double excess_for_max = 5.0 / (stiffness * 100.0);</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">         976 :         double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)general_cfg.wheelbase_max_nm * 2.0;</span></span>
 <span id="L47"><span class="lineNum">      47</span>                 :             : </span>
-<span id="L48"><span class="lineNum">      48</span>   [<span class="tlaGBC" title="Branch 0 was taken 617 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 359 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 601 times"> + </span> :<span class="tlaGNC">         976 :         if (std::abs(ctx.soft_lock_force) &gt; 5.0 &amp;&amp; !m_safety.soft_lock_significant) {</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :         // Damping Force: opposes movement to prevent bouncing.</span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :         // Scaled by hardware torque to remain relevant across all wheelbases.</span>
+<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaGNC">         976 :         double damping_nm = steering_velocity_smoothed * advanced_cfg.soft_lock_damping * (double)general_cfg.wheelbase_max_nm * 0.1;</span></span>
+<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">         976 :         damping_nm = std::clamp(damping_nm, -(double)general_cfg.wheelbase_max_nm * 0.5, (double)general_cfg.wheelbase_max_nm * 0.5);</span></span>
+<span id="L52"><span class="lineNum">      52</span>                 :             : </span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :         // Total Soft Lock force (opposing the steering direction)</span>
+<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">         976 :         ctx.soft_lock_force = -(spring_nm * sign + damping_nm);</span></span>
+<span id="L55"><span class="lineNum">      55</span>                 :             : </span>
+<span id="L56"><span class="lineNum">      56</span>   [<span class="tlaGBC" title="Branch 0 was taken 617 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 359 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 601 times"> + </span> :<span class="tlaGNC">         976 :         if (std::abs(ctx.soft_lock_force) &gt; 5.0 &amp;&amp; !safety.soft_lock_significant) {</span></span>
 <span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 16 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 960 times"> + </span>]
-<span id="L49"><span class="lineNum">      49</span>   [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          16 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Significant Influence: %.1f Nm&quot;, ctx.soft_lock_force);</span></span>
-<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaGNC">          16 :             m_safety.soft_lock_significant = true;</span></span>
-<span id="L51"><span class="lineNum">      51</span>         [<span class="tlaGBC" title="Branch 0 was taken 355 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 605 times"> + </span>]:<span class="tlaGNC">         960 :         } else if (std::abs(ctx.soft_lock_force) &lt; 4.0) {</span></span>
-<span id="L52"><span class="lineNum">      52</span>                 :<span class="tlaGNC">         355 :             m_safety.soft_lock_significant = false;</span></span>
-<span id="L53"><span class="lineNum">      53</span>                 :             :         }</span>
-<span id="L54"><span class="lineNum">      54</span>                 :             :     } else {</span>
-<span id="L55"><span class="lineNum">      55</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 68645 times"> + </span>]:<span class="tlaGNC">       68648 :         if (m_safety.was_soft_locked) {</span></span>
-<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">           3 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Disengaged&quot;);</span></span>
-<span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaGNC">           3 :             m_safety.was_soft_locked = false;</span></span>
-<span id="L58"><span class="lineNum">      58</span>                 :             :         }</span>
-<span id="L59"><span class="lineNum">      59</span>                 :<span class="tlaGNC">       68648 :         m_safety.soft_lock_significant = false;</span></span>
-<span id="L60"><span class="lineNum">      60</span>                 :             :     }</span>
-<span id="L61"><span class="lineNum">      61</span>                 :             : }</span>
+<span id="L57"><span class="lineNum">      57</span>   [<span class="tlaGBC" title="Branch 0 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 16 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          16 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Significant Influence: %.1f Nm&quot;, ctx.soft_lock_force);</span></span>
+<span id="L58"><span class="lineNum">      58</span>                 :<span class="tlaGNC">          16 :             safety.soft_lock_significant = true;</span></span>
+<span id="L59"><span class="lineNum">      59</span>         [<span class="tlaGBC" title="Branch 0 was taken 355 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 605 times"> + </span>]:<span class="tlaGNC">         960 :         } else if (std::abs(ctx.soft_lock_force) &lt; 4.0) {</span></span>
+<span id="L60"><span class="lineNum">      60</span>                 :<span class="tlaGNC">         355 :             safety.soft_lock_significant = false;</span></span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :         }</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             :     } else {</span>
+<span id="L63"><span class="lineNum">      63</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 68645 times"> + </span>]:<span class="tlaGNC">       68648 :         if (safety.was_soft_locked) {</span></span>
+<span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaGNC">           3 :             Logger::Get().LogFile(&quot;[Safety] Soft Lock Disengaged&quot;);</span></span>
+<span id="L65"><span class="lineNum">      65</span>                 :<span class="tlaGNC">           3 :             safety.was_soft_locked = false;</span></span>
+<span id="L66"><span class="lineNum">      66</span>                 :             :         }</span>
+<span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC">       68648 :         safety.soft_lock_significant = false;</span></span>
+<span id="L68"><span class="lineNum">      68</span>                 :             :     }</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             : }</span>
+<span id="L70"><span class="lineNum">      70</span>                 :             : </span>
+<span id="L71"><span class="lineNum">      71</span>                 :             : } // namespace SteeringUtils</span>
+<span id="L72"><span class="lineNum">      72</span>                 :             : } // namespace LMUFFB</span>
         </pre>
               </td>
             </tr>
