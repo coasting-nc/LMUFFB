@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-24 16:28:16</td>
+            <td class="headerValue">2026-03-24 22:10:07</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -386,10 +386,10 @@
 <span id="L315"><span class="lineNum">     315</span>                 :             :     FFBSafetyMonitor m_safety;</span>
 <span id="L316"><span class="lineNum">     316</span>                 :             : </span>
 <span id="L317"><span class="lineNum">     317</span>                 :             :     // Telemetry Stats</span>
-<span id="L318"><span class="lineNum">     318</span>                 :             :     ChannelStats s_torque;</span>
-<span id="L319"><span class="lineNum">     319</span>                 :             :     ChannelStats s_front_load;</span>
-<span id="L320"><span class="lineNum">     320</span>                 :             :     ChannelStats s_front_grip;</span>
-<span id="L321"><span class="lineNum">     321</span>                 :             :     ChannelStats s_lat_g;</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             :     LMUFFB::ChannelStats s_torque;</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :     LMUFFB::ChannelStats s_front_load;</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :     LMUFFB::ChannelStats s_front_grip;</span>
+<span id="L321"><span class="lineNum">     321</span>                 :             :     LMUFFB::ChannelStats s_lat_g;</span>
 <span id="L322"><span class="lineNum">     322</span>                 :             :     std::chrono::steady_clock::time_point last_log_time;</span>
 <span id="L323"><span class="lineNum">     323</span>                 :             : </span>
 <span id="L324"><span class="lineNum">     324</span>                 :             :     // Thread-Safe Buffer (Producer-Consumer)</span>
