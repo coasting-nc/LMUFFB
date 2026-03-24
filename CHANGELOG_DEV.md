@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -7,6 +7,27 @@ All notable changes to this project will be documented in this file.
 
 
 ---
+
+## [0.7.228]
+
+Maximized the test suite performance by transitioning to a single-batch unity build and resolved the stability issues on Linux.
+
+Maximum Build Velocity: Updated 
+
+tests/CMakeLists.txt
+ to use a UNITY_BUILD_BATCH_SIZE of 0.
+This bundles all 150+ whitelisted test files into a single massive chunk (unity_0_cxx.cxx).
+This achieves the theoretical limit of unity build performance by parsing shared headers (like 
+
+test_ffb_common.h
+, ImGui, and FFBEngine.h) only once for the entire suite.
+Linux Stability Fix: Resolved a flakey test failure in test_game_connector_branch_boost that occurred during CI runs.
+Root Cause: Uninitialized stack memory for the telemetry destination struct was leading to false-positive assertions in the high-speed bundled environment.
+Fix: Implemented proper zero-initialization ({}) and added an explicit connection check before verifying telemetry flags.
+Documentation Update: Fully updated 
+
+unity_builds_tests_incremental_plan.md
+ to reflect the v0.7.227 milestone, documenting the move to a single-batch architecture and the resulting performance gains.
 
 ## [0.7.227]
 

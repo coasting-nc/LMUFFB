@@ -232,7 +232,7 @@ add_executable(run_combined_tests ${TEST_SOURCES})
 # Enable Unity Builds strictly for the test target
 set_target_properties(run_combined_tests PROPERTIES 
     UNITY_BUILD ON
-    UNITY_BUILD_BATCH_SIZE 100 # Group 100 files per chunk
+    UNITY_BUILD_BATCH_SIZE 0 # Group all tests in a single chunk
 )
 target_compile_definitions(run_combined_tests PRIVATE 
     HEADLESS_GUI 

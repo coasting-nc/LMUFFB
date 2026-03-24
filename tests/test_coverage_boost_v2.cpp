@@ -224,9 +224,12 @@ TEST_CASE(test_game_connector_branch_boost, "System") {
 
     layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1)); // NOLINT(performance-no-int-to-ptr)
     conn.TryConnect();
+    ASSERT_TRUE(conn.IsConnected());
+    
     layout->data.telemetry.playerHasVehicle = false;
-    SharedMemoryObjectOut dest;
-    conn.CopyTelemetry(dest);
+    SharedMemoryObjectOut dest {};
+    bool copy_res = conn.CopyTelemetry(dest);
+    ASSERT_TRUE(copy_res);
     ASSERT_FALSE(dest.telemetry.playerHasVehicle);
 
     #endif
