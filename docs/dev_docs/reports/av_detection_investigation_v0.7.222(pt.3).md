@@ -252,9 +252,6 @@ Here is the updated, highly verbose, and forced-scan YAML step:
 # More Fixes to Defender Checks (2)
 
 
-
-
-
 The log you provided contains the exact "smoking gun" that explains why the scan was skipped! 
 
 Look closely at this part of your output:
@@ -350,6 +347,7 @@ Here is the updated YAML step. It adds comprehensive environment checks, strips 
 3. **The Engine State prints** will tell us if GitHub has completely lobotomized the Defender engine on their runners (e.g., if `DisableBehaviorMonitoring` is `True`, it means the runner is incapable of doing ML heuristic scans anyway, and only basic signature scanning will work).
 
 Run this, and it will either successfully scan the file, or give us the exact administrative reason why GitHub's environment refuses to do so!
+
 
 # Adding VirusTotal Scan
 

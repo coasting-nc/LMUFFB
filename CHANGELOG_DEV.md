@@ -1,8 +1,18 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 
+
+## [0.7.232]
+
+### Added
+- **Behavioral Windows Defender Scanning (CI/CD)**:
+  - Upgraded the automated security scans to include **Behavioral Analysis** by executing `LMUFFB.exe --headless` for 10 seconds during the build process.
+  - Enabled Microsoft Advanced Protection Service (MAPS) and Cloud-delivered protection in the CI environment to trigger `!ml` heuristic evaluations.
+  - Implemented automated survival checks: the workflow now fails if Defender kills the app process or quarantines the binary during execution.
+
+---
 
 ## [0.7.231]
 

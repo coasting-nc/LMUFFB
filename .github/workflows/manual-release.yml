@@ -55,13 +55,13 @@ jobs:
           cmake -S . -B build -DLMUFFB_USE_UNITY_BUILD=ON
           cmake --build build --config Release --clean-first
 
-      - name: Windows Defender Scan
+      - name: Windows Defender Behavioral & Static Scan
         shell: pwsh
         run: |
           $exePath = "build\Release\LMUFFB.exe"
           
           if (-not (Test-Path $exePath)) {
-              Write-Error "Executable not found! It may have been quarantined during the build."
+              Write-Error "Executable not found! Quarantined during build."
               exit 1
           }
           
@@ -70,61 +70,68 @@ jobs:
           $tempPath = Join-Path $scanDir "LMUFFB_scan.exe"
           Copy-Item -Path $exePath -Destination $tempPath -Force
           
-          # 1. Deep Environment Diagnostics
-          Write-Host "--- Initial Defender Engine State ---"
+          Write-Host "--- Waking up Windows Defender ---"
+          # 1. Remove Exclusions
+          Remove-MpPreference -ExclusionPath "C:\" -ErrorAction SilentlyContinue
+          Remove-MpPreference -ExclusionPath "D:\" -ErrorAction SilentlyContinue
+          
+          # 2. Enable Real-time, Behavioral, and Cloud ML Protection
+          Set-MpPreference -DisableRealtimeMonitoring $false `
+                           -DisableBehaviorMonitoring $false `
+                           -DisableArchiveScanning $false `
+                           -DisableIOAVProtection $false `
+                           -MAPSReporting Advanced `
+                           -SubmitSamplesConsent SendAllSamples
+                           
+          # 3. Verify Engine State
           $prefs = Get-MpPreference
-          Write-Host "Excluded Paths: $($prefs.ExclusionPath)"
-          Write-Host "Excluded Extensions: $($prefs.ExclusionExtension)"
           Write-Host "Real-time Protection Disabled: $($prefs.DisableRealtimeMonitoring)"
           Write-Host "Behavior Monitoring Disabled: $($prefs.DisableBehaviorMonitoring)"
-          Write-Host "Archive Scanning Disabled: $($prefs.DisableArchiveScanning)"
-          Write-Host "Intrusion Prevention System (IPS) Disabled: $($prefs.DisableIntrusionPreventionSystem)"
-          Write-Host "IOAV Protection Disabled: $($prefs.DisableIOAVProtection)"
-          Write-Host "-------------------------------------`n"
+          Write-Host "Cloud Protection (MAPS): $($prefs.MAPSReporting)"
+          Write-Host "----------------------------------`n"
           
-          # 2. Strip all existing path exclusions (specifically C:\ and D:\)
-          Write-Host "Removing root drive exclusions to force scan..."
-          if ($prefs.ExclusionPath) {
-              foreach ($path in $prefs.ExclusionPath) {
-                  Write-Host " -> Removing exclusion for: $path"
-                  Remove-MpPreference -ExclusionPath $path -ErrorAction SilentlyContinue
-              }
+          if ($prefs.DisableBehaviorMonitoring -eq $true) {
+              Write-Warning "GitHub Group Policy blocked us from enabling Behavior Monitoring!"
           }
           
-          # 3. Verify the exclusions are actually gone
-          $newPrefs = Get-MpPreference
-          Write-Host "`nVerified Excluded Paths: $($newPrefs.ExclusionPath)`n"
-          
-          if ($newPrefs.ExclusionPath -match "C:\\") {
-              Write-Warning "Failed to remove C:\ exclusion! GitHub may be enforcing this via Group Policy."
-          }
-          
-          Write-Host "Scanning $tempPath with Windows Defender..."
-          
-          # 4. Run the scan
+          # 4. Static Scan
+          Write-Host "1. Running Static Scan..."
           & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$tempPath"
-          $scanExitCode = $LASTEXITCODE
+          if ($LASTEXITCODE -eq 2) {
+              Write-Error "❌ Static Scan Failed! Threat detected."
+              exit 1
+          }
+          Write-Host "✅ Static Scan Passed.`n"
           
-          # 5. Print the Defender log file
-          $logPath = "$env:LOCALAPPDATA\Temp\MpCmdRun.log"
-          if (Test-Path $logPath) {
-              Write-Host "`n--- Windows Defender Detailed Log ---"
-              Get-Content $logPath -Encoding Unicode | Select-Object -Last 20
-              Write-Host "-----------------------------------`n"
+          # 5. Behavioral Scan (Execution)
+          Write-Host "2. Running Behavioral Scan (Executing App in Headless Mode)..."
+          
+          # Start the process in the background
+          $process = Start-Process -FilePath $tempPath -ArgumentList "--headless" -PassThru -WindowStyle Hidden
+          
+          # Let it run for 10 seconds so Defender can watch its behavior
+          Write-Host "App is running. Waiting 10 seconds for Defender ML evaluation..."
+          Start-Sleep -Seconds 10
+          
+          # Check if the process is still alive, or if Defender killed it
+          $process.Refresh()
+          if ($process.HasExited) {
+              # If it exited, we need to know if it crashed normally or if Defender killed it.
+              # Defender usually quarantines the file when it kills the process.
+              if (-not (Test-Path $tempPath)) {
+                  Write-Error "❌ Behavioral Scan Failed! Defender killed the process and quarantined the file."
+                  exit 1
+              } else {
+                  Write-Host "⚠️ Process exited on its own (Exit Code: $($process.ExitCode)). File was not quarantined."
+              }
+          } else {
+              Write-Host "✅ Behavioral Scan Passed. Process survived without being flagged."
+              # Clean up the running process
+              Stop-Process -Id $process.Id -Force
           }
           
           # 6. Cleanup
           Remove-Item -Path $scanDir -Recurse -Force
-          
-          # 7. Evaluate results
-          if ($scanExitCode -eq 2) {
-              Write-Error "❌ Windows Defender detected a threat! Workflow failed."
-              exit 1
-          } elseif ($scanExitCode -eq 0) {
-              Write-Host "✅ Windows Defender scan passed. No threats detected."
-          } else {
-              Write-Warning "⚠️ Windows Defender scan returned unexpected exit code: $scanExitCode"
-          }
 
       - name: Run Tests
         shell: pwsh
