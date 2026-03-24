@@ -12,6 +12,7 @@ extern std::recursive_mutex g_engine_mutex;
 #include <cmath>
 
 using namespace ffb_math;
+using namespace LMUFFB;
 
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();

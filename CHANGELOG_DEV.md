@@ -1,9 +1,20 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.233]
 
+### Added
+- Initial steps on the incremental refactoring plan to enable unity builds on the main code.
 
+### Fixed
+- **Resolved Unity Build Compilation Failures**:
+  - Addressed missing namespace qualifications resulting from migrating `VehicleUtils.h`/`.cpp` into the `LMUFFB` namespace.
+  - Sourced and appended `using namespace LMUFFB;` declarations across dependent core files (`GripLoadEstimation.cpp`, `FFBEngine.cpp`, `FFBMetadataManager.cpp`, `main.cpp`, and various test files).
+  - Explicitly qualified `ParsedVehicleClass` as `LMUFFB::ParsedVehicleClass` within `FFBEngine.h` to prevent lookup errors during bundled compilation phases.
+  - Hardened local testing infrastructure to enforce successful compilation exit codes prior to chaining execution.
+
+---
 ## [0.7.232]
 
 ### Added

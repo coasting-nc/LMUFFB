@@ -109,7 +109,7 @@ struct FFBCalculationContext {
 // FFB Engine Class
 class FFBEngine {
 public:
-    using ParsedVehicleClass = ::ParsedVehicleClass;
+    using ParsedVehicleClass = LMUFFB::ParsedVehicleClass;
 
     // Buffer size constants (declared first so they can be used as array bounds below)
     static constexpr int STR_BUF_64 = 64;

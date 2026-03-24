@@ -1,6 +1,8 @@
 #include "test_ffb_common.h"
 #include "VehicleUtils.h"
 
+using namespace LMUFFB;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_vehicle_class_parsing_keywords, "Internal") {

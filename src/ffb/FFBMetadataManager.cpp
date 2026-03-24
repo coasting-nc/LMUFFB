@@ -3,6 +3,8 @@
 #include "io/RestApiProvider.h"
 #include "physics/VehicleUtils.h"
 
+using namespace LMUFFB;
+
 bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
     const char* trackName = data.scoring.scoringInfo.mTrackName;
     const char* vehicleClass = nullptr;

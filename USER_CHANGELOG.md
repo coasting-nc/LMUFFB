@@ -3,6 +3,18 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.233 - Architecture Modernization & Unity Build Hardening[/b]
+
+[b]New release[/b] (0.7.233): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Structural Improvements[/b]: Hardened the internal C++ namespace architecture to eliminate potential global memory collisions with other game software components.
+[*][b]Build Stability[/b]: Addressed hidden dependency chains that surfaced during high-speed automated "Unity" compilation, ensuring robust stability for future FFB physics iterations.
+[/list]
+
+---
+
+[size=5][b]March 24, 2026[/b][/size]
 [b]Version 0.7.229 - CI Coverage Refinement[/b]
 
 [b]New release[/b] (0.7.229): https://github.com/coasting-nc/LMUFFB/releases

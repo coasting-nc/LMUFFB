@@ -1,6 +1,8 @@
 #include "test_ffb_common.h"
 #include "VehicleUtils.h"
 
+using namespace LMUFFB;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_issue_355_motion_ratio_normalization, "Physics") {

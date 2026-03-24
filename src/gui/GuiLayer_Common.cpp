@@ -8,6 +8,10 @@
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
 #include "VehicleUtils.h"
+#include <string>
+
+using namespace LMUFFB;
+
 #include "HealthMonitor.h"
 #ifdef _WIN32
 #include <shellapi.h>

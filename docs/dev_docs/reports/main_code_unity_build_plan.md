@@ -155,15 +155,15 @@ By treating vendor code and proprietary APIs as immutable global resources, we p
 This section tracks the progress made towards fully refactoring the main code and enabling it to compile under Unity builds.
 
 ### 6.1 Unity Build Infrastructure Support
-- [ ] Add `UNITY_READY_MAIN` whitelist logic to `src/CMakeLists.txt` for incremental `.cpp` chunking.
-- [ ] Apply `SKIP_UNITY_BUILD_INCLUSION` automatically to unrefactored `.cpp` files in `src/CMakeLists.txt`.
-- [ ] Ensure vendor modules (`imgui.cpp`, etc.) are explicitly excluded from Unity inclusion.
+- [x] Add `UNITY_READY_MAIN` whitelist logic to `src/CMakeLists.txt` for incremental `.cpp` chunking.
+- [x] Apply `SKIP_UNITY_BUILD_INCLUSION` automatically to unrefactored `.cpp` files in `src/CMakeLists.txt`.
+- [x] Ensure vendor modules (`imgui.cpp`, etc.) are explicitly excluded from Unity inclusion.
 
 ### 6.2 Phase 1: Leaf Utility Modules (Headers & Source)
 - [x] Refactored `logging/PerfStats.h` (Wrapped `ChannelStats` in `namespace LMUFFB`).
 - [ ] Refactor `utils/MathUtils.h` (Currently using `namespace ffb_math`).
 - [ ] Refactor `logging/RateMonitor.h`.
-- [ ] Refactor `physics/VehicleUtils.h` & `.cpp` (First viable `.cpp` file for `UNITY_READY_MAIN`).
+- [x] Refactor `physics/VehicleUtils.h` & `.cpp` (First viable `.cpp` file for `UNITY_READY_MAIN`).
 - [ ] Refactor `physics/SteeringUtils.cpp`.
 
 ### 6.3 Phase 2: Core Data Structures
@@ -191,6 +191,12 @@ This section tracks the progress made towards fully refactoring the main code an
 - [ ] Refactor `io/GameConnector.h` & `.cpp`.
 - [ ] Finalize `core/main.cpp` (Retaining global `main()` declaration).
 
+### 6.7 Phase 6: Subsystem Namespace Migration (Post-Unity Stability)
+- [ ] **IMPORTANT**: Only begin this phase AFTER Phase 1-5 are 100% complete and the Unity Build is stable.
+- [ ] Transition `logging/` files from `namespace LMUFFB` to `namespace LMUFFB::Logging`.
+- [ ] Transition `physics/` files to `namespace LMUFFB::Physics`.
+- [ ] Transition `gui/` files to `namespace LMUFFB::GUI`.
+
 ---
 
 ## 7. Questions & Answers
@@ -204,3 +210,24 @@ This section tracks the progress made towards fully refactoring the main code an
 For the demonstrative "first refactoring", it was temporarily attached to the global `LMUFFB` root namespace instead of a specialized `LMUFFB::Logging` namespace for the following practical reasons:
 1. **Incremental Pragmatism:** The immediate goal was proving "Global Namespace Elimination" while guaranteeing zero build failures. Creating a deep submodule hierarchy out the gate generates a cascade of complex naming updates across non-refactored monolithic classes like `FFBEngine`. 
 2. **Current Coupling:** In the current unrefactored state, `FFBEngine` utilizes `ChannelStats` heavily inside its own global definition. When `FFBEngine` itself eventually undergoes the 5-step process (Phase 3), the utility modules like `PerfStats` will be neatly transitioned down into their final `LMUFFB::Logging` domain, leaving a vastly cleaner set of `using namespace` scopes inside the final class implementations.
+
+
+### Q: Why are we still using the `LMUFFB` namespace? Shouldn't we start using the more specific ones? When should we start using more specific namespaces?
+**A:** We are temporarily using the root `LMUFFB` namespace for all files to prioritize **"Global Namespace Elimination"** with minimal architectural friction. If we started using granular namespaces (like `LMUFFB::Physics` or `LMUFFB::Logging`) right now, the monolithic, unrefactored classes (like `FFBEngine`) would require hundreds of complex prefix updates (`LMUFFB::Physics::VehicleUtils::...`) which breaks compilation.
+
+**When to transition:** We will rigidly switch to specific sub-namespaces **only after** all 5 phases of the core Refactoring Plan are complete and the entire application is successfully building via the Unity chunk without global pollution. Once the monoliths are safely inside the root `LMUFFB` namespace, transitioning utilities down into `LMUFFB::Logging` becomes a safe, purely internal refactoring task (Phase 6).
+
+---
+
+## 8. Implementation Notes
+
+### 8.1 Encountered Issues
+- **Compilation Order Masking:** During the early configuration of the Unity chunking whitelist, running `cmake --build build` immediately followed by `; python scripts/run_all_tests.py` caused PowerShell to mask genuine C++ compilation errors. If the build step failed, the test script still ran using the *previously compiled* binaries, returning exit code 0 and falsely implying success. Future build-validation commands must evaluate the exit status of the compiler before proceeding to testing.
+- **Hidden Dependencies:** Refactoring a seemingly isolated `.h`/`.cpp` leaf module (`VehicleUtils`) logically broke dependent files outside the Unity chunk (like `GripLoadEstimation.cpp`, `FFBMetadataManager.cpp`, and `main.cpp`) because they included the updated header without namespace qualification. Adding `using namespace LMUFFB;` directly beneath the headers in the consumer `.cpp` files resolved these `error C3861: identifier not found` lookup failures.
+
+### 8.2 Deviations from the Plan
+- **Skipping Class Methods for Initial Refactoring:** We originally considered `physics/SteeringUtils.cpp` as the first `.cpp` file to wrap inside the Unity pipeline. However, since it exclusively contains implementation methods belonging to the globally declared `FFBEngine` class (e.g., `void FFBEngine::calculate_soft_lock`), wrapping it in `namespace LMUFFB` immediately triggers "class not declared" compiler errors. We deviated by selecting `VehicleUtils.cpp` instead, as its purely standalone logic is safely isolated from the monolithic classes.
+
+### 8.3 Suggestions for the Future
+- **Piecemeal Testing:** Do not blindly chain test scripts via semicolon `;` to compilation scripts during active refactoring. Explicitly monitor the compiler output directly to immediately catch `identifier not found` errors triggered by missing namespace qualifications.
+- **Phase 3 Readiness (The Monoliths):** When approaching Phase 3 (`FFBEngine.h` / `.cpp`), we must anticipate cascading architectural changes across the entire hook surface (`DirectInputFFB.cpp` and `main.cpp`). Because `FFBEngine` fundamentally governs the physics tree, transitioning it into `namespace LMUFFB` will require a meticulously controlled, large-scale commit.

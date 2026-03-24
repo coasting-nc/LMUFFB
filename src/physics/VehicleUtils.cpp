@@ -3,13 +3,17 @@
 #include <string>
 #include <cctype>
 
+namespace LMUFFB {
+
+namespace {
 // Helper: Trim whitespace from a string
-static std::string Trim(const std::string& s) {
+std::string Trim(const std::string& s) {
     auto start = s.find_first_not_of(" \t\n\r");
     if (start == std::string::npos) return "";
     auto end = s.find_last_not_of(" \t\n\r");
     return s.substr(start, end - start + 1);
 }
+} // namespace
 
 // Helper: Parse car class from strings (v0.7.44 Refactor)
 // Returns a ParsedVehicleClass enum for internal logic and categorization
@@ -218,3 +222,5 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
         }
     }
 }
+
+} // namespace LMUFFB

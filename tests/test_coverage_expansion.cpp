@@ -20,6 +20,8 @@ public:
     static void DrawDebugWindow(FFBEngine& engine) { GuiLayer::DrawDebugWindow(engine); }
 };
 
+using namespace LMUFFB;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_logger_expansion, "Diagnostics") {

@@ -278,6 +278,26 @@ else()
     list(APPEND CORE_SOURCES src/gui/GuiLayer_Linux.cpp)
 endif()
 
+# 1. Define the whitelist of files we have verified to be Unity-safe
+set(UNITY_READY_MAIN
+    VehicleUtils.cpp
+)
+
+# 2. Disable Unity inclusion for any main source NOT in the whitelist
+foreach(src ${CORE_SOURCES} ${APP_SOURCES})
+    get_filename_component(src_name ${src} NAME)
+    list(FIND UNITY_READY_MAIN ${src_name} index)
+    if(index EQUAL -1)
+        # Not in the whitelist -> Compile as standalone file
+        set_source_files_properties(${src} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+    endif()
+endforeach()
+
+# 3. Disable Unity inclusion for vendor files
+foreach(src ${IMGUI_SOURCES})
+    set_source_files_properties(${src} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+endforeach()
+
 # Optimized Core for the Main Application
 add_library(LMUFFB_Core STATIC ${CORE_SOURCES} ${GENERATED_PRESETS_HEADER})
 target_include_directories(LMUFFB_Core PUBLIC 

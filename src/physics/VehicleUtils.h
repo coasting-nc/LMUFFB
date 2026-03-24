@@ -3,6 +3,8 @@
 
 #include <string>
 
+namespace LMUFFB {
+
 enum class ParsedVehicleClass {
     UNKNOWN = 0,
     HYPERCAR,
@@ -31,5 +33,7 @@ double GetMotionRatioForClass(ParsedVehicleClass vclass);
 
 // Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)
 double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear);
+
+} // namespace LMUFFB
 
 #endif // VEHICLE_UTILS_H

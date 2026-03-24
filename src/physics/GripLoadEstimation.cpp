@@ -25,6 +25,7 @@ extern std::recursive_mutex g_engine_mutex;
 #include "StringUtils.h"
 
 using namespace ffb_math;
+using namespace LMUFFB;
 
 // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)
 void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {

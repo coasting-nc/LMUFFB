@@ -24,6 +24,8 @@
 #include <atomic>
 #include <mutex>
 
+using namespace LMUFFB;
+
 // --- Helper for Testability ---
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
     info.app_version = LMUFFB_VERSION;
