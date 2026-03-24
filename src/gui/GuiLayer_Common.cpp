@@ -159,10 +159,17 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
                     // Replacing  `system()`  with `ShellExecuteW` or `CreateProcessW`.
                     // See docs\dev_docs\reports\av_detection_investigation_v0.7.222(pt.2).md
 #ifdef _WIN32
+                    // 1. Set the environment variable natively in the C++ process.
+                    // cmd.exe and python.exe will automatically inherit this.
                     std::wstring wPythonPath = fs::path(python_path).wstring();
+                    SetEnvironmentVariableW(L"PYTHONPATH", wPythonPath.c_str());
+
+                    // 2. Build a clean, unchained command. 
+                    // /k tells cmd.exe to run the command and KEEP the window open (replacing the need for '& pause')
                     std::wstring wLogFile = fs::path(log_file).wstring();
-                    std::wstring wArgs = L"/c \"set PYTHONPATH=" + wPythonPath + L" && python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\" & pause\"";
+                    std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
                     
+                    // 3. Execute
                     ShellExecuteW(NULL, L"open", L"cmd.exe", wArgs.c_str(), NULL, SW_SHOWNORMAL);
 #else
                     std::string cmd = "PYTHONPATH=" + python_path + " python3 -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\"";

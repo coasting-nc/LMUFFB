@@ -8,7 +8,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [0.7.223] - 2026-03-23
+## [0.7.224] 
+
+### Fixed
+- **Hardened ShellExecuteW Implementation (Issue #500 follow-up)**
+  - Eliminated command chaining (`&&`, `&`) in the log analyzer launch sequence to remove remaining "Living-off-the-Land" behavioral triggers.
+  - Native Environment Integration: Replaced shell-based `set PYTHONPATH` with native `SetEnvironmentVariableW` calls, ensuring the child process inherits the environment without suspicious command-line manipulation.
+  - Switched from `cmd /c` to `cmd /k` to align with standard developer tool behavior and maintain window persistence for user feedback.
+
+---
+
+## [0.7.223]
 
 ### Fixed
 - **Windows Defender Heuristic False Positives Remediation (Issue #500)**

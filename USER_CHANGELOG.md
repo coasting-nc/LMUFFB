@@ -2,6 +2,18 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 24, 2026[/b][/size]
+[b]Version 0.7.224 - ShellExecuteW Behavioral Hardening[/b]
+
+[b]New release[/b] (0.7.224): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Hardened AV Mitigations[/b]: This minor update refines the previously introduced Windows Defender mitigations. By moving environment variable setup directly into the core application and removing "chained commands," we've further reduced the likelihood of false-positive heuristic detections.
+[*][b]Improved Log Analyzer Launch[/b]: The log analyzer window now stays open by default (`cmd /k`), making it easier to read the analysis results before closing the window.
+[/list]
+
+---
+
 [size=5][b]March 23, 2026[/b][/size]
 [b]Version 0.7.223 - Anti-Virus Heuristic Mitigations & Test Isolation[/b]
 
