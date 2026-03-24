@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-24 12:16:37</td>
+            <td class="headerValue">2026-03-24 12:26:20</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -84,38 +84,38 @@
 <span id="L13"><span class="lineNum">      13</span>                 :             : </span>
 <span id="L14"><span class="lineNum">      14</span>                 :             : using namespace ffb_math;</span>
 <span id="L15"><span class="lineNum">      15</span>                 :             : </span>
-<span id="L16"><span class="lineNum">      16</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">         528 : FFBEngine::FFBEngine() {</span></span>
-<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">         528 :     last_log_time = std::chrono::steady_clock::now();</span></span>
+<span id="L16"><span class="lineNum">      16</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">         529 : FFBEngine::FFBEngine() {</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">         529 :     last_log_time = std::chrono::steady_clock::now();</span></span>
 <span id="L18"><span class="lineNum">      18</span>                 :             : </span>
 <span id="L19"><span class="lineNum">      19</span>                 :             :     // Group 1: Driver Inputs (Fast, Smooth) - ALWAYS Zero Latency</span>
-<span id="L20"><span class="lineNum">      20</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_steering.Configure(0.95, 0.10);</span></span>
-<span id="L21"><span class="lineNum">      21</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_throttle.Configure(0.95, 0.10);</span></span>
-<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_brake.Configure(0.95, 0.10);</span></span>
-<span id="L23"><span class="lineNum">      23</span>   [<span class="tlaGBC" title="Branch 0 was taken 2112 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2112 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 528 times"> + </span>]:<span class="tlaGNC">        2640 :     for (int i = 0; i &lt; 4; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.10);</span></span>
+<span id="L20"><span class="lineNum">      20</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_steering.Configure(0.95, 0.10);</span></span>
+<span id="L21"><span class="lineNum">      21</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_throttle.Configure(0.95, 0.10);</span></span>
+<span id="L22"><span class="lineNum">      22</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_brake.Configure(0.95, 0.10);</span></span>
+<span id="L23"><span class="lineNum">      23</span>   [<span class="tlaGBC" title="Branch 0 was taken 2116 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2116 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 529 times"> + </span>]:<span class="tlaGNC">        2645 :     for (int i = 0; i &lt; 4; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.10);</span></span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : </span>
 <span id="L25"><span class="lineNum">      25</span>                 :             :     // Group 2: Texture &amp; Slip (Balanced) - TIED TO UI TOGGLE</span>
-<span id="L26"><span class="lineNum">      26</span>         [<span class="tlaGBC" title="Branch 0 was taken 2112 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 528 times"> + </span>]:<span class="tlaGNC">        2640 :     for (int i = 0; i &lt; 4; i++) {</span></span>
-<span id="L27"><span class="lineNum">      27</span>         [<span class="tlaGBC" title="Branch 0 was taken 2112 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2112 :         m_upsample_vert_deflection[i].Configure(0.80, 0.05);</span></span>
-<span id="L28"><span class="lineNum">      28</span>         [<span class="tlaGBC" title="Branch 0 was taken 2112 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2112 :         m_upsample_lat_patch_vel[i].Configure(0.80, 0.05);</span></span>
-<span id="L29"><span class="lineNum">      29</span>         [<span class="tlaGBC" title="Branch 0 was taken 2112 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2112 :         m_upsample_long_patch_vel[i].Configure(0.80, 0.05);</span></span>
-<span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 2112 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2112 :         m_upsample_rotation[i].Configure(0.80, 0.05);</span></span>
+<span id="L26"><span class="lineNum">      26</span>         [<span class="tlaGBC" title="Branch 0 was taken 2116 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 529 times"> + </span>]:<span class="tlaGNC">        2645 :     for (int i = 0; i &lt; 4; i++) {</span></span>
+<span id="L27"><span class="lineNum">      27</span>         [<span class="tlaGBC" title="Branch 0 was taken 2116 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2116 :         m_upsample_vert_deflection[i].Configure(0.80, 0.05);</span></span>
+<span id="L28"><span class="lineNum">      28</span>         [<span class="tlaGBC" title="Branch 0 was taken 2116 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2116 :         m_upsample_lat_patch_vel[i].Configure(0.80, 0.05);</span></span>
+<span id="L29"><span class="lineNum">      29</span>         [<span class="tlaGBC" title="Branch 0 was taken 2116 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2116 :         m_upsample_long_patch_vel[i].Configure(0.80, 0.05);</span></span>
+<span id="L30"><span class="lineNum">      30</span>         [<span class="tlaGBC" title="Branch 0 was taken 2116 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        2116 :         m_upsample_rotation[i].Configure(0.80, 0.05);</span></span>
 <span id="L31"><span class="lineNum">      31</span>                 :             :     }</span>
 <span id="L32"><span class="lineNum">      32</span>                 :             : </span>
 <span id="L33"><span class="lineNum">      33</span>                 :             :     // Group 3: Noisy Chassis &amp; Impacts (Heavily Damped, No Trend) - ALWAYS Smooth</span>
-<span id="L34"><span class="lineNum">      34</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_local_accel_x.Configure(0.50, 0.0);</span></span>
-<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_local_accel_y.Configure(0.50, 0.0);</span></span>
-<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_local_accel_z.Configure(0.50, 0.0);</span></span>
-<span id="L37"><span class="lineNum">      37</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_local_rot_accel_y.Configure(0.50, 0.0);</span></span>
-<span id="L38"><span class="lineNum">      38</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     m_upsample_local_rot_y.Configure(0.50, 0.0);</span></span>
-<span id="L39"><span class="lineNum">      39</span>   [<span class="tlaGBC" title="Branch 0 was taken 2112 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2112 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 528 times"> + </span>]:<span class="tlaGNC">        2640 :     for (int i = 0; i &lt; 4; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);</span></span>
+<span id="L34"><span class="lineNum">      34</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_local_accel_x.Configure(0.50, 0.0);</span></span>
+<span id="L35"><span class="lineNum">      35</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_local_accel_y.Configure(0.50, 0.0);</span></span>
+<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_local_accel_z.Configure(0.50, 0.0);</span></span>
+<span id="L37"><span class="lineNum">      37</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_local_rot_accel_y.Configure(0.50, 0.0);</span></span>
+<span id="L38"><span class="lineNum">      38</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     m_upsample_local_rot_y.Configure(0.50, 0.0);</span></span>
+<span id="L39"><span class="lineNum">      39</span>   [<span class="tlaGBC" title="Branch 0 was taken 2116 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2116 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 529 times"> + </span>]:<span class="tlaGNC">        2645 :     for (int i = 0; i &lt; 4; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);</span></span>
 <span id="L40"><span class="lineNum">      40</span>                 :             : </span>
-<span id="L41"><span class="lineNum">      41</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     Preset::ApplyDefaultsToEngine(*this);</span></span>
+<span id="L41"><span class="lineNum">      41</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     Preset::ApplyDefaultsToEngine(*this);</span></span>
 <span id="L42"><span class="lineNum">      42</span>                 :             : </span>
 <span id="L43"><span class="lineNum">      43</span>                 :             :     // Initial apply to set m_last_aux_recon_mode and default latencies</span>
-<span id="L44"><span class="lineNum">      44</span>         [<span class="tlaGBC" title="Branch 0 was taken 528 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         528 :     ApplyAuxReconstructionMode();</span></span>
+<span id="L44"><span class="lineNum">      44</span>         [<span class="tlaGBC" title="Branch 0 was taken 529 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         529 :     ApplyAuxReconstructionMode();</span></span>
 <span id="L45"><span class="lineNum">      45</span>                 :             : </span>
-<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">         528 :     m_safety.SetTimePtr(&amp;m_working_info.mElapsedTime);</span></span>
-<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">         528 : }</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">         529 :     m_safety.SetTimePtr(&amp;m_working_info.mElapsedTime);</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">         529 : }</span></span>
 <span id="L48"><span class="lineNum">      48</span>                 :             : </span>
 <span id="L49"><span class="lineNum">      49</span>                 :             : // ---------------------------------------------------------------------------</span>
 <span id="L50"><span class="lineNum">      50</span>                 :             : // Grip &amp; Load Estimation methods have been moved to GripLoadEstimation.cpp.</span>
@@ -1782,45 +1782,45 @@
 <span id="L1694"><span class="lineNum">    1694</span>                 :<span class="tlaGNC">       11606 :     ctx.road_noise *= ctx.speed_gate;</span></span>
 <span id="L1695"><span class="lineNum">    1695</span>                 :             : }</span>
 <span id="L1696"><span class="lineNum">    1696</span>                 :             : </span>
-<span id="L1697"><span class="lineNum">    1697</span>                 :<span class="tlaGNC">        1573 : void FFBEngine::ApplyAuxReconstructionMode() {</span></span>
-<span id="L1698"><span class="lineNum">    1698</span>                 :<span class="tlaGNC">        1573 :     bool user_wants_raw = (m_advanced.aux_telemetry_reconstruction == 0);</span></span>
+<span id="L1697"><span class="lineNum">    1697</span>                 :<span class="tlaGNC">        1575 : void FFBEngine::ApplyAuxReconstructionMode() {</span></span>
+<span id="L1698"><span class="lineNum">    1698</span>                 :<span class="tlaGNC">        1575 :     bool user_wants_raw = (m_advanced.aux_telemetry_reconstruction == 0);</span></span>
 <span id="L1699"><span class="lineNum">    1699</span>                 :             : </span>
 <span id="L1700"><span class="lineNum">    1700</span>                 :             :     // Group 1: ALWAYS Zero Latency (Driver Inputs)</span>
-<span id="L1701"><span class="lineNum">    1701</span>                 :<span class="tlaGNC">        1573 :     m_upsample_steering.Configure(0.95, 0.10);</span></span>
-<span id="L1702"><span class="lineNum">    1702</span>                 :<span class="tlaGNC">        1573 :     m_upsample_steering.SetZeroLatency(true);</span></span>
-<span id="L1703"><span class="lineNum">    1703</span>                 :<span class="tlaGNC">        1573 :     m_upsample_throttle.Configure(0.95, 0.10);</span></span>
-<span id="L1704"><span class="lineNum">    1704</span>                 :<span class="tlaGNC">        1573 :     m_upsample_throttle.SetZeroLatency(true);</span></span>
-<span id="L1705"><span class="lineNum">    1705</span>                 :<span class="tlaGNC">        1573 :     m_upsample_brake.Configure(0.95, 0.10);</span></span>
-<span id="L1706"><span class="lineNum">    1706</span>                 :<span class="tlaGNC">        1573 :     m_upsample_brake.SetZeroLatency(true);</span></span>
-<span id="L1707"><span class="lineNum">    1707</span>         [<span class="tlaGBC" title="Branch 0 was taken 6292 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1573 times"> + </span>]:<span class="tlaGNC">        7865 :     for (int i = 0; i &lt; 4; i++) {</span></span>
-<span id="L1708"><span class="lineNum">    1708</span>                 :<span class="tlaGNC">        6292 :         m_upsample_brake_pressure[i].Configure(0.95, 0.10);</span></span>
-<span id="L1709"><span class="lineNum">    1709</span>                 :<span class="tlaGNC">        6292 :         m_upsample_brake_pressure[i].SetZeroLatency(true);</span></span>
+<span id="L1701"><span class="lineNum">    1701</span>                 :<span class="tlaGNC">        1575 :     m_upsample_steering.Configure(0.95, 0.10);</span></span>
+<span id="L1702"><span class="lineNum">    1702</span>                 :<span class="tlaGNC">        1575 :     m_upsample_steering.SetZeroLatency(true);</span></span>
+<span id="L1703"><span class="lineNum">    1703</span>                 :<span class="tlaGNC">        1575 :     m_upsample_throttle.Configure(0.95, 0.10);</span></span>
+<span id="L1704"><span class="lineNum">    1704</span>                 :<span class="tlaGNC">        1575 :     m_upsample_throttle.SetZeroLatency(true);</span></span>
+<span id="L1705"><span class="lineNum">    1705</span>                 :<span class="tlaGNC">        1575 :     m_upsample_brake.Configure(0.95, 0.10);</span></span>
+<span id="L1706"><span class="lineNum">    1706</span>                 :<span class="tlaGNC">        1575 :     m_upsample_brake.SetZeroLatency(true);</span></span>
+<span id="L1707"><span class="lineNum">    1707</span>         [<span class="tlaGBC" title="Branch 0 was taken 6300 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1575 times"> + </span>]:<span class="tlaGNC">        7875 :     for (int i = 0; i &lt; 4; i++) {</span></span>
+<span id="L1708"><span class="lineNum">    1708</span>                 :<span class="tlaGNC">        6300 :         m_upsample_brake_pressure[i].Configure(0.95, 0.10);</span></span>
+<span id="L1709"><span class="lineNum">    1709</span>                 :<span class="tlaGNC">        6300 :         m_upsample_brake_pressure[i].SetZeroLatency(true);</span></span>
 <span id="L1710"><span class="lineNum">    1710</span>                 :             :     }</span>
 <span id="L1711"><span class="lineNum">    1711</span>                 :             : </span>
 <span id="L1712"><span class="lineNum">    1712</span>                 :             :     // Group 2: User Selectable (High-Frequency Texture)</span>
 <span id="L1713"><span class="lineNum">    1713</span>                 :             :     // Dynamic Beta Forcing: Force Beta=0.0 to prevent Nyquist ringing in Zero Latency mode</span>
-<span id="L1714"><span class="lineNum">    1714</span>         [<span class="tlaGBC" title="Branch 0 was taken 1569 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">        1573 :     double group2_beta = user_wants_raw ? 0.00 : 0.05;</span></span>
-<span id="L1715"><span class="lineNum">    1715</span>         [<span class="tlaGBC" title="Branch 0 was taken 6292 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1573 times"> + </span>]:<span class="tlaGNC">        7865 :     for (int i = 0; i &lt; 4; i++) {</span></span>
-<span id="L1716"><span class="lineNum">    1716</span>                 :<span class="tlaGNC">        6292 :         m_upsample_vert_deflection[i].Configure(0.80, group2_beta);</span></span>
-<span id="L1717"><span class="lineNum">    1717</span>                 :<span class="tlaGNC">        6292 :         m_upsample_vert_deflection[i].SetZeroLatency(user_wants_raw);</span></span>
-<span id="L1718"><span class="lineNum">    1718</span>                 :<span class="tlaGNC">        6292 :         m_upsample_lat_patch_vel[i].Configure(0.80, group2_beta);</span></span>
-<span id="L1719"><span class="lineNum">    1719</span>                 :<span class="tlaGNC">        6292 :         m_upsample_lat_patch_vel[i].SetZeroLatency(user_wants_raw);</span></span>
-<span id="L1720"><span class="lineNum">    1720</span>                 :<span class="tlaGNC">        6292 :         m_upsample_long_patch_vel[i].Configure(0.80, group2_beta);</span></span>
-<span id="L1721"><span class="lineNum">    1721</span>                 :<span class="tlaGNC">        6292 :         m_upsample_long_patch_vel[i].SetZeroLatency(user_wants_raw);</span></span>
-<span id="L1722"><span class="lineNum">    1722</span>                 :<span class="tlaGNC">        6292 :         m_upsample_rotation[i].Configure(0.80, group2_beta);</span></span>
-<span id="L1723"><span class="lineNum">    1723</span>                 :<span class="tlaGNC">        6292 :         m_upsample_rotation[i].SetZeroLatency(user_wants_raw);</span></span>
+<span id="L1714"><span class="lineNum">    1714</span>         [<span class="tlaGBC" title="Branch 0 was taken 1571 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">        1575 :     double group2_beta = user_wants_raw ? 0.00 : 0.05;</span></span>
+<span id="L1715"><span class="lineNum">    1715</span>         [<span class="tlaGBC" title="Branch 0 was taken 6300 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1575 times"> + </span>]:<span class="tlaGNC">        7875 :     for (int i = 0; i &lt; 4; i++) {</span></span>
+<span id="L1716"><span class="lineNum">    1716</span>                 :<span class="tlaGNC">        6300 :         m_upsample_vert_deflection[i].Configure(0.80, group2_beta);</span></span>
+<span id="L1717"><span class="lineNum">    1717</span>                 :<span class="tlaGNC">        6300 :         m_upsample_vert_deflection[i].SetZeroLatency(user_wants_raw);</span></span>
+<span id="L1718"><span class="lineNum">    1718</span>                 :<span class="tlaGNC">        6300 :         m_upsample_lat_patch_vel[i].Configure(0.80, group2_beta);</span></span>
+<span id="L1719"><span class="lineNum">    1719</span>                 :<span class="tlaGNC">        6300 :         m_upsample_lat_patch_vel[i].SetZeroLatency(user_wants_raw);</span></span>
+<span id="L1720"><span class="lineNum">    1720</span>                 :<span class="tlaGNC">        6300 :         m_upsample_long_patch_vel[i].Configure(0.80, group2_beta);</span></span>
+<span id="L1721"><span class="lineNum">    1721</span>                 :<span class="tlaGNC">        6300 :         m_upsample_long_patch_vel[i].SetZeroLatency(user_wants_raw);</span></span>
+<span id="L1722"><span class="lineNum">    1722</span>                 :<span class="tlaGNC">        6300 :         m_upsample_rotation[i].Configure(0.80, group2_beta);</span></span>
+<span id="L1723"><span class="lineNum">    1723</span>                 :<span class="tlaGNC">        6300 :         m_upsample_rotation[i].SetZeroLatency(user_wants_raw);</span></span>
 <span id="L1724"><span class="lineNum">    1724</span>                 :             :     }</span>
 <span id="L1725"><span class="lineNum">    1725</span>                 :             : </span>
 <span id="L1726"><span class="lineNum">    1726</span>                 :             :     // Group 3: ALWAYS Smooth (Chassis Kinematics)</span>
-<span id="L1727"><span class="lineNum">    1727</span>                 :<span class="tlaGNC">        1573 :     m_upsample_local_accel_x.SetZeroLatency(false);</span></span>
-<span id="L1728"><span class="lineNum">    1728</span>                 :<span class="tlaGNC">        1573 :     m_upsample_local_accel_y.SetZeroLatency(false);</span></span>
-<span id="L1729"><span class="lineNum">    1729</span>                 :<span class="tlaGNC">        1573 :     m_upsample_local_accel_z.SetZeroLatency(false);</span></span>
-<span id="L1730"><span class="lineNum">    1730</span>                 :<span class="tlaGNC">        1573 :     m_upsample_local_rot_accel_y.SetZeroLatency(false);</span></span>
-<span id="L1731"><span class="lineNum">    1731</span>                 :<span class="tlaGNC">        1573 :     m_upsample_local_rot_y.SetZeroLatency(false);</span></span>
-<span id="L1732"><span class="lineNum">    1732</span>         [<span class="tlaGBC" title="Branch 0 was taken 6292 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1573 times"> + </span>]:<span class="tlaGNC">        7865 :     for (int i = 0; i &lt; 4; i++) m_upsample_susp_force[i].SetZeroLatency(false);</span></span>
+<span id="L1727"><span class="lineNum">    1727</span>                 :<span class="tlaGNC">        1575 :     m_upsample_local_accel_x.SetZeroLatency(false);</span></span>
+<span id="L1728"><span class="lineNum">    1728</span>                 :<span class="tlaGNC">        1575 :     m_upsample_local_accel_y.SetZeroLatency(false);</span></span>
+<span id="L1729"><span class="lineNum">    1729</span>                 :<span class="tlaGNC">        1575 :     m_upsample_local_accel_z.SetZeroLatency(false);</span></span>
+<span id="L1730"><span class="lineNum">    1730</span>                 :<span class="tlaGNC">        1575 :     m_upsample_local_rot_accel_y.SetZeroLatency(false);</span></span>
+<span id="L1731"><span class="lineNum">    1731</span>                 :<span class="tlaGNC">        1575 :     m_upsample_local_rot_y.SetZeroLatency(false);</span></span>
+<span id="L1732"><span class="lineNum">    1732</span>         [<span class="tlaGBC" title="Branch 0 was taken 6300 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1575 times"> + </span>]:<span class="tlaGNC">        7875 :     for (int i = 0; i &lt; 4; i++) m_upsample_susp_force[i].SetZeroLatency(false);</span></span>
 <span id="L1733"><span class="lineNum">    1733</span>                 :             : </span>
-<span id="L1734"><span class="lineNum">    1734</span>                 :<span class="tlaGNC">        1573 :     m_last_aux_recon_mode = m_advanced.aux_telemetry_reconstruction;</span></span>
-<span id="L1735"><span class="lineNum">    1735</span>                 :<span class="tlaGNC">        1573 : }</span></span>
+<span id="L1734"><span class="lineNum">    1734</span>                 :<span class="tlaGNC">        1575 :     m_last_aux_recon_mode = m_advanced.aux_telemetry_reconstruction;</span></span>
+<span id="L1735"><span class="lineNum">    1735</span>                 :<span class="tlaGNC">        1575 : }</span></span>
 <span id="L1736"><span class="lineNum">    1736</span>                 :             : </span>
 <span id="L1737"><span class="lineNum">    1737</span>                 :<span class="tlaGNC">         149 : void FFBEngine::ResetNormalization() {</span></span>
 <span id="L1738"><span class="lineNum">    1738</span>         [<span class="tlaGBC" title="Branch 0 was taken 149 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         149 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
@@ -1929,16 +1929,16 @@
 <span id="L1840"><span class="lineNum">    1840</span>                 :             :     }</span>
 <span id="L1841"><span class="lineNum">    1841</span>                 :             : }</span>
 <span id="L1842"><span class="lineNum">    1842</span>                 :             : </span>
-<span id="L1843"><span class="lineNum">    1843</span>                 :<span class="tlaGNC">        1044 : void FFBEngine::UpdateUpsamplerModes() {</span></span>
-<span id="L1844"><span class="lineNum">    1844</span>         [<span class="tlaGBC" title="Branch 0 was taken 1044 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1044 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L1843"><span class="lineNum">    1843</span>                 :<span class="tlaGNC">        1045 : void FFBEngine::UpdateUpsamplerModes() {</span></span>
+<span id="L1844"><span class="lineNum">    1844</span>         [<span class="tlaGBC" title="Branch 0 was taken 1045 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1045 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
 <span id="L1845"><span class="lineNum">    1845</span>                 :             : </span>
 <span id="L1846"><span class="lineNum">    1846</span>                 :             :     // Steering Shaft Torque (Existing)</span>
-<span id="L1847"><span class="lineNum">    1847</span>         [<span class="tlaGBC" title="Branch 0 was taken 1044 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1044 :     m_upsample_shaft_torque.Configure(0.8, 0.1); // Reduced beta</span></span>
-<span id="L1848"><span class="lineNum">    1848</span>                 :<span class="tlaGNC">        1044 :     m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);</span></span>
+<span id="L1847"><span class="lineNum">    1847</span>         [<span class="tlaGBC" title="Branch 0 was taken 1045 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1045 :     m_upsample_shaft_torque.Configure(0.8, 0.1); // Reduced beta</span></span>
+<span id="L1848"><span class="lineNum">    1848</span>                 :<span class="tlaGNC">        1045 :     m_upsample_shaft_torque.SetZeroLatency(m_front_axle.steering_100hz_reconstruction == 0);</span></span>
 <span id="L1849"><span class="lineNum">    1849</span>                 :             : </span>
 <span id="L1850"><span class="lineNum">    1850</span>                 :             :     // Auxiliary Channels (New v0.7.221): Apply differentiated modes</span>
-<span id="L1851"><span class="lineNum">    1851</span>         [<span class="tlaGBC" title="Branch 0 was taken 1044 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1044 :     ApplyAuxReconstructionMode();</span></span>
-<span id="L1852"><span class="lineNum">    1852</span>                 :<span class="tlaGNC">        1044 : }</span></span>
+<span id="L1851"><span class="lineNum">    1851</span>         [<span class="tlaGBC" title="Branch 0 was taken 1045 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1045 :     ApplyAuxReconstructionMode();</span></span>
+<span id="L1852"><span class="lineNum">    1852</span>                 :<span class="tlaGNC">        1045 : }</span></span>
         </pre>
               </td>
             </tr>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-24 12:16:37</td>
+            <td class="headerValue">2026-03-24 12:26:20</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -335,15 +335,15 @@
 <span id="L264"><span class="lineNum">     264</span>                 :             :     double m_game_tick = 0.01; // Default 100Hz</span>
 <span id="L265"><span class="lineNum">     265</span>                 :             : </span>
 <span id="L266"><span class="lineNum">     266</span>                 :             : public:</span>
-<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">       54131 :     void Configure(double alpha, double beta, double game_tick = 0.01) {</span></span>
-<span id="L268"><span class="lineNum">     268</span>                 :<span class="tlaGNC">       54131 :         m_alpha = std::clamp(alpha, 0.01, 1.0);</span></span>
-<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">       54131 :         m_beta = std::clamp(beta, 0.0, 1.0);</span></span>
-<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">       54131 :         m_game_tick = (std::max)(0.0001, game_tick);</span></span>
-<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">       54131 :     }</span></span>
+<span id="L267"><span class="lineNum">     267</span>                 :<span class="tlaGNC">       54210 :     void Configure(double alpha, double beta, double game_tick = 0.01) {</span></span>
+<span id="L268"><span class="lineNum">     268</span>                 :<span class="tlaGNC">       54210 :         m_alpha = std::clamp(alpha, 0.01, 1.0);</span></span>
+<span id="L269"><span class="lineNum">     269</span>                 :<span class="tlaGNC">       54210 :         m_beta = std::clamp(beta, 0.0, 1.0);</span></span>
+<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">       54210 :         m_game_tick = (std::max)(0.0001, game_tick);</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">       54210 :     }</span></span>
 <span id="L272"><span class="lineNum">     272</span>                 :             : </span>
-<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">       51382 :     void SetZeroLatency(bool zero_latency) {</span></span>
-<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">       51382 :         m_zero_latency = zero_latency;</span></span>
-<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">       51382 :     }</span></span>
+<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">       51447 :     void SetZeroLatency(bool zero_latency) {</span></span>
+<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">       51447 :         m_zero_latency = zero_latency;</span></span>
+<span id="L275"><span class="lineNum">     275</span>                 :<span class="tlaGNC">       51447 :     }</span></span>
 <span id="L276"><span class="lineNum">     276</span>                 :             : </span>
 <span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">          20 :     double GetAlpha() const { return m_alpha; }</span></span>
 <span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaGNC">           7 :     double GetBeta() const { return m_beta; }</span></span>
