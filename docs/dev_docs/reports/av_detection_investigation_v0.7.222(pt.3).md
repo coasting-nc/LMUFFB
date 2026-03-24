@@ -249,6 +249,108 @@ Here is the updated, highly verbose, and forced-scan YAML step:
 2. **Exclusion Visibility:** You will see a block printed out showing exactly what paths and extensions GitHub has told Defender to ignore.
 3. **Forced Scan:** By moving the file to `C:\AV_Scan` and explicitly telling Defender `Remove-MpPreference -ExclusionPath C:\AV_Scan`, it should bypass the runner's optimizations and actually scan the bytes of your executable.
 
+# More Fixes to Defender Checks (2)
+
+
+
+
+
+The log you provided contains the exact "smoking gun" that explains why the scan was skipped! 
+
+Look closely at this part of your output:
+```text
+--- Current GitHub Runner Exclusions ---
+Excluded Paths: C:\ D:\
+```
+
+GitHub Actions has excluded the **entire `C:\` and `D:\` drives** from Windows Defender. Because exclusions in Windows Defender are recursive, creating a folder at `C:\AV_Scan` didn't bypass the exclusion—it inherited it from the `C:\` root rule. When `MpCmdRun.exe` saw that the file was on the `C:\` drive, it instantly skipped it.
+
+To fix this and get the deep diagnostics you want, we need to:
+1. **Dynamically strip all existing exclusions** from the runner before we scan.
+2. **Query the core Defender engine states** (like Real-time Protection and Behavior Monitoring) to ensure GitHub hasn't completely disabled the AV engine via registry policies.
+
+Here is the updated YAML step. It adds comprehensive environment checks, strips the root drive exclusions, verifies they are gone, and then runs the scan.
+
+```yaml
+    - name: Windows Defender Scan
+      shell: pwsh
+      run: |
+        $exePath = "build\Release\LMUFFB.exe"
+        
+        if (-not (Test-Path $exePath)) {
+            Write-Error "Executable not found! It may have been quarantined during the build."
+            exit 1
+        }
+        
+        $scanDir = "C:\AV_Scan"
+        New-Item -ItemType Directory -Path $scanDir -Force | Out-Null
+        $tempPath = Join-Path $scanDir "LMUFFB_scan.exe"
+        Copy-Item -Path $exePath -Destination $tempPath -Force
+        
+        # 1. Deep Environment Diagnostics
+        Write-Host "--- Initial Defender Engine State ---"
+        $prefs = Get-MpPreference
+        Write-Host "Excluded Paths: $($prefs.ExclusionPath)"
+        Write-Host "Excluded Extensions: $($prefs.ExclusionExtension)"
+        Write-Host "Real-time Protection Disabled: $($prefs.DisableRealtimeMonitoring)"
+        Write-Host "Behavior Monitoring Disabled: $($prefs.DisableBehaviorMonitoring)"
+        Write-Host "Archive Scanning Disabled: $($prefs.DisableArchiveScanning)"
+        Write-Host "Intrusion Prevention System (IPS) Disabled: $($prefs.DisableIntrusionPreventionSystem)"
+        Write-Host "IOAV Protection Disabled: $($prefs.DisableIOAVProtection)"
+        Write-Host "-------------------------------------`n"
+        
+        # 2. Strip all existing path exclusions (specifically C:\ and D:\)
+        Write-Host "Removing root drive exclusions to force scan..."
+        if ($prefs.ExclusionPath) {
+            foreach ($path in $prefs.ExclusionPath) {
+                Write-Host " -> Removing exclusion for: $path"
+                Remove-MpPreference -ExclusionPath $path -ErrorAction SilentlyContinue
+            }
+        }
+        
+        # 3. Verify the exclusions are actually gone
+        $newPrefs = Get-MpPreference
+        Write-Host "`nVerified Excluded Paths: $($newPrefs.ExclusionPath)`n"
+        
+        if ($newPrefs.ExclusionPath -match "C:\\") {
+            Write-Warning "Failed to remove C:\ exclusion! GitHub may be enforcing this via Group Policy."
+        }
+        
+        Write-Host "Scanning $tempPath with Windows Defender..."
+        
+        # 4. Run the scan
+        & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$tempPath"
+        $scanExitCode = $LASTEXITCODE
+        
+        # 5. Print the Defender log file
+        $logPath = "$env:LOCALAPPDATA\Temp\MpCmdRun.log"
+        if (Test-Path $logPath) {
+            Write-Host "`n--- Windows Defender Detailed Log ---"
+            Get-Content $logPath -Encoding Unicode | Select-Object -Last 20
+            Write-Host "-----------------------------------`n"
+        }
+        
+        # 6. Cleanup
+        Remove-Item -Path $scanDir -Recurse -Force
+        
+        # 7. Evaluate results
+        if ($scanExitCode -eq 2) {
+            Write-Error "❌ Windows Defender detected a threat! Workflow failed."
+            exit 1
+        } elseif ($scanExitCode -eq 0) {
+            Write-Host "✅ Windows Defender scan passed. No threats detected."
+        } else {
+            Write-Warning "⚠️ Windows Defender scan returned unexpected exit code: $scanExitCode"
+        }
+```
+
+### What this will tell us:
+1. **The `Remove-MpPreference` loop** will explicitly target `C:\` and `D:\` and delete them from the whitelist.
+2. **The `Verified Excluded Paths` print** will confirm if the removal was successful. If GitHub enforces these exclusions via strict Group Policy (GPO), the removal will fail silently, and this print will prove it.
+3. **The Engine State prints** will tell us if GitHub has completely lobotomized the Defender engine on their runners (e.g., if `DisableBehaviorMonitoring` is `True`, it means the runner is incapable of doing ML heuristic scans anyway, and only basic signature scanning will work).
+
+Run this, and it will either successfully scan the file, or give us the exact administrative reason why GitHub's environment refuses to do so!
+
 # Adding VirusTotal Scan
 
 Separating slow, comprehensive malware scans into a different workflow is a standard and highly recommended CI/CD practice. It keeps your developer feedback loop fast while still providing deep security insights asynchronously.
