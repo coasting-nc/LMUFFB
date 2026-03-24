@@ -211,6 +211,10 @@ TEST_CASE(test_config_branch_boost, "Config") {
 }
 
 TEST_CASE(test_game_connector_branch_boost, "System") {
+    // 1. Force background threads to stop to avoid MockSM lock contention in unity build
+    g_running = false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
     GameConnector& conn = GameConnector::Get();
     conn.Disconnect();
 
