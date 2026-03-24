@@ -48,7 +48,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Cumulative changes from version 0.7.207 till 0.7.222
+## Cumulative changes from version 0.7.207 till 0.7.223
 
 ### Fixed
 - Improved the **reconstruction filter** applied to auxiliary telemetry channels to fix the damping feeling of some effects introduced with version 0.7.207.
@@ -56,14 +56,14 @@ All notable changes to this project will be documented in this file.
 - **Kerbs impact**: the change to the reconstruction filter should also make kerbs less harsh.
 - Added setting in the "Advanced" section to choose the reconstruction filter for Road Texture, Slide Texture, Wheel Spin, Lockup Vibrations: "Zero Latency" (default) or "Smooth".
 - Improved parameters of the reconstruction filter for the Steering Shaft Torque.
+- Remediations for Windows Defender Heuristic False Positives in previous version 0.7.222.
 
 ### Changed
 - **Refactored the preset system** to make it more robust, and address issues in importing and saving presets.
   - It now uses .toml text files instead of .ini files for presets.
   - Each user preset is now saved as an individual *.toml text file inside the user_presets/ folder, to make it easier to share and import.
-  - When you launch the app, all your existing settings and custom profiles will be seamlessly upgraded to the new format.
+  - When you launch the app, all your existing settings and custom profiles will be seamlessly upgraded to the new (and more reliable) format.
   - If you need more details, here is a more detailed guide on how presets work now: [docs\user_guides\New Preset System Explained.md](https://github.com/coasting-nc/LMUFFB/blob/main/docs/user_guides/New%20Preset%20System%20Explained.md)
-
 ---
 
 ## [0.7.221]
