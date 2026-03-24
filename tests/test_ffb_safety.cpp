@@ -70,7 +70,7 @@ TEST_CASE(test_ffb_safety_slew_limiter, "Safety") {
     std::cout << "  [PASS] Normal mode allows rapid changes (up to 1000 u/s)." << std::endl;
 
     // Reset
-    engine.m_safety.ApplySafetySlew(0.0, 1.0, false); // Instant reset via large dt
+    (void)engine.m_safety.ApplySafetySlew(0.0, 1.0, false); // Instant reset via large dt
 
     // Restricted Mode: 2.0 units/s (Issue #426)
     // Max change per frame: 2.0 * 0.0025 = 0.005
