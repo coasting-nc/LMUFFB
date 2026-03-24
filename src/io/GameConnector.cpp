@@ -41,6 +41,14 @@ void GameConnector::_DisconnectLocked() {
     m_smLock.reset();
     m_connected = false;
     m_processId = 0;
+    
+    // Reset robust state machine flags (#267)
+    m_sessionActive = false;
+    m_inRealtime = false;
+    m_currentSessionType = -1;
+    m_currentGamePhase = 255;
+    m_playerControl = -2;
+    m_pendingMenuCheck = false;
 }
 
 bool GameConnector::TryConnect() {

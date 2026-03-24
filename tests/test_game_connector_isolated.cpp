@@ -29,13 +29,17 @@ TEST_CASE(test_game_connector_branch_boost_isolated, "System") {
     
     MockSM::GetMaps()["LMU_Data"].resize(sizeof(SharedMemoryLayout));
     SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
+    memset(layout, 0, sizeof(SharedMemoryLayout)); // Zero init
+    
     layout->data.generic.events[SME_UPDATE_TELEMETRY] = static_cast<SharedMemoryEvent>(1); // Enable telemetry copying
     layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(3)); // Invalid window
+    layout->data.scoring.scoringInfo.mInRealtime = 1; // REQUIRED for CopyTelemetry to return true
+    layout->data.scoring.scoringInfo.mGamePhase = 5; // Running
 
     conn.TryConnect();
     ASSERT_FALSE(conn.IsConnected());
 
-    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1)); // NOLINT(performance-no-int-to-ptr)
+    layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(1)); // Valid window
     conn.TryConnect();
     ASSERT_TRUE(conn.IsConnected());
     
