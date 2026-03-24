@@ -83,11 +83,8 @@ jobs:
         Copy-Item -Path $exePath -Destination $tempPath -Force
         
         Write-Host "--- Waking up Windows Defender ---"
-        # 1. Remove Exclusions
-        Remove-MpPreference -ExclusionPath "C:\" -ErrorAction SilentlyContinue
-        Remove-MpPreference -ExclusionPath "D:\" -ErrorAction SilentlyContinue
         
-        # 2. Enable Real-time, Behavioral, and Cloud ML Protection
+        # 1. Enable Real-time, Behavioral, and Cloud ML Protection
         Set-MpPreference -DisableRealtimeMonitoring $false `
                          -DisableBehaviorMonitoring $false `
                          -DisableArchiveScanning $false `
@@ -95,16 +92,22 @@ jobs:
                          -MAPSReporting Advanced `
                          -SubmitSamplesConsent SendAllSamples
                          
-        # 3. Verify Engine State
+        # 2. Dynamically remove ALL path exclusions to ensure the static scan runs
         $prefs = Get-MpPreference
-        Write-Host "Real-time Protection Disabled: $($prefs.DisableRealtimeMonitoring)"
-        Write-Host "Behavior Monitoring Disabled: $($prefs.DisableBehaviorMonitoring)"
-        Write-Host "Cloud Protection (MAPS): $($prefs.MAPSReporting)"
-        Write-Host "----------------------------------`n"
-        
-        if ($prefs.DisableBehaviorMonitoring -eq $true) {
-            Write-Warning "GitHub Group Policy blocked us from enabling Behavior Monitoring!"
+        if ($prefs.ExclusionPath) {
+            foreach ($path in $prefs.ExclusionPath) {
+                Remove-MpPreference -ExclusionPath $path -ErrorAction SilentlyContinue
+            }
         }
+        Remove-MpPreference -ExclusionExtension ".exe" -ErrorAction SilentlyContinue
+        
+        # 3. Verify Engine State
+        $newPrefs = Get-MpPreference
+        Write-Host "Real-time Protection Disabled: $($newPrefs.DisableRealtimeMonitoring)"
+        Write-Host "Behavior Monitoring Disabled: $($newPrefs.DisableBehaviorMonitoring)"
+        Write-Host "Cloud Protection (MAPS): $($newPrefs.MAPSReporting)"
+        Write-Host "Remaining Exclusions: $($newPrefs.ExclusionPath)"
+        Write-Host "----------------------------------`n"
         
         # 4. Static Scan
         Write-Host "1. Running Static Scan..."
@@ -117,19 +120,13 @@ jobs:
         
         # 5. Behavioral Scan (Execution)
         Write-Host "2. Running Behavioral Scan (Executing App in Headless Mode)..."
-        
-        # Start the process in the background
         $process = Start-Process -FilePath $tempPath -ArgumentList "--headless" -PassThru -WindowStyle Hidden
         
-        # Let it run for 10 seconds so Defender can watch its behavior
         Write-Host "App is running. Waiting 10 seconds for Defender ML evaluation..."
         Start-Sleep -Seconds 10
         
-        # Check if the process is still alive, or if Defender killed it
         $process.Refresh()
         if ($process.HasExited) {
-            # If it exited, we need to know if it crashed normally or if Defender killed it.
-            # Defender usually quarantines the file when it kills the process.
             if (-not (Test-Path $tempPath)) {
                 Write-Error "❌ Behavioral Scan Failed! Defender killed the process and quarantined the file."
                 exit 1
@@ -138,8 +135,12 @@ jobs:
             }
         } else {
             Write-Host "✅ Behavioral Scan Passed. Process survived without being flagged."
-            # Clean up the running process
-            Stop-Process -Id $process.Id -Force
+            
+            # Clean up the running process AND WAIT for it to release the file lock
+            Stop-Process -Id $process.Id -Force -PassThru | Wait-Process
+            
+            # Give the OS file system a tiny fraction of a second to catch up
+            Start-Sleep -Milliseconds 500 
         }
         
         # 6. Cleanup
