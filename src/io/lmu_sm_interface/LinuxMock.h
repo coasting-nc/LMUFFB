@@ -117,6 +117,12 @@ namespace MockSM {
         static DWORD res = 0; // WAIT_OBJECT_0
         return res;
     }
+    inline void ResetAll() {
+        GetMaps().clear();
+        LastError() = 0;
+        FailNext() = false;
+        WaitResult() = 0;
+    }
 }
 
 // Interlocked functions for Linux mocking
