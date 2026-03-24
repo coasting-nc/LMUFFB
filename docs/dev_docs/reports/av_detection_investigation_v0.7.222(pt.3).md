@@ -99,6 +99,69 @@ While adding this step is a fantastic baseline check, you must be aware of a lim
 Adding this step is highly recommended. It will immediately catch standard signature detections and structural heuristic flags, failing your PRs before they merge. Just keep in mind that a "Pass" in GitHub Actions doesn't guarantee a 100% pass on a user's machine, which is why submitting false positives to Microsoft and eventually getting a Code Signing Certificate remain the ultimate solutions.
 
 
+# Fix Scan Skipped
+
+The reason your scan took 0 seconds and output **"Scanning ... was skipped"** is due to how GitHub configures its Windows runners. 
+
+To prevent antivirus from slowing down compilation (which generates thousands of temporary files), **GitHub explicitly adds the entire workspace directory (`D:\a\`) to the Windows Defender Exclusion List.** When you ask `MpCmdRun.exe` to scan a file inside an excluded directory, it simply skips it.
+
+To fix this and force a real scan, we need to **copy the executable to a non-excluded directory** (like the Windows Temp folder), scan it there, and then delete it. 
+
+We can also pull the actual Defender log file to make the output highly verbose.
+
+Here is the updated step for your `.yml` file:
+
+```yaml
+    - name: Windows Defender Scan
+      shell: pwsh
+      run: |
+        $exePath = "build\Release\LMUFFB.exe"
+        
+        if (-not (Test-Path $exePath)) {
+            Write-Error "Executable not found! It may have been quarantined during the build."
+            exit 1
+        }
+        
+        # 1. Copy to Temp folder to bypass GitHub's D:\a\ workspace exclusions
+        $tempPath = Join-Path $env:TEMP "LMUFFB_scan.exe"
+        Copy-Item -Path $exePath -Destination $tempPath -Force
+        
+        Write-Host "Scanning $tempPath with Windows Defender..."
+        
+        # 2. Run the scan
+        & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$tempPath"
+        $scanExitCode = $LASTEXITCODE
+        
+        # 3. (Optional Verbosity) Print the Defender log file
+        $logPath = "$env:LOCALAPPDATA\Temp\MpCmdRun.log"
+        if (Test-Path $logPath) {
+            Write-Host "`n--- Windows Defender Detailed Log ---"
+            Get-Content $logPath | Select-Object -Last 15
+            Write-Host "-----------------------------------`n"
+        }
+        
+        # 4. Cleanup the temp file
+        Remove-Item -Path $tempPath -Force
+        
+        # 5. Evaluate results
+        if ($scanExitCode -eq 2) {
+            Write-Error "❌ Windows Defender detected a threat! Workflow failed."
+            exit 1
+        } elseif ($scanExitCode -eq 0) {
+            Write-Host "✅ Windows Defender scan passed. No threats detected."
+        } else {
+            Write-Warning "⚠️ Windows Defender scan returned unexpected exit code: $scanExitCode"
+        }
+```
+
+### What changed:
+1. **`$env:TEMP` Bypass:** It copies `LMUFFB.exe` to `C:\Users\runneradmin\AppData\Local\Temp\LMUFFB_scan.exe`. Because this is on the `C:` drive and outside the excluded `D:\a\` workspace, Defender is forced to actually scan the file.
+2. **Log Extraction:** `MpCmdRun.exe` doesn't print much to the console by default, but it writes a detailed log to `%TEMP%\MpCmdRun.log`. The script now grabs the last 15 lines of that log file and prints it directly into your GitHub Actions console so you can see exactly what the engine evaluated. 
+
+Run this updated step, and you should see the scan take a few seconds and output the actual engine verification logs!
+
+
+
 # Adding VirusTotal Scan
 
 Separating slow, comprehensive malware scans into a different workflow is a standard and highly recommended CI/CD practice. It keeps your developer feedback loop fast while still providing deep security insights asynchronously.

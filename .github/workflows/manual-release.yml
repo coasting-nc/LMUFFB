@@ -60,28 +60,40 @@ jobs:
         run: |
           $exePath = "build\Release\LMUFFB.exe"
           
-          # 1. Check if the file even exists. If Defender caught it during compilation, 
-          # it might have already silently quarantined/deleted it.
           if (-not (Test-Path $exePath)) {
-              Write-Error "Executable not found! It may have been quarantined by Defender during the build."
+              Write-Error "Executable not found! It may have been quarantined during the build."
               exit 1
           }
           
-          $absPath = (Resolve-Path $exePath).Path
-          Write-Host "Scanning $absPath with Windows Defender..."
+          # 1. Copy to Temp folder to bypass GitHub's D:\a\ workspace exclusions
+          $tempPath = Join-Path $env:TEMP "LMUFFB_scan.exe"
+          Copy-Item -Path $exePath -Destination $tempPath -Force
           
-          # 2. Run the Defender command-line utility (ScanType 3 is a custom file/directory scan)
-          & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$absPath"
+          Write-Host "Scanning $tempPath with Windows Defender..."
           
-          # 3. Check the exit code. 
-          # 0 = Clean, 2 = Threat Detected
-          if ($LASTEXITCODE -eq 2) {
-              Write-Error "Windows Defender detected a threat! Workflow failed."
+          # 2. Run the scan
+          & "C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File "$tempPath"
+          $scanExitCode = $LASTEXITCODE
+          
+          # 3. (Optional Verbosity) Print the Defender log file
+          $logPath = "$env:LOCALAPPDATA\Temp\MpCmdRun.log"
+          if (Test-Path $logPath) {
+              Write-Host "`n--- Windows Defender Detailed Log ---"
+              Get-Content $logPath | Select-Object -Last 15
+              Write-Host "-----------------------------------`n"
+          }
+          
+          # 4. Cleanup the temp file
+          Remove-Item -Path $tempPath -Force
+          
+          # 5. Evaluate results
+          if ($scanExitCode -eq 2) {
+              Write-Error "❌ Windows Defender detected a threat! Workflow failed."
               exit 1
-          } elseif ($LASTEXITCODE -eq 0) {
-              Write-Host "Windows Defender scan passed. No threats detected."
+          } elseif ($scanExitCode -eq 0) {
+              Write-Host "✅ Windows Defender scan passed. No threats detected."
           } else {
-              Write-Warning "Windows Defender scan returned unexpected exit code: $LASTEXITCODE"
+              Write-Warning "⚠️ Windows Defender scan returned unexpected exit code: $scanExitCode"
           }
 
       - name: Run Tests
