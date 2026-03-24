@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-24 22:32:36</td>
+            <td class="headerValue">2026-03-24 22:43:18</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -94,7 +94,7 @@
 <span id="L23"><span class="lineNum">      23</span>                 :             : #endif</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             : </span>
 <span id="L25"><span class="lineNum">      25</span>                 :             : // Bring common math into scope</span>
-<span id="L26"><span class="lineNum">      26</span>                 :             : using namespace ffb_math;</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             : using namespace LMUFFB;</span>
 <span id="L27"><span class="lineNum">      27</span>                 :             : // Default FFB calculation timestep. Used by FFBCalculationContext (defined before</span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : // FFBEngine, so cannot reference FFBEngine::DEFAULT_CALC_DT directly).</span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : // Note: FFBEngine also has a private member of the same name; this file-scope</span>
@@ -244,21 +244,21 @@
 <span id="L173"><span class="lineNum">     173</span>                 :             :     TelemInfoV01 m_working_info; // Persistent storage for upsampled telemetry</span>
 <span id="L174"><span class="lineNum">     174</span>                 :             :     double m_last_telemetry_time = -1.0;</span>
 <span id="L175"><span class="lineNum">     175</span>                 :             : </span>
-<span id="L176"><span class="lineNum">     176</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_lat_patch_vel[4];</span>
-<span id="L177"><span class="lineNum">     177</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_long_patch_vel[4];</span>
-<span id="L178"><span class="lineNum">     178</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_vert_deflection[4];</span>
-<span id="L179"><span class="lineNum">     179</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_susp_force[4];</span>
-<span id="L180"><span class="lineNum">     180</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_brake_pressure[4];</span>
-<span id="L181"><span class="lineNum">     181</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_rotation[4];</span>
-<span id="L182"><span class="lineNum">     182</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_steering;</span>
-<span id="L183"><span class="lineNum">     183</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_throttle;</span>
-<span id="L184"><span class="lineNum">     184</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_brake;</span>
-<span id="L185"><span class="lineNum">     185</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_accel_x;</span>
-<span id="L186"><span class="lineNum">     186</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_accel_y;</span>
-<span id="L187"><span class="lineNum">     187</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_accel_z;</span>
-<span id="L188"><span class="lineNum">     188</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_rot_accel_y;</span>
-<span id="L189"><span class="lineNum">     189</span>                 :             :     ffb_math::HoltWintersFilter m_upsample_local_rot_y;</span>
-<span id="L190"><span class="lineNum">     190</span>                 :             :     ffb_math::HoltWintersFilter  m_upsample_shaft_torque;</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_lat_patch_vel[4];</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_long_patch_vel[4];</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_vert_deflection[4];</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_susp_force[4];</span>
+<span id="L180"><span class="lineNum">     180</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_brake_pressure[4];</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_rotation[4];</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_steering;</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_throttle;</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_brake;</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_accel_x;</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_accel_y;</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_accel_z;</span>
+<span id="L188"><span class="lineNum">     188</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_rot_accel_y;</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_rot_y;</span>
+<span id="L190"><span class="lineNum">     190</span>                 :             :     LMUFFB::HoltWintersFilter  m_upsample_shaft_torque;</span>
 <span id="L191"><span class="lineNum">     191</span>                 :             : </span>
 <span id="L192"><span class="lineNum">     192</span>                 :             :     double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; </span>
 <span id="L193"><span class="lineNum">     193</span>                 :             :     double m_prev_vert_accel = 0.0; </span>
