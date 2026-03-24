@@ -204,6 +204,7 @@ set(UNITY_SKIP_LIST
     test_coverage_boost_v4.cpp   # Clashes on GuiLayerTestAccess class
     test_coverage_boost_v6.cpp   # Clashes on GuiLayerTestAccess class
     test_coverage_expansion.cpp  # Clashes on GuiLayerTestAccess class
+    test_coverage_boost_v2.cpp   # Shared memory mock state contention
 )
 
 set(UNITY_READY_TESTS ${TEST_SOURCES})

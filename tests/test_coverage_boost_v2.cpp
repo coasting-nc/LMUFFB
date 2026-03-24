@@ -236,25 +236,7 @@ TEST_CASE(test_game_connector_branch_boost, "System") {
     layout->data.telemetry.playerHasVehicle = false;
     SharedMemoryObjectOut dest {};
 
-    // Diagnostics (#267 integration)
-    std::cout << "  [D] Conn Status: " << conn.IsConnected() << std::endl;
-    #ifndef _WIN32
-    auto& maps = MockSM::GetMaps();
-    if (maps.count("LMU_SharedMemoryLockData")) {
-        long* ldata = (long*)maps["LMU_SharedMemoryLockData"].data();
-        std::cout << "  [D] Lock Data: waiters=" << ldata[0] << " busy=" << ldata[1] << std::endl;
-    }
-    #endif
-
     bool copy_res = conn.CopyTelemetry(dest);
-    if (!copy_res) {
-        std::cout << "  [FAIL] CopyTelemetry returned false. Diagnostics:" << std::endl;
-        std::cout << "    Connected: " << conn.IsConnected() << std::endl;
-        #ifndef _WIN32
-        std::cout << "    Last SM Error: " << MockSM::LastError() << std::endl;
-        std::cout << "    Wait Result: " << MockSM::WaitResult() << std::endl;
-        #endif
-    }
     ASSERT_TRUE(copy_res);
     ASSERT_FALSE(dest.telemetry.playerHasVehicle);
 #endif
