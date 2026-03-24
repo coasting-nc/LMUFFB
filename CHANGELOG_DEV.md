@@ -1,8 +1,15 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 
+
+## [0.7.231]
+
+### Fixed
+- **Resolved Linux Build Errors**: Fixed compiler errors on Linux caused by ignored return values of `ApplySafetySlew()`. The function is marked with `[[nodiscard]]`, and several test cases were ignoring the result, which triggered fatal warnings in strict build environments.
+
+---
 
 ## [0.7.230]
 

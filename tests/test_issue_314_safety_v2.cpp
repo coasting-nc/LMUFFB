@@ -19,7 +19,7 @@ void test_immediate_spike_detection() {
     FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
 
     // First call should trigger safety immediately
-    engine.m_safety.ApplySafetySlew(5.0, 0.0025, false);
+    (void)engine.m_safety.ApplySafetySlew(5.0, 0.0025, false);
 
     // Should have triggered safety window immediately
     ASSERT_GT(engine.m_safety.safety_timer, 0.0);

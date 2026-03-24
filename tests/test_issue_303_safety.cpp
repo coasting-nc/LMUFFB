@@ -103,7 +103,7 @@ void test_issue_303_spike_detection() {
         // Must use large enough target to ensure delta/dt > threshold
         // And reset last output force to keep delta large
         FFBEngineTestAccess::SetLastOutputForce(engine, 0.0);
-        engine.m_safety.ApplySafetySlew(10.0, 0.0025, false);
+        (void)engine.m_safety.ApplySafetySlew(10.0, 0.0025, false);
     }
 
     // Should have triggered safety window
