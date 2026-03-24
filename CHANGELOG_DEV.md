@@ -7,7 +7,10 @@ All notable changes to this project will be documented in this file.
 ## [0.7.231]
 
 ### Fixed
-- **Resolved Linux Build Errors**: Fixed compiler errors on Linux caused by ignored return values of `ApplySafetySlew()`. The function is marked with `[[nodiscard]]`, and several test cases were ignoring the result, which triggered fatal warnings in strict build environments.
+- **Resolved Linux Build Errors**: Fixed compiler errors on Linux caused by ignored return values of `ApplySafetySlew()`.
+- **Hardened GameConnector State Machine**: Fixed a "zombie connection" bug where `TryConnect()` would return early if the internal flag was set, even if the game window was closed.
+- **Improved Test Stability**: Enhanced `test_game_connector_isolated` with full mock session initialization to prevent non-deterministic failures on Linux CI.
+- **Robust Disconnection**: Updated `Disconnect()` to properly reset all robust state machine flags (`m_inRealtime`, `m_sessionActive`, etc.).
 
 ---
 

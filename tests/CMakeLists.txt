@@ -94,6 +94,7 @@ set(TEST_SOURCES
     test_main_harness.cpp
     test_coverage_boost_v2.cpp
     test_game_connector_isolated.cpp
+    test_game_connector_logic.cpp
     test_coverage_boost_v3.cpp
     test_coverage_boost_v4.cpp
     test_coverage_boost_v5.cpp
