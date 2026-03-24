@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -152,7 +152,7 @@ More changes for Windows Defender checks in GitHub Actions.
 - **Kerbs impact**: the change to the reconstruction filter should also make kerbs less harsh.
 - Added setting in the "Advanced" section to choose the reconstruction filter for Road Texture, Slide Texture, Wheel Spin, Lockup Vibrations: "Zero Latency" (default) or "Smooth".
 - Improved parameters of the reconstruction filter for the Steering Shaft Torque.
-- Remediations for Windows Defender Heuristic False Positives in previous version 0.7.222.
+- Remediations for Windows Defender Heuristic False Positives in previous version 0.7.222 and 0.7.223.
 
 ### Changed
 - **Refactored the preset system** to make it more robust, and address issues in importing and saving presets.
