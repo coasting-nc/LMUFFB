@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -18,6 +18,12 @@ All notable changes to this project will be documented in this file.
 - **Test Suite Robustness**:
   - Hardened `GameConnectorTestAccessor::Reset()` to properly reset `std::chrono` time points, ensuring 100% reliability of transition logging tests in high-speed bundled builds by clearing the 5-second `SME_STARTUP` cooldown.
   - Fixed a cross-test interference bug in `test_transition_logging_logic` by ensuring a clean state before execution.
+
+---
+
+## [0.7.225b]
+
+More changes for Windows Defender checks in GitHub Actions.
 
 ---
 
