@@ -111,6 +111,20 @@ do { \
         } \
 } while(0)
 
+#define ASSERT_TRUE_MSG(condition, msg) \
+do { \
+        if (condition) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #condition << " is false. " << msg \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
+
 #define ASSERT_FALSE(condition) \
 do { \
         if (!(condition)) { \
