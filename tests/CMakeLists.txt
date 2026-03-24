@@ -194,8 +194,58 @@ else()
     endif()
 endif()
 
+# Define the whitelist of files we have verified to be Unity-safe
+set(UNITY_READY_TESTS
+    test_math_utils.cpp
+    test_vehicle_utils.cpp
+    test_perf_stats.cpp
+    test_ffb_common.cpp
+    test_ffb_smoothstep.cpp
+    test_ffb_smoothing.cpp
+    test_ffb_coordinates.cpp
+    test_ffb_internal.cpp
+    test_ffb_stability.cpp
+    test_rate_monitor.cpp
+    repro_issue_290.cpp
+    test_ffb_slope_edge_cases.cpp
+    test_ffb_slope_fix.cpp
+    test_ffb_advanced_slope.cpp
+    test_ffb_core_physics.cpp
+    test_ffb_accuracy_tools.cpp
+    test_ffb_understeer.cpp
+    test_ffb_yaw_gyro.cpp
+    test_ffb_features.cpp
+    test_ffb_road_texture.cpp
+    test_ffb_lockup_braking.cpp
+    test_ffb_config.cpp
+    test_toml_config.cpp
+    test_toml_presets.cpp
+    test_ffb_slip_grip.cpp
+    test_ffb_logic.cpp
+    test_ffb_safety.cpp
+    test_ffb_soft_lock.cpp
+)
+
+# Disable Unity inclusion for any test NOT in the whitelist
+foreach(src ${TEST_SOURCES})
+    # Get the base file name in case paths are relative
+    get_filename_component(src_name ${src} NAME)
+    
+    list(FIND UNITY_READY_TESTS ${src_name} index)
+    if(index EQUAL -1)
+        # Not in the whitelist -> Compile as standalone file
+        set_source_files_properties(${src} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+    endif()
+endforeach()
+
 enable_testing()
 add_executable(run_combined_tests ${TEST_SOURCES})
+
+# Enable Unity Builds strictly for the test target
+set_target_properties(run_combined_tests PROPERTIES 
+    UNITY_BUILD ON
+    UNITY_BUILD_BATCH_SIZE 15 # Group 15 files per chunk
+)
 target_compile_definitions(run_combined_tests PRIVATE 
     HEADLESS_GUI 
     LMUFFB_UNIT_TEST 
