@@ -236,7 +236,11 @@ void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
     gc.m_currentGamePhase.store(255);
     gc.m_playerControl.store(-2);
     gc.m_pendingMenuCheck = false;
-    memset(&gc.m_prevState, 0, sizeof(gc.m_prevState));
+    memset(&gc.m_prevState, 0, offsetof(::GameConnector::TransitionState, lastEventLogTime));
+    for (int i = 0; i < SME_MAX; ++i) {
+        gc.m_prevState.lastEventLogTime[i] = std::chrono::steady_clock::time_point();
+        gc.m_prevState.eventState[i] = 0;
+    }
     gc.m_prevState.optionsLocation = 255;
     gc.m_prevState.gamePhase = 255;
     gc.m_prevState.session = -1;

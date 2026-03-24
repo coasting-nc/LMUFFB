@@ -8,6 +8,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.7.226]
+
+### Added
+- **Incremental Unity Build Expansion**:
+  - Whitelisted over 150 test files for bundled "Unity" compilation, significantly reducing total test suite build time.
+  - Optimized the CI/CD pipeline by enabling unity builds for both Core and Test targets in GitHub workflows using `-DLMUFFB_USE_UNITY_BUILD=ON`.
+  - Maintained 8 standalone test files to avoid specific symbol clashes in legacy and GUI helper classes.
+- **Test Suite Robustness**:
+  - Hardened `GameConnectorTestAccessor::Reset()` to properly reset `std::chrono` time points, ensuring 100% reliability of transition logging tests in high-speed bundled builds by clearing the 5-second `SME_STARTUP` cooldown.
+  - Fixed a cross-test interference bug in `test_transition_logging_logic` by ensuring a clean state before execution.
+
+---
+
 ## [0.7.225]
 
 ### Added

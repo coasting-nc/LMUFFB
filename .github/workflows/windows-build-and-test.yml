@@ -64,7 +64,7 @@ jobs:
     - name: Configure and Build (Release)
       shell: pwsh
       run: |
-        cmake -S . -B build
+        cmake -S . -B build -DLMUFFB_USE_UNITY_BUILD=ON
         cmake --build build --config Release --clean-first
 
     - name: Windows Defender Scan

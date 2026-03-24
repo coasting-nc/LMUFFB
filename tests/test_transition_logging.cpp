@@ -12,6 +12,7 @@ namespace FFBEngineTests {
 TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::string>{"logging", "transitions"})) {
     Logger::Get().Init("test_transitions.log", "", false);
     GameConnector& gc = GameConnector::Get();
+    GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut data;
     memset(&data, 0, sizeof(data));

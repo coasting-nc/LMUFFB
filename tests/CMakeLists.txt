@@ -194,36 +194,24 @@ else()
     endif()
 endif()
 
-# Define the whitelist of files we have verified to be Unity-safe
-set(UNITY_READY_TESTS
-    test_math_utils.cpp
-    test_vehicle_utils.cpp
-    test_perf_stats.cpp
-    test_ffb_common.cpp
-    test_ffb_smoothstep.cpp
-    test_ffb_smoothing.cpp
-    test_ffb_coordinates.cpp
-    test_ffb_internal.cpp
-    test_ffb_stability.cpp
-    test_rate_monitor.cpp
-    repro_issue_290.cpp
-    test_ffb_slope_edge_cases.cpp
-    test_ffb_slope_fix.cpp
-    test_ffb_advanced_slope.cpp
-    test_ffb_core_physics.cpp
-    test_ffb_accuracy_tools.cpp
-    test_ffb_understeer.cpp
-    test_ffb_yaw_gyro.cpp
-    test_ffb_features.cpp
-    test_ffb_road_texture.cpp
-    test_ffb_lockup_braking.cpp
-    test_ffb_config.cpp
-    test_toml_config.cpp
-    test_toml_presets.cpp
-    test_ffb_slip_grip.cpp
-    test_ffb_logic.cpp
-    test_ffb_safety.cpp
-    test_ffb_soft_lock.cpp
+# Define files that currently have symbol clashes and need cleanup before joining unity build
+set(UNITY_SKIP_LIST
+    test_persistence_v0625.cpp   # Clashes with test_persistence_v0628.cpp (FileContains)
+    test_gui_interaction.cpp     # Clashes on GuiLayerTestAccess class and CONFIG_PANEL_WIDTH
+    test_gui_interaction_v2.cpp  # Clashes on GuiLayerTestAccess class and CONFIG_PANEL_WIDTH
+    test_gui_menu_bar.cpp        # Clashes on GuiLayerTestAccess class
+    test_gui_log_analyzer.cpp    # Clashes on GuiLayerTestAccess class
+    test_coverage_boost_v4.cpp   # Clashes on GuiLayerTestAccess class
+    test_coverage_boost_v6.cpp   # Clashes on GuiLayerTestAccess class
+    test_coverage_expansion.cpp  # Clashes on GuiLayerTestAccess class
+)
+
+set(UNITY_READY_TESTS ${TEST_SOURCES})
+# Exclude the test runner (main), core project main, and clashing files
+list(REMOVE_ITEM UNITY_READY_TESTS 
+    main_test_runner.cpp 
+    ../src/core/main.cpp
+    ${UNITY_SKIP_LIST}
 )
 
 # Disable Unity inclusion for any test NOT in the whitelist
