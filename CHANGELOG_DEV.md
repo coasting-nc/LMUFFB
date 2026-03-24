@@ -1,10 +1,15 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
 
 
+## [0.7.230]
 
+### Fixed
+- Resolved Linux CI Failure: Fixed a crash/failure in test_game_connector_branch_boost that occurred specifically in the high-speed bundled (Unity) environment on Linux.
+Root Cause: The mock shared memory map for the system lock (LMU_SharedMemoryLockData) was persisting between tests in the same process. If a previous test left the lock in a "busy" state, subsequent tests would fail to acquire it, causing CopyTelemetry  to return false.
+Fix: Added MockSM::GetMaps().clear() at the start of the failing test to ensure a clean state, and explicitly enabled the SME_UPDATE_TELEMETRY event flag to ensure telemetry is correctly copied and verified.
 
 ---
 

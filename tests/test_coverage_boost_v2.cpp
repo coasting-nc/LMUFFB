@@ -215,8 +215,12 @@ TEST_CASE(test_game_connector_branch_boost, "System") {
     conn.Disconnect();
 
     #ifndef _WIN32
+    MockSM::GetMaps().clear(); // Reset shared state for unity build
+    MockSM::LastError() = 0;
+    
     MockSM::GetMaps()["LMU_Data"].resize(sizeof(SharedMemoryLayout));
     SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
+    layout->data.generic.events[SME_UPDATE_TELEMETRY] = 1; // Enable telemetry copying
     layout->data.generic.appInfo.mAppWindow = reinterpret_cast<HWND>(static_cast<intptr_t>(3)); // NOLINT(performance-no-int-to-ptr)
 
     conn.TryConnect();
