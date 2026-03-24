@@ -93,6 +93,7 @@ set(TEST_SOURCES
     test_dxgi_modernization.cpp
     test_main_harness.cpp
     test_coverage_boost_v2.cpp
+    test_game_connector_isolated.cpp
     test_coverage_boost_v3.cpp
     test_coverage_boost_v4.cpp
     test_coverage_boost_v5.cpp
@@ -204,7 +205,7 @@ set(UNITY_SKIP_LIST
     test_coverage_boost_v4.cpp   # Clashes on GuiLayerTestAccess class
     test_coverage_boost_v6.cpp   # Clashes on GuiLayerTestAccess class
     test_coverage_expansion.cpp  # Clashes on GuiLayerTestAccess class
-    test_coverage_boost_v2.cpp   # Shared memory mock state contention
+    test_game_connector_isolated.cpp  # Shared memory mock state contention
 )
 
 set(UNITY_READY_TESTS ${TEST_SOURCES})
