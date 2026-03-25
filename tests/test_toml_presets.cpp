@@ -1,6 +1,6 @@
 #include "test_ffb_common.h"
 #include <filesystem>
-#include <toml.hpp>
+#include <toml++/toml.hpp>
 #include <fstream>
 
 namespace fs = std::filesystem;

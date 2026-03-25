@@ -14,7 +14,7 @@
 #include <iostream>
 #include <algorithm>
 #include <mutex>
-#include <toml.hpp>
+#include <toml++/toml.hpp>
 #include <filesystem>
 
 extern std::recursive_mutex g_engine_mutex;

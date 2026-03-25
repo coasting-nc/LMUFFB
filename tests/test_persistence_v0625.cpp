@@ -6,7 +6,7 @@
 #include "src/ffb/FFBEngine.h"
 #include "src/core/Config.h"
 #include "src/Version.h"
-#include <toml.hpp>
+#include <toml++/toml.hpp>
 
 namespace FFBEngineTests {
 

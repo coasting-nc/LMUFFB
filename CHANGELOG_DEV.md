@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.243]
+
+### Changed
+- **Dependency Pipeline Harmonization**:
+  - Transitioned `toml++` from an isolated bundled header to a CMake-managed `FetchContent` dependency (following the pattern of LZ4 and ImGui).
+  - Modernized `toml++` includes to use the official standard path: `#include <toml++/toml.hpp>`.
+  - Resolved CI build failures caused by the `vendor/` gitignore rules while maintaining a clean, zero-vendor-overhead repository.
+
 ## [0.7.242]
 
 ### Changed

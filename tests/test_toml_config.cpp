@@ -1,5 +1,5 @@
 #include "test_ffb_common.h"
-#include <toml.hpp>
+#include <toml++/toml.hpp>
 
 namespace FFBEngineTests {
 

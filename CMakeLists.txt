@@ -107,7 +107,6 @@ endif()
 
 # LZ4 Detection & FetchContent
 set(LZ4_DIR "${CMAKE_SOURCE_DIR}/vendor/lz4")
-
 if(EXISTS "${LZ4_DIR}/lz4.c")
     message(STATUS "LZ4 found locally.")
     set(LZ4_LOCAL_FOUND TRUE)
@@ -126,6 +125,21 @@ else()
     set(LZ4_FETCHED TRUE)
 endif()
 
+# toml++ FetchContent (v3.4.0)
+# Harmonized with LZ4/ImGui to use FetchContent for CI stability and repo cleanliness
+FetchContent_Declare(
+  tomlplusplus
+  GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+  GIT_TAG        v3.4.0
+)
+FetchContent_GetProperties(tomlplusplus)
+if(NOT tomlplusplus_POPULATED)
+    FetchContent_Populate(tomlplusplus)
+    # We add the tomlplusplus subdirectory to get its targets (header-only)
+    add_subdirectory(${tomlplusplus_SOURCE_DIR} ${tomlplusplus_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# LZ4 detection already handled above
 if(EXISTS "${IMGUI_DIR}/imgui.cpp")
     add_definitions(-DENABLE_IMGUI)
 
@@ -175,8 +189,8 @@ if(VENDOR_SOURCES)
         ${IMGUI_DIR} 
         ${IMGUI_DIR}/backends 
         ${LZ4_DIR}
-        vendor/toml++
     )
+    target_link_libraries(LMUFFB_Vendor PUBLIC tomlplusplus::tomlplusplus)
     # Disable clang-tidy for this target explicitly
     set_target_properties(LMUFFB_Vendor PROPERTIES CXX_CLANG_TIDY "")
     # Disable most warnings for vendor code

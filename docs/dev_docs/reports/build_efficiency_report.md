@@ -100,3 +100,25 @@ The following architectural clean-ups have been implemented:
 1.  **Consolidated Directory Structure:** Moved `src/ext/toml++` to `vendor/toml++` and verified the build.
 2.  **Cleaned Up CMakeLists.txt:** Removed redundant `toml++` target include declarations from the core libraries.
 3.  **Refined Coverage Pipeline:** Updated the coverage collection script to rely on the centralized `vendor/` exclusion.
+
+---
+
+## 6. Dependency Management Strategy: Bundling vs. `FetchContent`
+
+### 6.1 The CI Build Failure (Case Study)
+Moving `toml++` to the `vendor/` directory while keeping `vendor/` in `.gitignore` caused CI failures because the library was neither bundled nor fetched. This highlighted the need for a consistent strategy.
+
+### 6.2 Comparison: Bundled vs. `FetchContent`
+
+| Strategy | Best For | Pros | Cons |
+| :--- | :--- | :--- | :--- |
+| **Bundling (Source Tree)** | Small, stable, single-header libs. | Zero-dependency CI, offline dev, absolute version stability. | Repo bloat, harder to update. |
+| **FetchContent (CMake)** | Large libraries or frequently updated dependencies. | Clean repo, easy versioning, standard CMake workflow. | Requires internet for first build, potential network failures. |
+
+### 6.3 Recommendation for LMUFFB
+For this project, we have chosen the **FetchContent** strategy for all third-party dependencies (`lz4`, `imgui`, and now `toml++`) to maintain a clean repository and leverage standard CMake dependency management.
+
+### 6.4 Implementation Status (v0.7.243)
+- **Harmonized `toml++`**: Implemented `FetchContent_Declare` for `marzer/tomlplusplus` (v3.4.0) with a fallback mechanism.
+- **Modernized Includes**: Updated project source code (`Config.cpp` and tests) to use the standard library include path: `#include <toml++/toml.hpp>`.
+- **Verified Linkage**: Successfully linked `tomlplusplus::tomlplusplus` to the `LMUFFB_Vendor` target.
