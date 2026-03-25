@@ -249,12 +249,11 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Suggestions for the Future:** Now that Phase 3 is complete, Phase 4 should proceed with high caution regarding external OS headers. It is recommended to refactor `AsyncLogger` next, as it has the fewest OS-specific dependencies compared to `DirectInputFFB` or `DXGIUtils`.
 
 
-## 2. Next Steps: v0.7.241 (Phase 4 Continuation)
-With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to finalize any remaining Phase 3 modules and begin tackling Phase 4.
+## 9. Next Steps: v0.7.244 (Phase 4 Continuation)
+With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to begin tackling Phase 4.
 
 ### Your Objectives for the Next PR:
-1. **Conclude Phase 3:** Refactor `ffb/UpSampler.h` and `ffb/UpSampler.cpp`. Wrap them safely into `namespace LMUFFB` and add `UpSampler.cpp` to the `UNITY_READY_MAIN` whitelist in `CMakeLists.txt`.
-2. **Begin Phase 4 (OS Boundaries & Subsystems):** Begin systematically wrapping the global boundaries:
+1. **Begin Phase 4 (OS Boundaries & Subsystems):** Begin systematically wrapping the global boundaries:
    - `logging/AsyncLogger.h` & `.cpp`
    - `ffb/DirectInputFFB.h` & `.cpp`
    - `gui/DXGIUtils.h` & `.cpp`
