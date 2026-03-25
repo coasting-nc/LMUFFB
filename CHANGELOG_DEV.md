@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.240]
+
+### Changed
+- **Unity Build Main Expansion (Phase 3 Completion)**:
+  - Whitelisted `src/ffb/UpSampler.cpp` into the CMake `UNITY_READY_MAIN` pipeline, completing the integration of all Phase 3 core engine modules into the unified translation unit.
+  - Verified that `PolyphaseResampler` and associated components are correctly namespaced within `LMUFFB` and compatible with the high-speed bundled build.
+
 ## [0.7.239]
 
 ### Fixed
