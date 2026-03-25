@@ -13,6 +13,24 @@ All notable changes to this project will be documented in this file.
     3. **The Kill Switch**: Implemented a mandatory post-packaging verification step that inspects the final `.zip` archive. If a leaked certificate is detected, the compromised archive is destroyed and the workflow is immediately terminated before any public release.
   - This ensures every Windows binary published to GitHub is cryptographically sealed, helping to reduce false-positive antivirus heuristic detections and building publisher reputation.
 
+
+
+---
+
+## Cumulative changes from version 0.7.223 till 0.7.238
+
+### Added
+- Added app signing to lower the chanches of triggering Windows Defender false positives.
+- Improved call to log analiser to avoid Windows Defender false positives (using native `SetEnvironmentVariableW`, eliminated command chaining, switched from `cmd /c` to `cmd /k`).
+
+
+### Fixed
+- **Hardened ShellExecuteW Implementation (Issue #500 follow-up)**
+  - Eliminated command chaining (`&&`, `&`) in the log analyzer launch sequence to remove remaining "Living-off-the-Land" behavioral triggers.
+  - Native Environment Integration: Replaced shell-based `set PYTHONPATH` with native `SetEnvironmentVariableW` calls, ensuring the child process inherits the environment without suspicious command-line manipulation.
+  - Switched from `cmd /c` to `cmd /k` to align with standard developer tool behavior and maintain window persistence for user feedback.
+
+
 ---
 
 ## [0.7.237]
