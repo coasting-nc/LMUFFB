@@ -3,6 +3,7 @@
 #include "../src/core/Config.h"
 #include "../src/logging/AsyncLogger.h"
 #include "../src/gui/GuiLayer.h"
+#include "test_gui_common.h"
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
 #endif
@@ -12,12 +13,6 @@
 #include <limits>
 #include <fstream>
 #include <filesystem>
-
-class GuiLayerTestAccess {
-public:
-    static void DrawTuningWindow(LMUFFB::FFBEngine& engine) { LMUFFB::GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(LMUFFB::FFBEngine& engine) { LMUFFB::GuiLayer::DrawDebugWindow(engine); }
-};
 
 namespace FFBEngineTests {
 

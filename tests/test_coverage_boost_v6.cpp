@@ -10,6 +10,7 @@
 #include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include "../src/io/lmu_sm_interface/LinuxMock.h"
 #include "../src/gui/GuiLayer.h"
+#include "test_gui_common.h"
 #include "../src/io/GameConnector.h"
 #include "../src/ffb/DirectInputFFB.h"
 #include "../src/logging/RateMonitor.h"
@@ -25,12 +26,6 @@ extern std::atomic<bool> g_ffb_active;
 extern std::recursive_mutex g_engine_mutex;
 extern void FFBThread();
 extern int lmuffb_app_main(int argc, char* argv[]);
-
-class GuiLayerTestAccess {
-public:
-    static void DrawTuningWindow(FFBEngine& engine) { GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(FFBEngine& engine) { GuiLayer::DrawDebugWindow(engine); }
-};
 
 #ifndef _WIN32
 // Use the global captured swap chain desc defined in test_dxgi_modernization.cpp

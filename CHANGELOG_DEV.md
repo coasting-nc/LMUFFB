@@ -4,12 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.250]
 ### Changed
-- **Unity Build Expansion (Phase 5 Commencement)**:
-  - Refactored the GUI layer by wrapping core headers (`Tooltips.h`, `GuiWidgets.h`, `GuiLayer.h`, `GuiPlatform.h`) and implementation files (`GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, `GuiLayer_Linux.cpp`) into `namespace LMUFFB`.
-  - Encapsulated platform-specific helper functions (e.g., `ResizeWindowPlatform`) and the `IGuiPlatform` interface within the `LMUFFB` namespace to resolve ODR and linkage issues in unified translation units.
-  - Whitelisted `GuiLayer_Common.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
-  - Updated `main.cpp` and 13 test files to maintain compatibility with the namespaced GUI module.
-  - Resolved a cross-namespace access issue by using a global forward declaration for `GuiLayerTestAccess` to maintain its `friend` status with `GuiLayer`.
+- **Unity Build Expansion (Phase 5 Completion)**:
+  - Fully encapsulated the GUI layer (headers and implementation files) within `namespace LMUFFB`, completing Phase 5 of the Unity Build plan.
+  - Refactored platform-specific helper functions (e.g., `WndProc`, `CreateDeviceD3D`, `glfw_error_callback`) and internal static variables into anonymous namespaces within `namespace LMUFFB` to resolve "declared but not defined" and ODR errors during Unity builds.
+  - Whitelisted `src/gui/GuiLayer_Common.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+  - Centralized `GuiLayerTestAccess` in `tests/test_gui_common.h` and removed redundant local definitions across test files to prevent ODR clashes in unified translation units.
+  - Updated `main.cpp` and all GUI-related test files to maintain compatibility with the namespaced GUI module.
+  - Hardened `GuiLayer_Common.cpp` with consolidated preprocessor guards and added missing no-op stubs for headless build support.
+
+### Fixed
+- **UI Logic and Consistency**:
+  - Restored the "Optimal Slip Angle" format string to `%.3f rad` in the GUI.
+  - Corrected a compilation typo `SOP_OUTPUT_SMOOTHING` to the intended `SLOPE_OUTPUT_SMOOTHING` in `GuiLayer_Common.cpp`.
+  - Restored missing `ImGuiCol_Text` styling in `SetupGUIStyle`.
 
 ## [0.7.249]
 ### Changed

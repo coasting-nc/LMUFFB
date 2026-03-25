@@ -27,13 +27,6 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
-
-// Forward declarations
-static bool CreateDeviceD3D(HWND hWnd);
-static void CleanupDeviceD3D();
-static void CreateRenderTarget();
-static void CleanupRenderTarget();
-static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
 
 extern std::atomic<bool> g_running;
@@ -42,15 +35,24 @@ namespace LMUFFB {
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 
-// Global DirectX variables
-static ID3D11Device*            g_pd3dDevice = NULL;
-static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
-static IDXGISwapChain*          g_pSwapChain = NULL;
-static ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
-static HWND                     g_hwnd = NULL;
+namespace {
+    // Forward declarations
+    bool CreateDeviceD3D(HWND hWnd);
+    void CleanupDeviceD3D();
+    void CreateRenderTarget();
+    void CleanupRenderTarget();
+    LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static const int MIN_WINDOW_WIDTH = 400;
-static const int MIN_WINDOW_HEIGHT = 600;
+    // Global DirectX variables
+    ID3D11Device*            g_pd3dDevice = NULL;
+    ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
+    IDXGISwapChain*          g_pSwapChain = NULL;
+    ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
+    HWND                     g_hwnd = NULL;
+
+    const int MIN_WINDOW_WIDTH = 400;
+    const int MIN_WINDOW_HEIGHT = 600;
+}
 
 #ifndef PW_RENDERFULLCONTENT
 #define PW_RENDERFULLCONTENT 0x00000002
@@ -235,8 +237,10 @@ bool GuiLayer::Render(FFBEngine& engine) {
     return true; // Always return true to keep the main loop running at full speed
 }
 
+namespace {
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam)) return true;
     switch (msg) {
     case WM_SIZE:
@@ -254,7 +258,7 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-static bool CreateDeviceD3D(HWND hWnd) {
+bool CreateDeviceD3D(HWND hWnd) {
     // Modern DXGI/D3D11 Initialization following Flip Model (Issue #189)
     D3D_FEATURE_LEVEL featureLevel;
     const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0 };
@@ -326,21 +330,23 @@ static bool CreateDeviceD3D(HWND hWnd) {
     return true;
 }
 
-static void CleanupDeviceD3D() {
+void CleanupDeviceD3D() {
     CleanupRenderTarget();
     if (g_pSwapChain) { g_pSwapChain->Release(); g_pSwapChain = NULL; }
     if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = NULL; }
     if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
 }
 
-static void CreateRenderTarget() {
+void CreateRenderTarget() {
     ID3D11Texture2D* pBackBuffer; g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
     g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &g_mainRenderTargetView); pBackBuffer->Release();
 }
 
-static void CleanupRenderTarget() {
+void CleanupRenderTarget() {
     if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = NULL; }
 }
+
+} // anonymous namespace
 
 #else
 // Stub Implementation for Headless Builds

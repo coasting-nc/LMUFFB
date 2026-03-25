@@ -193,7 +193,7 @@ This section tracks the progress made towards fully refactoring the main code an
 
 ### 6.6 Phase 5: UI & Final Integration
 - [x] Refactor `gui/Tooltips.h` & `gui/GuiWidgets.h`.
-- [x] Refactor `gui/GuiLayer_*.cpp`.
+- [x] Refactor `gui/GuiLayer_*.cpp`. (Fully namespaced and whitelisted).
 - [ ] Finalize `core/main.cpp` (Retaining global `main()` declaration).
 
 ### 6.7 Phase 6: Subsystem Namespace Migration (Post-Unity Stability)
@@ -285,7 +285,11 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Encountered Issues:**
   - Encountered linker errors regarding platform-agnostic helper functions (e.g., `ResizeWindowPlatform`). These were originally global and called from `GuiLayer_Common.cpp`. Because `GuiLayer_Common.cpp` was moved into the Unity chunk, it could no longer see the global definitions if the platform-specific files weren't also wrapped and included. Fixed by moving all platform helpers and the `IGuiPlatform` interface into `namespace LMUFFB`.
   - Discovered a namespace visibility issue for `GuiLayerTestAccess`. As a `friend` class declared in the global scope but trying to access a namespaced class, it required a global forward declaration and explicit qualification (`friend class ::GuiLayerTestAccess`) in `GuiLayer.h`.
-- **Deviations from the Plan:** None. The core GUI modules were successfully namespaced and whitelisted for Unity builds.
+  - Encountered "static function declared but not defined" errors for platform helpers like `WndProc` and `CreateDeviceD3D` on Windows when bundled in Unity builds. Resolved by moving forward declarations and definitions into an anonymous namespace within `namespace LMUFFB`.
+  - A typo `SOP_OUTPUT_SMOOTHING` (intended to be `SLOPE_OUTPUT_SMOOTHING`) caused compilation failures in `GuiLayer_Common.cpp`.
+  - Linker error `undefined reference to GuiLayerTestAccess::GetLastLaunchArgs` occurred due to improper namespacing of test-only globals. Fixed by moving these members into the `GuiLayer` class under `LMUFFB_UNIT_TEST`.
+  - Discovered missing no-op stubs for `LaunchLogAnalyzer` and `UpdateTelemetry` in the `#else` (headless) block of `GuiLayer_Common.cpp` which broke non-ImGui builds.
+- **Deviations from the Plan:** None. The GUI layer was successfully namespaced and whitelisted for Unity builds.
 - **Suggestions for the Future:** Phase 5 is nearly complete. The final step is to clean up `core/main.cpp` by removing temporary `using namespace` directives and fully qualifying remaining calls, and then proceeding to Phase 6 (Subsystem Namespace Migration).
 
 ## 9. Next Steps: Phase 5 Completion & Final Integration

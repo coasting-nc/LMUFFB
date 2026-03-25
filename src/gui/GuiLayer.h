@@ -31,6 +31,13 @@ private:
     static float m_latest_steering_range;
     static float m_latest_steering_angle;
 
+#ifdef LMUFFB_UNIT_TEST
+public:
+    static std::wstring m_last_shell_execute_args;
+    static std::string m_last_system_cmd;
+private:
+#endif
+
     static void DrawMenuBar(LMUFFB::FFBEngine& engine);
     static void LaunchLogAnalyzer(const std::string& log_file);
     static void DrawTuningWindow(LMUFFB::FFBEngine& engine);

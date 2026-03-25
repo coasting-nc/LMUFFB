@@ -1,4 +1,5 @@
 #include "test_ffb_common.h"
+#include "test_gui_common.h"
 #include "../src/logging/Logger.h"
 #include "../src/physics/VehicleUtils.h"
 #include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
@@ -13,12 +14,6 @@
 #ifndef _WIN32
 #include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
-
-class GuiLayerTestAccess {
-public:
-    static void DrawTuningWindow(LMUFFB::FFBEngine& engine) { LMUFFB::GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(LMUFFB::FFBEngine& engine) { LMUFFB::GuiLayer::DrawDebugWindow(engine); }
-};
 
 using namespace LMUFFB;
 

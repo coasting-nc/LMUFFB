@@ -34,22 +34,19 @@ extern std::atomic<bool> g_running;
 extern std::recursive_mutex g_engine_mutex;
 
 #ifdef LMUFFB_UNIT_TEST
-// Full definition needed to define members in this TU
-class GuiLayerTestAccess {
-public:
-    static void GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd);
-};
-
-static std::wstring g_last_shell_execute_args;
-static std::string g_last_system_cmd;
-
-void GuiLayerTestAccess::GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd) {
-    wArgs = g_last_shell_execute_args;
-    cmd = g_last_system_cmd;
-}
+// Linkage for global test access class defined in test_gui_common.h
+#include "../../tests/test_gui_common.h"
 #endif
 
 namespace LMUFFB {
+
+float GuiLayer::m_latest_steering_range = 0.0f;
+float GuiLayer::m_latest_steering_angle = 0.0f;
+
+#ifdef LMUFFB_UNIT_TEST
+std::wstring GuiLayer::m_last_shell_execute_args;
+std::string GuiLayer::m_last_system_cmd;
+#endif
 
 #ifdef ENABLE_IMGUI
 static void DisplayRate(const char* label, double rate, double target) {
@@ -69,17 +66,12 @@ static void DisplayRate(const char* label, double rate, double target) {
     
     ImGui::TextColored(color, "%.1f Hz", rate);
 }
-#endif
-
-float GuiLayer::m_latest_steering_range = 0.0f;
-float GuiLayer::m_latest_steering_angle = 0.0f;
 
 static const float CONFIG_PANEL_WIDTH = 500.0f;
 static const int LATENCY_WARNING_THRESHOLD_MS = 15;
 
 // Professional "Flat Dark" Theme
 void GuiLayer::SetupGUIStyle() {
-#ifdef ENABLE_IMGUI
     ImGuiStyle& style = ImGui::GetStyle();
 
     style.WindowRounding = 5.0f;
@@ -113,14 +105,12 @@ void GuiLayer::SetupGUIStyle() {
     colors[ImGuiCol_ButtonActive]   = ImVec4(0.00f, 0.50f, 0.75f, 1.00f);
     colors[ImGuiCol_CheckMark]      = accent;
 
-    colors[ImGuiCol_Text]           = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+    colors[ImGuiCol_Text]           = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
     colors[ImGuiCol_TextDisabled]   = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
     colors[ImGuiCol_MenuBarBg]      = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
-#endif
 }
 
 void GuiLayer::DrawMenuBar(FFBEngine& engine) {
-#ifdef ENABLE_IMGUI
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Logs")) {
             if (ImGui::MenuItem("Analyze last log")) {
@@ -163,7 +153,6 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
         }
         ImGui::EndMainMenuBar();
     }
-#endif
 }
 
 void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
@@ -201,7 +190,7 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
     std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
 
 #ifdef LMUFFB_UNIT_TEST
-    g_last_shell_execute_args = wArgs;
+    m_last_shell_execute_args = wArgs;
 #endif
 
 #ifndef LMUFFB_UNIT_TEST
@@ -211,7 +200,7 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
 #else
     std::string cmd = "PYTHONPATH=" + python_path + " python3 -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\"";
 #ifdef LMUFFB_UNIT_TEST
-    g_last_system_cmd = cmd;
+    m_last_system_cmd = cmd;
 #endif
 
 #ifndef LMUFFB_UNIT_TEST
@@ -223,7 +212,6 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
 void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
-#ifdef ENABLE_IMGUI
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     // Persistent UI State
@@ -650,14 +638,9 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
 
         ImGui::TreePop();
-#endif
     } else {
-#ifdef ENABLE_IMGUI
         ImGui::NextColumn(); ImGui::NextColumn();
-#endif
     }
-
-#ifdef ENABLE_IMGUI
     if (ImGui::TreeNodeEx("FFB Safety Features", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
@@ -871,7 +854,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::TreeNode("Advanced Slope Settings")) {
                 ImGui::NextColumn(); ImGui::NextColumn();
                 FloatSetting("  Slope Threshold", &engine.m_slope_detection.min_threshold, -1.0f, 0.0f, "%.2f", Tooltips::SLOPE_THRESHOLD);
-                FloatSetting("  Output Smoothing", &engine.m_slope_detection.smoothing_tau, 0.005f, 0.100f, "%.3f s", Tooltips::SOP_OUTPUT_SMOOTHING);
+                FloatSetting("  Output Smoothing", &engine.m_slope_detection.smoothing_tau, 0.005f, 0.100f, "%.3f s", Tooltips::SLOPE_OUTPUT_SMOOTHING);
 
                 ImGui::Separator();
                 ImGui::Text("Stability Fixes (v0.7.3)");
@@ -1039,8 +1022,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
         ImGui::Unindent();
     }
-#endif
-
     ImGui::Columns(1);
     ImGui::End();
 }
@@ -1049,7 +1030,6 @@ const float PLOT_HISTORY_SEC = 10.0f;
 const int PHYSICS_RATE_HZ = 400;
 const int PLOT_BUFFER_SIZE = (int)(PLOT_HISTORY_SEC * PHYSICS_RATE_HZ);
 
-#ifdef ENABLE_IMGUI
 struct RollingBuffer {
     std::vector<float> data;
     int offset = 0;
@@ -1125,10 +1105,8 @@ static RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_
 static RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
 static bool g_warn_dt = false;
-#endif
 
 void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
-#ifdef ENABLE_IMGUI
     auto snapshots = engine.GetDebugBatch();
     for (const auto& snap : snapshots) {
         m_latest_steering_range = snap.steering_range_deg;
@@ -1183,11 +1161,9 @@ void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
         plot_raw_front_deflection.Add(snap.raw_front_deflection);
         g_warn_dt = snap.warn_dt;
     }
-#endif
 }
 
 void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
-#ifdef ENABLE_IMGUI
     if (!Config::show_graphs) return;
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -1361,11 +1337,21 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     }
 
     ImGui::End();
-#endif
 }
-
-#ifndef ENABLE_IMGUI
+#else
 void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
+void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {}
+void GuiLayer::UpdateTelemetry(FFBEngine& engine) {}
+void GuiLayer::DrawTuningWindow(FFBEngine& engine) {}
+void GuiLayer::DrawDebugWindow(FFBEngine& engine) {}
+void GuiLayer::SetupGUIStyle() {}
 #endif
 
 } // namespace LMUFFB
+
+#ifdef LMUFFB_UNIT_TEST
+void GuiLayerTestAccess::GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd) {
+    wArgs = LMUFFB::GuiLayer::m_last_shell_execute_args;
+    cmd = LMUFFB::GuiLayer::m_last_system_cmd;
+}
+#endif
