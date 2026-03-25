@@ -254,10 +254,29 @@ jobs:
       run: |
         ./build/tests/run_combined_tests
 
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Cache Virtual Environment
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-cov-${{ hashFiles('requirements.txt') }}
+
+    - name: Install Python Dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+        pip install pytest-cov lcov_cobertura
+
     - name: Run Python Tests (with Coverage)
       run: |
-        pip install -r requirements.txt
-        pip install pytest-cov
+        source .venv/bin/activate
         export PYTHONPATH=$PYTHONPATH:$(pwd)/tools
         python3 -m pytest --cov=tools --cov=scripts --cov-report=xml:python_cobertura.xml tests tools/lmuffb_log_analyzer/tests
 
@@ -268,12 +287,13 @@ jobs:
         lcov --remove coverage_filtered.info "*/src/ext/toml++/*" --output-file coverage_filtered.info --rc branch_coverage=1 --ignore-errors unused
         genhtml coverage_filtered.info --output-directory coverage_report --rc branch_coverage=1 --ignore-errors source
         
-        # Install tool to convert lcov to cobertura for the summary script
-        pip install lcov_cobertura
+        # Use tool to convert lcov to cobertura for the summary script (installed in venv)
+        source .venv/bin/activate
         lcov_cobertura coverage_filtered.info --output cobertura.xml
 
     - name: Generate Coverage Summaries
       run: |
+        source .venv/bin/activate
         # Ensure directory exists
         mkdir -p docs/dev_docs/reports/coverage/
 
