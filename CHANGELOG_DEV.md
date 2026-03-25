@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.244]
+
+### Changed
+- **CI Build Optimization**:
+  - Implemented compiler-level caching for Windows (Sccache) and Linux (Ccache).
+  - Optimized workflow keys using content hashes (`hashFiles`) to achieve high cache hit rates for vendor and core libraries.
+  - Enabled incremental builds on CI by removing the `clean-first` requirement during the Windows Release configuration.
+
 ## [0.7.243]
 
 ### Changed

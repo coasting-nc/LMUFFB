@@ -37,19 +37,15 @@ jobs:
       with:
         arch: amd64
 
-    - name: Install Ccache (Windows)
+    - name: Sccache Cache
+      uses: mozilla/sccache-action@v0.0.6
+
+    - name: Configure Sccache
       shell: pwsh
       run: |
-        choco install ccache
-        echo "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-    - name: Ccache Cache
-      uses: actions/cache@v4
-      with:
-        path: .ccache
-        key: ${{ runner.os }}-ccache-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-ccache-
+        echo "CMAKE_C_COMPILER_LAUNCHER=sccache" >> $env:GITHUB_ENV
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=sccache" >> $env:GITHUB_ENV
+        echo "SCCACHE_GHA_ENABLED=true" >> $env:GITHUB_ENV
 
     - name: Install ImGui
       shell: pwsh
@@ -64,8 +60,8 @@ jobs:
     - name: Configure and Build (Release)
       shell: pwsh
       run: |
-        cmake -S . -B build -DLMUFFB_USE_UNITY_BUILD=ON
-        cmake --build build --config Release --clean-first
+        cmake -S . -B build -DLMUFFB_USE_UNITY_BUILD=ON -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+        cmake --build build --config Release
 
     - name: Decode Certificate to Temp
       shell: pwsh
@@ -295,8 +291,8 @@ jobs:
     - name: Ccache Cache
       uses: actions/cache@v4
       with:
-        path: .ccache
-        key: ${{ runner.os }}-ccache-${{ github.sha }}
+        path: ${{ env.CCACHE_DIR }}
+        key: ${{ runner.os }}-ccache-${{ hashFiles('CMakeLists.txt', 'vendor/**', 'src/core/Config.cpp') }}
         restore-keys: |
           ${{ runner.os }}-ccache-
 
@@ -310,8 +306,7 @@ jobs:
 
     - name: Configure and Build (Debug + Coverage)
       run: |
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy"
-
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         cmake --build build --config Debug
 
     - name: Run Tests
@@ -441,9 +436,10 @@ jobs:
     - name: Ccache Cache
       uses: actions/cache@v4
       with:
-        path: .ccache
-        key: ${{ runner.os }}-ccache-${{ github.sha }}
+        path: ${{ env.CCACHE_DIR }}
+        key: ${{ runner.os }}-ccache-sanitizers-${{ hashFiles('CMakeLists.txt', 'vendor/**', 'src/core/Config.cpp') }}
         restore-keys: |
+          ${{ runner.os }}-ccache-sanitizers-
           ${{ runner.os }}-ccache-
 
     - name: Install ImGui (Linux)
@@ -456,7 +452,7 @@ jobs:
 
     - name: Configure and Build (ASan + UBSan)
       run: |
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HEADLESS=ON -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         cmake --build build --config Debug
 
     - name: Run Tests with Sanitizers
