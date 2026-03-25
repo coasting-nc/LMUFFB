@@ -165,20 +165,25 @@ if(NOT BUILD_HEADLESS AND IMGUI_CORE_SOURCES)
     endif()
 endif()
 
-set(IMGUI_SOURCES ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES})
+set(VENDOR_SOURCES ${IMGUI_CORE_SOURCES} ${IMGUI_BACKEND_SOURCES} ${LZ4_DIR}/lz4.c)
 
-# Create a separate target for ImGui to isolate it from linting/warnings
-if(IMGUI_SOURCES)
-    add_library(imgui_vendor STATIC ${IMGUI_SOURCES})
+# Create a consolidated vendor library for third-party dependencies
+if(VENDOR_SOURCES)
+    add_library(LMUFFB_Vendor STATIC ${VENDOR_SOURCES})
     # Mark headers as SYSTEM to suppress warnings in files that include them
-    target_include_directories(imgui_vendor SYSTEM PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+    target_include_directories(LMUFFB_Vendor SYSTEM PUBLIC 
+        ${IMGUI_DIR} 
+        ${IMGUI_DIR}/backends 
+        ${LZ4_DIR}
+        src/ext/toml++
+    )
     # Disable clang-tidy for this target explicitly
-    set_target_properties(imgui_vendor PROPERTIES CXX_CLANG_TIDY "")
-    # Disable اکثر warnings for vendor code
+    set_target_properties(LMUFFB_Vendor PROPERTIES CXX_CLANG_TIDY "")
+    # Disable most warnings for vendor code
     if(MSVC)
-        target_compile_options(imgui_vendor PRIVATE /W0)
+        target_compile_options(LMUFFB_Vendor PRIVATE /W0)
     else()
-        target_compile_options(imgui_vendor PRIVATE -w)
+        target_compile_options(LMUFFB_Vendor PRIVATE -w)
     endif()
 endif()
 
@@ -246,7 +251,6 @@ add_definitions(-DLMUFFB_VERSION="${LMUFFB_VERSION}")
 
 # Core Library (Shared between App and Tests)
 set(CORE_SOURCES
-    ${LZ4_DIR}/lz4.c
     src/gui/GuiLayer_Common.cpp
     src/gui/GuiLayer.h
     src/gui/DXGIUtils.cpp
@@ -302,7 +306,7 @@ foreach(src ${CORE_SOURCES} ${APP_SOURCES})
 endforeach()
 
 # 3. Disable Unity inclusion for vendor files
-foreach(src ${IMGUI_SOURCES})
+foreach(src ${VENDOR_SOURCES})
     set_source_files_properties(${src} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 endforeach()
 
@@ -319,8 +323,8 @@ target_include_directories(LMUFFB_Core PUBLIC
     src/utils
     src/ext/toml++
 )
-if(TARGET imgui_vendor)
-    target_link_libraries(LMUFFB_Core PUBLIC imgui_vendor)
+if(TARGET LMUFFB_Vendor)
+    target_link_libraries(LMUFFB_Core PUBLIC LMUFFB_Vendor)
 endif()
 
 # Fast-Compile Core for Tests (Reduced Optimization)
@@ -336,8 +340,8 @@ target_include_directories(LMUFFB_Core_Fast PUBLIC
     src/utils
     src/ext/toml++
 )
-if(TARGET imgui_vendor)
-    target_link_libraries(LMUFFB_Core_Fast PUBLIC imgui_vendor)
+if(TARGET LMUFFB_Vendor)
+    target_link_libraries(LMUFFB_Core_Fast PUBLIC LMUFFB_Vendor)
 endif()
 target_compile_definitions(LMUFFB_Core_Fast PRIVATE LMUFFB_UNIT_TEST)
 

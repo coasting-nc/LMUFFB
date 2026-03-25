@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.241]
+
+### Changed
+- **Build Efficiency Optimization**:
+  - Consolidated third-party dependencies (`imgui`, `lz4`, `toml++`) into a single `LMUFFB_Vendor` static library.
+  - Reduced build times by ensuring vendor sources like `lz4.c` are compiled only once per configuration.
+
+
 ## [0.7.240]
 
 ### Changed
