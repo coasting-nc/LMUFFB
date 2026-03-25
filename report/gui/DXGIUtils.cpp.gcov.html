@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-25 17:23:52</td>
+            <td class="headerValue">2026-03-25 18:06:57</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -72,21 +72,23 @@
 <span id="L1"><span class="lineNum">       1</span>                 :             : #include &quot;DXGIUtils.h&quot;</span>
 <span id="L2"><span class="lineNum">       2</span>                 :             : #include &lt;cstring&gt;</span>
 <span id="L3"><span class="lineNum">       3</span>                 :             : </span>
-<span id="L4"><span class="lineNum">       4</span>                 :<span class="tlaGNC tlaBgGNC">           1 : void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1&amp; sd) {</span></span>
-<span id="L5"><span class="lineNum">       5</span>                 :<span class="tlaGNC">           1 :     memset(&amp;sd, 0, sizeof(sd));</span></span>
-<span id="L6"><span class="lineNum">       6</span>                 :<span class="tlaGNC">           1 :     sd.Width = 0;                               // Use window size</span></span>
-<span id="L7"><span class="lineNum">       7</span>                 :<span class="tlaGNC">           1 :     sd.Height = 0;</span></span>
-<span id="L8"><span class="lineNum">       8</span>                 :<span class="tlaGNC">           1 :     sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;</span></span>
-<span id="L9"><span class="lineNum">       9</span>                 :<span class="tlaGNC">           1 :     sd.Stereo = FALSE;</span></span>
-<span id="L10"><span class="lineNum">      10</span>                 :<span class="tlaGNC">           1 :     sd.SampleDesc.Count = 1;                    // Flip model requires SampleDesc.Count = 1</span></span>
-<span id="L11"><span class="lineNum">      11</span>                 :<span class="tlaGNC">           1 :     sd.SampleDesc.Quality = 0;</span></span>
-<span id="L12"><span class="lineNum">      12</span>                 :<span class="tlaGNC">           1 :     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;</span></span>
-<span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC">           1 :     sd.BufferCount = 2;                         // Flip model requires at least 2</span></span>
-<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">           1 :     sd.Scaling = DXGI_SCALING_STRETCH;</span></span>
-<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">           1 :     sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // Modern flip model</span></span>
-<span id="L16"><span class="lineNum">      16</span>                 :<span class="tlaGNC">           1 :     sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;</span></span>
-<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">           1 :     sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;</span></span>
-<span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">           1 : }</span></span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : namespace LMUFFB {</span>
+<span id="L5"><span class="lineNum">       5</span>                 :<span class="tlaGNC tlaBgGNC">           1 :     void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1&amp; sd) {</span></span>
+<span id="L6"><span class="lineNum">       6</span>                 :<span class="tlaGNC">           1 :         memset(&amp;sd, 0, sizeof(sd));</span></span>
+<span id="L7"><span class="lineNum">       7</span>                 :<span class="tlaGNC">           1 :         sd.Width = 0;                               // Use window size</span></span>
+<span id="L8"><span class="lineNum">       8</span>                 :<span class="tlaGNC">           1 :         sd.Height = 0;</span></span>
+<span id="L9"><span class="lineNum">       9</span>                 :<span class="tlaGNC">           1 :         sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;</span></span>
+<span id="L10"><span class="lineNum">      10</span>                 :<span class="tlaGNC">           1 :         sd.Stereo = FALSE;</span></span>
+<span id="L11"><span class="lineNum">      11</span>                 :<span class="tlaGNC">           1 :         sd.SampleDesc.Count = 1;                    // Flip model requires SampleDesc.Count = 1</span></span>
+<span id="L12"><span class="lineNum">      12</span>                 :<span class="tlaGNC">           1 :         sd.SampleDesc.Quality = 0;</span></span>
+<span id="L13"><span class="lineNum">      13</span>                 :<span class="tlaGNC">           1 :         sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;</span></span>
+<span id="L14"><span class="lineNum">      14</span>                 :<span class="tlaGNC">           1 :         sd.BufferCount = 2;                         // Flip model requires at least 2</span></span>
+<span id="L15"><span class="lineNum">      15</span>                 :<span class="tlaGNC">           1 :         sd.Scaling = DXGI_SCALING_STRETCH;</span></span>
+<span id="L16"><span class="lineNum">      16</span>                 :<span class="tlaGNC">           1 :         sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // Modern flip model</span></span>
+<span id="L17"><span class="lineNum">      17</span>                 :<span class="tlaGNC">           1 :         sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;</span></span>
+<span id="L18"><span class="lineNum">      18</span>                 :<span class="tlaGNC">           1 :         sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC">           1 :     }</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : }</span>
         </pre>
               </td>
             </tr>
