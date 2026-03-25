@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-25 15:16:15</td>
+            <td class="headerValue">2026-03-25 15:42:55</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -124,39 +124,39 @@
 <span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">          41 :     spike_counter = 0; </span></span>
 <span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">          41 : }</span></span>
 <span id="L55"><span class="lineNum">      55</span>                 :             : </span>
-<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">        3874 : double FFBSafetyMonitor::ApplySafetySlew(double target_force, double current_output_force, double dt, bool restricted, double now) {</span></span>
-<span id="L57"><span class="lineNum">      57</span>         [<span class="tlaGBC" title="Branch 0 was taken 3672 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 202 times"> + </span>]:<span class="tlaGNC">        3874 :     if (now &gt;= 0.0) {</span></span>
-<span id="L58"><span class="lineNum">      58</span>                 :<span class="tlaGNC">        3672 :         m_last_now = now;</span></span>
+<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">        3756 : double FFBSafetyMonitor::ApplySafetySlew(double target_force, double current_output_force, double dt, bool restricted, double now) {</span></span>
+<span id="L57"><span class="lineNum">      57</span>         [<span class="tlaGBC" title="Branch 0 was taken 3554 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 202 times"> + </span>]:<span class="tlaGNC">        3756 :     if (now &gt;= 0.0) {</span></span>
+<span id="L58"><span class="lineNum">      58</span>                 :<span class="tlaGNC">        3554 :         m_last_now = now;</span></span>
 <span id="L59"><span class="lineNum">      59</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 202 times"> + </span>]:<span class="tlaGNC">         202 :     } else if (m_time_ptr) {</span></span>
 <span id="L60"><span class="lineNum">      60</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         m_last_now = *m_time_ptr;</span></span>
 <span id="L61"><span class="lineNum">      61</span>                 :             :     }</span>
-<span id="L62"><span class="lineNum">      62</span>                 :<span class="tlaGNC tlaBgGNC">        3874 :     double current_now = m_last_now;</span></span>
+<span id="L62"><span class="lineNum">      62</span>                 :<span class="tlaGNC tlaBgGNC">        3756 :     double current_now = m_last_now;</span></span>
 <span id="L63"><span class="lineNum">      63</span>                 :             : </span>
 <span id="L64"><span class="lineNum">      64</span>                 :             :     // Check for non-finite inputs</span>
-<span id="L65"><span class="lineNum">      65</span>         [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3869 times"> + </span>]:<span class="tlaGNC">        3874 :     if (!std::isfinite(target_force)) return 0.0;</span></span>
-<span id="L66"><span class="lineNum">      66</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 3869 times"> + </span>]:<span class="tlaGNC">        3869 :     if (!std::isfinite(current_output_force)) return 0.0;</span></span>
+<span id="L65"><span class="lineNum">      65</span>         [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3751 times"> + </span>]:<span class="tlaGNC">        3756 :     if (!std::isfinite(target_force)) return 0.0;</span></span>
+<span id="L66"><span class="lineNum">      66</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 3751 times"> + </span>]:<span class="tlaGNC">        3751 :     if (!std::isfinite(current_output_force)) return 0.0;</span></span>
 <span id="L67"><span class="lineNum">      67</span>                 :             : </span>
 <span id="L68"><span class="lineNum">      68</span>                 :             :     // 1. Determine slew limit</span>
-<span id="L69"><span class="lineNum">      69</span>         [<span class="tlaGBC" title="Branch 0 was taken 3842 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 27 times"> + </span>]:<span class="tlaGNC">        3869 :     double slew_limit = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;</span></span>
+<span id="L69"><span class="lineNum">      69</span>         [<span class="tlaGBC" title="Branch 0 was taken 3724 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 27 times"> + </span>]:<span class="tlaGNC">        3751 :     double slew_limit = restricted ? (double)SAFETY_SLEW_RESTRICTED : (double)SAFETY_SLEW_NORMAL;</span></span>
 <span id="L70"><span class="lineNum">      70</span>                 :             :     </span>
 <span id="L71"><span class="lineNum">      71</span>                 :             :     // If safety window is active, we apply the user-defined slew limit (Issue #316)</span>
-<span id="L72"><span class="lineNum">      72</span>   [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3858 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 11 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        3869 :     if (safety_timer &gt; 0.0 &amp;&amp; m_config.slew_full_scale_time_s &gt; 0.01f) {</span></span>
+<span id="L72"><span class="lineNum">      72</span>   [<span class="tlaGBC" title="Branch 0 was taken 11 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3740 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 11 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        3751 :     if (safety_timer &gt; 0.0 &amp;&amp; m_config.slew_full_scale_time_s &gt; 0.01f) {</span></span>
 <span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">          11 :         slew_limit = 1.0 / (double)m_config.slew_full_scale_time_s;</span></span>
 <span id="L74"><span class="lineNum">      74</span>                 :             :     }</span>
 <span id="L75"><span class="lineNum">      75</span>                 :             : </span>
-<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">        3869 :     double max_delta = slew_limit * dt;</span></span>
-<span id="L77"><span class="lineNum">      77</span>                 :<span class="tlaGNC">        3869 :     double delta = target_force - current_output_force;</span></span>
-<span id="L78"><span class="lineNum">      78</span>                 :<span class="tlaGNC">        3869 :     double requested_rate = std::abs(delta) / (dt + 1e-9);</span></span>
+<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">        3751 :     double max_delta = slew_limit * dt;</span></span>
+<span id="L77"><span class="lineNum">      77</span>                 :<span class="tlaGNC">        3751 :     double delta = target_force - current_output_force;</span></span>
+<span id="L78"><span class="lineNum">      78</span>                 :<span class="tlaGNC">        3751 :     double requested_rate = std::abs(delta) / (dt + 1e-9);</span></span>
 <span id="L79"><span class="lineNum">      79</span>                 :             : </span>
 <span id="L80"><span class="lineNum">      80</span>                 :             :     // 2. Spike Detection (independent of slew limit)</span>
-<span id="L81"><span class="lineNum">      81</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3857 times"> + </span>]:<span class="tlaGNC">        3869 :     if (requested_rate &gt; (double)m_config.immediate_spike_threshold) {</span></span>
+<span id="L81"><span class="lineNum">      81</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3739 times"> + </span>]:<span class="tlaGNC">        3751 :     if (requested_rate &gt; (double)m_config.immediate_spike_threshold) {</span></span>
 <span id="L82"><span class="lineNum">      82</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 9 times"> + </span>]:<span class="tlaGNC">          12 :          if (current_now &gt; (last_massive_spike_log_time + 5.0)) {</span></span>
 <span id="L83"><span class="lineNum">      83</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :             Logger::Get().LogFile(&quot;[Safety] Massive Spike! Rate: %.0f u/s (Limit: %.0f). Triggering Safety.&quot;, </span></span>
 <span id="L84"><span class="lineNum">      84</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 :                 requested_rate, (double)m_config.immediate_spike_threshold);</span></span>
 <span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">           3 :             last_massive_spike_log_time = current_now;</span></span>
 <span id="L86"><span class="lineNum">      86</span>                 :             :         }</span>
 <span id="L87"><span class="lineNum">      87</span>         [<span class="tlaGBC" title="Branch 0 was taken 12 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          12 :         TriggerSafetyWindow(&quot;Massive Spike&quot;, current_now);</span></span>
-<span id="L88"><span class="lineNum">      88</span>         [<span class="tlaGBC" title="Branch 0 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3849 times"> + </span>]:<span class="tlaGNC">        3857 :     } else if (requested_rate &gt; (double)m_config.spike_detection_threshold) {</span></span>
+<span id="L88"><span class="lineNum">      88</span>         [<span class="tlaGBC" title="Branch 0 was taken 8 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3731 times"> + </span>]:<span class="tlaGNC">        3739 :     } else if (requested_rate &gt; (double)m_config.spike_detection_threshold) {</span></span>
 <span id="L89"><span class="lineNum">      89</span>                 :<span class="tlaGNC">           8 :         spike_counter++;</span></span>
 <span id="L90"><span class="lineNum">      90</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 7 times"> + </span>]:<span class="tlaGNC">           8 :         if (spike_counter &gt;= 5) { // 5 consecutive frames of high slew</span></span>
 <span id="L91"><span class="lineNum">      91</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :             if (current_now &gt; (last_high_spike_log_time + 5.0)) {</span></span>
@@ -166,15 +166,15 @@
 <span id="L95"><span class="lineNum">      95</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :             TriggerSafetyWindow(&quot;High Spike&quot;, current_now);</span></span>
 <span id="L96"><span class="lineNum">      96</span>                 :             :         }</span>
 <span id="L97"><span class="lineNum">      97</span>                 :             :     } else {</span>
-<span id="L98"><span class="lineNum">      98</span>                 :<span class="tlaGNC">        3849 :         spike_counter = (std::max)(0, spike_counter - 1);</span></span>
+<span id="L98"><span class="lineNum">      98</span>                 :<span class="tlaGNC">        3731 :         spike_counter = (std::max)(0, spike_counter - 1);</span></span>
 <span id="L99"><span class="lineNum">      99</span>                 :             :     }</span>
 <span id="L100"><span class="lineNum">     100</span>                 :             : </span>
 <span id="L101"><span class="lineNum">     101</span>                 :             :     // 3. Apply Slew</span>
-<span id="L102"><span class="lineNum">     102</span>         [<span class="tlaGBC" title="Branch 0 was taken 615 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3254 times"> + </span>]:<span class="tlaGNC">        3869 :     if (std::abs(delta) &gt; max_delta) {</span></span>
+<span id="L102"><span class="lineNum">     102</span>         [<span class="tlaGBC" title="Branch 0 was taken 615 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3136 times"> + </span>]:<span class="tlaGNC">        3751 :     if (std::abs(delta) &gt; max_delta) {</span></span>
 <span id="L103"><span class="lineNum">     103</span>         [<span class="tlaGBC" title="Branch 0 was taken 615 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         615 :         delta = std::clamp(delta, -max_delta, max_delta);</span></span>
 <span id="L104"><span class="lineNum">     104</span>                 :             :     }</span>
 <span id="L105"><span class="lineNum">     105</span>                 :             : </span>
-<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">        3869 :     return current_output_force + delta;</span></span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">        3751 :     return current_output_force + delta;</span></span>
 <span id="L107"><span class="lineNum">     107</span>                 :             : }</span>
 <span id="L108"><span class="lineNum">     108</span>                 :             : </span>
 <span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC">       69653 : double FFBSafetyMonitor::ProcessSafetyMitigation(double norm_force, double dt) {</span></span>
@@ -221,11 +221,11 @@
 <span id="L149"><span class="lineNum">     149</span>                 :             :     }</span>
 <span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">       69653 : }</span></span>
 <span id="L151"><span class="lineNum">     151</span>                 :             : </span>
-<span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">        3663 : double FFBSafetyMonitor::ApplySafetySlew(double target_force, double dt, bool restricted) {</span></span>
-<span id="L153"><span class="lineNum">     153</span>         [<span class="tlaGBC" title="Branch 0 was taken 3663 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        3663 :     double now = (m_time_ptr) ? *m_time_ptr : m_last_now;</span></span>
-<span id="L154"><span class="lineNum">     154</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 3663 times"> + </span>]:<span class="tlaGNC">        3663 :     if (!m_time_ptr) m_last_now += dt; </span></span>
-<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">        3663 :     safety_smoothed_force = ApplySafetySlew(target_force, safety_smoothed_force, dt, restricted, now);</span></span>
-<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">        3663 :     return safety_smoothed_force;</span></span>
+<span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">        3545 : double FFBSafetyMonitor::ApplySafetySlew(double target_force, double dt, bool restricted) {</span></span>
+<span id="L153"><span class="lineNum">     153</span>         [<span class="tlaGBC" title="Branch 0 was taken 3545 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        3545 :     double now = (m_time_ptr) ? *m_time_ptr : m_last_now;</span></span>
+<span id="L154"><span class="lineNum">     154</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 3545 times"> + </span>]:<span class="tlaGNC">        3545 :     if (!m_time_ptr) m_last_now += dt; </span></span>
+<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">        3545 :     safety_smoothed_force = ApplySafetySlew(target_force, safety_smoothed_force, dt, restricted, now);</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaGNC">        3545 :     return safety_smoothed_force;</span></span>
 <span id="L157"><span class="lineNum">     157</span>                 :             : }</span>
 <span id="L158"><span class="lineNum">     158</span>                 :             : </span>
 <span id="L159"><span class="lineNum">     159</span>                 :             : } // namespace LMUFFB</span>
