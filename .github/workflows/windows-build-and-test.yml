@@ -67,6 +67,38 @@ jobs:
         cmake -S . -B build -DLMUFFB_USE_UNITY_BUILD=ON
         cmake --build build --config Release --clean-first
 
+    - name: Decode Certificate to Temp
+      shell: pwsh
+      run: |
+        # Use the runner's isolated temp directory, NOT the project workspace
+        $certPath = Join-Path $env:RUNNER_TEMP "lmuffb_secure_cert.pfx"
+        
+        # Decode and save
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.CERT_PFX_BASE64 }}")
+        [IO.File]::WriteAllBytes($certPath, $pfx_cert_byte)
+        
+        # Save the path to a GitHub environment variable so the next steps can find it
+        "SECURE_CERT_PATH=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        Write-Host "Certificate securely decoded to outside of workspace."
+
+    - name: Sign Executable
+      shell: pwsh
+      run: |
+        $exePath = "build\Release\LMUFFB.exe"
+        if (-not (Test-Path $exePath)) { throw "Executable not found for signing!" }
+        
+        Write-Host "Signing $exePath..."
+        signtool sign /f $env:SECURE_CERT_PATH /p "${{ secrets.CERT_PASSWORD }}" /tr http://timestamp.digicert.com /td sha256 /fd sha256 $exePath
+
+    - name: Cleanup Certificate
+      if: always() # This ensures it runs EVEN IF the signing step fails
+      shell: pwsh
+      run: |
+        if (Test-Path $env:SECURE_CERT_PATH) {
+            Remove-Item -Path $env:SECURE_CERT_PATH -Force
+            Write-Host "Certificate successfully wiped from runner."
+        }
+
     - name: Windows Defender Behavioral & Static Scan
       shell: pwsh
       run: |
@@ -169,6 +201,38 @@ jobs:
         Copy-Item "build/Release/README.txt" -Destination "dist/"
         Copy-Item "build/Release/tools" -Destination "dist/" -Recurse
         Compress-Archive -Path "dist/*" -DestinationPath "lmuffb-${{ env.APP_VERSION }}-nightly.zip"
+
+    - name: Verify Zip Security (Kill Switch)
+      shell: pwsh
+      run: |
+        # Find the zip file we just created
+        $zipFile = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
+        if (-not $zipFile) { throw "No zip file found to verify!" }
+        
+        Write-Host "Verifying contents of $($zipFile.Name) for leaked certificates..."
+        
+        # Load .NET Zip assembly to read the zip without extracting it
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip =[System.IO.Compression.ZipFile]::OpenRead($zipFile.FullName)
+        
+        $leaked = $false
+        foreach ($entry in $zip.Entries) {
+            # Check if any file inside the zip has a certificate-related extension
+            if ($entry.FullName -match "\.(pfx|p12|pem|key|cer|crt|der|pvk)$") {
+                Write-Error "🚨 SECURITY BREACH: Certificate or Key file found inside release zip: $($entry.FullName)"
+                $leaked = $true
+            }
+        }
+        $zip.Dispose()
+        
+        if ($leaked) {
+            # Destroy the compromised zip file immediately
+            Remove-Item $zipFile.FullName -Force
+            Write-Error "🚨 The compromised zip file has been destroyed. Failing workflow."
+            exit 1
+        } else {
+            Write-Host "✅ Zip verification passed. No certificates found inside the archive."
+        }
 
     - name: Upload Nightly Zip
       uses: actions/upload-artifact@v4

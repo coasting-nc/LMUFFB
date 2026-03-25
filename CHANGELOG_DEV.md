@@ -1,6 +1,19 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.7.238]
+
+### Added
+- **Secure Code Signing (CI/CD Strategy)**:
+  - Integrated automated, self-signed certificate execution into the GitHub Actions workflows (`manual-release.yml` and `windows-build-and-test.yml`).
+  - Implemented a 3-layer security strategy to protect the signing certificate:
+    1. **Physical Isolation**: Certificate decoding occurs in the isolated `$env:RUNNER_TEMP` directory, completely outside of the project workspace.
+    2. **Guaranteed Erasure**: Added an `always()` cleanup step that wipes the certificate from the runner even if the build or signing fails.
+    3. **The Kill Switch**: Implemented a mandatory post-packaging verification step that inspects the final `.zip` archive. If a leaked certificate is detected, the compromised archive is destroyed and the workflow is immediately terminated before any public release.
+  - This ensures every Windows binary published to GitHub is cryptographically sealed, helping to reduce false-positive antivirus heuristic detections and building publisher reputation.
+
+---
 
 ## [0.7.237]
 
