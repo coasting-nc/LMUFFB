@@ -15,6 +15,8 @@
 
 namespace FFBEngineTests { class GameConnectorTestAccessor; }
 
+namespace LMUFFB {
+
 class GameConnector {
 public:
     static GameConnector& Get();
@@ -86,7 +88,7 @@ private:
     static const char* ControlModeName(signed char control);
     static const char* PitStateName(unsigned char pitState);
 
-    friend class FFBEngineTests::GameConnectorTestAccessor;
+    friend class ::FFBEngineTests::GameConnectorTestAccessor;
 
     GameConnector();
     ~GameConnector();
@@ -120,4 +122,7 @@ private:
 
     void _DisconnectLocked();
 };
+
+} // namespace LMUFFB
+
 #endif // GAMECONNECTOR_H

@@ -12,7 +12,7 @@ extern std::recursive_mutex g_engine_mutex;
 #include <algorithm>
 #include <cmath>
 
-using namespace LMUFFB;
+namespace LMUFFB {
 
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
@@ -1851,3 +1851,5 @@ void FFBEngine::UpdateUpsamplerModes() {
     // Auxiliary Channels (New v0.7.221): Apply differentiated modes
     ApplyAuxReconstructionMode();
 }
+
+} // namespace LMUFFB

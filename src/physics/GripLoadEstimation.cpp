@@ -13,10 +13,9 @@
 // See docs/dev_docs/reports/FFBEngine_refactoring_analysis.md for full details.
 // ---------------------------------------------------------------------------
 
-#include "FFBEngine.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Logger.h"
+#include "ffb/FFBEngine.h"
+#include "core/Config.h"
+#include "logging/Logger.h"
 #include <iostream>
 #include <mutex>
 
@@ -24,7 +23,7 @@ extern std::recursive_mutex g_engine_mutex;
 #include <cmath>
 #include "StringUtils.h"
 
-using namespace LMUFFB;
+namespace LMUFFB {
 
 // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)
 void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {
@@ -552,6 +551,8 @@ double FFBEngine::calculate_slope_confidence(double dAlpha_dt) {
 // Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
 double FFBEngine::calculate_wheel_slip_ratio(const TelemWheelV01& w) {
     double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
+    if (std::abs(v_long) < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
     return w.mLongitudinalPatchVel / v_long;
 }
+
+} // namespace LMUFFB

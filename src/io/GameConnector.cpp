@@ -1,12 +1,15 @@
 #include "GameConnector.h"
-#include "Logger.h"
+#include "logging/Logger.h"
 #ifndef _WIN32
 #include "io/lmu_sm_interface/LinuxMock.h"
 #endif
 #include "io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 #include <cstring>
-#include "StringUtils.h"
+#include <cmath>
+#include "utils/StringUtils.h"
+
+namespace LMUFFB {
 
 #define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
 
@@ -489,3 +492,5 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     _UpdateStateFromSnapshot(current);  // Phase 1: sync state machine atomics
     _LogTransitions(current);           // Phase 2: log any changes
 }
+
+} // namespace LMUFFB
