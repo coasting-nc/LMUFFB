@@ -50,15 +50,62 @@ jobs:
         # Treat this as a warning: if VT flags it, the step fails, but the workflow continues
         continue-on-error: true
 
+      - name: Wait for VirusTotal Analysis
+        id: vt_poll
+        run: |
+          # The analysis output is filename=url. Extract the URL.
+          ANALYSIS_URL=$(echo "${{ steps.vt.outputs.analysis }}" | cut -d'=' -f2)
+          # The analysis ID is the last part of the URL
+          ANALYSIS_ID=$(basename "$ANALYSIS_URL")
+          
+          echo "Analysis ID: $ANALYSIS_ID"
+          echo "Polling VirusTotal API for results..."
+          
+          STATUS="queued"
+          # Poll every 30 seconds until completed
+          while [[ "$STATUS" != "completed" ]]; do
+            echo "Current status: $STATUS. Waiting 30 seconds..."
+            sleep 30
+            RESPONSE=$(curl -s --request GET \
+              --url "https://www.virustotal.com/api/v3/analyses/$ANALYSIS_ID" \
+              --header "x-apikey: ${{ secrets.VT_API_KEY }}")
+            
+            STATUS=$(echo "$RESPONSE" | jq -r '.data.attributes.status')
+            
+            if [[ "$STATUS" == "null" ]]; then
+              echo "Error: Received null status. API response might be malformed or rate limited."
+              echo "$RESPONSE"
+              exit 1
+            fi
+          done
+          
+          echo "Analysis completed!"
+          
+          # Extract malicious/undetected stats
+          MALICIOUS=$(echo "$RESPONSE" | jq -r '.data.attributes.stats.malicious')
+          UNDETECTED=$(echo "$RESPONSE" | jq -r '.data.attributes.stats.undetected')
+          TOTAL=$((MALICIOUS + UNDETECTED))
+          
+          echo "positives=$MALICIOUS" >> $GITHUB_OUTPUT
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
       - name: Print VirusTotal Results
         run: |
           echo "### VirusTotal Scan Results 🦠" >> $GITHUB_STEP_SUMMARY
           echo "**File:** LMUFFB.exe" >> $GITHUB_STEP_SUMMARY
-          echo "**Positives:** ${{ steps.vt.outputs.positives }} / ${{ steps.vt.outputs.total }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Use outputs from the polling step, defaulting to '?' if they failed
+          POSITIVES="${{ steps.vt_poll.outputs.positives || '?' }}"
+          TOTAL="${{ steps.vt_poll.outputs.total || '?' }}"
+          
+          echo "**Positives:** $POSITIVES / $TOTAL" >> $GITHUB_STEP_SUMMARY
           echo "**Report Link:** [View Full Report on VirusTotal](${{ steps.vt.outputs.permalink }})" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ steps.vt.outputs.positives }}" -gt 0 ]; then
+          if [[ "$POSITIVES" != "?" && "$POSITIVES" -gt 0 ]]; then
             echo "⚠️ **Warning:** Some engines flagged this file. Check the report link for details." >> $GITHUB_STEP_SUMMARY
-          else
+          elif [[ "$POSITIVES" == "0" ]]; then
             echo "✅ **Clean:** No engines flagged this file." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ **Note:** Analysis data could not be retrieved automatically. Please check the report link." >> $GITHUB_STEP_SUMMARY
           fi

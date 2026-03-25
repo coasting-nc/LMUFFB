@@ -443,10 +443,97 @@ jobs:
 ### How this works:
 1. **Asynchronous Execution:** The `on: workflow_run` trigger means this YAML file sits completely idle until your main `windows-build-and-test.yml` finishes. Your developers get their build success/failure feedback immediately.
 2. **Artifact Retrieval:** It uses the GitHub API to reach back into the finished build, grab the `.zip` file you uploaded, and extract `LMUFFB.exe`.
-3. **Automated Polling:** The `crazy-max/ghaction-virustotal` action uploads the file to VirusTotal and automatically handles the polling (waiting for the 70+ engines to finish scanning). 
-4. **Non-Blocking Warnings:** Because of `continue-on-error: true`, if 2 out of 70 engines flag the file (a common false-positive scenario for indie C++ apps), the step will show a red `X` in the Actions tab, but it won't break your repository status.
-5. **Summary Report:** It prints a nice markdown summary directly into the GitHub Actions UI with a clickable link to the full VirusTotal web report, saving you from having to upload it manually ever again.
+3. **Asynchronous Upload:** The `crazy-max/ghaction-virustotal` action handles the initial upload and provides a permalink to the web report.
+
+## Integrated Results Retrieval (Advanced Polling)
+
+To truly automate the assessment, we need the workflow to wait for VirusTotal to finish its analysis so the results are printed directly in GitHub. The following refined version adds an explicit polling step.
+
+### Refined `virustotal-scan.yml`
+
+```yaml
+name: VirusTotal Scan
+
+on:
+  workflow_run:
+    workflows: ["Build and Test"]
+    types:
+      - completed
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download Nightly Artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: lmuffb-*-nightly
+          path: temp_download
+          merge-multiple: true
+
+      - name: Extract Executable
+        run: |
+          ZIP_FILE=$(ls temp_download/*.zip | head -n 1)
+          unzip -j "$ZIP_FILE" "LMUFFB.exe" -d scan_dir/
+          
+      - name: VirusTotal Upload
+        uses: crazy-max/ghaction-virustotal@v4
+        id: vt
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: scan_dir/LMUFFB.exe
+        continue-on-error: true
+
+      - name: Wait for VirusTotal Analysis
+        id: vt_poll
+        run: |
+          ANALYSIS_URL=$(echo "${{ steps.vt.outputs.analysis }}" | cut -d'=' -f2)
+          ANALYSIS_ID=$(basename "$ANALYSIS_URL")
+          
+          STATUS="queued"
+          # Poll every 30 seconds until completed
+          while [[ "$STATUS" != "completed" ]]; do
+            echo "Current status: $STATUS. Waiting 30 seconds..."
+            sleep 30
+            RESPONSE=$(curl -s --request GET \
+              --url "https://www.virustotal.com/api/v3/analyses/$ANALYSIS_ID" \
+              --header "x-apikey: ${{ secrets.VT_API_KEY }}")
+            STATUS=$(echo "$RESPONSE" | jq -r '.data.attributes.status')
+          done
+          
+          MALICIOUS=$(echo "$RESPONSE" | jq -r '.data.attributes.stats.malicious')
+          UNDETECTED=$(echo "$RESPONSE" | jq -r '.data.attributes.stats.undetected')
+          TOTAL=$((MALICIOUS + UNDETECTED))
+          
+          echo "positives=$MALICIOUS" >> $GITHUB_OUTPUT
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Print VirusTotal Results
+        run: |
+          echo "### VirusTotal Scan Results 🦠" >> $GITHUB_STEP_SUMMARY
+          echo "**File:** LMUFFB.exe" >> $GITHUB_STEP_SUMMARY
+          
+          POSITIVES="${{ steps.vt_poll.outputs.positives || '?' }}"
+          TOTAL="${{ steps.vt_poll.outputs.total || '?' }}"
+          
+          echo "**Positives:** $POSITIVES / $TOTAL" >> $GITHUB_STEP_SUMMARY
+          echo "**Report Link:** [View Full Report on VirusTotal](${{ steps.vt.outputs.permalink }})" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "$POSITIVES" != "?" && "$POSITIVES" -gt 0 ]]; then
+            echo "⚠️ **Warning:** Some engines flagged this file. Check the report link for details." >> $GITHUB_STEP_SUMMARY
+          elif [[ "$POSITIVES" == "0" ]]; then
+            echo "✅ **Clean:** No engines flagged this file." >> $GITHUB_STEP_SUMMARY
+          fi
+```
+
+### Why this is necessary:
+1. **Asynchronous API:** When you upload a file, VirusTotal returns an "Analysis ID" immediately, but the scan itself takes 5-20 minutes.
+2. **Bash Safety:** The use of `[[ "$POSITIVES" != "?" ]]` ensures the `if` condition doesn't crash even if the API call fails or the variable is empty.
+3. **Integration:** By using `curl` and `jq`, we fetch the exact `malicious` vs `undetected` counts directly from the analysis object, providing a real-time status report inside the CI.
 
 ### Important Note on VirusTotal Free API Limits
-The free VirusTotal API allows **4 requests per minute** and **500 requests per day**. 
-If you push commits very rapidly (e.g., 5 commits in 2 minutes), the VT action might hit the rate limit and fail. Because we set `continue-on-error: true`, this won't break anything, but it's something to be aware of if you see the VT workflow occasionally failing during heavy development sessions.
+The free VirusTotal API allows **4 requests per minute**. Since our polling happens once every 30 seconds, a single run of this workflow is safe. However, concurrent runs (multiple builds finishing at once) may hit the rate limit. 
