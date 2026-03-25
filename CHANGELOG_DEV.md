@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.239]
+
+### Fixed
+- **Preset Persistence (Issue #481)**:
+  - Resolved an issue where the selected preset was not maintained across application restarts.
+  - Implemented robust UI index synchronization by moving the `selected_preset` initialization to the start of the `DrawTuningWindow` lifecycle. This ensures the UI correctly matches the last saved preset from `config.toml` on the first frame, even if the configuration section is collapsed.
+- **Improved FFB Startup Safety**:
+  - Enhanced the configuration system to persist `m_session_peak_torque` and `m_auto_peak_front_load` normalization variables.
+  - This prevents sudden FFB surges or "graininess" during app startup by maintaining session-learned peaks across restarts.
+  - Implemented rigorous sanitization (finite and range checks) for these values when loading to ensure hardware safety.
+- **Architectural Integrity**:
+  - Restored `FFBEngine` encapsulation by maintaining normalization members as private and utilizing `friend class Config` for serialization.
+
+### Testing
+- **New Regression Test**: Added `tests/repro_issue_481.cpp` verifying end-to-end preset persistence, UI matching, and normalization state recovery.
+
 ## [0.7.238]
 
 ### Added

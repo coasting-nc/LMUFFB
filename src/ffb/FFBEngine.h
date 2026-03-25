@@ -327,6 +327,7 @@ public:
     LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class FFBEngineTests::FFBEngineTestAccess;
+    friend class Config;
     friend struct LMUFFB::Preset;
 
     FFBEngine();
@@ -365,8 +366,6 @@ private:
     static constexpr double ABS_PRESSURE_RATE_THRESHOLD = 2.0;  
     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  
     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;
-
-    double m_auto_peak_front_load = 4500.0; // DEFAULT_AUTO_PEAK_LOAD
 
     static constexpr double HPF_TIME_CONSTANT_S = 0.1;
     static constexpr double ZERO_CROSSING_EPSILON = 0.05;
@@ -480,7 +479,8 @@ private:
     static constexpr double ACCEL_ROAD_TEXTURE_SCALE = 0.05;
     static constexpr double DEBUG_FREQ_SMOOTHING = 0.9;
     static constexpr double GAIN_REDUCTION_MAX = 50.0;
-    double m_session_peak_torque = 25.0; // DEFAULT_SESSION_PEAK_TORQUE
+    double m_session_peak_torque = 25.0; // Normalization State (Persisted in config.toml)
+    double m_auto_peak_front_load = 4500.0; // Normalization State (Persisted in config.toml)
     double m_smoothed_structural_mult = 1.0 / 25.0; 
     double m_rolling_average_torque = 0.0; 
     double m_last_raw_torque = 0.0; 

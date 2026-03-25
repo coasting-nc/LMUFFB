@@ -220,6 +220,21 @@ static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
+    // Persistent UI State
+    static int selected_preset = 0;
+    static bool first_run = true;
+
+    // Initialization: Match selected_preset index to Config::m_last_preset_name on first frame
+    if (first_run && !Config::presets.empty()) {
+        for (int i = 0; i < (int)Config::presets.size(); i++) {
+            if (Config::presets[i].name == Config::m_last_preset_name) {
+                selected_preset = i;
+                break;
+            }
+        }
+        first_run = false;
+    }
+
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->WorkSize.x;
 
@@ -365,8 +380,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     ImGui::Separator();
 
-    static int selected_preset = 0;
-
     auto FormatDecoupled = [&](float val, float base_nm) {
         float estimated_nm = val * base_nm;
         static char buf[64];
@@ -404,17 +417,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     };
 
     if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        static bool first_run = true;
-        if (first_run && !Config::presets.empty()) {
-            for (int i = 0; i < (int)Config::presets.size(); i++) {
-                if (Config::presets[i].name == Config::m_last_preset_name) {
-                    selected_preset = i;
-                    break;
-                }
-            }
-            first_run = false;
-        }
-
         static std::string preview_buf;
         const char* preview_value = "Custom";
         if (selected_preset >= 0 && selected_preset < (int)Config::presets.size()) {
