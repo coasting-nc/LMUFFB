@@ -308,6 +308,7 @@ set(UNITY_READY_MAIN
     FFBMetadataManager.cpp
     UpSampler.cpp
     DirectInputFFB.cpp
+    RestApiProvider.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist

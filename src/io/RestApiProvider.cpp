@@ -9,6 +9,8 @@
 #pragma comment(lib, "wininet.lib")
 #endif
 
+namespace LMUFFB {
+
 RestApiProvider& RestApiProvider::Get() {
     static RestApiProvider instance;
     return instance;
@@ -126,3 +128,5 @@ float RestApiProvider::ParseSteeringLock(const std::string& json) {
 
     return 0.0f;
 }
+
+} // namespace LMUFFB

@@ -7,6 +7,8 @@
 #include <thread>
 #include <optional>
 
+namespace LMUFFB {
+
 class RestApiProvider {
 public:
     static RestApiProvider& Get();
@@ -40,5 +42,7 @@ private:
     mutable std::mutex m_threadMutex;
     std::thread m_requestThread;
 };
+
+} // namespace LMUFFB
 
 #endif // RESTAPIPROVIDER_H
