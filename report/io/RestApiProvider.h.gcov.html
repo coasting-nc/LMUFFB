@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-25 16:36:00</td>
+            <td class="headerValue">2026-03-25 17:23:52</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -78,41 +78,45 @@
 <span id="L7"><span class="lineNum">       7</span>                 :             : #include &lt;thread&gt;</span>
 <span id="L8"><span class="lineNum">       8</span>                 :             : #include &lt;optional&gt;</span>
 <span id="L9"><span class="lineNum">       9</span>                 :             : </span>
-<span id="L10"><span class="lineNum">      10</span>                 :             : class RestApiProvider {</span>
-<span id="L11"><span class="lineNum">      11</span>                 :             : public:</span>
-<span id="L12"><span class="lineNum">      12</span>                 :             :     static RestApiProvider&amp; Get();</span>
-<span id="L13"><span class="lineNum">      13</span>                 :             : </span>
-<span id="L14"><span class="lineNum">      14</span>                 :             :     // Trigger an asynchronous request for the steering range</span>
-<span id="L15"><span class="lineNum">      15</span>                 :             :     void RequestSteeringRange(int port);</span>
-<span id="L16"><span class="lineNum">      16</span>                 :             : </span>
-<span id="L17"><span class="lineNum">      17</span>                 :             :     // Get the latest successfully retrieved range in degrees</span>
-<span id="L18"><span class="lineNum">      18</span>                 :             :     // Returns 0.0 if no value has been retrieved yet</span>
-<span id="L19"><span class="lineNum">      19</span>                 :             :     float GetFallbackRangeDeg() const;</span>
-<span id="L20"><span class="lineNum">      20</span>                 :             : </span>
-<span id="L21"><span class="lineNum">      21</span>                 :             :     // Is a request currently in flight?</span>
-<span id="L22"><span class="lineNum">      22</span>                 :             :     bool IsRequesting() const;</span>
-<span id="L23"><span class="lineNum">      23</span>                 :             : </span>
-<span id="L24"><span class="lineNum">      24</span>                 :<span class="tlaGNC tlaBgGNC">         131 :     void ResetSteeringRange() {</span></span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC">         131 :         m_fallbackRangeDeg.store(0.0f);</span></span>
-<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC">         131 :     }</span></span>
-<span id="L27"><span class="lineNum">      27</span>                 :             : </span>
-<span id="L28"><span class="lineNum">      28</span>                 :             : private:</span>
-<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">           1 :     RestApiProvider() = default;</span></span>
-<span id="L30"><span class="lineNum">      30</span>                 :             :     ~RestApiProvider();</span>
-<span id="L31"><span class="lineNum">      31</span>                 :             : </span>
-<span id="L32"><span class="lineNum">      32</span>                 :             :     void PerformRequest(int port);</span>
-<span id="L33"><span class="lineNum">      33</span>                 :             :     float ParseSteeringLock(const std::string&amp; json);</span>
-<span id="L34"><span class="lineNum">      34</span>                 :             : </span>
-<span id="L35"><span class="lineNum">      35</span>                 :             :     friend class RestApiProviderTestAccess;</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : namespace LMUFFB {</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : class RestApiProvider {</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : public:</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             :     static RestApiProvider&amp; Get();</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : </span>
+<span id="L16"><span class="lineNum">      16</span>                 :             :     // Trigger an asynchronous request for the steering range</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             :     void RequestSteeringRange(int port);</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : </span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :     // Get the latest successfully retrieved range in degrees</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :     // Returns 0.0 if no value has been retrieved yet</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             :     float GetFallbackRangeDeg() const;</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             : </span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :     // Is a request currently in flight?</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :     bool IsRequesting() const;</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : </span>
+<span id="L26"><span class="lineNum">      26</span>                 :<span class="tlaGNC tlaBgGNC">         131 :     void ResetSteeringRange() {</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">         131 :         m_fallbackRangeDeg.store(0.0f);</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">         131 :     }</span></span>
+<span id="L29"><span class="lineNum">      29</span>                 :             : </span>
+<span id="L30"><span class="lineNum">      30</span>                 :             : private:</span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">           1 :     RestApiProvider() = default;</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :     ~RestApiProvider();</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             : </span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :     void PerformRequest(int port);</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :     float ParseSteeringLock(const std::string&amp; json);</span>
 <span id="L36"><span class="lineNum">      36</span>                 :             : </span>
-<span id="L37"><span class="lineNum">      37</span>                 :             :     std::atomic&lt;bool&gt; m_isRequesting{false};</span>
-<span id="L38"><span class="lineNum">      38</span>                 :             :     std::atomic&lt;float&gt; m_fallbackRangeDeg{0.0f};</span>
-<span id="L39"><span class="lineNum">      39</span>                 :             : </span>
-<span id="L40"><span class="lineNum">      40</span>                 :             :     mutable std::mutex m_threadMutex;</span>
-<span id="L41"><span class="lineNum">      41</span>                 :             :     std::thread m_requestThread;</span>
-<span id="L42"><span class="lineNum">      42</span>                 :             : };</span>
-<span id="L43"><span class="lineNum">      43</span>                 :             : </span>
-<span id="L44"><span class="lineNum">      44</span>                 :             : #endif // RESTAPIPROVIDER_H</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :     friend class RestApiProviderTestAccess;</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             : </span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :     std::atomic&lt;bool&gt; m_isRequesting{false};</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :     std::atomic&lt;float&gt; m_fallbackRangeDeg{0.0f};</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             : </span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :     mutable std::mutex m_threadMutex;</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :     std::thread m_requestThread;</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             : };</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             : </span>
+<span id="L46"><span class="lineNum">      46</span>                 :             : } // namespace LMUFFB</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             : </span>
+<span id="L48"><span class="lineNum">      48</span>                 :             : #endif // RESTAPIPROVIDER_H</span>
         </pre>
               </td>
             </tr>
