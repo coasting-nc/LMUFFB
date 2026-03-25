@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.248]
+### Changed
+- **Unity Build Expansion (Phase 4 Continuation)**:
+  - Refactored `src/gui/DXGIUtils.h` and `src/gui/DXGIUtils.cpp` by wrapping the module into `namespace LMUFFB`.
+  - Enforced strict include discipline by positioning all headers outside the namespace block to support unified translation units.
+  - Whitelisted `DXGIUtils.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+
 ## [0.7.247]
 ### Changed
 - **Unity Build Expansion (Phase 4 Continuation)**:
