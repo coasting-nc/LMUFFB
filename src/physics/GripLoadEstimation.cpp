@@ -21,7 +21,7 @@
 
 extern std::recursive_mutex g_engine_mutex;
 #include <cmath>
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 
 namespace LMUFFB {
 

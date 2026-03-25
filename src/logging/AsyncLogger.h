@@ -17,12 +17,8 @@
 #include <lz4.h>     // For LZ4 compression
 #include "ffb/FFBConfig.h"
 
-#include "io/lmu_sm_interface/InternalsPluginWrapper.h"
-
 // Forward declaration
-namespace LMUFFB {
-    class FFBEngine;
-}
+namespace LMUFFB { class FFBEngine; }
 
 // Log frame structure - captures one physics tick
 #pragma pack(push, 1)

@@ -29,7 +29,7 @@ using namespace LMUFFB;
 using namespace LMUFFB;
 
 // --- Helper for Testability ---
-void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const LMUFFB::FFBEngine& engine) {
+void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
     info.app_version = LMUFFB_VERSION;
     info.vehicle_name = scoring.mVehicleName;
     info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
@@ -57,13 +57,13 @@ std::atomic<bool> g_ffb_active(true);
 
 SharedMemoryObjectOut g_localData; // Local copy of shared memory
 
-LMUFFB::FFBEngine g_engine;
+FFBEngine g_engine;
 std::recursive_mutex g_engine_mutex; // Protects settings access if GUI changes them
 #else
 extern std::atomic<bool> g_running;
 extern std::atomic<bool> g_ffb_active;
 extern SharedMemoryObjectOut g_localData;
-extern LMUFFB::FFBEngine g_engine;
+extern FFBEngine g_engine;
 extern std::recursive_mutex g_engine_mutex;
 extern std::chrono::steady_clock::time_point g_mock_time;
 extern bool g_use_mock_time;
