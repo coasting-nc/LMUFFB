@@ -17,8 +17,10 @@
 #include <lz4.h>     // For LZ4 compression
 #include "ffb/FFBConfig.h"
 
+namespace LMUFFB {
+
 // Forward declaration
-namespace LMUFFB { class FFBEngine; }
+class FFBEngine;
 
 // Log frame structure - captures one physics tick
 #pragma pack(push, 1)
@@ -203,16 +205,16 @@ struct SessionInfo {
     std::string app_version;
     
     // Key settings snapshot
-    LMUFFB::GeneralConfig general;
-    LMUFFB::FrontAxleConfig front_axle;
-    LMUFFB::RearAxleConfig rear_axle;
-    LMUFFB::LoadForcesConfig load_forces;
-    LMUFFB::GripEstimationConfig grip_estimation;
-    LMUFFB::SlopeDetectionConfig slope_detection;
-    LMUFFB::BrakingConfig braking;
-    LMUFFB::VibrationConfig vibration;
-    LMUFFB::AdvancedConfig advanced;
-    LMUFFB::SafetyConfig safety;
+    GeneralConfig general;
+    FrontAxleConfig front_axle;
+    RearAxleConfig rear_axle;
+    LoadForcesConfig load_forces;
+    GripEstimationConfig grip_estimation;
+    SlopeDetectionConfig slope_detection;
+    BrakingConfig braking;
+    VibrationConfig vibration;
+    AdvancedConfig advanced;
+    SafetyConfig safety;
 };
 
 class AsyncLogger {
@@ -538,5 +540,7 @@ private:
     static const size_t BUFFER_THRESHOLD = 200; // ~0.5s of data
     static const int FLUSH_INTERVAL_SECONDS = 5; // Flush every 5 seconds
 };
+
+} // namespace LMUFFB
 
 #endif // ASYNCLOGGER_H

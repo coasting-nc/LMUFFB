@@ -188,7 +188,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [ ] Refactor `ffb/DirectInputFFB.h` & `.cpp`.
 - [ ] Refactor `gui/DXGIUtils.h` & `.cpp`.
 - [ ] Refactor `io/RestApiProvider.h` & `.cpp`.
-- [x] Refactor `logging/AsyncLogger.h` & `.cpp`. (Qualified and ready).
+- [x] Refactor `logging/AsyncLogger.h`. (Header-only module officially wrapped).
 
 ### 6.6 Phase 5: UI & Final Integration
 - [ ] Refactor `gui/Tooltips.h` & `gui/GuiWidgets.h`.
@@ -248,13 +248,20 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Deviations from the Plan:** None. The task was executed as a single incremental step to conclude Phase 3 as instructed.
 - **Suggestions for the Future:** Now that Phase 3 is complete, Phase 4 should proceed with high caution regarding external OS headers. It is recommended to refactor `AsyncLogger` next, as it has the fewest OS-specific dependencies compared to `DirectInputFFB` or `DXGIUtils`.
 
+### 8.5 Implementation Notes (v0.7.244)
+- **Encountered Issues:** None.
+- **Deviations from the Plan:**
+  - Refactored `AsyncLogger.h` only.
+  - Investigation confirmed that `AsyncLogger` is a header-only module; no `src/logging/AsyncLogger.cpp` exists in the repository. The plan's mention of a `.cpp` file for this module appears to be a documentation artifact, similar to `PerfStats.h` or `RateMonitor.h` which are also header-only.
+  - Verified that all methods in `AsyncLogger` (e.g. `Get()`, `Start()`, `Stop()`, `Log()`) are defined inline within the class body, satisfying ODR requirements for Unity Builds.
+  - Confirmed via local compilation (standard and Unity mode) and full test suite execution (631 tests passing) that no linker or compilation errors were introduced.
+- **Suggestions for the Future:** Continue Phase 4 by refactoring `DirectInputFFB.h/.cpp` or `RestApiProvider.h/.cpp`, which do possess implementation files.
 
-## 9. Next Steps: v0.7.244 (Phase 4 Continuation)
-With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to begin tackling Phase 4.
+## 9. Next Steps: v0.7.246 (Phase 4 Continuation)
+With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to continue tackling Phase 4.
 
 ### Your Objectives for the Next PR:
-1. **Begin Phase 4 (OS Boundaries & Subsystems):** Begin systematically wrapping the global boundaries:
-   - `logging/AsyncLogger.h` & `.cpp`
+1. **Continue Phase 4 (OS Boundaries & Subsystems):** Continue systematically wrapping the global boundaries:
    - `ffb/DirectInputFFB.h` & `.cpp`
    - `gui/DXGIUtils.h` & `.cpp`
    - `io/RestApiProvider.h` & `.cpp`
