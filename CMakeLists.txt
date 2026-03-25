@@ -175,7 +175,7 @@ if(VENDOR_SOURCES)
         ${IMGUI_DIR} 
         ${IMGUI_DIR}/backends 
         ${LZ4_DIR}
-        src/ext/toml++
+        vendor/toml++
     )
     # Disable clang-tidy for this target explicitly
     set_target_properties(LMUFFB_Vendor PROPERTIES CXX_CLANG_TIDY "")
@@ -321,7 +321,6 @@ target_include_directories(LMUFFB_Core PUBLIC
     src/io
     src/logging
     src/utils
-    src/ext/toml++
 )
 if(TARGET LMUFFB_Vendor)
     target_link_libraries(LMUFFB_Core PUBLIC LMUFFB_Vendor)
@@ -338,7 +337,6 @@ target_include_directories(LMUFFB_Core_Fast PUBLIC
     src/io
     src/logging
     src/utils
-    src/ext/toml++
 )
 if(TARGET LMUFFB_Vendor)
     target_link_libraries(LMUFFB_Core_Fast PUBLIC LMUFFB_Vendor)

@@ -112,7 +112,7 @@ These files tie everything together and represent the most deeply coupled module
 
 ## 5. Handling Vendor Files and Proprietary Game APIs
 
-When refactoring the codebase, you will naturally encounter third-party vendor code (e.g., `src/ext/toml++/toml.hpp`, `vendor/lz4`, `vendor/imgui`) and proprietary game interface headers (`src/io/lmu_sm_interface/SharedMemoryInterface.hpp`, `PluginObjects.hpp`, `InternalsPlugin.hpp`).
+When refactoring the codebase, you will naturally encounter third-party vendor code (e.g., `vendor/toml++/toml.hpp`, `vendor/lz4`, `vendor/imgui`) and proprietary game interface headers (`src/io/lmu_sm_interface/SharedMemoryInterface.hpp`, `PluginObjects.hpp`, `InternalsPlugin.hpp`).
 
 ### Do we enforce the same refactoring rules on these files?
 

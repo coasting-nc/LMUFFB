@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.242]
+
+### Changed
+- **Architectural Clean-up**:
+  - Consolidated all third-party dependencies into the root `vendor/` directory by moving `src/ext/toml++` to `vendor/toml++`.
+  - Removed redundant include path declarations from core targets in `CMakeLists.txt`, relying on `LMUFFB_Vendor` inheritance.
+  - Refined CI coverage pipeline and context generation scripts to use the unified vendor path.
+
 ## [0.7.241]
 
 ### Changed

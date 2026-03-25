@@ -467,7 +467,7 @@ def main():
                 if 'tmp' in relpath_normalized:
                     continue
 
-                if relpath_normalized == 'src/stb_image_write.h' or relpath_normalized == 'src/ext/toml++/toml.hpp':
+                if relpath_normalized == 'src/stb_image_write.h' or relpath_normalized == 'vendor/toml++/toml.hpp':
                     continue
                 
                 # Exclude .txt files in root directory except for allowed ones

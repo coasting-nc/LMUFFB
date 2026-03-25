@@ -72,5 +72,31 @@ The following optimizations proposed in this report have been successfully imple
 - **Build Success:** The project now compiles with a dedicated `LMUFFB_Vendor.lib`.
 - **Test Integrity:** All 630/630 tests passed post-refactoring on the local build system.
 - **Redundancy Reduced:** LZ4 is now a standalone translation unit compiled only once per configuration, effectively shared via `PUBLIC` linking.
+---
 
-By prioritizing the Unity build migration, we continue to address the "main code compiled multiple times" inefficiency at its root (header parsing overhead) while maintaining the distinct optimization needs of the application vs. the test suite.
+## 5. Architectural Clean-up: Redundancy and Directory Structure
+
+### 5.1 Redundant `toml++` Include Paths
+In the current `CMakeLists.txt`, `src/ext/toml++` is explicitly added to the include directories of both `LMUFFB_Core` and `LMUFFB_Core_Fast`. 
+
+**Is this correct?**
+Technically, it still works, but it is **redundant**. Since `LMUFFB_Vendor` now includes `src/ext/toml++` as a `SYSTEM PUBLIC` directory, any target that links to `LMUFFB_Vendor` (which both core libraries do) automatically inherits this include path. 
+
+*   **Next Step:** In a follow-up PR, we should remove `src/ext/toml++` from the `target_include_directories` of the core libraries to rely solely on the vendor target's inheritance.
+
+### 5.2 Directory Inconsistency (`vendor/` vs `src/ext/`)
+Currently:
+*   `imgui` and `lz4` reside in the root `/vendor/` directory.
+*   `toml++` resides in `/src/ext/`.
+
+**Should we unify these?**
+**Yes.** `vendor` and `ext` (external) are functionally synonymous in this project. Having them in different locations creates confusion and complicates path management. 
+
+*   **Recommendation:** Move `src/ext/toml++` to `vendor/toml++`.
+*   **Rationale:** Third-party dependencies should live outside the `src/` directory to strictly separate code written by the project authors from external libraries. This also simplifies exclusion rules for linters, coverage tools, and search indexing (e.g., standardizing on a single `vendor/` folder for all external exclusions).
+
+### 5.3 Implementation Status (v0.7.242)
+The following architectural clean-ups have been implemented:
+1.  **Consolidated Directory Structure:** Moved `src/ext/toml++` to `vendor/toml++` and verified the build.
+2.  **Cleaned Up CMakeLists.txt:** Removed redundant `toml++` target include declarations from the core libraries.
+3.  **Refined Coverage Pipeline:** Updated the coverage collection script to rely on the centralized `vendor/` exclusion.
