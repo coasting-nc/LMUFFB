@@ -309,6 +309,7 @@ set(UNITY_READY_MAIN
     UpSampler.cpp
     DirectInputFFB.cpp
     RestApiProvider.cpp
+    DXGIUtils.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist
