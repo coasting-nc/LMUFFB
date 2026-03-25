@@ -2,13 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.244]
-
+## [0.7.245]
 ### Changed
 - **Unity Build Expansion (Phase 4 Commencement)**:
   - Refactored `src/logging/AsyncLogger.h` by wrapping the module into `namespace LMUFFB`.
   - Enforced strict include discipline by positioning all headers outside the namespace block to support unified translation units.
   - Updated progress tracking in the Unity Build Plan to reflect commencement of OS boundary encapsulation.
+
+## [0.7.244]
+
+### Changed
+- **CI Build Optimization**:
+  - Implemented compiler-level caching for Windows (Sccache) and Linux (Ccache).
+  - Optimized workflow keys using content hashes (`hashFiles`) to achieve high cache hit rates for vendor and core libraries.
+  - Enabled incremental builds on CI by removing the `clean-first` requirement during the Windows Release configuration.
 
 ## [0.7.243]
 
