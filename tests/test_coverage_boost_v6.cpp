@@ -1,10 +1,11 @@
-#include "test_ffb_common.h"
 #include <atomic>
 #include <mutex>
 #include <thread>
 #include <cstring>
 #include <string>
 #include <utility>
+
+#include "test_ffb_common.h"
 #include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include "../src/io/lmu_sm_interface/LinuxMock.h"
@@ -16,6 +17,8 @@
 #include "../src/gui/GuiWidgets.h"
 #include "../src/logging/Logger.h"
 #include "imgui.h"
+
+using namespace LMUFFB;
 
 extern std::atomic<bool> g_running;
 extern std::atomic<bool> g_ffb_active;

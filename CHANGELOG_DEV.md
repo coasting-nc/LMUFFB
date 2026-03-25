@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.246]
+### Changed
+- **Unity Build Expansion (Phase 4 Continuation)**:
+  - Refactored `src/ffb/DirectInputFFB.h` and `src/ffb/DirectInputFFB.cpp` by wrapping the module into `namespace LMUFFB`.
+  - Enforced strict include discipline by positioning all headers outside the namespace block to support unified translation units.
+  - Applied anonymous namespaces for internal helper functions in `DirectInputFFB.cpp` to prevent symbol collisions.
+  - Whitelisted `DirectInputFFB.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+  - Updated the test suite to ensure compatibility with the namespaced DirectInput module.
+
 ## [0.7.245]
 ### Changed
 - **Unity Build Expansion (Phase 4 Commencement)**:

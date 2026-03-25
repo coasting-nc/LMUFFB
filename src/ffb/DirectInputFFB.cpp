@@ -21,6 +21,8 @@ namespace {
     constexpr uint32_t RECOVERY_COOLDOWN_MS = 2000;       // Wait 2 seconds between recovery attempts
 }
 
+namespace LMUFFB {
+
 // Keep existing implementations
 DirectInputFFB& DirectInputFFB::Get() {
     static DirectInputFFB instance;
@@ -74,6 +76,7 @@ GUID DirectInputFFB::StringToGuid(const std::string& str) {
 
 
 #ifdef _WIN32
+namespace {
 /**
  * @brief Returns the description for a DirectInput return code.
  * 
@@ -131,6 +134,7 @@ const char* GetDirectInputErrorString(HRESULT hr) {
     
     return "Unknown DirectInput Error";
 }
+}
 #endif
 
 DirectInputFFB::~DirectInputFFB() {
@@ -168,6 +172,7 @@ void DirectInputFFB::Shutdown() {
 }
 
 #ifdef _WIN32
+namespace {
 BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
     auto* devices = (std::vector<DeviceInfo>*)pContext;
     DeviceInfo info;
@@ -177,6 +182,7 @@ BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* 
     info.name = std::string(name);
     devices->push_back(info);
     return DIENUM_CONTINUE;
+}
 }
 #endif
 
@@ -446,3 +452,5 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
 #endif
     return true;
 }
+
+} // namespace LMUFFB

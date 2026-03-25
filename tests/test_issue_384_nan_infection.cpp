@@ -1,6 +1,9 @@
+#include <limits>
+
 #include "test_ffb_common.h"
 #include "../src/ffb/DirectInputFFB.h"
-#include <limits>
+
+using namespace LMUFFB;
 
 namespace FFBEngineTests {
 

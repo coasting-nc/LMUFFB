@@ -22,6 +22,8 @@
 
 #include "test_ffb_common.h"
 
+using namespace LMUFFB;
+
 namespace FFBEngineTests {
 
 // --- TESTS ---

@@ -1,16 +1,19 @@
-#include "test_ffb_common.h"
-#include "../src/core/Config.h"
-#include "../src/io/GameConnector.h"
-#include "../src/ffb/DirectInputFFB.h"
 #include <iostream>
 #include <cmath>
 #include <cstring>
 #include <fstream>
 #include <limits>
 
+#include "test_ffb_common.h"
+#include "../src/core/Config.h"
+#include "../src/io/GameConnector.h"
+#include "../src/ffb/DirectInputFFB.h"
+
 #ifndef _WIN32
 #include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
+
+using namespace LMUFFB;
 
 namespace FFBEngineTests {
 
