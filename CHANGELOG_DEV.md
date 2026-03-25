@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.244]
+
+### Changed
+- **Unity Build Expansion (Phase 4 Commencement)**:
+  - Refactored `src/logging/AsyncLogger.h` by wrapping the module into `namespace LMUFFB`.
+  - Enforced strict include discipline by positioning all headers outside the namespace block to support unified translation units.
+  - Updated progress tracking in the Unity Build Plan to reflect commencement of OS boundary encapsulation.
+
 ## [0.7.243]
 
 ### Changed
