@@ -144,3 +144,23 @@ We have implemented a dual-layer compiler caching strategy to handle both Window
 ### 7.4 Impact Analysis
 *   **Vendor Build Overhead**: Compilation of `imgui`, `lz4`, and `toml++` is now successfully skipped on 90% of PR runs, yielding a **2-5 minute time saving per job**.
 *   **Total CI Throughput**: Combined with Unity builds, total CI completion time has been reduced by approximately **30-40%**.
+
+---
+
+## 8. Risks and Rationale: The `--clean-first` Debate
+
+### 8.1 Why remove `--clean-first`?
+The removal of the `--clean-first` flag in CI is a transition from **Stateless Builds** to **Incremental Builds**. 
+
+*   **Pros**: Allows the build system to skip recompilation and re-linking of files that haven't changed. When paired with persistent storage for the `build` directory (which we may consider in the future) or when using self-hosted runners, this can drop build times to seconds for small changes.
+*   **Cons (Risk)**: Incrementality introduces the possibility of "stale" artifacts—where the build system fails to detect that a change in a header requires a recompile of certain source files.
+
+### 8.2 Risk Mitigation in LMUFFB
+The risk of stale builds in this specific project is highly mitigated by three factors:
+
+1.  **Fresh CI Runners**: Since we use GitHub-hosted runners (`windows-latest`, `ubuntu-latest`), the workspace is **purged and fresh** at the start of every job. Effectively, every build on GitHub is a "clean" build regardless of the CMake flag.
+2.  **Sccache/Ccache Integrity**: Unlike standard object file reuse, `sccache` and `ccache` use cryptographic hashes of the source code, compiler flags, and environment to ensure that the cached object is exactly what would have been produced by a fresh compile.
+3.  **Modern CMake Dependency Tracking**: Current CMake versions generate highly reliable dependency graphs (`.d` files) that correctly trigger recompilation when headers change, even without a full clean.
+
+### 8.3 Recommendation
+We have removed `--clean-first` to prepare for advanced caching strategies (like caching the `build/` directory itself) and to speed up local developer feedback loops where the build folder persists. For the current GitHub pipeline, the impact is minimal but the build system is now "future-proofed" for even deeper optimizations.
