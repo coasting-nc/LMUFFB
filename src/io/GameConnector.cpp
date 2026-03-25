@@ -8,7 +8,11 @@
 #include <cstring>
 #include "StringUtils.h"
 
-#define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
+namespace LMUFFB {
+
+namespace {
+    constexpr const char* LEGACY_SHARED_MEMORY_NAME = "$rFactor2SMMP_Telemetry$";
+}
 
 GameConnector& GameConnector::Get() {
     static GameConnector instance;
@@ -489,3 +493,5 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     _UpdateStateFromSnapshot(current);  // Phase 1: sync state machine atomics
     _LogTransitions(current);           // Phase 2: log any changes
 }
+
+} // namespace LMUFFB

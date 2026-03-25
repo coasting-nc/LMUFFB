@@ -404,14 +404,14 @@ void Run(); // Main runner
 // --- Friend Access for Testing ---
 class GameConnectorTestAccessor {
 public:
-    static void Reset(::GameConnector& gc);
-    static void SetSharedMem(::GameConnector& gc, struct SharedMemoryLayout* layout);
-    static void SetSessionActive(::GameConnector& gc, bool val);
-    static void SetInRealtime(::GameConnector& gc, bool val);
-    static void SetSessionType(::GameConnector& gc, long val);
-    static void SetGamePhase(::GameConnector& gc, unsigned char val);
-    static void SetPlayerControl(::GameConnector& gc, signed char val);
-    static void InjectTransitions(::GameConnector& gc, const struct SharedMemoryObjectOut& data);
+    static void Reset(LMUFFB::GameConnector& gc);
+    static void SetSharedMem(LMUFFB::GameConnector& gc, struct SharedMemoryLayout* layout);
+    static void SetSessionActive(LMUFFB::GameConnector& gc, bool val);
+    static void SetInRealtime(LMUFFB::GameConnector& gc, bool val);
+    static void SetSessionType(LMUFFB::GameConnector& gc, long val);
+    static void SetGamePhase(LMUFFB::GameConnector& gc, unsigned char val);
+    static void SetPlayerControl(LMUFFB::GameConnector& gc, signed char val);
+    static void InjectTransitions(LMUFFB::GameConnector& gc, const struct SharedMemoryObjectOut& data);
 };
 
 class FFBEngineTestAccess {

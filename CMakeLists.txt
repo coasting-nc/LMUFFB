@@ -310,6 +310,7 @@ set(UNITY_READY_MAIN
     DirectInputFFB.cpp
     RestApiProvider.cpp
     DXGIUtils.cpp
+    GameConnector.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist

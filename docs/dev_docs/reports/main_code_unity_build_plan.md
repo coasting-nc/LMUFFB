@@ -189,11 +189,11 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Refactor `gui/DXGIUtils.h` & `.cpp`. (Fully namespaced and whitelisted).
 - [x] Refactor `io/RestApiProvider.h` & `.cpp`. (Fully namespaced and whitelisted).
 - [x] Refactor `logging/AsyncLogger.h`. (Header-only module officially wrapped).
+- [x] Refactor `io/GameConnector.h` & `.cpp`. (Fully namespaced and whitelisted).
 
 ### 6.6 Phase 5: UI & Final Integration
 - [ ] Refactor `gui/Tooltips.h` & `gui/GuiWidgets.h`.
 - [ ] Refactor `gui/GuiLayer_*.cpp`.
-- [ ] Refactor `io/GameConnector.h` & `.cpp`.
 - [ ] Finalize `core/main.cpp` (Retaining global `main()` declaration).
 
 ### 6.7 Phase 6: Subsystem Namespace Migration (Post-Unity Stability)
@@ -272,12 +272,22 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Deviations from the Plan:** None. The `DXGIUtils` module was refactored and integrated into the Unity Build pipeline as instructed.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `io/GameConnector.h/.cpp` or other remaining UI-related modules.
 
-## 9. Next Steps: Phase 4 Continuation
-With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to continue tackling Phase 4.
+### 8.9 Implementation Notes (v0.7.249)
+- **Encountered Issues:**
+  - Initial refactor introduced build breakages due to missing namespace qualification in call sites across `main.cpp`, `GuiLayer_Common.cpp`, and numerous test files.
+  - A typo (`mNumVeholes` instead of `mNumVehicles`) was accidentally introduced during automated string replacement.
+- **Deviations from the Plan:**
+  - Expanded scope to update all call sites project-wide to use `LMUFFB::GameConnector` to restore build stability.
+  - Updated `tests/test_ffb_common.h` and `tests/test_ffb_common.cpp` to ensure `GameConnectorTestAccessor` remains compatible with the namespaced `GameConnector`.
+- **Suggestions for the Future:** Phase 4 is technically complete for core OS boundaries. Proceed to Phase 5 (UI & Final Integration).
+
+## 9. Next Steps: Phase 5 Commencement
+With the OS boundaries and major subsystems now encapsulated and stable within the Unity Build chunk, the next phase focuses on the UI layer and final integration.
 
 ### Your Objectives for the Next PR:
-1. **Continue Phase 4 (OS Boundaries & Subsystems):** Continue systematically wrapping the global boundaries:
-   - `io/GameConnector.h` & `.cpp`
+1. **Commence Phase 5 (UI & Final Integration):** Begin systematically wrapping the UI components:
+   - `gui/Tooltips.h` and `gui/GuiWidgets.h`
+   - `gui/GuiLayer_*.cpp` (Common, Win32, Linux)
 
 ### Critical Reminder for Phase 4
 Phase 4 deals heavily with Windows libraries (`<windows.h>`, `<dinput.h>`) and standard libraries (`<vector>`, `<thread>`). You must be extremely careful:
