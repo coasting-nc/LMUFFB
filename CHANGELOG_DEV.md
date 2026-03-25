@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.250]
+### Changed
+- **Unity Build Expansion (Phase 5 Commencement)**:
+  - Refactored the GUI layer by wrapping core headers (`Tooltips.h`, `GuiWidgets.h`, `GuiLayer.h`, `GuiPlatform.h`) and implementation files (`GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, `GuiLayer_Linux.cpp`) into `namespace LMUFFB`.
+  - Encapsulated platform-specific helper functions (e.g., `ResizeWindowPlatform`) and the `IGuiPlatform` interface within the `LMUFFB` namespace to resolve ODR and linkage issues in unified translation units.
+  - Whitelisted `GuiLayer_Common.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+  - Updated `main.cpp` and 13 test files to maintain compatibility with the namespaced GUI module.
+  - Resolved a cross-namespace access issue by using a global forward declaration for `GuiLayerTestAccess` to maintain its `friend` status with `GuiLayer`.
+
 ## [0.7.249]
 ### Changed
 - **Unity Build Expansion (Phase 4 Continuation)**:

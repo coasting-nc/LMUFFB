@@ -377,11 +377,11 @@ int main(int argc, char* argv[]) noexcept {
     }
 
     if (!headless) {
-        if (!GuiLayer::Init()) {
+        if (!LMUFFB::GuiLayer::Init()) {
             Logger::Get().Log("Failed to initialize GUI.");
             Logger::Get().Log("Failed to initialize GUI.");
         }
-        DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
+        DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(LMUFFB::GuiLayer::GetWindowHandle()));
     } else {
         Logger::Get().Log("Running in HEADLESS mode.");
         Logger::Get().Log("Running in HEADLESS mode.");
@@ -400,7 +400,7 @@ int main(int argc, char* argv[]) noexcept {
     Logger::Get().LogFile("[GUI] Main Loop Started.");
 
     while (g_running) {
-        GuiLayer::Render(g_engine);
+        LMUFFB::GuiLayer::Render(g_engine);
 
         // Process background save requests from the FFB thread (v0.7.70)
         if (Config::m_needs_save.exchange(false)) {
@@ -415,7 +415,7 @@ int main(int argc, char* argv[]) noexcept {
     Config::Save(g_engine);
     if (!headless) {
         Logger::Get().LogFile("Shutting down GUI...");
-        GuiLayer::Shutdown(g_engine);
+        LMUFFB::GuiLayer::Shutdown(g_engine);
     }
     if (ffb_thread.joinable()) {
         Logger::Get().LogFile("Stopping FFB Thread...");

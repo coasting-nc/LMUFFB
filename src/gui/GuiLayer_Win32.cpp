@@ -5,26 +5,42 @@
 #include "Logger.h"
 #include "Config.h"
 #include "StringUtils.h"
-#include <windows.h>
-#include <commdlg.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
 #include <chrono>
 
-using namespace LMUFFB;
-
-#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <commdlg.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <tchar.h>
+#include "resource.h"
+#endif
 
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+
+// Forward declarations
+static bool CreateDeviceD3D(HWND hWnd);
+static void CleanupDeviceD3D();
+static void CreateRenderTarget();
+static void CleanupRenderTarget();
+static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+
+extern std::atomic<bool> g_running;
+
+namespace LMUFFB {
+
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 
 // Global DirectX variables
 static ID3D11Device*            g_pd3dDevice = NULL;
@@ -39,17 +55,6 @@ static const int MIN_WINDOW_HEIGHT = 600;
 #ifndef PW_RENDERFULLCONTENT
 #define PW_RENDERFULLCONTENT 0x00000002
 #endif
-
-#include "resource.h"
-
-// Forward declarations
-bool CreateDeviceD3D(HWND hWnd);
-void CleanupDeviceD3D();
-void CreateRenderTarget();
-void CleanupRenderTarget();
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-extern std::atomic<bool> g_running;
 
 class Win32GuiPlatform : public IGuiPlatform {
 public:
@@ -231,7 +236,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam)) return true;
     switch (msg) {
     case WM_SIZE:
@@ -249,7 +254,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-bool CreateDeviceD3D(HWND hWnd) {
+static bool CreateDeviceD3D(HWND hWnd) {
     // Modern DXGI/D3D11 Initialization following Flip Model (Issue #189)
     D3D_FEATURE_LEVEL featureLevel;
     const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0 };
@@ -321,19 +326,19 @@ bool CreateDeviceD3D(HWND hWnd) {
     return true;
 }
 
-void CleanupDeviceD3D() {
+static void CleanupDeviceD3D() {
     CleanupRenderTarget();
     if (g_pSwapChain) { g_pSwapChain->Release(); g_pSwapChain = NULL; }
     if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = NULL; }
     if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
 }
 
-void CreateRenderTarget() {
+static void CreateRenderTarget() {
     ID3D11Texture2D* pBackBuffer; g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
     g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &g_mainRenderTargetView); pBackBuffer->Release();
 }
 
-void CleanupRenderTarget() {
+static void CleanupRenderTarget() {
     if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = NULL; }
 }
 
@@ -369,3 +374,5 @@ bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform(
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
 
 #endif
+
+} // namespace LMUFFB

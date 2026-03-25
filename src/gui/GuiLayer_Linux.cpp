@@ -3,14 +3,11 @@
 #include "Version.h"
 #include "Config.h"
 #include "Logger.h"
-#include "Logger.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
 #include <chrono>
-
-using namespace LMUFFB;
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
@@ -22,11 +19,15 @@ using namespace LMUFFB;
 #else
 #include <GL/gl.h>
 #endif
-
-static GLFWwindow* g_window = nullptr;
 #endif
 
 extern std::atomic<bool> g_running;
+
+namespace LMUFFB {
+
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+static GLFWwindow* g_window = nullptr;
+#endif
 
 class LinuxGuiPlatform : public IGuiPlatform {
 public:
@@ -200,3 +201,5 @@ bool GuiLayer::Render(FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 #endif
+
+} // namespace LMUFFB

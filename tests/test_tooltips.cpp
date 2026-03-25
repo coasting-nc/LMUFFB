@@ -13,7 +13,7 @@ TEST_CASE(test_tooltip_line_lengths, "UI") {
     const size_t MAX_LINE_LENGTH = 80;
     int fail_count = 0;
 
-    for (const char* tooltip : Tooltips::ALL) {
+    for (const char* tooltip : LMUFFB::Tooltips::ALL) {
         if (!tooltip) continue;
 
         std::string s(tooltip);

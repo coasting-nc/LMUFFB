@@ -4,9 +4,13 @@
 #include "FFBEngine.h"
 #include <string>
 
+class GuiLayerTestAccess;
+
+namespace LMUFFB {
+
 class GuiLayer {
 public:
-    friend class GuiLayerTestAccess;
+    friend class ::GuiLayerTestAccess;
     static bool Init();
     static void Shutdown(LMUFFB::FFBEngine& engine);
     
@@ -33,11 +37,15 @@ private:
     static void DrawDebugWindow(LMUFFB::FFBEngine& engine);
 };
 
+} // namespace LMUFFB
+
 // Platform helper functions (implemented in GuiLayer_Win32.cpp and GuiLayer_Linux.cpp)
+namespace LMUFFB {
 void ResizeWindowPlatform(int x, int y, int w, int h);
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode);
 void SetWindowAlwaysOnTopPlatform(bool enabled);
 bool OpenPresetFileDialogPlatform(std::string& outPath);
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName);
+}
 
 #endif // GUILAYER_H

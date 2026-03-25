@@ -13,11 +13,11 @@ TEST_CASE(test_gui_tooltips_presence_static, "GUI") {
 
     // Try multiple paths to find the source file relative to the test runner
     std::vector<std::string> paths = {
-        "src/GuiLayer_Common.cpp",
-        "../src/GuiLayer_Common.cpp",
-        "../../src/GuiLayer_Common.cpp",
-        "../../../src/GuiLayer_Common.cpp",
-        "../../../../src/GuiLayer_Common.cpp"
+        "src/gui/GuiLayer_Common.cpp",
+        "../src/gui/GuiLayer_Common.cpp",
+        "../../src/gui/GuiLayer_Common.cpp",
+        "../../../src/gui/GuiLayer_Common.cpp",
+        "../../../../src/gui/GuiLayer_Common.cpp"
     };
 
     std::string found_path = "";
@@ -29,7 +29,7 @@ TEST_CASE(test_gui_tooltips_presence_static, "GUI") {
     }
 
     if (found_path.empty()) {
-        std::cout << "[WARN] Could not find src/GuiLayer_Common.cpp for static analysis. Skipping." << std::endl;
+        std::cout << "[WARN] Could not find src/gui/GuiLayer_Common.cpp for static analysis. Skipping." << std::endl;
         g_tests_passed++;
         return;
     }

@@ -15,8 +15,8 @@
 
 class GuiLayerTestAccess {
 public:
-    static void DrawTuningWindow(FFBEngine& engine) { GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(FFBEngine& engine) { GuiLayer::DrawDebugWindow(engine); }
+    static void DrawTuningWindow(LMUFFB::FFBEngine& engine) { LMUFFB::GuiLayer::DrawTuningWindow(engine); }
+    static void DrawDebugWindow(LMUFFB::FFBEngine& engine) { LMUFFB::GuiLayer::DrawDebugWindow(engine); }
 };
 
 namespace FFBEngineTests {

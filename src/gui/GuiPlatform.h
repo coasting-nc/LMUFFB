@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+namespace LMUFFB {
+
 class IGuiPlatform {
 public:
     virtual ~IGuiPlatform() = default;
@@ -20,3 +22,5 @@ IGuiPlatform& GetGuiPlatform();
 
 // Global helper for simple access (compatibility)
 void SetWindowAlwaysOnTopPlatform(bool enabled);
+
+} // namespace LMUFFB
