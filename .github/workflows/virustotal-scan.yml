@@ -1,0 +1,64 @@
+name: VirusTotal Scan
+
+# Trigger this workflow automatically when the main build completes
+on:
+  workflow_run:
+    workflows: ["Build and Test"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: VirusTotal Comprehensive Scan
+    runs-on: ubuntu-latest
+    # Only run if the main build actually succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - name: Download Nightly Artifact
+        uses: actions/download-artifact@v4
+        with:
+          # Download the artifact from the workflow run that triggered this
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Use a pattern to catch the dynamic version name (e.g., lmuffb-0.7.223-nightly)
+          pattern: lmuffb-*-nightly
+          path: temp_download
+          merge-multiple: true
+
+      - name: Extract Executable
+        run: |
+          # Find the zip file
+          ZIP_FILE=$(ls temp_download/*.zip | head -n 1)
+          echo "Found artifact: $ZIP_FILE"
+          
+          # Unzip just the executable for scanning
+          unzip -j "$ZIP_FILE" "LMUFFB.exe" -d scan_dir/
+          
+      - name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v4
+        id: vt
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          # Path to the extracted executable
+          files: scan_dir/LMUFFB.exe
+          # Request a full analysis (this handles the 20+ minute wait automatically)
+          request_rate: 4
+        # Treat this as a warning: if VT flags it, the step fails, but the workflow continues
+        continue-on-error: true
+
+      - name: Print VirusTotal Results
+        run: |
+          echo "### VirusTotal Scan Results 🦠" >> $GITHUB_STEP_SUMMARY
+          echo "**File:** LMUFFB.exe" >> $GITHUB_STEP_SUMMARY
+          echo "**Positives:** ${{ steps.vt.outputs.positives }} / ${{ steps.vt.outputs.total }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Report Link:** [View Full Report on VirusTotal](${{ steps.vt.outputs.permalink }})" >> $GITHUB_STEP_SUMMARY
+          
+          if[ "${{ steps.vt.outputs.positives }}" -gt 0 ]; then
+            echo "⚠️ **Warning:** Some engines flagged this file. Check the report link for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Clean:** No engines flagged this file." >> $GITHUB_STEP_SUMMARY
+          fi
