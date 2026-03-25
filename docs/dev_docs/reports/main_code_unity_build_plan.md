@@ -262,7 +262,7 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Deviations from the Plan:** None. The `DirectInputFFB` module was refactored and integrated into the Unity Build pipeline as instructed.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `RestApiProvider.h/.cpp` or `DXGIUtils.h/.cpp`.
 
-## 9. Next Steps:Phase 4 Continuation
+## 9. Next Steps: Phase 4 Continuation
 With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to continue tackling Phase 4.
 
 ### Your Objectives for the Next PR:
