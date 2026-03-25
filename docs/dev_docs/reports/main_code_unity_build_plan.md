@@ -242,3 +242,20 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 ### 8.3 Suggestions for the Future
 - **Piecemeal Testing:** Do not blindly chain test scripts via semicolon `;` to compilation scripts during active refactoring. Explicitly monitor the compiler output directly to immediately catch `identifier not found` errors triggered by missing namespace qualifications.
 - **Phase 3 Readiness (The Monoliths):** When approaching Phase 3 (`FFBEngine.h` / `.cpp`), we must anticipate cascading architectural changes across the entire hook surface (`DirectInputFFB.cpp` and `main.cpp`). Because `FFBEngine` fundamentally governs the physics tree, transitioning it into `namespace LMUFFB` will require a meticulously controlled, large-scale commit.
+
+
+## 2. Next Steps: v0.7.238 (Phase 3 Wrap-up & Phase 4 Initiation)
+With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to finalize any remaining Phase 3 modules and begin tackling Phase 4.
+
+### Your Objectives for the Next PR:
+1. **Conclude Phase 3:** Refactor `ffb/UpSampler.h` and `ffb/UpSampler.cpp`. Wrap them safely into `namespace LMUFFB` and add `UpSampler.cpp` to the `UNITY_READY_MAIN` whitelist in `CMakeLists.txt`.
+2. **Begin Phase 4 (OS Boundaries & Subsystems):** Begin systematically wrapping the global boundaries:
+   - `logging/AsyncLogger.h` & `.cpp`
+   - `ffb/DirectInputFFB.h` & `.cpp`
+   - `gui/DXGIUtils.h` & `.cpp`
+   - `io/RestApiProvider.h` & `.cpp`
+
+### Critical Reminder for Phase 4
+Phase 4 deals heavily with Windows libraries (`<windows.h>`, `<dinput.h>`) and standard libraries (`<vector>`, `<thread>`). You must be extremely careful:
+*   **The Include Rule:** You **MUST** place all `#include` directives completely **outside and above** your `namespace LMUFFB { ... }` blocks. 
+*   Wrapping external headers or OS macros inside our namespace will cause immediate, catastrophic compilation failures. Deal with these files fully (header and source together) to prevent ODR violations like the ones seen in early attempts.
