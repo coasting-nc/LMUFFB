@@ -2,6 +2,10 @@
 
 This report outlines the strategy for preparing the main `LMUFFB` codebase to support Unity (Jumbo) builds, enforcing strict namespace rules, and mitigating the common drawbacks associated with unified translation units.
 
+See also:
+* `docs\dev_docs\unity_builds_implementation.md`
+* `docs\dev_docs\unity_builds_tests_incremental_plan.md`
+
 ## 1. Preparing the Main Code (Rigorous Namespace Usage Plan)
 
 To safely compile the main source code as a Unity build, we must ensure that no internal symbols or implementations collide when multiple `.cpp` files are concatenated. The primary strategy to achieve this is **Rigorous Namespace Usage**. 
@@ -228,6 +232,7 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Test Runner and Main Entry Points:** Moving `Config` and `FFBEngine` to `namespace LMUFFB` broke the test suite and the main entry point. Adding `using namespace LMUFFB;` to `main_test_runner.cpp`, `test_ffb_common.h`, and `main.cpp` restored compilation hygiene for these "boundary" files without requiring them to be fully refactored into the internal Unity chunk immediately. This allows the core to remain pure while legacy runners continue to function.
 - **Unity Build Verification (v0.7.235):** The project now successfully compiles `unity_0_cxx.cxx` containing core modules (`VehicleUtils`, `Config`, `FFBEngine` (partially)). Total tests (629/629) pass under the new namespaced architecture.
 - **Missing Unity Whitelist Entries:** During Phase 2/3, files were successfully wrapped in `namespace LMUFFB` but were not explicitly added to the `UNITY_READY_MAIN` variable in `CMakeLists.txt`. While the code compiled correctly as standalone translation units (since `SKIP_UNITY_BUILD_INCLUSION` was naturally left active for them), this bypassed the core goal of proving their safety *within* the batched Unity chunk. We manually appended `Config.cpp`, `FFBDebugBuffer.cpp`, `FFBSafetyMonitor.cpp`, and `FFBEngine.cpp` to the whitelist and successfully compiled `unity_0_cxx.cxx` with zero ODR (One Definition Rule) violations.
+
 
 ### 8.2 Deviations from the Plan
 - **Skipping Class Methods for Initial Refactoring:** We originally considered `physics/SteeringUtils.cpp` as the first `.cpp` file to wrap inside the Unity pipeline. However, since it exclusively contains implementation methods belonging to the globally declared `FFBEngine` class (e.g., `void FFBEngine::calculate_soft_lock`), wrapping it in `namespace LMUFFB` immediately triggers "class not declared" compiler errors. We deviated by selecting `VehicleUtils.cpp` instead, as its purely standalone logic is safely isolated from the monolithic classes.
