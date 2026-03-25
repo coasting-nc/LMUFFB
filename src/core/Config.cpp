@@ -917,6 +917,12 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 if (auto val = (*sys)["show_graphs"].value<bool>()) show_graphs = *val;
                 if (auto val = (*sys)["auto_start_logging"].value<bool>()) m_auto_start_logging = *val;
                 if (auto val = (*sys)["invert_force"].value<bool>()) engine.m_invert_force = *val;
+                if (auto val = (*sys)["session_peak_torque"].value<double>()) {
+                    if (std::isfinite(*val) && *val > 0.01) engine.m_session_peak_torque = *val;
+                }
+                if (auto val = (*sys)["auto_peak_front_load"].value<double>()) {
+                    if (std::isfinite(*val) && *val > 10.0) engine.m_auto_peak_front_load = *val;
+                }
             }
 
             Preset p("Temporary", false);
@@ -982,7 +988,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         {"show_graphs", show_graphs},
         {"auto_start_logging", m_auto_start_logging},
         {"log_path", m_log_path},
-        {"invert_force", engine.m_invert_force}
+        {"invert_force", engine.m_invert_force},
+        {"session_peak_torque", engine.m_session_peak_torque},
+        {"auto_peak_front_load", engine.m_auto_peak_front_load}
     });
 
     // Merge categories from engine config into the main table
