@@ -138,6 +138,32 @@ jobs:
         shell: pwsh
         run: |
           .\build\tests\Release\run_combined_tests.exe
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Cache Virtual Environment
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Install Python Dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .venv\Scripts\Activate.ps1
+          pip install -r requirements.txt
+
+      - name: Run Python Tests
+        shell: pwsh
+        run: |
+          .venv\Scripts\Activate.ps1
+          $env:PYTHONPATH = "$(Get-Location)/tools"
+          python -m pytest tests tools/lmuffb_log_analyzer/tests
 
       - name: Package Artifacts
         shell: pwsh
