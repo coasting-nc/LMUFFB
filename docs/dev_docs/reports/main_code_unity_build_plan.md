@@ -178,7 +178,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [ ] TODO: don't do this. This is another vendor / game file, not to be changed. Update the makefile accordingly. -- Wrap isolated I/O wrappers (`io/rF2/rF2Data.h`).
 
 ### 6.4 Phase 3: Core Logic (FFB & Physics)
-- [ ] Refactor `ffb/UpSampler.h` & `.cpp`.
+- [x] Refactor `ffb/UpSampler.h` & `.cpp`.
 - [x] Refactor `ffb/FFBSafetyMonitor.h` & `.cpp`.
 - [x] Refactor `ffb/FFBDebugBuffer.h` & `.cpp`.
 - [x] Refactor `physics/GripLoadEstimation.cpp`.
@@ -243,8 +243,13 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Piecemeal Testing:** Do not blindly chain test scripts via semicolon `;` to compilation scripts during active refactoring. Explicitly monitor the compiler output directly to immediately catch `identifier not found` errors triggered by missing namespace qualifications.
 - **Phase 3 Readiness (The Monoliths):** When approaching Phase 3 (`FFBEngine.h` / `.cpp`), we must anticipate cascading architectural changes across the entire hook surface (`DirectInputFFB.cpp` and `main.cpp`). Because `FFBEngine` fundamentally governs the physics tree, transitioning it into `namespace LMUFFB` will require a meticulously controlled, large-scale commit.
 
+### 8.4 Implementation Notes (v0.7.240)
+- **Encountered Issues:** None. The `UpSampler` module was already correctly namespaced within `LMUFFB`, and its consumers in `main.cpp` were already using the `LMUFFB` namespace. The primary task was build system integration.
+- **Deviations from the Plan:** None. The task was executed as a single incremental step to conclude Phase 3 as instructed.
+- **Suggestions for the Future:** Now that Phase 3 is complete, Phase 4 should proceed with high caution regarding external OS headers. It is recommended to refactor `AsyncLogger` next, as it has the fewest OS-specific dependencies compared to `DirectInputFFB` or `DXGIUtils`.
 
-## 2. Next Steps: v0.7.240 (Phase 3 Wrap-up & Phase 4 Initiation)
+
+## 2. Next Steps: v0.7.241 (Phase 4 Continuation)
 With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to finalize any remaining Phase 3 modules and begin tackling Phase 4.
 
 ### Your Objectives for the Next PR:
