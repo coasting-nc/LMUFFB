@@ -433,7 +433,7 @@ jobs:
           echo "**Positives:** ${{ steps.vt.outputs.positives }} / ${{ steps.vt.outputs.total }}" >> $GITHUB_STEP_SUMMARY
           echo "**Report Link:** [View Full Report on VirusTotal](${{ steps.vt.outputs.permalink }})" >> $GITHUB_STEP_SUMMARY
           
-          if[ "${{ steps.vt.outputs.positives }}" -gt 0 ]; then
+          if [ "${{ steps.vt.outputs.positives }}" -gt 0 ]; then
             echo "⚠️ **Warning:** Some engines flagged this file. Check the report link for details." >> $GITHUB_STEP_SUMMARY
           else
             echo "✅ **Clean:** No engines flagged this file." >> $GITHUB_STEP_SUMMARY
