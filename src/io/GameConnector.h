@@ -86,7 +86,7 @@ private:
     static const char* ControlModeName(signed char control);
     static const char* PitStateName(unsigned char pitState);
 
-    friend class FFBEngineTests::GameConnectorTestAccessor;
+    friend class ::FFBEngineTests::GameConnectorTestAccessor;
 
     GameConnector();
     ~GameConnector();

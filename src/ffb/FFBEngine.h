@@ -52,6 +52,10 @@ enum class LoadTransform {
 
 // BiquadNotch moved to MathUtils.h
 
+namespace FFBEngineTests { class FFBEngineTestAccess; }
+
+namespace LMUFFB {
+
 // Helper Result Struct for calculate_axle_grip
 struct GripResult {
     double value;           // Final grip value
@@ -60,9 +64,8 @@ struct GripResult {
     double slip_angle;      // Calculated slip angle (if approximated)
 };
 
-namespace LMUFFB { struct Preset; class FFBDebugBuffer; }
-
-namespace FFBEngineTests { class FFBEngineTestAccess; }
+struct Preset;
+class FFBDebugBuffer;
 
 struct FFBCalculationContext {
     double dt = DEFAULT_CALC_DT;
@@ -105,7 +108,7 @@ struct FFBCalculationContext {
     double soft_lock_force = 0.0;
     double gain_reduction_factor = 1.0;
 };
-    
+
 // FFB Engine Class
 class FFBEngine {
 public:
@@ -321,7 +324,6 @@ public:
     LMUFFB::ChannelStats s_lat_g;
     std::chrono::steady_clock::time_point last_log_time;
 
-    // Thread-Safe Buffer (Producer-Consumer)
     LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class FFBEngineTests::FFBEngineTestAccess;
@@ -537,5 +539,7 @@ private:
     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx);
 };
+
+} // namespace LMUFFB
 
 #endif // FFBENGINE_H

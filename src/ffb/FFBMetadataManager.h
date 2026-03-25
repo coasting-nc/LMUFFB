@@ -9,6 +9,8 @@
 #include "utils/StringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
+namespace LMUFFB {
+
 class FFBMetadataManager {
 public:
     static constexpr int STR_BUF_64 = 64;
@@ -45,5 +47,7 @@ public:
 private:
     std::mutex m_mutex;
 };
+
+} // namespace LMUFFB
 
 #endif // FFBMETADATA_MANAGER_H

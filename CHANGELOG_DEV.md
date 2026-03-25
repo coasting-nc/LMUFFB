@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.237]
+
+### Changed
+- **Incremental Unity Build Securing (Phase 3 Advancement)**:
+  - Fully encapsulated verified core engine modules (`FFBEngine`, `FFBSafetyMonitor`, `FFBMetadataManager`, `GripLoadEstimation`) within the `LMUFFB` namespace.
+  - Whitelisted `GripLoadEstimation.cpp` and `FFBMetadataManager.cpp` for Unity (Jumbo) builds.
+  - Resolved namespace ambiguities and ODR violations in the unified translation unit by standardizing forward declarations and qualifying friend class access.
+  - Updated application boundary points (`main.cpp`, `GuiLayer.h`) to handle the namespaced core logic while Phase 4 modules remain global for incremental stability.
+
+### Testing
+- **Unity Build Verification**: Verified 100% stability with `LMUFFB_USE_UNITY_BUILD=ON` in a headless environment.
+- **Passing Grade**: Confirmed all 630 unit and regression tests pass under the namespaced and bundled architecture.
+
 ## [0.7.236]  
 
 ### Changed

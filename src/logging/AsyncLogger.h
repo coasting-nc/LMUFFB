@@ -18,8 +18,7 @@
 #include "ffb/FFBConfig.h"
 
 // Forward declaration
-struct TelemInfoV01;
-class FFBEngine;
+namespace LMUFFB { class FFBEngine; }
 
 // Log frame structure - captures one physics tick
 #pragma pack(push, 1)

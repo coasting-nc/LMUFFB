@@ -9,6 +9,8 @@
 #include "utils/StringUtils.h"
 #include "FFBConfig.h"
 
+namespace LMUFFB {
+
 class FFBSafetyMonitor {
 public:
     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;
@@ -62,5 +64,7 @@ public:
     bool was_soft_locked = false;
     bool soft_lock_significant = false;
 };
+
+} // namespace LMUFFB
 
 #endif // FFBSAFETYMONITOR_H

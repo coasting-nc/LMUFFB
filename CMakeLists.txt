@@ -286,6 +286,8 @@ set(UNITY_READY_MAIN
     FFBDebugBuffer.cpp
     FFBSafetyMonitor.cpp
     FFBEngine.cpp
+    GripLoadEstimation.cpp
+    FFBMetadataManager.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist
