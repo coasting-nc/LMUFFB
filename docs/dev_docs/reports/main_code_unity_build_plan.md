@@ -185,7 +185,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Refactor `ffb/FFBEngine.h` & `.cpp` (Central consumer wrapped).
 
 ### 6.5 Phase 4: OS Boundaries & Subsystems
-- [ ] Refactor `ffb/DirectInputFFB.h` & `.cpp`.
+- [x] Refactor `ffb/DirectInputFFB.h` & `.cpp`. (Fully namespaced and whitelisted).
 - [ ] Refactor `gui/DXGIUtils.h` & `.cpp`.
 - [ ] Refactor `io/RestApiProvider.h` & `.cpp`.
 - [x] Refactor `logging/AsyncLogger.h`. (Header-only module officially wrapped).
@@ -257,12 +257,16 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - Confirmed via local compilation (standard and Unity mode) and full test suite execution (631 tests passing) that no linker or compilation errors were introduced.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `DirectInputFFB.h/.cpp` or `RestApiProvider.h/.cpp`, which do possess implementation files.
 
-## 9. Next Steps: v0.7.246 (Phase 4 Continuation)
+### 8.6 Implementation Notes (v0.7.246)
+- **Encountered Issues:** None.
+- **Deviations from the Plan:** None. The `DirectInputFFB` module was refactored and integrated into the Unity Build pipeline as instructed.
+- **Suggestions for the Future:** Continue Phase 4 by refactoring `RestApiProvider.h/.cpp` or `DXGIUtils.h/.cpp`.
+
+## 9. Next Steps: v0.7.247 (Phase 4 Continuation)
 With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to continue tackling Phase 4.
 
 ### Your Objectives for the Next PR:
 1. **Continue Phase 4 (OS Boundaries & Subsystems):** Continue systematically wrapping the global boundaries:
-   - `ffb/DirectInputFFB.h` & `.cpp`
    - `gui/DXGIUtils.h` & `.cpp`
    - `io/RestApiProvider.h` & `.cpp`
 

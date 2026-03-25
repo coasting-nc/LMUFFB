@@ -307,6 +307,7 @@ set(UNITY_READY_MAIN
     GripLoadEstimation.cpp
     FFBMetadataManager.cpp
     UpSampler.cpp
+    DirectInputFFB.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist

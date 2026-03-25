@@ -20,6 +20,8 @@ typedef void* LPDIRECTINPUTDEVICE8;
 typedef void* LPDIRECTINPUTEFFECT;
 #endif
 
+namespace LMUFFB {
+
 struct DeviceInfo {
     GUID guid;
     std::string name;
@@ -74,5 +76,7 @@ private:
 
     long m_last_force = -999999; 
 };
+
+} // namespace LMUFFB
 
 #endif // DIRECTINPUTFFB_H
