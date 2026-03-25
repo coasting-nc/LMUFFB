@@ -95,3 +95,20 @@ You could avoid fetching the heaviest UI/Data Science elements for some steps (l
 
 ## Recommended Action
 For minimal intrusion and maximum speed on the Windows runner, I recommend moving to **Approach 2 (using `uv`)** or **Approach 1 (Caching the `.venv`)**. Either method requires less than 10 lines of YAML modification and will immediately alleviate the Python installation bottleneck.
+
+## Approach Compatibility (Orthogonality vs Incompatibility)
+
+When deciding how to combine these strategies, it's important to recognize which ones stack for maximum performance and which ones conflict or render each other redundant.
+
+### Mutually Exclusive (Incompatible)
+The caching approaches for dependencies are largely mutually exclusive. You should only choose **one** of the following core caching mechanisms to avoid duplicated efforts or pipeline conflicts:
+- **Approach 1 (Virtual Environment Caching)** vs **Approach 2 (`uv`)** vs **Approach 3 (`setup-python` Pip Caching)**.
+  - *Context*: If you cache the `.venv` (Approach 1), you bypass `pip` entirely on a cache hit, rendering `uv` or `setup-python` caching redundant. If you use `uv`, its internal cache makes manual Virtual Environment caching unnecessary overhead. Pick the one that fits your ecosystem best (we implemented **Approach 1** coupled with **Approach 4**). 
+
+### Orthogonal (Cumulative)
+The architectural optimizations can be paired directly with your chosen caching mechanism to compound performance gains.
+
+- **Approach 4 (Parallel Job)** + **Any Caching Strategy (1, 2, or 3)**:
+  - *Context*: Running the Python tests in parallel separates the runtime from the lengthy C++ build. Adding `.venv` caching (Approach 1) inside that parallel job ensures the job starts *and* finishes instantly. They are perfectly complementary.
+- **Approach 5 (Dependency Split)** + **Any Caching Strategy** + **Approach 4**:
+  - *Context*: Splitting `requirements.txt` into core testing and UI/analytics components is universally beneficial. Trimming the dependency tree makes any cache step smaller and faster, and requires less download bandwidth on cache misses, entirely orthogonal to whether the job is running in parallel or sequentially.

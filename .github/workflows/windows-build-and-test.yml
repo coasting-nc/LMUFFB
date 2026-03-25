@@ -151,12 +151,7 @@ jobs:
       run: |
         .\build\tests\Release\run_combined_tests.exe
 
-    - name: Run Python Tests
-      shell: pwsh
-      run: |
-        pip install -r requirements.txt
-        $env:PYTHONPATH = "$(Get-Location)/tools"
-        python -m pytest tests tools/lmuffb_log_analyzer/tests
+
 
     - name: Get Version
       shell: pwsh
@@ -181,6 +176,41 @@ jobs:
         name: lmuffb-${{ env.APP_VERSION }}-nightly
         path: lmuffb-${{ env.APP_VERSION }}-nightly.zip
         retention-days: 90
+
+  windows-python-tests:
+    name: Windows Python Tests
+    runs-on: windows-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Cache Virtual Environment
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: |
+        python -m venv .venv
+        .venv\Scripts\Activate.ps1
+        pip install -r requirements.txt
+
+    - name: Run Python Tests
+      shell: pwsh
+      run: |
+        .venv\Scripts\Activate.ps1
+        $env:PYTHONPATH = "$(Get-Location)/tools"
+        python -m pytest tests tools/lmuffb_log_analyzer/tests
 
   linux-coverage:
     name: Linux Coverage (Debug)
@@ -355,7 +385,7 @@ jobs:
   deploy-coverage:
     name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
-    needs: [windows-release, linux-coverage, linux-sanitizers]
+    needs: [windows-release, windows-python-tests, linux-coverage, linux-sanitizers]
     if: github.event_name == 'push'
     permissions:
       contents: write
