@@ -24,7 +24,7 @@
 #include "../src/physics/SteeringUtils.h"
 #include "test_performance_types.h"
 
-using namespace LMUFFB;
+namespace LMUFFB {
 
 class RestApiProviderTestAccess {
 public:
@@ -38,6 +38,10 @@ public:
         return p.ParseSteeringLock(json);
     }
 };
+
+} // namespace LMUFFB
+
+using namespace LMUFFB;
 
 namespace FFBEngineTests {
 

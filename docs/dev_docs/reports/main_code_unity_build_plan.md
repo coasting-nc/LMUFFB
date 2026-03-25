@@ -187,7 +187,7 @@ This section tracks the progress made towards fully refactoring the main code an
 ### 6.5 Phase 4: OS Boundaries & Subsystems
 - [x] Refactor `ffb/DirectInputFFB.h` & `.cpp`. (Fully namespaced and whitelisted).
 - [ ] Refactor `gui/DXGIUtils.h` & `.cpp`.
-- [ ] Refactor `io/RestApiProvider.h` & `.cpp`.
+- [x] Refactor `io/RestApiProvider.h` & `.cpp`. (Fully namespaced and whitelisted).
 - [x] Refactor `logging/AsyncLogger.h`. (Header-only module officially wrapped).
 
 ### 6.6 Phase 5: UI & Final Integration
@@ -262,13 +262,17 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Deviations from the Plan:** None. The `DirectInputFFB` module was refactored and integrated into the Unity Build pipeline as instructed.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `RestApiProvider.h/.cpp` or `DXGIUtils.h/.cpp`.
 
+### 8.7 Implementation Notes (v0.7.247)
+- **Encountered Issues:** None.
+- **Deviations from the Plan:** None. The `RestApiProvider` module was refactored and integrated into the Unity Build pipeline as instructed.
+- **Suggestions for the Future:** Continue Phase 4 by refactoring `gui/DXGIUtils.h/.cpp` or `io/GameConnector.h/.cpp`.
+
 ## 9. Next Steps: Phase 4 Continuation
 With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to continue tackling Phase 4.
 
 ### Your Objectives for the Next PR:
 1. **Continue Phase 4 (OS Boundaries & Subsystems):** Continue systematically wrapping the global boundaries:
    - `gui/DXGIUtils.h` & `.cpp`
-   - `io/RestApiProvider.h` & `.cpp`
 
 ### Critical Reminder for Phase 4
 Phase 4 deals heavily with Windows libraries (`<windows.h>`, `<dinput.h>`) and standard libraries (`<vector>`, `<thread>`). You must be extremely careful:

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.247]
+### Changed
+- **Unity Build Expansion (Phase 4 Continuation)**:
+  - Refactored `src/io/RestApiProvider.h` and `src/io/RestApiProvider.cpp` by wrapping the module into `namespace LMUFFB`.
+  - Enforced strict include discipline by positioning all headers outside the namespace block to support unified translation units.
+  - Whitelisted `RestApiProvider.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+  - Updated the test suite to ensure compatibility with the namespaced REST API module.
+
 ## [0.7.246]
 ### Changed
 - **Unity Build Expansion (Phase 4 Continuation)**:
