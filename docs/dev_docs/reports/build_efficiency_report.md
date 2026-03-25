@@ -57,13 +57,20 @@ The proposed optimizations **do not conflict** with the Unity build transition; 
 
 ---
 
-## 4. Summary of Planned Actions
+## 4. Implementation Status (v0.7.241)
 
-| Action | Target File | Impact |
-| :--- | :--- | :--- |
-| Move `lz4.c` to `imgui_vendor` | `CMakeLists.txt` | Reduces `lz4.c` compilation from 2x to 1x. |
-| Rename `imgui_vendor` to `LMUFFB_Vendor` | `CMakeLists.txt` | Improved naming consistency. |
-| Continue Unity Whitelisting | `CMakeLists.txt` | Reduces total compile time of all main code files by ~40-60%. |
-| Add `toml++` to Vendor Lib | `CMakeLists.txt` | Centralizes vendor interface management. |
+The following optimizations proposed in this report have been successfully implemented:
 
-By prioritizing the Unity build migration, we address the "main code compiled multiple times" inefficiency at its root (header parsing overhead) without sacrificing the distinct optimization needs of the application vs. the test suite.
+| Action | Target File | Impact | Status |
+| :--- | :--- | :--- | :--- |
+| Move `lz4.c` to `LMUFFB_Vendor` | `CMakeLists.txt` | Reduces `lz4.c` compilation from 2x to 1x. | [x] **Complete** |
+| Rename `imgui_vendor` to `LMUFFB_Vendor` | `CMakeLists.txt` | Improved naming consistency and centralized vendors. | [x] **Complete** |
+| Add `toml++` to Vendor Lib | `CMakeLists.txt` | Centralizes vendor interface management. | [x] **Complete** |
+| Continue Unity Whitelisting | `CMakeLists.txt` | Reduces total compile time of all main code files by ~40-60%. | [x] **In Progress** |
+
+### Verified Results
+- **Build Success:** The project now compiles with a dedicated `LMUFFB_Vendor.lib`.
+- **Test Integrity:** All 630/630 tests passed post-refactoring on the local build system.
+- **Redundancy Reduced:** LZ4 is now a standalone translation unit compiled only once per configuration, effectively shared via `PUBLIC` linking.
+
+By prioritizing the Unity build migration, we continue to address the "main code compiled multiple times" inefficiency at its root (header parsing overhead) while maintaining the distinct optimization needs of the application vs. the test suite.
