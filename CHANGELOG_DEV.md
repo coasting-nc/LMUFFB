@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.249]
+### Changed
+- **Unity Build Expansion (Phase 4 Continuation)**:
+  - Refactored `src/io/GameConnector.h` and `src/io/GameConnector.cpp` by wrapping the module into `namespace LMUFFB`.
+  - Enforced strict include discipline by positioning all headers outside the namespace block to support unified translation units.
+  - Converted internal macros in `GameConnector.cpp` to `constexpr` within an anonymous namespace to avoid ODR violations.
+  - Whitelisted `GameConnector.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+  - Updated `test_ffb_common.h` and `test_ffb_common.cpp` to maintain compatibility with the namespaced `GameConnector`.
+
 ## [0.7.248]
 ### Changed
 - **Unity Build Expansion (Phase 4 Continuation)**:

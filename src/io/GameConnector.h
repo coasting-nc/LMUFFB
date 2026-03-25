@@ -15,6 +15,8 @@
 
 namespace FFBEngineTests { class GameConnectorTestAccessor; }
 
+namespace LMUFFB {
+
 class GameConnector {
 public:
     static GameConnector& Get();
@@ -120,4 +122,7 @@ private:
 
     void _DisconnectLocked();
 };
+
+} // namespace LMUFFB
+
 #endif // GAMECONNECTOR_H
