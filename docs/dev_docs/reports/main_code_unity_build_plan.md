@@ -244,7 +244,7 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Phase 3 Readiness (The Monoliths):** When approaching Phase 3 (`FFBEngine.h` / `.cpp`), we must anticipate cascading architectural changes across the entire hook surface (`DirectInputFFB.cpp` and `main.cpp`). Because `FFBEngine` fundamentally governs the physics tree, transitioning it into `namespace LMUFFB` will require a meticulously controlled, large-scale commit.
 
 
-## 2. Next Steps: v0.7.238 (Phase 3 Wrap-up & Phase 4 Initiation)
+## 2. Next Steps: v0.7.240 (Phase 3 Wrap-up & Phase 4 Initiation)
 With the core FFB engine now stable within the Unity Build chunk, your next incremental step is to finalize any remaining Phase 3 modules and begin tackling Phase 4.
 
 ### Your Objectives for the Next PR:
