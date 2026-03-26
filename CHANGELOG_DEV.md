@@ -12,6 +12,15 @@ All notable changes to this project will be documented in this file.
   - Updated the entire unit and regression test suite (150+ files) to align with the new standardized indexing architecture.
   - Verified 100% test coverage and 629/629 passing tests.
 
+---
+
+## Cumulative changes from version 0.7.238 till 0.7.252
+### Fixed
+- Fixed default profile being loaded (instead of the last used) after app restart:
+
+---
+
+
 ## [0.7.251]
 ### Changed
 - **Unity Build Expansion (Phase 5 Completion)**:
