@@ -9,6 +9,7 @@
 #include "AsyncLogger.h"
 #include "VehicleUtils.h"
 #include "HealthMonitor.h"
+
 #include <string>
 #include <iostream>
 #include <vector>
@@ -33,6 +34,8 @@
 // Linkage for global test access class defined in test_gui_common.h
 #include "../../tests/test_gui_common.h"
 #endif
+
+using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
 

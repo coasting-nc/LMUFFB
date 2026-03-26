@@ -3,6 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
+using namespace LMUFFB::Logging;
+
 namespace LMUFFB {
 namespace SteeringUtils {
 

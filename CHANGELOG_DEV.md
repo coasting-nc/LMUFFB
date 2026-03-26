@@ -2,7 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.253]
+
+## [0.7.254]
 ### Fixed
 - **Lateral Load Slider Persistence (Issue #475)**:
   - Resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon application restart, despite the GUI allowing values up to 10.0 (1000%).
@@ -10,6 +11,16 @@ All notable changes to this project will be documented in this file.
 
 ### Testing
 - **New Regression Test**: Added `tests/repro_issue_475.cpp` verifying that values up to 10.0 are preserved through the validation cycle.
+- 
+## [0.7.253]
+### Changed
+- **Unity Build Expansion (Phase 6 Commencement)**:
+  - Initiated Phase 6 of the Unity Build plan by transitioning all modules in the `src/logging/` directory to `namespace LMUFFB::Logging`.
+  - Implemented temporary bridge `using` declarations (e.g., `namespace LMUFFB { using Logger = LMUFFB::Logging::Logger; }`) in the logging headers to maintain backward compatibility and support qualified lookups while call sites are incrementally updated.
+  - Updated key project-wide call sites in `main.cpp` and `GuiLayer_Common.cpp` with appropriate `using namespace` or qualified lookups.
+  - Enforced strict header hygiene by ensuring no `using namespace` directives exist in core headers like `FFBEngine.h`.
+  - Resolved namespace ambiguity for `FFBEngine` in `AsyncLogger.h` via qualified `using` declarations.
+  - Verified 100% test pass rate (632/632) under the new namespaced architecture.
 
 ## [0.7.252]
 ### Changed
@@ -20,6 +31,14 @@ All notable changes to this project will be documented in this file.
   - Standardized internal state arrays (e.g., `m_prev_slip_angle`, `m_prev_susp_force`) to use named constants for improved readability and safety.
   - Updated the entire unit and regression test suite (150+ files) to align with the new standardized indexing architecture.
   - Verified 100% test coverage and 629/629 passing tests.
+
+---
+
+## Cumulative changes from version 0.7.238 till 0.7.252
+### Fixed
+- Fixed default profile being loaded (instead of the last used) after app restart.
+
+---
 
 ## [0.7.251]
 ### Changed

@@ -7,6 +7,8 @@
 #include <mutex>
 #include <cmath>
 
+using namespace LMUFFB::Logging;
+
 // Platform-Specific Headers
 #ifdef _WIN32
 #include <windows.h>

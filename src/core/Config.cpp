@@ -17,6 +17,8 @@
 #include <toml++/toml.hpp>
 #include <filesystem>
 
+using namespace LMUFFB::Logging;
+
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;
 

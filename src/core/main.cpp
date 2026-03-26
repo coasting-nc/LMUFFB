@@ -27,6 +27,8 @@
 
 namespace LMUFFB {
 
+using namespace LMUFFB::Logging;
+
 // --- Helper for Testability ---
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
     info.app_version = LMUFFB_VERSION;
