@@ -59,6 +59,5 @@ test_gui.csv/**
 test_*.ini
 test_*.log
 test_*.txt
+*.log
 src/core/GeneratedBuiltinPresets.h
-build_output.log
-clang_tidy_output.log
