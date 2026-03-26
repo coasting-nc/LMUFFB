@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 12:57:04</td>
+            <td class="headerValue">2026-03-26 15:23:29</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -87,11 +87,11 @@
 <span id="L16"><span class="lineNum">      16</span>                 :             :      * @brief A simple interface for providing the current time.</span>
 <span id="L17"><span class="lineNum">      17</span>                 :             :      * Allows for mocking in unit tests.</span>
 <span id="L18"><span class="lineNum">      18</span>                 :             :      */</span>
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC tlaBgGNC">       17632 :     inline std::chrono::steady_clock::time_point GetTime() {</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC tlaBgGNC">       12501 :     inline std::chrono::steady_clock::time_point GetTime() {</span></span>
 <span id="L20"><span class="lineNum">      20</span>                 :             : #ifdef LMUFFB_UNIT_TEST</span>
-<span id="L21"><span class="lineNum">      21</span>         [<span class="tlaGBC" title="Branch 0 was taken 14718 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2914 times"> + </span>]:<span class="tlaGNC">       17632 :         if (g_use_mock_time) return g_mock_time;</span></span>
+<span id="L21"><span class="lineNum">      21</span>         [<span class="tlaGBC" title="Branch 0 was taken 9584 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 2917 times"> + </span>]:<span class="tlaGNC">       12501 :         if (g_use_mock_time) return g_mock_time;</span></span>
 <span id="L22"><span class="lineNum">      22</span>                 :             : #endif</span>
-<span id="L23"><span class="lineNum">      23</span>                 :<span class="tlaGNC">        2914 :         return std::chrono::steady_clock::now();</span></span>
+<span id="L23"><span class="lineNum">      23</span>                 :<span class="tlaGNC">        2917 :         return std::chrono::steady_clock::now();</span></span>
 <span id="L24"><span class="lineNum">      24</span>                 :             :     }</span>
 <span id="L25"><span class="lineNum">      25</span>                 :             : } // namespace TimeUtils</span>
 <span id="L26"><span class="lineNum">      26</span>                 :             : } // namespace LMUFFB</span>

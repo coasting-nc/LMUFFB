@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 12:57:04</td>
+            <td class="headerValue">2026-03-26 15:23:29</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -390,10 +390,10 @@
 <span id="L319"><span class="lineNum">     319</span>                 :             :     FFBSafetyMonitor m_safety;</span>
 <span id="L320"><span class="lineNum">     320</span>                 :             : </span>
 <span id="L321"><span class="lineNum">     321</span>                 :             :     // Telemetry Stats</span>
-<span id="L322"><span class="lineNum">     322</span>                 :             :     LMUFFB::ChannelStats s_torque;</span>
-<span id="L323"><span class="lineNum">     323</span>                 :             :     LMUFFB::ChannelStats s_front_load;</span>
-<span id="L324"><span class="lineNum">     324</span>                 :             :     LMUFFB::ChannelStats s_front_grip;</span>
-<span id="L325"><span class="lineNum">     325</span>                 :             :     LMUFFB::ChannelStats s_lat_g;</span>
+<span id="L322"><span class="lineNum">     322</span>                 :             :     Logging::ChannelStats s_torque;</span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :     Logging::ChannelStats s_front_load;</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             :     Logging::ChannelStats s_front_grip;</span>
+<span id="L325"><span class="lineNum">     325</span>                 :             :     Logging::ChannelStats s_lat_g;</span>
 <span id="L326"><span class="lineNum">     326</span>                 :             :     std::chrono::steady_clock::time_point last_log_time;</span>
 <span id="L327"><span class="lineNum">     327</span>                 :             : </span>
 <span id="L328"><span class="lineNum">     328</span>                 :             :     LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP</span>
