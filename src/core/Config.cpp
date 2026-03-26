@@ -83,9 +83,9 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
         if (!has1 && !has2) return true;
 
         int val1 = 0;
-        try { if (has1) val1 = std::stoi(segment1); } catch (...) {}
+        try { if (has1) val1 = std::stoi(segment1); } catch (...) { (void)0; }
         int val2 = 0;
-        try { if (has2) val2 = std::stoi(segment2); } catch (...) {}
+        try { if (has2) val2 = std::stoi(segment2); } catch (...) { (void)0; }
 
         if (val1 < val2) return true;
         if (val1 > val2) return false;
@@ -942,7 +942,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 }
             }
         }
-    } catch (...) {}
+    } catch (...) { (void)0; }
 
     if (!toml_loaded) {
         MigrateFromLegacyIni(engine, final_path);
@@ -1129,7 +1129,7 @@ void Config::LoadPresets() {
                 }
             }
         }
-    } catch (...) {}
+    } catch (...) { (void)0; }
 
     // 3. Deterministic Sorting: Built-ins first, then "Default" first within that group, then alphabetical.
     std::sort(presets.begin(), presets.end(), [](const Preset& a, const Preset& b) {
@@ -1292,7 +1292,7 @@ void Config::MigrateFromLegacyIni(FFBEngine& engine, const std::string& filename
                 bool dummy_needs_save = false;
                 ParsePresetLine(key + "=" + value, current_preset, config_version, dummy_needs_save, legacy_torque_hack, legacy_torque_val);
             } else if (in_static_loads) {
-                try { SetSavedStaticLoad(key, std::stod(value)); } catch (...) {}
+                try { SetSavedStaticLoad(key, std::stod(value)); } catch (...) { (void)0; }
             } else {
                 if (key == "ini_version") { config_version = value; }
                 bool ns = m_needs_save.load();
@@ -1370,7 +1370,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
             SaveUserPresetFile(p);
             presets.push_back(p);
             return true;
-        } catch (...) {}
+        } catch (...) { (void)0; }
     }
 
     // Fallback to legacy INI import

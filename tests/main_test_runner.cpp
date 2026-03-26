@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) noexcept {
                     if (dirname.find("test_logs") == 0) {
                         try {
                             std::filesystem::remove_all(entry.path());
-                        } catch (...) {}
+                        } catch (...) { (void)0; }
                     }
                 }
             }

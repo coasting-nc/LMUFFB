@@ -380,6 +380,7 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
             case 1: locStr = "Track Loading"; break;
             case 2: locStr = "Monitor (Garage)"; break;
             case 3: locStr = "On Track"; break;
+            default: break;
         }
         Logger::Get().LogFile("[Transition] OptionsLocation: %d -> %d (%s)",
             m_prevState.optionsLocation, generic.appInfo.mOptionsLocation, locStr);

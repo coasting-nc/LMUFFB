@@ -56,14 +56,13 @@ TEST_CASE(test_game_connector_branch_boost_isolated, "System") {
     std::stringstream diag;
     diag << "Conn: " << (conn.IsConnected() ? "YES" : "NO");
     diag << " | Realtime: " << (layout->data.scoring.scoringInfo.mInRealtime ? "T" : "F");
-    #ifndef _WIN32
+
     auto& maps = MockSM::GetMaps();
     if (maps.count("LMU_SharedMemoryLockData")) {
         long* ldata = (long*)maps["LMU_SharedMemoryLockData"].data();
         diag << " | Lock: waiters=" << ldata[0] << " busy=" << ldata[1];
     }
     diag << " | Err: " << MockSM::LastError() << " | Wait: " << MockSM::WaitResult();
-    #endif
 
     ASSERT_TRUE_MSG(copy_res, diag.str());
     ASSERT_FALSE(dest.telemetry.playerHasVehicle);
