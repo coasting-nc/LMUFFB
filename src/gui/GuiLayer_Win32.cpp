@@ -5,51 +5,59 @@
 #include "Logger.h"
 #include "Config.h"
 #include "StringUtils.h"
-#include <windows.h>
-#include <commdlg.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
 #include <chrono>
 
-using namespace LMUFFB;
-
-#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <commdlg.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <tchar.h>
+#include "resource.h"
+#endif
 
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
 
-// Global DirectX variables
-static ID3D11Device*            g_pd3dDevice = NULL;
-static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
-static IDXGISwapChain*          g_pSwapChain = NULL;
-static ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
-static HWND                     g_hwnd = NULL;
+extern std::atomic<bool> g_running;
 
-static const int MIN_WINDOW_WIDTH = 400;
-static const int MIN_WINDOW_HEIGHT = 600;
+namespace LMUFFB {
+
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+
+namespace {
+    // Forward declarations
+    bool CreateDeviceD3D(HWND hWnd);
+    void CleanupDeviceD3D();
+    void CreateRenderTarget();
+    void CleanupRenderTarget();
+    LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    // Global DirectX variables
+    ID3D11Device*            g_pd3dDevice = NULL;
+    ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
+    IDXGISwapChain*          g_pSwapChain = NULL;
+    ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
+    HWND                     g_hwnd = NULL;
+
+    const int MIN_WINDOW_WIDTH = 400;
+    const int MIN_WINDOW_HEIGHT = 600;
+}
 
 #ifndef PW_RENDERFULLCONTENT
 #define PW_RENDERFULLCONTENT 0x00000002
 #endif
-
-#include "resource.h"
-
-// Forward declarations
-bool CreateDeviceD3D(HWND hWnd);
-void CleanupDeviceD3D();
-void CreateRenderTarget();
-void CleanupRenderTarget();
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-extern std::atomic<bool> g_running;
 
 class Win32GuiPlatform : public IGuiPlatform {
 public:
@@ -230,7 +238,8 @@ bool GuiLayer::Render(FFBEngine& engine) {
     return true; // Always return true to keep the main loop running at full speed
 }
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+namespace {
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam)) return true;
     switch (msg) {
@@ -337,6 +346,8 @@ void CleanupRenderTarget() {
     if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = NULL; }
 }
 
+} // anonymous namespace
+
 #else
 // Stub Implementation for Headless Builds
 class Win32GuiPlatform : public IGuiPlatform {
@@ -369,3 +380,5 @@ bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform(
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
 
 #endif
+
+} // namespace LMUFFB

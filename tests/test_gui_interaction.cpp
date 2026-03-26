@@ -1,4 +1,5 @@
 #include "test_ffb_common.h"
+#include "test_gui_common.h"
 #include "GuiWidgets.h"
 #include "imgui.h"
 #include "../src/gui/GuiLayer.h"
@@ -9,12 +10,6 @@
 #endif
 
 static const float CONFIG_PANEL_WIDTH = 500.0f;
-
-class GuiLayerTestAccess {
-public:
-    static void DrawTuningWindow(FFBEngine& engine) { GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(FFBEngine& engine) { GuiLayer::DrawDebugWindow(engine); }
-};
 
 namespace FFBEngineTests {
 

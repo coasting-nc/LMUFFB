@@ -3,14 +3,11 @@
 #include "Version.h"
 #include "Config.h"
 #include "Logger.h"
-#include "Logger.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
 #include <chrono>
-
-using namespace LMUFFB;
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
@@ -22,11 +19,17 @@ using namespace LMUFFB;
 #else
 #include <GL/gl.h>
 #endif
-
-static GLFWwindow* g_window = nullptr;
 #endif
 
 extern std::atomic<bool> g_running;
+
+namespace LMUFFB {
+
+namespace {
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+    GLFWwindow* g_window = nullptr;
+#endif
+}
 
 class LinuxGuiPlatform : public IGuiPlatform {
 public:
@@ -103,8 +106,10 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 
-static void glfw_error_callback(int error, const char* description) {
-    Logger::Get().LogFile("Glfw Error %d: %s", error, description);
+namespace {
+    void glfw_error_callback(int error, const char* description) {
+        Logger::Get().LogFile("Glfw Error %d: %s", error, description);
+    }
 }
 
 bool GuiLayer::Init() {
@@ -200,3 +205,5 @@ bool GuiLayer::Render(FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 #endif
+
+} // namespace LMUFFB

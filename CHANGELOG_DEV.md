@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.250]
+### Changed
+- **Unity Build Expansion (Phase 5 Completion)**:
+  - Fully encapsulated the GUI layer (headers and implementation files) within `namespace LMUFFB`, completing Phase 5 of the Unity Build plan.
+  - Refactored platform-specific helper functions (e.g., `WndProc`, `CreateDeviceD3D`, `glfw_error_callback`) and internal static variables into anonymous namespaces within `namespace LMUFFB` to resolve "declared but not defined" and ODR errors during Unity builds.
+  - Whitelisted `src/gui/GuiLayer_Common.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+  - Centralized `GuiLayerTestAccess` in `tests/test_gui_common.h` and removed redundant local definitions across test files to prevent ODR clashes in unified translation units.
+  - Updated `main.cpp` and all GUI-related test files to maintain compatibility with the namespaced GUI module.
+  - Hardened `GuiLayer_Common.cpp` with consolidated preprocessor guards and added missing no-op stubs for headless build support.
+
+### Fixed
+- **UI Logic and Consistency**:
+  - Restored the "Optimal Slip Angle" format string to `%.3f rad` in the GUI.
+  - Corrected a compilation typo `SOP_OUTPUT_SMOOTHING` to the intended `SLOPE_OUTPUT_SMOOTHING` in `GuiLayer_Common.cpp`.
+  - Restored missing `ImGuiCol_Text` styling in `SetupGUIStyle`.
+
 ## [0.7.249]
 ### Changed
 - **Unity Build Expansion (Phase 4 Continuation)**:

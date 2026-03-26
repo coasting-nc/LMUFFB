@@ -39,7 +39,7 @@ TEST_CASE(test_ffb_engine_extreme_edge_cases, "Physics") {
     // 2. Wheel radius < RADIUS_FALLBACK_MIN_M (Line 188 context)
     // Note: circumference > 0 is always true because fallback is 0.33, 
     // but this exercises the defensive logic.
-    data.mWheel[0].mStaticUndeflectedRadius = 0.05f * 100.0f; // 5cm in cm
+    data.mWheel[0].mStaticUndeflectedRadius = static_cast<unsigned char>(0.05f * 100.0f); // 5cm in cm
     
     engine.calculate_force(&data, "GT3", "911");
 }

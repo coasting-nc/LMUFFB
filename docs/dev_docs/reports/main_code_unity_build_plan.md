@@ -192,8 +192,8 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Refactor `io/GameConnector.h` & `.cpp`. (Fully namespaced and whitelisted).
 
 ### 6.6 Phase 5: UI & Final Integration
-- [ ] Refactor `gui/Tooltips.h` & `gui/GuiWidgets.h`.
-- [ ] Refactor `gui/GuiLayer_*.cpp`.
+- [x] Refactor `gui/Tooltips.h` & `gui/GuiWidgets.h`.
+- [x] Refactor `gui/GuiLayer_*.cpp`. (Fully namespaced and whitelisted).
 - [ ] Finalize `core/main.cpp` (Retaining global `main()` declaration).
 
 ### 6.7 Phase 6: Subsystem Namespace Migration (Post-Unity Stability)
@@ -281,15 +281,27 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - Updated `tests/test_ffb_common.h` and `tests/test_ffb_common.cpp` to ensure `GameConnectorTestAccessor` remains compatible with the namespaced `GameConnector`.
 - **Suggestions for the Future:** Phase 4 is technically complete for core OS boundaries. Proceed to Phase 5 (UI & Final Integration).
 
-## 9. Next Steps: Phase 5 Commencement
-With the OS boundaries and major subsystems now encapsulated and stable within the Unity Build chunk, the next phase focuses on the UI layer and final integration.
+### 8.10 Implementation Notes (v0.7.250)
+- **Encountered Issues:**
+  - Encountered linker errors regarding platform-agnostic helper functions (e.g., `ResizeWindowPlatform`). These were originally global and called from `GuiLayer_Common.cpp`. Because `GuiLayer_Common.cpp` was moved into the Unity chunk, it could no longer see the global definitions if the platform-specific files weren't also wrapped and included. Fixed by moving all platform helpers and the `IGuiPlatform` interface into `namespace LMUFFB`.
+  - Discovered a namespace visibility issue for `GuiLayerTestAccess`. As a `friend` class declared in the global scope but trying to access a namespaced class, it required a global forward declaration and explicit qualification (`friend class ::GuiLayerTestAccess`) in `GuiLayer.h`.
+  - Encountered "static function declared but not defined" errors for platform helpers like `WndProc` and `CreateDeviceD3D` on Windows when bundled in Unity builds. Resolved by moving forward declarations and definitions into an anonymous namespace within `namespace LMUFFB`.
+  - A typo `SOP_OUTPUT_SMOOTHING` (intended to be `SLOPE_OUTPUT_SMOOTHING`) caused compilation failures in `GuiLayer_Common.cpp`.
+  - Linker error `undefined reference to GuiLayerTestAccess::GetLastLaunchArgs` occurred due to improper namespacing of test-only globals. Fixed by moving these members into the `GuiLayer` class under `LMUFFB_UNIT_TEST`.
+  - Discovered missing no-op stubs for `LaunchLogAnalyzer` and `UpdateTelemetry` in the `#else` (headless) block of `GuiLayer_Common.cpp` which broke non-ImGui builds.
+  - Linker error `unresolved external symbol ImGui_ImplWin32_WndProcHandler` occurred on Windows because the `extern` declaration was mistakenly placed inside an anonymous namespace, causing incorrect symbol mangling. Fixed by moving the declaration to the global scope.
+- **Deviations from the Plan:** None. The GUI layer was successfully namespaced and whitelisted for Unity builds.
+- **Suggestions for the Future:** Phase 5 is nearly complete. The final step is to clean up `core/main.cpp` by removing temporary `using namespace` directives and fully qualifying remaining calls, and then proceeding to Phase 6 (Subsystem Namespace Migration).
+
+## 9. Next Steps: Phase 5 Completion & Final Integration
+With the UI layer now encapsulated and stable within the Unity Build chunk, the next phase focuses on finalizing the main entry point and starting the transition to granular sub-namespaces.
 
 ### Your Objectives for the Next PR:
-1. **Commence Phase 5 (UI & Final Integration):** Begin systematically wrapping the UI components:
-   - `gui/Tooltips.h` and `gui/GuiWidgets.h`
-   - `gui/GuiLayer_*.cpp` (Common, Win32, Linux)
+1. **Finalize Phase 5 (UI & Final Integration):**
+   - Perform a final pass on `core/main.cpp`.
+   - Ensure all remaining global symbols (except `main`) are addressed.
+2. **Phase 6 Readiness:** Prepare for transitioning from `namespace LMUFFB` to specific sub-namespaces like `LMUFFB::Physics`, `LMUFFB::GUI`, and `LMUFFB::Logging`.
 
-### Critical Reminder for Phase 4
-Phase 4 deals heavily with Windows libraries (`<windows.h>`, `<dinput.h>`) and standard libraries (`<vector>`, `<thread>`). You must be extremely careful:
-*   **The Include Rule:** You **MUST** place all `#include` directives completely **outside and above** your `namespace LMUFFB { ... }` blocks. 
-*   Wrapping external headers or OS macros inside our namespace will cause immediate, catastrophic compilation failures. Deal with these files fully (header and source together) to prevent ODR violations like the ones seen in early attempts.
+### Critical Reminder for Unity Builds
+*   **The Include Rule:** Continue to enforce strict discipline: all `#include` directives **MUST** be outside namespace blocks.
+*   **Internal Linkage:** Use anonymous namespaces for any helper functions or constants within `.cpp` files to avoid ODR violations when bundled.

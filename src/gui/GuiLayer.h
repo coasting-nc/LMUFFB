@@ -4,9 +4,13 @@
 #include "FFBEngine.h"
 #include <string>
 
+class GuiLayerTestAccess;
+
+namespace LMUFFB {
+
 class GuiLayer {
 public:
-    friend class GuiLayerTestAccess;
+    friend class ::GuiLayerTestAccess;
     static bool Init();
     static void Shutdown(LMUFFB::FFBEngine& engine);
     
@@ -27,17 +31,28 @@ private:
     static float m_latest_steering_range;
     static float m_latest_steering_angle;
 
+#ifdef LMUFFB_UNIT_TEST
+public:
+    static std::wstring m_last_shell_execute_args;
+    static std::string m_last_system_cmd;
+private:
+#endif
+
     static void DrawMenuBar(LMUFFB::FFBEngine& engine);
     static void LaunchLogAnalyzer(const std::string& log_file);
     static void DrawTuningWindow(LMUFFB::FFBEngine& engine);
     static void DrawDebugWindow(LMUFFB::FFBEngine& engine);
 };
 
+} // namespace LMUFFB
+
 // Platform helper functions (implemented in GuiLayer_Win32.cpp and GuiLayer_Linux.cpp)
+namespace LMUFFB {
 void ResizeWindowPlatform(int x, int y, int w, int h);
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode);
 void SetWindowAlwaysOnTopPlatform(bool enabled);
 bool OpenPresetFileDialogPlatform(std::string& outPath);
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName);
+}
 
 #endif // GUILAYER_H

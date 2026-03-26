@@ -9,6 +9,7 @@
 #include <functional>
 #include <cstring>
 
+namespace LMUFFB {
 namespace GuiWidgets {
 
     /**
@@ -71,7 +72,7 @@ namespace GuiWidgets {
                     ImGui::Text("%s", tooltip);
                     ImGui::Separator();
                 }
-                ImGui::Text("%s", Tooltips::FINE_TUNE);
+                ImGui::Text("%s", LMUFFB::Tooltips::FINE_TUNE);
                 ImGui::EndTooltip();
             }
         }
@@ -126,6 +127,7 @@ namespace GuiWidgets {
         ImGui::NextColumn();
         return res;
     }
+}
 }
 
 #endif // ENABLE_IMGUI
