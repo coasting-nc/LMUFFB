@@ -19,6 +19,7 @@ using namespace LMUFFB;
 #include <windows.h>
 #endif
 
+namespace LMUFFB {
 // Shared globals required by GuiLayer and main.cpp
 std::atomic<bool> g_running(true);
 std::atomic<bool> g_ffb_active(true);
@@ -29,6 +30,7 @@ SharedMemoryObjectOut g_localData;
 // Mock time globals
 std::chrono::steady_clock::time_point g_mock_time;
 bool g_use_mock_time = false;
+}
 
 namespace FFBEngineTests { 
     extern int g_tests_passed; 

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.251]
+### Changed
+- **Unity Build Expansion (Phase 5 Completion)**:
+  - Finalized Phase 5 of the Unity Build plan by fully encapsulating all remaining global symbols (`g_running`, `g_engine`, etc.) and the `FFBThread` within `namespace LMUFFB`.
+  - Whitelisted `src/core/main.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`, officially integrating the application's entry point logic into the unified translation unit.
+  - Updated `src/core/Config.cpp`, `src/ffb/FFBEngine.cpp`, and the GUI layer to correctly reference the namespaced globals, resolving name mangling mismatches.
+  - Updated the entire unit test suite (`main_test_runner.cpp`, `test_main_harness.cpp`, etc.) to align with the new namespaced architecture.
+  - Refactored `src/utils/TimeUtils.h` to position `extern` mock globals within `namespace LMUFFB`.
+
 ## [0.7.250]
 ### Changed
 - **Unity Build Expansion (Phase 5 Completion)**:

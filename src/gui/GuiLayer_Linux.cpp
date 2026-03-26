@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <mutex>
 #include <chrono>
+#include <atomic>
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
@@ -21,9 +22,8 @@
 #endif
 #endif
 
-extern std::atomic<bool> g_running;
-
 namespace LMUFFB {
+extern std::atomic<bool> g_running;
 
 namespace {
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)

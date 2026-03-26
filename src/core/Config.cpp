@@ -17,9 +17,8 @@
 #include <toml++/toml.hpp>
 #include <filesystem>
 
-extern std::recursive_mutex g_engine_mutex;
-
 namespace LMUFFB {
+extern std::recursive_mutex g_engine_mutex;
 
 bool Config::m_always_on_top = true;
 std::string Config::m_last_device_guid = "";

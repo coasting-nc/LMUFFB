@@ -9,6 +9,7 @@
 #include <csignal>
 #endif
 
+namespace LMUFFB {
 // Shared globals already defined in main_test_runner.cpp or needed by main.cpp
 extern std::atomic<bool> g_running;
 extern std::atomic<bool> g_ffb_active;
@@ -23,6 +24,7 @@ extern void FFBThread();
 #ifndef _WIN32
 extern void handle_sigterm(int sig);
 #endif
+}
 
 namespace FFBEngineTests {
 
@@ -58,12 +60,12 @@ TEST_CASE(test_main_app_logic, "System") {
 
     // Run FFBThread for a few iterations with changing telemetry
     // We run long enough to trigger the 5-second health warning logic
-    g_running = true;
-    g_use_mock_time = true;
-    g_mock_time = std::chrono::steady_clock::now();
+    LMUFFB::g_running = true;
+    LMUFFB::g_use_mock_time = true;
+    LMUFFB::g_mock_time = std::chrono::steady_clock::now();
 
     // Start thread
-    std::thread t(FFBThread);
+    std::thread t(LMUFFB::FFBThread);
 
     for (int i = 0; i < 550; i++) {
         #ifndef _WIN32
@@ -73,7 +75,7 @@ TEST_CASE(test_main_app_logic, "System") {
         #endif
 
         // Advance mock time by 10ms each step
-        g_mock_time += std::chrono::milliseconds(10);
+        LMUFFB::g_mock_time += std::chrono::milliseconds(10);
 
         // v0.7.186 Optimization: On Windows, high-frequency sleeps carry massive scheduling penalties.
         // Yield instead of sleep to allow FFBThread to process if needed, or sleep very briefly every N iterations.
@@ -83,26 +85,26 @@ TEST_CASE(test_main_app_logic, "System") {
             std::this_thread::yield();
         }
     }
-    g_running = false;
+    LMUFFB::g_running = false;
     report_phase("FFBThread Exercise");
     if (t.joinable()) t.join();
-    g_use_mock_time = false;
+    LMUFFB::g_use_mock_time = false;
 
     std::cout << "[PASS] FFBThread exercised with telemetry" << std::endl;
     g_tests_passed++;
 
     // Test lmuffb_app_main in headless mode
     char* argv[] = {(char*)"lmuffb", (char*)"--headless"};
-    g_running = true;
+    LMUFFB::g_running = true;
 
     // We can't easily run the full main because it blocks,
     // but we can simulate the loop exit.
     std::thread mt([&]() {
-        lmuffb_app_main(2, argv);
+        LMUFFB::lmuffb_app_main(2, argv);
     });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    g_running = false;
+    LMUFFB::g_running = false;
     if (mt.joinable()) mt.join();
     report_phase("Main App Entry Point");
 
@@ -111,14 +113,14 @@ TEST_CASE(test_main_app_logic, "System") {
 
     // Test health monitor warnings and menu transitions
     {
-        g_ffb_active = true;
+        LMUFFB::g_ffb_active = true;
         #ifndef _WIN32
         SharedMemoryLayout* layout = (SharedMemoryLayout*)MockSM::GetMaps()["LMU_Data"].data();
         layout->data.scoring.scoringInfo.mInRealtime = 0; // In menu
         #endif
 
         // This should trigger "User exited to menu"
-        std::thread t(FFBThread);
+        std::thread t(LMUFFB::FFBThread);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         #ifndef _WIN32
@@ -126,7 +128,7 @@ TEST_CASE(test_main_app_logic, "System") {
         #endif
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-        g_running = false;
+        LMUFFB::g_running = false;
         if (t.joinable()) t.join();
         std::cout << "[PASS] Menu transitions exercised" << std::endl;
         g_tests_passed++;
@@ -134,9 +136,9 @@ TEST_CASE(test_main_app_logic, "System") {
 
     // Test health monitor warnings (simulated low rate)
     {
-        g_running = true;
-        g_use_mock_time = true;
-        g_mock_time = std::chrono::steady_clock::now();
+        LMUFFB::g_running = true;
+        LMUFFB::g_use_mock_time = true;
+        LMUFFB::g_mock_time = std::chrono::steady_clock::now();
 
         Config::m_auto_start_logging = true;
         #ifndef _WIN32
@@ -144,12 +146,12 @@ TEST_CASE(test_main_app_logic, "System") {
         layout->data.scoring.scoringInfo.mInRealtime = 1;
         #endif
 
-        std::thread t(FFBThread);
+        std::thread t(LMUFFB::FFBThread);
 
         // We need to advance time past the 5-second interval in main.cpp for the health warning
         // We do this in smaller steps to ensure the loop processes the events.
         for(int j=0; j<520; ++j) {
-            g_mock_time += std::chrono::milliseconds(10);
+            LMUFFB::g_mock_time += std::chrono::milliseconds(10);
 
             // v0.7.186 Optimization: Replace high-frequency sleep with yield for Windows performance
             if (j % 10 == 0) {
@@ -159,9 +161,9 @@ TEST_CASE(test_main_app_logic, "System") {
             }
         }
 
-        g_running = false;
+        LMUFFB::g_running = false;
         if (t.joinable()) t.join();
-        g_use_mock_time = false;
+        LMUFFB::g_use_mock_time = false;
         report_phase("Health Monitor Simulation");
         std::cout << "[PASS] Health monitor branch exercised (optimized)" << std::endl;
         g_tests_passed++;
@@ -170,9 +172,9 @@ TEST_CASE(test_main_app_logic, "System") {
     // Test SIGTERM handler
     #ifndef _WIN32
     {
-        g_running = true;
-        handle_sigterm(SIGTERM);
-        if (!g_running) {
+        LMUFFB::g_running = true;
+        LMUFFB::handle_sigterm(SIGTERM);
+        if (!LMUFFB::g_running) {
             std::cout << "[PASS] handle_sigterm sets g_running to false" << std::endl;
             g_tests_passed++;
         }
@@ -182,8 +184,8 @@ TEST_CASE(test_main_app_logic, "System") {
     // Test command line arguments in lmuffb_app_main
     {
         char* argv[] = {(char*)"lmuffb", (char*)"--headless", (char*)"--invalid"};
-        g_running = false; // Don't run the loop
-        lmuffb_app_main(3, argv);
+        LMUFFB::g_running = false; // Don't run the loop
+        LMUFFB::lmuffb_app_main(3, argv);
         std::cout << "[PASS] lmuffb_app_main with extra args" << std::endl;
         g_tests_passed++;
     }
@@ -192,8 +194,8 @@ TEST_CASE(test_main_app_logic, "System") {
 #ifndef _WIN32
     {
         char* argv[] = {(char*)"lmuffb"};
-        g_running = false;
-        lmuffb_app_main(1, argv);
+        LMUFFB::g_running = false;
+        LMUFFB::lmuffb_app_main(1, argv);
         std::cout << "[PASS] lmuffb_app_main without headless" << std::endl;
         g_tests_passed++;
     }

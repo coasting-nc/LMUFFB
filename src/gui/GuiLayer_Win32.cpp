@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <mutex>
 #include <chrono>
+#include <atomic>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -30,9 +31,8 @@
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
 
-extern std::atomic<bool> g_running;
-
 namespace LMUFFB {
+extern std::atomic<bool> g_running;
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 
