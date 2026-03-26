@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 15:22:06</td>
+            <td class="headerValue">2026-03-26 15:36:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -87,7 +87,7 @@
 <span id="L16"><span class="lineNum">      16</span>                 :             :     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;</span>
 <span id="L17"><span class="lineNum">      17</span>                 :             :     static constexpr float SAFETY_SLEW_RESTRICTED = 2.0f;</span>
 <span id="L18"><span class="lineNum">      18</span>                 :             : </span>
-<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC tlaBgGNC">         540 :     FFBSafetyMonitor() = default;</span></span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC tlaBgGNC">         541 :     FFBSafetyMonitor() = default;</span></span>
 <span id="L20"><span class="lineNum">      20</span>                 :             : </span>
 <span id="L21"><span class="lineNum">      21</span>                 :             :     // FFB Safety Settings</span>
 <span id="L22"><span class="lineNum">      22</span>                 :             :     LMUFFB::SafetyConfig m_config;</span>
@@ -96,7 +96,7 @@
 <span id="L25"><span class="lineNum">      25</span>                 :             :     double GetSafetyTimer() const { return safety_timer; }</span>
 <span id="L26"><span class="lineNum">      26</span>                 :             :     void ClearSafetySmoothedForce() { safety_smoothed_force = 0.0; }</span>
 <span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">          17 :     void SetSafetySmoothedForce(double f) { safety_smoothed_force = f; }</span></span>
-<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">         540 :     void SetTimePtr(const double* ptr) { m_time_ptr = ptr; }</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">         541 :     void SetTimePtr(const double* ptr) { m_time_ptr = ptr; }</span></span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : </span>
 <span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">      139286 :     bool GetLastAllowed() const { return last_allowed; }</span></span>
 <span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">       69655 :     void SetLastAllowed(bool val) { last_allowed = val; }</span></span>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 15:22:06</td>
+            <td class="headerValue">2026-03-26 15:36:39</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryMed">75.0&nbsp;%</td>
@@ -73,7 +73,7 @@
 <span id="L2"><span class="lineNum">       2</span>                 :             : </span>
 <span id="L3"><span class="lineNum">       3</span>                 :             : namespace LMUFFB {</span>
 <span id="L4"><span class="lineNum">       4</span>                 :             : </span>
-<span id="L5"><span class="lineNum">       5</span>                 :<span class="tlaGNC tlaBgGNC">         531 : FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}</span></span>
+<span id="L5"><span class="lineNum">       5</span>                 :<span class="tlaGNC tlaBgGNC">         532 : FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}</span></span>
 <span id="L6"><span class="lineNum">       6</span>                 :             : </span>
 <span id="L7"><span class="lineNum">       7</span>                 :<span class="tlaGNC">       69655 : void FFBDebugBuffer::Push(const FFBSnapshot&amp; snap) {</span></span>
 <span id="L8"><span class="lineNum">       8</span>         [<span class="tlaGBC" title="Branch 0 was taken 69655 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       69655 :     std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</span></span>
