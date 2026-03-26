@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 00:20:49</td>
+            <td class="headerValue">2026-03-26 00:55:13</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">92.3&nbsp;%</td>
@@ -95,10 +95,10 @@
 <span id="L24"><span class="lineNum">      24</span>                 :             : namespace LMUFFB {</span>
 <span id="L25"><span class="lineNum">      25</span>                 :             : </span>
 <span id="L26"><span class="lineNum">      26</span>                 :             : // Keep existing implementations</span>
-<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC tlaBgGNC">        8793 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
-<span id="L28"><span class="lineNum">      28</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 8792 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        8793 :     static DirectInputFFB instance;</span></span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC tlaBgGNC">        8752 : DirectInputFFB&amp; DirectInputFFB::Get() {</span></span>
+<span id="L28"><span class="lineNum">      28</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 8751 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        8752 :     static DirectInputFFB instance;</span></span>
 <span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
-<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">        8793 :     return instance;</span></span>
+<span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC">        8752 :     return instance;</span></span>
 <span id="L30"><span class="lineNum">      30</span>                 :             : }</span>
 <span id="L31"><span class="lineNum">      31</span>                 :             : </span>
 <span id="L32"><span class="lineNum">      32</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           3 : DirectInputFFB::DirectInputFFB() {}</span></span>
@@ -402,26 +402,26 @@
 <span id="L330"><span class="lineNum">     330</span>                 :             : #endif</span>
 <span id="L331"><span class="lineNum">     331</span>                 :             : }</span>
 <span id="L332"><span class="lineNum">     332</span>                 :             : </span>
-<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC tlaBgGNC">        8032 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
-<span id="L334"><span class="lineNum">     334</span>         [<span class="tlaGBC" title="Branch 0 was taken 4374 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3658 times"> + </span>]:<span class="tlaGNC">        8032 :     if (!m_active) return false;</span></span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC tlaBgGNC">        7991 : bool DirectInputFFB::UpdateForce(double normalizedForce) {</span></span>
+<span id="L334"><span class="lineNum">     334</span>         [<span class="tlaGBC" title="Branch 0 was taken 4219 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 3772 times"> + </span>]:<span class="tlaGNC">        7991 :     if (!m_active) return false;</span></span>
 <span id="L335"><span class="lineNum">     335</span>                 :             : </span>
 <span id="L336"><span class="lineNum">     336</span>                 :             :     // --- NEW: NaN Protection (Prevents -2147483648 magnitude bug) ---</span>
-<span id="L337"><span class="lineNum">     337</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 3658 times"> + </span>]:<span class="tlaGNC">        3658 :     if (!std::isfinite(normalizedForce)) {</span></span>
+<span id="L337"><span class="lineNum">     337</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 3772 times"> + </span>]:<span class="tlaGNC">        3772 :     if (!std::isfinite(normalizedForce)) {</span></span>
 <span id="L338"><span class="lineNum">     338</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         normalizedForce = 0.0;</span></span>
 <span id="L339"><span class="lineNum">     339</span>                 :             :     }</span>
 <span id="L340"><span class="lineNum">     340</span>                 :             : </span>
 <span id="L341"><span class="lineNum">     341</span>                 :             :     // Sanity Check: If 0.0, stop effect to prevent residual hum</span>
-<span id="L342"><span class="lineNum">     342</span>         [<span class="tlaGBC" title="Branch 0 was taken 3654 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC tlaBgGNC">        3658 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
+<span id="L342"><span class="lineNum">     342</span>         [<span class="tlaGBC" title="Branch 0 was taken 3768 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC tlaBgGNC">        3772 :     if (std::abs(normalizedForce) &lt; 0.00001) normalizedForce = 0.0;</span></span>
 <span id="L343"><span class="lineNum">     343</span>                 :             : </span>
 <span id="L344"><span class="lineNum">     344</span>                 :             :     // Clamp</span>
-<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaGNC">        3658 :     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));</span></span>
+<span id="L345"><span class="lineNum">     345</span>                 :<span class="tlaGNC">        3772 :     normalizedForce = (std::max)(-1.0, (std::min)(1.0, normalizedForce));</span></span>
 <span id="L346"><span class="lineNum">     346</span>                 :             : </span>
 <span id="L347"><span class="lineNum">     347</span>                 :             :     // Scale to -10000..10000</span>
-<span id="L348"><span class="lineNum">     348</span>                 :<span class="tlaGNC">        3658 :     long magnitude = static_cast&lt;long&gt;(normalizedForce * 10000.0);</span></span>
+<span id="L348"><span class="lineNum">     348</span>                 :<span class="tlaGNC">        3772 :     long magnitude = static_cast&lt;long&gt;(normalizedForce * 10000.0);</span></span>
 <span id="L349"><span class="lineNum">     349</span>                 :             : </span>
 <span id="L350"><span class="lineNum">     350</span>                 :             :     // DirectInput Overhead Optimization: Don't call driver if value hasn't changed. </span>
 <span id="L351"><span class="lineNum">     351</span>                 :             :     // This check prevents the expensive USB call (only talk to the driver when the force actually changes).</span>
-<span id="L352"><span class="lineNum">     352</span>         [<span class="tlaGBC" title="Branch 0 was taken 3653 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5 times"> + </span>]:<span class="tlaGNC">        3658 :     if (magnitude == m_last_force) return false;</span></span>
+<span id="L352"><span class="lineNum">     352</span>         [<span class="tlaGBC" title="Branch 0 was taken 3767 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5 times"> + </span>]:<span class="tlaGNC">        3772 :     if (magnitude == m_last_force) return false;</span></span>
 <span id="L353"><span class="lineNum">     353</span>                 :<span class="tlaGNC">           5 :     m_last_force = magnitude;</span></span>
 <span id="L354"><span class="lineNum">     354</span>                 :             : </span>
 <span id="L355"><span class="lineNum">     355</span>                 :             : #ifdef _WIN32</span>
