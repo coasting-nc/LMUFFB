@@ -12,8 +12,6 @@
 
 namespace LMUFFB {
 
-using namespace LMUFFB::Logging;
-
 class FFBSafetyMonitor {
 public:
     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;
