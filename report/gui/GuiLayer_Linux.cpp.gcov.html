@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 00:22:43</td>
+            <td class="headerValue">2026-03-26 07:42:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -79,22 +79,22 @@
 <span id="L8"><span class="lineNum">       8</span>                 :             : #include &lt;algorithm&gt;</span>
 <span id="L9"><span class="lineNum">       9</span>                 :             : #include &lt;mutex&gt;</span>
 <span id="L10"><span class="lineNum">      10</span>                 :             : #include &lt;chrono&gt;</span>
-<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
-<span id="L12"><span class="lineNum">      12</span>                 :             : #if defined(ENABLE_IMGUI) &amp;&amp; !defined(HEADLESS_GUI)</span>
-<span id="L13"><span class="lineNum">      13</span>                 :             : #include &quot;imgui.h&quot;</span>
-<span id="L14"><span class="lineNum">      14</span>                 :             : #include &quot;imgui_impl_glfw.h&quot;</span>
-<span id="L15"><span class="lineNum">      15</span>                 :             : #include &quot;imgui_impl_opengl3.h&quot;</span>
-<span id="L16"><span class="lineNum">      16</span>                 :             : #include &lt;GLFW/glfw3.h&gt;</span>
-<span id="L17"><span class="lineNum">      17</span>                 :             : #if defined(__APPLE__)</span>
-<span id="L18"><span class="lineNum">      18</span>                 :             : #include &lt;OpenGL/gl.h&gt;</span>
-<span id="L19"><span class="lineNum">      19</span>                 :             : #else</span>
-<span id="L20"><span class="lineNum">      20</span>                 :             : #include &lt;GL/gl.h&gt;</span>
-<span id="L21"><span class="lineNum">      21</span>                 :             : #endif</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : #include &lt;atomic&gt;</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : </span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : #if defined(ENABLE_IMGUI) &amp;&amp; !defined(HEADLESS_GUI)</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : #include &quot;imgui.h&quot;</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : #include &quot;imgui_impl_glfw.h&quot;</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : #include &quot;imgui_impl_opengl3.h&quot;</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : #include &lt;GLFW/glfw3.h&gt;</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : #if defined(__APPLE__)</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             : #include &lt;OpenGL/gl.h&gt;</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : #else</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : #include &lt;GL/gl.h&gt;</span>
 <span id="L22"><span class="lineNum">      22</span>                 :             : #endif</span>
-<span id="L23"><span class="lineNum">      23</span>                 :             : </span>
-<span id="L24"><span class="lineNum">      24</span>                 :             : extern std::atomic&lt;bool&gt; g_running;</span>
-<span id="L25"><span class="lineNum">      25</span>                 :             : </span>
-<span id="L26"><span class="lineNum">      26</span>                 :             : namespace LMUFFB {</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             : #endif</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             : </span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : namespace LMUFFB {</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             : extern std::atomic&lt;bool&gt; g_running;</span>
 <span id="L27"><span class="lineNum">      27</span>                 :             : </span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : namespace {</span>
 <span id="L29"><span class="lineNum">      29</span>                 :             : #if defined(ENABLE_IMGUI) &amp;&amp; !defined(HEADLESS_GUI)</span>

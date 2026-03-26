@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 00:22:43</td>
+            <td class="headerValue">2026-03-26 07:42:33</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -89,12 +89,12 @@
 <span id="L18"><span class="lineNum">      18</span>                 :             : #include &quot;logging/Logger.h&quot;</span>
 <span id="L19"><span class="lineNum">      19</span>                 :             : #include &lt;iostream&gt;</span>
 <span id="L20"><span class="lineNum">      20</span>                 :             : #include &lt;mutex&gt;</span>
-<span id="L21"><span class="lineNum">      21</span>                 :             : </span>
-<span id="L22"><span class="lineNum">      22</span>                 :             : extern std::recursive_mutex g_engine_mutex;</span>
-<span id="L23"><span class="lineNum">      23</span>                 :             : #include &lt;cmath&gt;</span>
-<span id="L24"><span class="lineNum">      24</span>                 :             : #include &quot;utils/StringUtils.h&quot;</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : #include &lt;cmath&gt;</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             : #include &quot;utils/StringUtils.h&quot;</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             : </span>
+<span id="L24"><span class="lineNum">      24</span>                 :             : namespace LMUFFB {</span>
 <span id="L25"><span class="lineNum">      25</span>                 :             : </span>
-<span id="L26"><span class="lineNum">      26</span>                 :             : namespace LMUFFB {</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             : extern std::recursive_mutex g_engine_mutex;</span>
 <span id="L27"><span class="lineNum">      27</span>                 :             : </span>
 <span id="L28"><span class="lineNum">      28</span>                 :             : // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)</span>
 <span id="L29"><span class="lineNum">      29</span>                 :<span class="tlaGNC tlaBgGNC">       69969 : void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {</span></span>
