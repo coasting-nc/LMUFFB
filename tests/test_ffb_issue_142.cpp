@@ -116,8 +116,8 @@ TEST_CASE(test_long_load_passthrough, "Issue142") {
 
     // Create telemetry with high load to trigger weight gain
     TelemInfoV01 telem = CreateBasicTestTelemetry(20.0, 0.0);
-    telem.mWheel[0].mTireLoad = 10000.0; // High load
-    telem.mWheel[1].mTireLoad = 10000.0;
+    telem.mWheel[WHEEL_FL].mTireLoad = 10000.0; // High load
+    telem.mWheel[WHEEL_FR].mTireLoad = 10000.0;
 
     // We need to settle the static load reference first
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);

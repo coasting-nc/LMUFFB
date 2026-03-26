@@ -10,6 +10,7 @@
 #include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include "../src/io/lmu_sm_interface/LinuxMock.h"
 #include "../src/gui/GuiLayer.h"
+#include "test_gui_common.h"
 #include "../src/io/GameConnector.h"
 #include "../src/ffb/DirectInputFFB.h"
 #include "../src/logging/RateMonitor.h"
@@ -20,17 +21,13 @@
 
 using namespace LMUFFB;
 
+namespace LMUFFB {
 extern std::atomic<bool> g_running;
 extern std::atomic<bool> g_ffb_active;
 extern std::recursive_mutex g_engine_mutex;
 extern void FFBThread();
 extern int lmuffb_app_main(int argc, char* argv[]);
-
-class GuiLayerTestAccess {
-public:
-    static void DrawTuningWindow(FFBEngine& engine) { GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(FFBEngine& engine) { GuiLayer::DrawDebugWindow(engine); }
-};
+}
 
 #ifndef _WIN32
 // Use the global captured swap chain desc defined in test_dxgi_modernization.cpp
@@ -222,9 +219,9 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
     // Ensure connector is connected
     GameConnector::Get().TryConnect();
 
-    g_ffb_active = true;
-    g_running = true;
-    std::thread t(FFBThread);
+    LMUFFB::g_ffb_active = true;
+    LMUFFB::g_running = true;
+    std::thread t(LMUFFB::FFBThread);
 
     // Wait a bit to let it run
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -271,7 +268,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
         t.mUnfilteredSteering = 1.0;
         t.mFilteredSteering = 1.0;
         t.mEngineRPM = 1000.0;
-        for(int i=0; i<4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             t.mWheel[i].mTireLoad = 1000.0;
             t.mWheel[i].mLateralForce = 1000.0;
         }
@@ -280,7 +277,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-    g_running = false;
+    LMUFFB::g_running = false;
     if (t.joinable()) t.join();
 
     // 8. Extended run with telemetry updates to hit ChannelMonitor::Update and other branches
@@ -308,7 +305,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
                 l->data.telemetry.telemInfo[0].mUnfilteredSteering += 0.01;
                 l->data.telemetry.telemInfo[0].mFilteredSteering += 0.01;
                 l->data.telemetry.telemInfo[0].mEngineRPM += 1.0;
-                for(int i=0; i<4; i++) {
+                for (int i = 0; i < NUM_WHEELS; i++) {
                     l->data.telemetry.telemInfo[0].mWheel[i].mTireLoad += 1.0;
                     l->data.telemetry.telemInfo[0].mWheel[i].mLateralForce += 1.0;
                 }
@@ -321,10 +318,10 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
             }
         });
 
-        g_running = true;
-        std::thread ffb_t(FFBThread);
+        LMUFFB::g_running = true;
+        std::thread ffb_t(LMUFFB::FFBThread);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        g_running = false;
+        LMUFFB::g_running = false;
         ffb_t.join();
         stop_telem = true;
         telem_thread.join();
@@ -336,13 +333,13 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
     // 9. Trigger Config::m_needs_save in lmuffb_app_main
     {
         char* argv[] = {(char*)"lmuffb", (char*)"--headless"};
-        g_running = true;
+        LMUFFB::g_running = true;
         Config::m_needs_save = true;
         std::thread mt([&]() {
-            lmuffb_app_main(2, argv);
+            LMUFFB::lmuffb_app_main(2, argv);
         });
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        g_running = false;
+        LMUFFB::g_running = false;
         if (mt.joinable()) mt.join();
     }
     std::cout << "[PASS] lmuffb_app_main with save request exercised" << std::endl;
@@ -539,7 +536,7 @@ TEST_CASE(test_game_connector_branches_v6, "System") {
 
 TEST_CASE(test_rate_monitor_v6, "System") {
     std::cout << "\nTest: RateMonitor Branches (Coverage Boost V6)" << std::endl;
-    RateMonitor rm;
+    Logging::RateMonitor rm;
     auto now = std::chrono::steady_clock::now();
     rm.RecordEventAt(now);
     // Trigger duration_ms >= 1000 branch

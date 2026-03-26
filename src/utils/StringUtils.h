@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cstdarg>
 
+namespace LMUFFB {
+namespace Utils {
 namespace StringUtils {
 
 // Safe string copy method compatible with Windows and Linux.
@@ -59,5 +61,11 @@ inline int SafeScan(const char* src, const char* format, ...) {
 }
 
 } // namespace StringUtils
+} // namespace Utils
+
+// Temporary bridge for legacy code
+namespace StringUtils = Utils::StringUtils;
+
+} // namespace LMUFFB
 
 #endif // STRINGUTILS_H

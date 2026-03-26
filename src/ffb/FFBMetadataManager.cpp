@@ -3,6 +3,9 @@
 #include "io/RestApiProvider.h"
 #include "physics/VehicleUtils.h"
 
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
 namespace LMUFFB {
 
 bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {

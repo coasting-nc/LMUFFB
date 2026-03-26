@@ -143,8 +143,8 @@ TEST_CASE(test_longitudinal_g_aero_independence, "Physics") {
     engine.m_accel_z_smoothed = 0.0;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(80.0);
-    data.mWheel[0].mTireLoad = 10000.0;
-    data.mWheel[1].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 10000.0;
     data.mSteeringShaftTorque = 10.0;
 
     // Issue #461: Predictive filter needs time to settle the Working Copy load/torque

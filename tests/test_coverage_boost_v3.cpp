@@ -28,7 +28,7 @@ TEST_CASE(test_engine_signal_conditioning_thresholds, "Physics") {
 
     // Trigger wheel_freq <= 1.0 branch
     engine.m_front_axle.flatspot_suppression = true;
-    data.mWheel[0].mStaticUndeflectedRadius = 250; // Larger radius -> Lower frequency, avoid overflow
+    data.mWheel[WHEEL_FL].mStaticUndeflectedRadius = 250; // Larger radius -> Lower frequency, avoid overflow
     engine.apply_signal_conditioning(1.0, &data, ctx);
 }
 
@@ -67,11 +67,11 @@ TEST_CASE(test_engine_bottoming_fallback, "Physics") {
 
     engine.m_vibration.bottoming_enabled = true;
     engine.m_vibration.bottoming_method = 0;
-    data.mWheel[0].mRideHeight = 1.0f; // No bottoming by ride height
+    data.mWheel[WHEEL_FL].mRideHeight = 1.0f; // No bottoming by ride height
 
     // Trigger safety fallback via raw load peak
     engine.m_static_front_load = 1000.0;
-    data.mWheel[0].mTireLoad = 5000.0; // > static * 2.5
+    data.mWheel[WHEEL_FL].mTireLoad = 5000.0; // > static * 2.5
 
     engine.calculate_force(&data, "GT3", "911", 0.0f);
 }
@@ -246,14 +246,16 @@ TEST_CASE(test_async_logger_errors, "Diagnostics") {
 } // namespace FFBEngineTests
 
 #ifndef _WIN32
+namespace LMUFFB {
 extern std::atomic<bool> g_running;
 void handle_sigterm(int sig);
+}
 
 namespace FFBEngineTests {
 TEST_CASE(test_main_signal_handler, "System") {
-    g_running = true;
-    handle_sigterm(SIGTERM);
-    ASSERT_FALSE(g_running);
+    LMUFFB::g_running = true;
+    LMUFFB::handle_sigterm(SIGTERM);
+    ASSERT_FALSE(LMUFFB::g_running);
 }
 }
 #endif

@@ -1,4 +1,5 @@
 #include "test_ffb_common.h"
+#include "test_gui_common.h"
 #include "../src/logging/Logger.h"
 #include "../src/physics/VehicleUtils.h"
 #include "../src/io/lmu_sm_interface/SafeSharedMemoryLock.h"
@@ -13,12 +14,6 @@
 #ifndef _WIN32
 #include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
-
-class GuiLayerTestAccess {
-public:
-    static void DrawTuningWindow(FFBEngine& engine) { GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(FFBEngine& engine) { GuiLayer::DrawDebugWindow(engine); }
-};
 
 using namespace LMUFFB;
 
@@ -287,29 +282,29 @@ TEST_CASE(test_sm_interface_expansion, "System") {
 
 TEST_CASE(test_gui_platform_expansion, "GUI") {
 #ifndef _WIN32
-    SetWindowAlwaysOnTopPlatform(true);
-    ASSERT_TRUE(GetGuiPlatform().GetAlwaysOnTopMock());
-    SetWindowAlwaysOnTopPlatform(false);
-    ASSERT_FALSE(GetGuiPlatform().GetAlwaysOnTopMock());
+    LMUFFB::SetWindowAlwaysOnTopPlatform(true);
+    ASSERT_TRUE(LMUFFB::GetGuiPlatform().GetAlwaysOnTopMock());
+    LMUFFB::SetWindowAlwaysOnTopPlatform(false);
+    ASSERT_FALSE(LMUFFB::GetGuiPlatform().GetAlwaysOnTopMock());
 #else
-    SetWindowAlwaysOnTopPlatform(true);
-    SetWindowAlwaysOnTopPlatform(false);
+    LMUFFB::SetWindowAlwaysOnTopPlatform(true);
+    LMUFFB::SetWindowAlwaysOnTopPlatform(false);
     std::cout << "  [INFO] Skipping GUI AlwaysOnTop mock check on Windows." << std::endl;
 #endif
 
-    ResizeWindowPlatform(100, 100, 800, 600);
-    SaveCurrentWindowGeometryPlatform(true);
-    SaveCurrentWindowGeometryPlatform(false);
+    LMUFFB::ResizeWindowPlatform(100, 100, 800, 600);
+    LMUFFB::SaveCurrentWindowGeometryPlatform(true);
+    LMUFFB::SaveCurrentWindowGeometryPlatform(false);
 
 #ifndef _WIN32
     std::string path;
-    SavePresetFileDialogPlatform(path, "test.ini");
-    OpenPresetFileDialogPlatform(path);
+    LMUFFB::SavePresetFileDialogPlatform(path, "test.ini");
+    LMUFFB::OpenPresetFileDialogPlatform(path);
 #else
     std::cout << "  [INFO] Skipping blocking GUI file dialogs on Windows tests." << std::endl;
 #endif
 
-    ASSERT_TRUE(GetGuiPlatform().GetWindowHandle() == nullptr);
+    ASSERT_TRUE(LMUFFB::GetGuiPlatform().GetWindowHandle() == nullptr);
 
     // Mock branches
     #ifndef _WIN32

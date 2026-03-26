@@ -13,7 +13,7 @@ TEST_CASE(test_unloaded_yaw_kick_activation, "YawKicks") {
     // Initialize car metadata
     engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
 
-    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 0.0;
 
     // Force manual seed of static loads AFTER metadata init
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 5000.0);
@@ -28,8 +28,8 @@ TEST_CASE(test_unloaded_yaw_kick_activation, "YawKicks") {
     p.Apply(engine);
 
     // Simulate low rear load (2500N vs 5000N static) -> 0.5 drop
-    data.mWheel[2].mSuspForce = 2200.0;
-    data.mWheel[3].mSuspForce = 2200.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 2200.0;
+    data.mWheel[WHEEL_RR].mSuspForce = 2200.0;
 
     // Run many frames to trigger load warning
     for(int i=0; i<30; i++) {
@@ -75,10 +75,10 @@ TEST_CASE(test_power_yaw_kick_activation, "YawKicks") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mUnfilteredThrottle = 1.0;
     // Simulate wheel spin: Ground 20m/s, Wheel 22m/s -> 10% slip
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalPatchVel = 2.0; // 2.0 / 20.0 = 0.1
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalPatchVel = 2.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 2.0; // 2.0 / 20.0 = 0.1
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 2.0;
 
     // Frame 1: Steady
     data.mLocalRot.y = 0.0;
@@ -116,10 +116,10 @@ TEST_CASE(test_yaw_jerk_punch, "YawKicks") {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mUnfilteredThrottle = 1.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalPatchVel = 2.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalPatchVel = 2.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 2.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 2.0;
 
     // Frame 1: Steady (accel = 0)
     data.mLocalRot.y = 0.0;
@@ -130,7 +130,7 @@ TEST_CASE(test_yaw_jerk_punch, "YawKicks") {
     data.mLocalRot.y = 0.01;
     data.mElapsedTime = 1.01;
     // Issue #397: Flush the 10ms transient ramp
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.0025);
     }
 
@@ -152,10 +152,10 @@ TEST_CASE(test_yaw_jerk_attack_phase_gate, "YawKicks") {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mUnfilteredThrottle = 1.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalPatchVel = 2.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalPatchVel = 2.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 2.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 2.0;
 
     // Frame 0: Seed yaw rate
     data.mLocalRot.y = 0.0;
@@ -196,10 +196,10 @@ TEST_CASE(test_vulnerability_asymmetric_smoothing, "YawKicks") {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mUnfilteredThrottle = 1.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalPatchVel = 2.0; // 10% slip -> vuln 1.0
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalPatchVel = 2.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 2.0; // 10% slip -> vuln 1.0
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 2.0;
 
     // Frame 1: Activation
     data.mLocalRot.y = 0.01;
@@ -207,13 +207,13 @@ TEST_CASE(test_vulnerability_asymmetric_smoothing, "YawKicks") {
     engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.01);
 
     // Frame 2: Deactivation (slip drops to 0)
-    data.mWheel[2].mLongitudinalPatchVel = 0.0;
-    data.mWheel[3].mLongitudinalPatchVel = 0.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 0.0;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 0.0;
     data.mLocalRot.y = 0.02;
     data.mElapsedTime = 1.02;
 
     // Issue #397: Flush the 10ms transient ramp
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.calculate_force(&data, "GT3", "TestCar", 0.0f, true, 0.0025);
     }
 
@@ -242,10 +242,10 @@ TEST_CASE(test_yaw_kick_blending, "YawKicks") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     // Open all gates
     data.mUnfilteredThrottle = 1.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalPatchVel = 2.0; // 10% slip
-    data.mWheel[2].mSuspForce = 700.0; // (700+300)/5000 = 0.2 ratio -> 0.8 drop
-    data.mWheel[3].mSuspForce = 700.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 2.0; // 10% slip
+    data.mWheel[WHEEL_RL].mSuspForce = 700.0; // (700+300)/5000 = 0.2 ratio -> 0.8 drop
+    data.mWheel[WHEEL_RR].mSuspForce = 700.0;
 
     data.mLocalRot.y = 0.0;
     data.mElapsedTime = 1.0;

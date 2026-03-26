@@ -1,4 +1,4 @@
-﻿---
+---
 # Clang-Tidy configuration for LMUFFB
 # This file centralizes all checks and suppressions.
 #
@@ -37,7 +37,6 @@ Checks: >-
   -readability-redundant-casting,
   -bugprone-unused-local-non-trivial-variable,
   -readability-redundant-declaration,
-  -readability-magic-numbers,
   -readability-simplify-boolean-expr,
   -bugprone-narrowing-conversions,
   -performance-no-int-to-ptr,

@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <thread>
 #include <chrono>
+#include <optional>
+#include <atomic>
+#include <mutex>
 
 #include "FFBEngine.h"
 #include "GuiLayer.h"
@@ -18,15 +21,26 @@
 #include "Logger.h"    // Added Logger
 #include "RateMonitor.h"
 #include "HealthMonitor.h"
+#include "ffb/UpSampler.h"
+#include "utils/TimeUtils.h"
+#include "logging/ChannelMonitor.h"
 
-using namespace LMUFFB;
-#include "UpSampler.h"
-#include "TimeUtils.h"
-#include <optional>
-#include <atomic>
-#include <mutex>
+namespace LMUFFB {
 
-using namespace LMUFFB;
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
+namespace {
+    // §2.2 Named constants (replaces magic numbers in FFBThread / lmuffb_app_main)
+    constexpr int    kFFBTargetHz          = 1000;   // Target FFB loop frequency (Hz)
+    constexpr int    kPhysicsUpsampleM     = 2;      // Decimation factor  (M in 5/2 polyphase ratio)
+    constexpr int    kPhysicsUpsampleL     = 5;      // Interpolation factor (L in 5/2 polyphase ratio)
+    constexpr double kPhysicsTimestepSec   = 0.0025; // 1 / (kFFBTargetHz * kPhysicsUpsampleM / kPhysicsUpsampleL) = 1/400 Hz
+    constexpr int    kStaleThresholdMs     = 100;    // Shared-memory staleness limit (ms)
+    constexpr int    kMaxVehicleIndex      = 104;    // Game-imposed upper bound on vehicle array index
+    constexpr int    kHealthWarnCooldownS  = 60;     // Minimum seconds between health-rate warnings
+    constexpr int    kGuiPeriodMs          = 16;     // GUI loop sleep period (ms, ≈60 Hz)
+} // anonymous namespace
 
 // --- Helper for Testability ---
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
@@ -48,8 +62,6 @@ void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring
     info.safety = engine.m_safety.m_config;
 }
 
-// Constants
-
 // Threading Globals
 #ifndef LMUFFB_UNIT_TEST
 std::atomic<bool> g_running(true);
@@ -65,8 +77,6 @@ extern std::atomic<bool> g_ffb_active;
 extern SharedMemoryObjectOut g_localData;
 extern FFBEngine g_engine;
 extern std::recursive_mutex g_engine_mutex;
-extern std::chrono::steady_clock::time_point g_mock_time;
-extern bool g_use_mock_time;
 #endif
 
 // --- FFB Loop (High Priority 1000Hz) ---
@@ -87,31 +97,10 @@ void FFBThread() {
     double lastTorque = -9999.0;
     float lastGenTorque = -9999.0f;
 
-    // Extended monitors for Issue #133
-    struct ChannelMonitor {
-        RateMonitor monitor;
-        double lastValue = -1e18;
-        void Update(double newValue) {
-            if (newValue != lastValue) {
-                monitor.RecordEvent();
-                lastValue = newValue;
-            }
-        }
-    };
+    ChannelMonitors channelMonitors;
 
-    ChannelMonitor mAccX, mAccY, mAccZ;
-    ChannelMonitor mVelX, mVelY, mVelZ;
-    ChannelMonitor mRotX, mRotY, mRotZ;
-    ChannelMonitor mRotAccX, mRotAccY, mRotAccZ;
-    ChannelMonitor mUnfSteer, mFilSteer;
-    ChannelMonitor mRPM;
-    ChannelMonitor mLoadFL, mLoadFR, mLoadRL, mLoadRR;
-    ChannelMonitor mLatFL, mLatFR, mLatRL, mLatRR;
-    ChannelMonitor mPosX, mPosY, mPosZ;
-    ChannelMonitor mDtMon;
-
-    // Precise Timing: Target 1000Hz (1000 microseconds)
-    const std::chrono::microseconds target_period(1000);
+    // Precise Timing: Target 1000Hz (1µs * kFFBTargetHz)
+    const std::chrono::microseconds target_period(kFFBTargetHz);
     auto next_tick = TimeUtils::GetTime();
 
     while (g_running) {
@@ -119,10 +108,10 @@ void FFBThread() {
         next_tick += target_period;
 
         // --- 1. Physics Phase Accumulator (5/2 Ratio) ---
-        phase_accumulator += 2; // M = 2
+        phase_accumulator += kPhysicsUpsampleM;
         bool run_physics = false;
 
-        if (phase_accumulator >= 5) { // L = 5
+        if (phase_accumulator >= kPhysicsUpsampleL) {
             phase_accumulator -= 5;
             run_physics = true;
         }
@@ -133,21 +122,22 @@ void FFBThread() {
             double force_physics = 0.0;
 
             bool in_realtime_phys = false;
-            if (g_ffb_active && LMUFFB::GameConnector::Get().IsConnected()) {
-                LMUFFB::GameConnector::Get().CopyTelemetry(g_localData);
+            if (g_ffb_active && GameConnector::Get().IsConnected()) {
+                GameConnector::Get().CopyTelemetry(g_localData);
                 g_engine.m_metadata.UpdateMetadata(g_localData); // Update names/classes immediately
 
-                in_realtime_phys = LMUFFB::GameConnector::Get().IsInRealtime();
-                long current_session = LMUFFB::GameConnector::Get().GetSessionType();
+                in_realtime_phys = GameConnector::Get().IsInRealtime();
+                long current_session = GameConnector::Get().GetSessionType();
 
-                bool is_stale = LMUFFB::GameConnector::Get().IsStale(100);
+                bool is_stale = GameConnector::Get().IsStale(kStaleThresholdMs);
 
-                static bool was_driving = false;
-                static long last_session = -1;
+                // §2.3: plain locals — reset on every thread launch (no static bleed in tests)
+                bool was_driving = false;
+                long last_session = -1L;
 
                 // is_driving uses IsPlayerActivelyDriving() which correctly gates on
                 // inRealtime AND playerControl==0 AND gamePhase!=9 (paused).
-                bool is_driving = LMUFFB::GameConnector::Get().IsPlayerActivelyDriving();
+                bool is_driving = GameConnector::Get().IsPlayerActivelyDriving();
 
                 bool should_start_log = (is_driving && !was_driving);
                 bool should_stop_log  = (!is_driving && was_driving);
@@ -167,7 +157,7 @@ void FFBThread() {
 
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         uint8_t idx = g_localData.telemetry.playerVehicleIdx;
-                        if (idx < 104) {
+                        if (idx < kMaxVehicleIndex) {
                             auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                             const char* tName = g_localData.scoring.scoringInfo.mTrackName;
 
@@ -192,14 +182,15 @@ void FFBThread() {
                     uint8_t idx = g_localData.telemetry.playerVehicleIdx;
 
                     // --- LOST FRAME DETECTION (Issue #303) ---
-                    static double last_telem_et = -1.0;
+                    // §2.3: plain local — avoids stale value if thread restarts
+                    double last_telem_et = -1.0;
                     if (g_engine.m_safety.m_config.stutter_safety_enabled && last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_safety.m_config.stutter_threshold)) {
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         g_engine.m_safety.TriggerSafetyWindow("Lost Frames");
                     }
                     last_telem_et = g_localData.telemetry.telemInfo[idx].mElapsedTime;
 
-                    if (idx < 104) {
+                    if (idx < kMaxVehicleIndex) {
                         auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                         TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
 
@@ -220,38 +211,12 @@ void FFBThread() {
                         }
 
                         // Extended monitoring (Issue #133)
-                        mAccX.Update(pPlayerTelemetry->mLocalAccel.x);
-                        mAccY.Update(pPlayerTelemetry->mLocalAccel.y);
-                        mAccZ.Update(pPlayerTelemetry->mLocalAccel.z);
-                        mVelX.Update(pPlayerTelemetry->mLocalVel.x);
-                        mVelY.Update(pPlayerTelemetry->mLocalVel.y);
-                        mVelZ.Update(pPlayerTelemetry->mLocalVel.z);
-                        mRotX.Update(pPlayerTelemetry->mLocalRot.x);
-                        mRotY.Update(pPlayerTelemetry->mLocalRot.y);
-                        mRotZ.Update(pPlayerTelemetry->mLocalRot.z);
-                        mRotAccX.Update(pPlayerTelemetry->mLocalRotAccel.x);
-                        mRotAccY.Update(pPlayerTelemetry->mLocalRotAccel.y);
-                        mRotAccZ.Update(pPlayerTelemetry->mLocalRotAccel.z);
-                        mUnfSteer.Update(pPlayerTelemetry->mUnfilteredSteering);
-                        mFilSteer.Update(pPlayerTelemetry->mFilteredSteering);
-                        mRPM.Update(pPlayerTelemetry->mEngineRPM);
-                        mLoadFL.Update(pPlayerTelemetry->mWheel[0].mTireLoad);
-                        mLoadFR.Update(pPlayerTelemetry->mWheel[1].mTireLoad);
-                        mLoadRL.Update(pPlayerTelemetry->mWheel[2].mTireLoad);
-                        mLoadRR.Update(pPlayerTelemetry->mWheel[3].mTireLoad);
-                        mLatFL.Update(pPlayerTelemetry->mWheel[0].mLateralForce);
-                        mLatFR.Update(pPlayerTelemetry->mWheel[1].mLateralForce);
-                        mLatRL.Update(pPlayerTelemetry->mWheel[2].mLateralForce);
-                        mLatRR.Update(pPlayerTelemetry->mWheel[3].mLateralForce);
-                        mPosX.Update(pPlayerTelemetry->mPos.x);
-                        mPosY.Update(pPlayerTelemetry->mPos.y);
-                        mPosZ.Update(pPlayerTelemetry->mPos.z);
-                        mDtMon.Update(pPlayerTelemetry->mDeltaTime);
+                        channelMonitors.UpdateAll(pPlayerTelemetry);
 
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         bool full_allowed = g_engine.m_safety.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
-                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl);
+                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, kPhysicsTimestepSec, scoring.mControl);
 
                         // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).
                         // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),
@@ -261,7 +226,7 @@ void FFBThread() {
                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.
                         bool restricted = !full_allowed || (scoring.mFinishStatus != 0);
-                        force_physics = g_engine.m_safety.ApplySafetySlew(force_physics, 0.0025, restricted);
+                        force_physics = g_engine.m_safety.ApplySafetySlew(force_physics, kPhysicsTimestepSec, restricted);
 
                         should_output = true;
                     }
@@ -270,23 +235,24 @@ void FFBThread() {
             
             if (!should_output) {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                force_physics = g_engine.m_safety.ApplySafetySlew(0.0, 0.0025, true);
+                force_physics = g_engine.m_safety.ApplySafetySlew(0.0, kPhysicsTimestepSec, true);
             }
             current_physics_force = force_physics;
 
             // Warning for low sample rate (Issue #133)
-            static auto lastWarningTime = TimeUtils::GetTime();
+            // §2.3: plain local — reset each time FFBThread starts
+            auto lastWarningTime = TimeUtils::GetTime();
             HealthStatus health;
             {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                 double t_rate = (g_engine.m_front_axle.torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();
                 health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_front_axle.torque_source, physicsMonitor.GetRate(),
-                                              LMUFFB::GameConnector::Get().IsConnected(), LMUFFB::GameConnector::Get().IsSessionActive(), LMUFFB::GameConnector::Get().GetSessionType(), LMUFFB::GameConnector::Get().IsInRealtime(), LMUFFB::GameConnector::Get().GetPlayerControl());
+                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
             }
 
             if (in_realtime_phys && !health.is_healthy) {
                  auto now = TimeUtils::GetTime();
-                 if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= 60) {
+                 if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= kHealthWarnCooldownS) {
                      std::string reason = "";
                      if (health.loop_low) reason += "Loop=" + std::to_string((int)health.loop_rate) + "Hz ";
                      if (health.physics_low) reason += "Physics=" + std::to_string((int)health.physics_rate) + "Hz ";
@@ -341,11 +307,7 @@ void handle_sigterm(int sig) {
 }
 #endif
 
-#ifdef LMUFFB_UNIT_TEST
 int lmuffb_app_main(int argc, char* argv[]) noexcept {
-#else
-int main(int argc, char* argv[]) noexcept {
-#endif
     try {
 #ifdef _WIN32
         timeBeginPeriod(1);
@@ -354,79 +316,83 @@ int main(int argc, char* argv[]) noexcept {
         signal(SIGINT, handle_sigterm);
 #endif
 
-    bool headless = false;
-    for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "--headless") headless = true;
-    }
-
-    // Initialize persistent debug logging for crash analysis
-    // First init in current directory or logs folder to catch startup
-    Logger::Get().Init("lmuffb_debug.log", "logs");
-    Logger::Get().Log("Starting lmuFFB (C++ Port)...");
-    Logger::Get().LogFile("Application Started. Version: %s", LMUFFB_VERSION);
-    if (headless) Logger::Get().LogFile("Mode: HEADLESS");
-    else Logger::Get().LogFile("Mode: GUI");
-
-    Preset::ApplyDefaultsToEngine(g_engine);
-    Config::Load(g_engine);
-
-    // Re-initialize logger with user-configured path if it changed
-    if (!Config::m_log_path.empty() && Config::m_log_path != "logs") {
-        Logger::Get().Init("lmuffb_debug.log", Config::m_log_path);
-        Logger::Get().LogFile("Logger re-initialized with user path: %s", Config::m_log_path.c_str());
-    }
-
-    if (!headless) {
-        if (!GuiLayer::Init()) {
-            Logger::Get().Log("Failed to initialize GUI.");
-            Logger::Get().Log("Failed to initialize GUI.");
-        }
-        DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
-    } else {
-        Logger::Get().Log("Running in HEADLESS mode.");
-        Logger::Get().Log("Running in HEADLESS mode.");
-        DirectInputFFB::Get().Initialize(NULL);
-    }
-
-    if (LMUFFB::GameConnector::Get().CheckLegacyConflict()) {
-        Logger::Get().LogFile("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
-    }
-
-    if (!LMUFFB::GameConnector::Get().TryConnect()) {
-        Logger::Get().LogFile("Game not running or Shared Memory not ready. Waiting...");
-    }
-
-    std::thread ffb_thread(FFBThread);
-    Logger::Get().LogFile("[GUI] Main Loop Started.");
-
-    while (g_running) {
-        GuiLayer::Render(g_engine);
-
-        // Process background save requests from the FFB thread (v0.7.70)
-        if (Config::m_needs_save.exchange(false)) {
-            Config::Save(g_engine);
+        // §2.5 Fix: body correctly indented inside try { }
+        bool headless = false;
+        for (int i = 1; i < argc; ++i) {
+            if (std::string(argv[i]) == "--headless") headless = true;
         }
 
-        // Maintain a consistent 60Hz message loop even when backgrounded
-        // to ensure DirectInput performance and reliability.
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    }
-    
-    Config::Save(g_engine);
-    if (!headless) {
-        Logger::Get().LogFile("Shutting down GUI...");
-        GuiLayer::Shutdown(g_engine);
-    }
-    if (ffb_thread.joinable()) {
-        Logger::Get().LogFile("Stopping FFB Thread...");
-        g_running = false; // Ensure loop breaks
-        ffb_thread.join();
-        Logger::Get().LogFile("FFB Thread Stopped.");
-    }
-    DirectInputFFB::Get().Shutdown();
-    Logger::Get().Log("Main Loop Ended. Clean Exit.");
-    
-    return 0;
+        // Initialize persistent debug logging for crash analysis
+        // First init in current directory or logs folder to catch startup
+        Logger::Get().Init("lmuffb_debug.log", "logs");
+        Logger::Get().Log("Starting lmuFFB (C++ Port)...");
+        Logger::Get().LogFile("Application Started. Version: %s", LMUFFB_VERSION);
+        if (headless) Logger::Get().LogFile("Mode: HEADLESS");
+        else Logger::Get().LogFile("Mode: GUI");
+
+        Preset::ApplyDefaultsToEngine(g_engine);
+        Config::Load(g_engine);
+
+        // Re-initialize logger with user-configured path if it changed
+        if (!Config::m_log_path.empty() && Config::m_log_path != "logs") {
+            Logger::Get().Init("lmuffb_debug.log", Config::m_log_path);
+            Logger::Get().LogFile("Logger re-initialized with user path: %s", Config::m_log_path.c_str());
+        }
+
+        if (!headless) {
+            if (!GuiLayer::Init()) {
+                // §2.1: was logging the same message twice; use LogFile so it survives a crash
+                Logger::Get().LogFile("Failed to initialize GUI.");
+            }
+            DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
+        } else {
+            // §2.1: was logging the same message twice
+            Logger::Get().Log("Running in HEADLESS mode.");
+            DirectInputFFB::Get().Initialize(NULL);
+        }
+
+        if (GameConnector::Get().CheckLegacyConflict()) {
+            Logger::Get().LogFile("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
+        }
+
+        if (!GameConnector::Get().TryConnect()) {
+            Logger::Get().LogFile("Game not running or Shared Memory not ready. Waiting...");
+        }
+
+        std::thread ffb_thread(FFBThread);
+        Logger::Get().LogFile("[GUI] Main Loop Started.");
+
+        while (g_running) {
+            GuiLayer::Render(g_engine);
+
+            // Process background save requests from the FFB thread (v0.7.70)
+            if (Config::m_needs_save.exchange(false)) {
+                Config::Save(g_engine);
+            }
+
+            // Maintain a consistent ~60Hz message loop even when backgrounded
+            // to ensure DirectInput performance and reliability.
+            std::this_thread::sleep_for(std::chrono::milliseconds(kGuiPeriodMs));
+        }
+
+        Config::Save(g_engine);
+        if (!headless) {
+            Logger::Get().LogFile("Shutting down GUI...");
+            GuiLayer::Shutdown(g_engine);
+        }
+        if (ffb_thread.joinable()) {
+            Logger::Get().LogFile("Stopping FFB Thread...");
+            // §2.4: g_running is already false here (GUI loop exits when g_running becomes
+            // false), but we set it explicitly for clarity and safety in case of future
+            // code paths that bypass the main loop.
+            g_running = false;
+            ffb_thread.join();
+            Logger::Get().LogFile("FFB Thread Stopped.");
+        }
+        DirectInputFFB::Get().Shutdown();
+        Logger::Get().Log("Main Loop Ended. Clean Exit.");
+
+        return 0;
     } catch (const std::exception& e) {
         Logger::Get().LogFile("Fatal exception: %s", e.what());
         return 1;
@@ -435,3 +401,11 @@ int main(int argc, char* argv[]) noexcept {
         return 1;
     }
 }
+
+} // namespace LMUFFB
+
+#ifndef LMUFFB_UNIT_TEST
+int main(int argc, char* argv[]) noexcept {
+    return LMUFFB::lmuffb_app_main(argc, argv);
+}
+#endif

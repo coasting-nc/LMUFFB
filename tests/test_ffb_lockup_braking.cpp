@@ -24,10 +24,10 @@ TEST_CASE(test_progressive_lockup, "LockupBraking") {
     
     // Case 1: High Slip (-0.20 = 20%). 
     // With Full=15%: severity = 1.0
-    data.mWheel[0].mLongitudinalGroundVel = 20.0;
-    data.mWheel[1].mLongitudinalGroundVel = 20.0;
-    data.mWheel[0].mLongitudinalPatchVel = -0.20 * 20.0; // -4.0 m/s
-    data.mWheel[1].mLongitudinalPatchVel = -0.20 * 20.0;
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -0.20 * 20.0; // -4.0 m/s
+    data.mWheel[WHEEL_FR].mLongitudinalPatchVel = -0.20 * 20.0;
     
     // Ensure data.mDeltaTime is set!
     data.mDeltaTime = 0.01;
@@ -85,12 +85,12 @@ TEST_CASE(test_predictive_lockup_v060, "LockupBraking") {
     // Current rotation for 20m/s is ~66.6. 
     // We set rotation to create a derivative of -100.
     // delta = rotation - prev. so rotation = prev - 1.0.
-    double prev_rot = data.mWheel[0].mRotation;
-    data.mWheel[0].mRotation = prev_rot - 1.0; 
+    double prev_rot = data.mWheel[WHEEL_FL].mRotation;
+    data.mWheel[WHEEL_FL].mRotation = prev_rot - 1.0; 
     
     // Slip at 10% (Required now that manual slip is removed)
-    data.mWheel[0].mLongitudinalPatchVel = -2.0; 
-    data.mWheel[0].mRotation = 18.0 / 0.3;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -2.0; 
+    data.mWheel[WHEEL_FL].mRotation = 18.0 / 0.3;
     
     // Car decel is 0 (mLocalAccel.z = 0)
     // Sensitivity threshold is -50. -100 < -50 is TRUE.
@@ -105,7 +105,7 @@ TEST_CASE(test_predictive_lockup_v060, "LockupBraking") {
         std::cout << "[PASS] Predictive trigger activated at 10% slip (Phase: " << engine.m_lockup_phase << ")" << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Predictive trigger failed. Phase: " << engine.m_lockup_phase << " Accel: " << (data.mWheel[0].mRotation - prev_rot)/0.01);
+        FAIL_TEST("Predictive trigger failed. Phase: " << engine.m_lockup_phase << " Accel: " << (data.mWheel[WHEEL_FL].mRotation - prev_rot)/0.01);
     }
 }
 
@@ -122,12 +122,12 @@ TEST_CASE(test_abs_pulse_v060, "LockupBraking") {
     data.mDeltaTime = 0.01;
     
     // Frame 1: Pressure 1.0
-    data.mWheel[0].mBrakePressure = 1.0;
+    data.mWheel[WHEEL_FL].mBrakePressure = 1.0;
     PumpEngineTime(engine, data, 0.0125);
     
     // Frame 2: Pressure drops to 0.7 (ABS modulation)
     // Delta = -0.3 / 0.01 = -30.0. |Delta| > 2.0.
-    data.mWheel[0].mBrakePressure = 0.7;
+    data.mWheel[WHEEL_FL].mBrakePressure = 0.7;
     double force = PumpEngineTime(engine, data, 0.0125);
     
     if (std::abs(force) > 0.001) {
@@ -157,16 +157,16 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     data.mDeltaTime = 0.01;      // 10ms step
     
     // Setup Ground Velocity (Reference)
-    for(int i=0; i<4; i++) data.mWheel[i].mLongitudinalGroundVel = 20.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mLongitudinalGroundVel = 20.0;
 
     // --- PASS 1: Front Lockup Only ---
     TelemInfoV01 data1 = CreateBasicTestTelemetry(20.0);
     data1.mUnfilteredBrake = 1.0;
     // Front Slip -0.5, Rear Slip 0.0
-    data1.mWheel[0].mLongitudinalPatchVel = -0.5 * 20.0; // -10 m/s
-    data1.mWheel[1].mLongitudinalPatchVel = -0.5 * 20.0;
-    data1.mWheel[2].mLongitudinalPatchVel = 0.0;
-    data1.mWheel[3].mLongitudinalPatchVel = 0.0;
+    data1.mWheel[WHEEL_FL].mLongitudinalPatchVel = -0.5 * 20.0; // -10 m/s
+    data1.mWheel[WHEEL_FR].mLongitudinalPatchVel = -0.5 * 20.0;
+    data1.mWheel[WHEEL_RL].mLongitudinalPatchVel = 0.0;
+    data1.mWheel[WHEEL_RR].mLongitudinalPatchVel = 0.0;
 
     // Seed
     InitializeEngine(engine);
@@ -211,10 +211,10 @@ TEST_CASE(test_rear_lockup_differentiation, "LockupBraking") {
     engine.m_lockup_phase = 0.0;
     
     // Front Slip 0.0, Rear Slip -0.5
-    data2.mWheel[0].mLongitudinalPatchVel = 0.0;
-    data2.mWheel[1].mLongitudinalPatchVel = 0.0;
-    data2.mWheel[2].mLongitudinalPatchVel = -0.5 * 20.0;
-    data2.mWheel[3].mLongitudinalPatchVel = -0.5 * 20.0;
+    data2.mWheel[WHEEL_FL].mLongitudinalPatchVel = 0.0;
+    data2.mWheel[WHEEL_FR].mLongitudinalPatchVel = 0.0;
+    data2.mWheel[WHEEL_RL].mLongitudinalPatchVel = -0.5 * 20.0;
+    data2.mWheel[WHEEL_RR].mLongitudinalPatchVel = -0.5 * 20.0;
 
     // Issue #397: Flush and Measure
     PumpEngineTime(engine, data2, 0.05);
@@ -248,7 +248,7 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
 
     // Setup High Load (12000N = 3.0x Load Factor)
-    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 12000.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 12000.0;
 
     // Config: Texture Cap = 1.0x, Brake Cap = 3.0x
     engine.m_vibration.texture_load_cap = 1.0f;
@@ -261,8 +261,8 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     engine.m_vibration.road_enabled = true;
     engine.m_vibration.road_gain = 1.0;
     engine.m_braking.lockup_enabled = false;
-    data.mWheel[0].mVerticalTireDeflection = 0.01; // Bump FL
-    data.mWheel[1].mVerticalTireDeflection = 0.01; // Bump FR
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.01; // Bump FL
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.01; // Bump FR
     
     // Road Texture Baseline: Delta * Sum * 50.0
     // Bump 0.01 -> Delta Sum = 0.02. 0.02 * 50.0 = 1.0 Nm.
@@ -271,17 +271,17 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
 
     // Issue #397: Measure Road Texture DURING the 10ms interpolation ramp
     // Reset state to ensure clean stimulus
-    data.mWheel[0].mVerticalTireDeflection = 0.0;
-    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0;
     PumpEngineSteadyState(engine, data);
     engine.GetDebugBatch();
 
-    data.mWheel[0].mVerticalTireDeflection = 0.01;
-    data.mWheel[1].mVerticalTireDeflection = 0.01;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.01;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.01;
     data.mElapsedTime += 0.01; // New frame
 
     double force_road = 0.0;
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
         auto b = engine.GetDebugBatch();
         if (!b.empty()) force_road = std::max(force_road, std::abs((double)b.back().texture_road));
@@ -306,8 +306,8 @@ TEST_CASE(test_split_load_caps, "LockupBraking") {
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0;
     data.mUnfilteredBrake = 1.0;
-    data.mWheel[0].mLongitudinalPatchVel = -10.0; // Slip
-    data.mWheel[1].mLongitudinalPatchVel = -10.0; // Slip (both wheels for consistency)
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -10.0; // Slip
+    data.mWheel[WHEEL_FR].mLongitudinalPatchVel = -10.0; // Slip (both wheels for consistency)
     
     // Baseline engine with 1.0 cap for comparison
     FFBEngine engine_low;
@@ -386,7 +386,7 @@ TEST_CASE(test_dynamic_thresholds, "LockupBraking") {
     
     // Case A: 4% Slip (Below Start)
     // 0.04 * 20.0 = 0.8
-    data.mWheel[0].mLongitudinalPatchVel = -0.8; 
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -0.8; 
     engine.calculate_force(&data);
     if (engine.m_lockup_phase == 0.0) {
         std::cout << "[PASS] No trigger below 5% start." << std::endl;
@@ -397,13 +397,13 @@ TEST_CASE(test_dynamic_thresholds, "LockupBraking") {
 
     // Case B: 20% Slip (Saturated/Manual Trigger)
     // 0.20 * 20.0 = 4.0
-    data.mWheel[0].mLongitudinalPatchVel = -4.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -4.0;
     double force_mid = PumpEngineTime(engine, data, 0.0125);
     ASSERT_TRUE(std::abs(force_mid) > 0.0);
     
     // Case C: 40% Slip (Deep Saturated)
     // 0.40 * 20.0 = 8.0
-    data.mWheel[0].mLongitudinalPatchVel = -8.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -8.0;
     double force_max = PumpEngineTime(engine, data, 0.0125);
     
     // Both should have non-zero force, and max should be significantly higher due to quadratic ramp
@@ -431,10 +431,10 @@ TEST_CASE(test_refactor_abs_pulse, "LockupBraking") {
 
     // Trigger condition: High Brake + Pressure Delta
     data.mUnfilteredBrake = 1.0;
-    data.mWheel[0].mBrakePressure = 1.0;
+    data.mWheel[WHEEL_FL].mBrakePressure = 1.0;
     PumpEngineTime(engine, data, 0.0125); // Frame 1: Set previous pressure
 
-    data.mWheel[0].mBrakePressure = 0.5; // Frame 2: Rapid drop (delta)
+    data.mWheel[WHEEL_FL].mBrakePressure = 0.5; // Frame 2: Rapid drop (delta)
     double force = PumpEngineTime(engine, data, 0.0125);
 
     // Should be non-zero (previously regressed to 0)
@@ -464,10 +464,10 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     // Slip = 0.5 (Severe) -> Severity = (0.5 - 0.2) / 0.5 = 0.6
     // Drop Factor = 1.0 - (0.6 * 1.0 * 0.6) = 1.0 - 0.36 = 0.64
     double ground_vel = 20.0;
-    data.mWheel[2].mLongitudinalPatchVel = 0.5 * ground_vel;
-    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
-    data.mWheel[3].mLongitudinalPatchVel = 0.5 * ground_vel;
-    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = ground_vel;
 
     // Disable Spin Vibration (gain 0) to check just the drop?
     // No, can't separate gain easily. But vibration is AC.
@@ -494,8 +494,8 @@ TEST_CASE(test_refactor_torque_drop, "LockupBraking") {
     PumpEngineTime(engine, data, 0.0125);
 
     // Apply Delta
-    data.mWheel[0].mVerticalTireDeflection += 0.02; // +2cm
-    data.mWheel[1].mVerticalTireDeflection += 0.02; // +2cm
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection += 0.02; // +2cm
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection += 0.02; // +2cm
     // Total Delta = 0.04. Road Force = 0.04 * 50.0 = 2.0 Nm.
     // Normalized Road = 2.0 / 20.0 = 0.1.
 

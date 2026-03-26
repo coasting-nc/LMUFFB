@@ -16,11 +16,11 @@ TEST_CASE(test_issue_374_reset_on_car_change, "Regression") {
     // 1. Simulate car with missing telemetry (Car A)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     // Missing load
-    for (int i = 0; i < 4; i++) data.mWheel[i].mTireLoad = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 0.0;
     // Missing vertical deflection
-    for (int i = 0; i < 4; i++) data.mWheel[i].mVerticalTireDeflection = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mVerticalTireDeflection = 0.0;
     // Missing suspension force
-    for (int i = 0; i < 4; i++) data.mWheel[i].mSuspForce = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mSuspForce = 0.0;
 
     // Run for enough frames to trigger warnings (threshold is 20 for load, 50 for others)
     for (int i = 0; i < 60; i++) {
@@ -42,7 +42,7 @@ TEST_CASE(test_issue_374_reset_on_car_change, "Regression") {
     // 2. Switch to Car B (with good telemetry)
     TelemInfoV01 dataB = CreateBasicTestTelemetry(20.0);
     // Good telemetry
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         dataB.mWheel[i].mTireLoad = 5000.0;
         dataB.mWheel[i].mVerticalTireDeflection = 0.01;
         dataB.mWheel[i].mSuspForce = 5000.0;

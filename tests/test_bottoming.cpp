@@ -21,10 +21,10 @@ TEST_CASE(test_bottoming_high_aero_rejection, "Texture") {
 
     // Simulate heavy aero + cornering load transfer (3.5x static load = 14000N)
     // This would have falsely triggered the old 2.5x threshold.
-    data.mWheel[0].mTireLoad = 14000.0;
-    data.mWheel[1].mTireLoad = 14000.0;
-    data.mWheel[2].mTireLoad = 14000.0;
-    data.mWheel[3].mTireLoad = 14000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 14000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 14000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 14000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 14000.0;
 
     // Explicitly set static load to bypass learning phase
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
@@ -34,8 +34,8 @@ TEST_CASE(test_bottoming_high_aero_rejection, "Texture") {
     FFBEngineTestAccess::SetBottomingEnabled(engine, true);
     FFBEngineTestAccess::SetBottomingMethod(engine, 0); // Method 0: Ride Height
     // isolating our test to the Safety Trigger (Raw Load Peak).
-    data.mWheel[0].mSuspForce = 4000.0;
-    data.mWheel[1].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 4000.0;
 
     // Call multiple times to advance sine phase
     PumpEngineTime(engine, data, 0.1);
@@ -73,8 +73,8 @@ TEST_CASE(test_bottoming_genuine_impact, "Texture") {
     PumpEngineTime(engine, data, 0.5); // Settle filters
 
     // Simulate a massive curb strike / bottoming out
-    data.mWheel[0].mRideHeight = 0.0001; // 0.1mm - should trigger Method 0
-    data.mWheel[1].mRideHeight = 0.0001;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.0001; // 0.1mm - should trigger Method 0
+    data.mWheel[WHEEL_FR].mRideHeight = 0.0001;
 
     // Call multiple times to advance sine phase
     PumpEngineTime(engine, data, 0.1);
@@ -106,7 +106,7 @@ TEST_CASE(test_bottoming_user_controls, "Texture") {
 
     // --- Test A: Disabled ---
     FFBEngineTestAccess::SetBottomingEnabled(engine, false);
-    data.mWheel[0].mTireLoad = 18000.0; // Massive impact
+    data.mWheel[WHEEL_FL].mTireLoad = 18000.0; // Massive impact
     PumpEngineTime(engine, data, 0.1);
 
     auto snaps = engine.GetDebugBatch();

@@ -6,7 +6,10 @@
 #include "io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 #include <cstring>
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
+
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 
@@ -380,6 +383,7 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
             case 1: locStr = "Track Loading"; break;
             case 2: locStr = "Monitor (Garage)"; break;
             case 3: locStr = "On Track"; break;
+            default: break;
         }
         Logger::Get().LogFile("[Transition] OptionsLocation: %d -> %d (%s)",
             m_prevState.optionsLocation, generic.appInfo.mOptionsLocation, locStr);

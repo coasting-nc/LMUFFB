@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 
+namespace LMUFFB {
 namespace Tooltips {
 
     // General FFB
@@ -204,6 +205,7 @@ namespace Tooltips {
         PLOT_SELECTED_TORQUE, PLOT_SHAFT_TORQUE, PLOT_INGAME_FFB,
         FINE_TUNE
     };
+}
 }
 
 #endif // TOOLTIPS_H

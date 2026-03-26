@@ -31,7 +31,7 @@ TEST_CASE(test_safety_slew_spikes, "Safety") {
     
     // 3. High Spike (sustained 5 frames)
     // requested_rate = 0.06 / 0.0001 = 600.0 (between 500 and 1000)
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.m_safety.ApplySafetySlew(0.06, 0.0, 0.0001, false, 0.0);
         ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).safety_timer, 0.0);
         ASSERT_EQ(FFBEngineTestAccess::GetSafety(engine).spike_counter, i + 1);
@@ -219,18 +219,18 @@ TEST_CASE(test_missing_telemetry_extended, "Diagnostics") {
     data.mLocalAccel.x = 2.0;
     
     // Missing Susp Deflection
-    data.mWheel[0].mSuspensionDeflection = 0.0;
-    data.mWheel[1].mSuspensionDeflection = 0.0;
+    data.mWheel[WHEEL_FL].mSuspensionDeflection = 0.0;
+    data.mWheel[WHEEL_FR].mSuspensionDeflection = 0.0;
     
     // Missing Lat Force
-    data.mWheel[0].mLateralForce = 0.0;
-    data.mWheel[1].mLateralForce = 0.0;
-    data.mWheel[2].mLateralForce = 0.0;
-    data.mWheel[3].mLateralForce = 0.0;
+    data.mWheel[WHEEL_FL].mLateralForce = 0.0;
+    data.mWheel[WHEEL_FR].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RL].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RR].mLateralForce = 0.0;
 
     // Missing Vert Deflection
-    data.mWheel[0].mVerticalTireDeflection = 0.0;
-    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0;
 
     for (int i = 0; i < 60; i++) {
         engine.calculate_force(&data, "GT3", "911");
@@ -334,7 +334,7 @@ TEST_CASE(test_yaw_kicks_branches, "Physics") {
     
     // 1. Unloaded Yaw Kick
     FFBEngineTestAccess::SetStaticRearLoad(engine, 1000.0);
-    data.mWheel[2].mTireLoad = 200.0; // Massive load drop (rear)
+    data.mWheel[WHEEL_RL].mTireLoad = 200.0; // Massive load drop (rear)
     data.mLocalRot.y = 1.0; // Yaw rate
     // Trigger multiple frames to seed and then create derivative
     FFBEngineTestAccess::CallCalculateSopLateral(engine, &data, ctx);
@@ -344,9 +344,9 @@ TEST_CASE(test_yaw_kicks_branches, "Physics") {
     ASSERT_NE(ctx.yaw_force, 0.0);
 
     // 2. Power Yaw Kick
-    data.mWheel[2].mTireLoad = 1000.0; // Restore load
+    data.mWheel[WHEEL_RL].mTireLoad = 1000.0; // Restore load
     data.mUnfilteredThrottle = 1.0f;
-    data.mWheel[2].mRotation = 500.0; // Spin!
+    data.mWheel[WHEEL_RL].mRotation = 500.0; // Spin!
     data.mLocalRot.y = 1.0;
     FFBEngineTestAccess::CallCalculateSopLateral(engine, &data, ctx);
     data.mLocalRot.y = 2.0;
@@ -363,9 +363,9 @@ TEST_CASE(test_lockup_predictive_branches, "Physics") {
     
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.0);
     data.mUnfilteredBrake = 1.0f;
-    data.mWheel[0].mTireLoad = 2000.0; // Grounded
-    data.mWheel[0].mRotation = 100.0;
-    data.mWheel[0].mLongitudinalPatchVel = 0.0; // No slip yet
+    data.mWheel[WHEEL_FL].mTireLoad = 2000.0; // Grounded
+    data.mWheel[WHEEL_FL].mRotation = 100.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = 0.0; // No slip yet
     
     FFBCalculationContext ctx;
     ctx.dt = 0.0025;
@@ -377,8 +377,8 @@ TEST_CASE(test_lockup_predictive_branches, "Physics") {
     FFBEngineTestAccess::CallCalculateLockup_Vibration(engine, &data, ctx);
     
     // Frame 2: Rapid deceleration AND slip
-    data.mWheel[0].mRotation = 50.0; // Delta = -50 over 0.0025 = -20000 rad/s2
-    data.mWheel[0].mLongitudinalPatchVel = 10.0; // 33% slip (10/30)
+    data.mWheel[WHEEL_FL].mRotation = 50.0; // Delta = -50 over 0.0025 = -20000 rad/s2
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = 10.0; // 33% slip (10/30)
     FFBEngineTestAccess::CallCalculateLockup_Vibration(engine, &data, ctx);
     
     ASSERT_NE(ctx.lockup_rumble, 0.0);
@@ -398,19 +398,19 @@ TEST_CASE(test_bottoming_branches, "Physics") {
     
     // 1. Method 1: Impulse
     FFBEngineTestAccess::SetBottomingMethod(engine, 1);
-    data.mWheel[0].mSuspForce = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 0.0;
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
     
-    data.mWheel[0].mSuspForce = 20000.0; // Massive impulse
+    data.mWheel[WHEEL_FL].mSuspForce = 20000.0; // Massive impulse
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
     ASSERT_NE(ctx.bottoming_crunch, 0.0);
     
     // 2. Safety Trigger: Raw Load Peak
     ctx.bottoming_crunch = 0.0;
     FFBEngineTestAccess::SetBottomingMethod(engine, 0);
-    data.mWheel[0].mRideHeight = 1.0; // No trigger from Method 0
+    data.mWheel[WHEEL_FL].mRideHeight = 1.0; // No trigger from Method 0
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 1000.0);
-    data.mWheel[0].mTireLoad = 10000.0; // 10x static load
+    data.mWheel[WHEEL_FL].mTireLoad = 10000.0; // 10x static load
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
     ASSERT_NE(ctx.bottoming_crunch, 0.0);
 }

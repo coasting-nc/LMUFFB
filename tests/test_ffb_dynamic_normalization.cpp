@@ -204,12 +204,12 @@ TEST_CASE(test_structural_vs_texture_separation, "StructuralNormalization") {
     FFBEngineTestAccess::SetLastRawTorque(engine, 10.0);
 
     // Set vertical deflection to get road noise
-    for(int i=0; i<4; i++) engine.m_prev_vert_deflection[i] = 0.0;
-    data.mWheel[0].mVerticalTireDeflection = 0.01f;
-    data.mWheel[1].mVerticalTireDeflection = 0.01f;
+    for (int i = 0; i < NUM_WHEELS; i++) engine.m_prev_vert_deflection[i] = 0.0;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.01f;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.01f;
 
-    data.mWheel[0].mTireLoad = 4500.0; // Default peak
-    data.mWheel[1].mTireLoad = 4500.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4500.0; // Default peak
+    data.mWheel[WHEEL_FR].mTireLoad = 4500.0;
 
     double force = engine.calculate_force(&data);
 

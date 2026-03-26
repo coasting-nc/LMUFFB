@@ -50,8 +50,8 @@ TEST_CASE(test_nan_sanitization_aux, "Safety") {
     data.mSteeringShaftTorque = 1.0;
 
     // Inject NaN into auxiliary channel (both front wheels to trigger load fallback)
-    data.mWheel[0].mTireLoad = std::numeric_limits<double>::quiet_NaN();
-    data.mWheel[1].mTireLoad = std::numeric_limits<double>::quiet_NaN();
+    data.mWheel[WHEEL_FL].mTireLoad = std::numeric_limits<double>::quiet_NaN();
+    data.mWheel[WHEEL_FR].mTireLoad = std::numeric_limits<double>::quiet_NaN();
 
     // Should NOT return 0.0, but should trigger fallback
     double force = engine.calculate_force(&data, "GT3", "TestCar");

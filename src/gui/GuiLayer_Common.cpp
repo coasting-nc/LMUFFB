@@ -2,21 +2,15 @@
 #include "Version.h"
 #include "Config.h"
 #include "Tooltips.h"
-#include "StringUtils.h" // Added StringUtils.h
+#include "utils/StringUtils.h"
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
 #include "VehicleUtils.h"
-#include <string>
-
-using namespace LMUFFB;
-
 #include "HealthMonitor.h"
-#ifdef _WIN32
-#include <shellapi.h>
-#include <windows.h>
-#endif
+
+#include <string>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -28,12 +22,36 @@ using namespace LMUFFB;
 
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
+#endif
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #endif
 
+#ifdef LMUFFB_UNIT_TEST
+// Linkage for global test access class defined in test_gui_common.h
+#include "../../tests/test_gui_common.h"
+#endif
+
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
+namespace LMUFFB {
+
+extern std::atomic<bool> g_running;
+extern std::recursive_mutex g_engine_mutex;
+
+float GuiLayer::m_latest_steering_range = 0.0f;
+float GuiLayer::m_latest_steering_angle = 0.0f;
+
+#ifdef LMUFFB_UNIT_TEST
+std::wstring GuiLayer::m_last_shell_execute_args;
+std::string GuiLayer::m_last_system_cmd;
+#endif
+
+#ifdef ENABLE_IMGUI
 static void DisplayRate(const char* label, double rate, double target) {
     ImGui::Text("%s", label);
     
@@ -51,14 +69,6 @@ static void DisplayRate(const char* label, double rate, double target) {
     
     ImGui::TextColored(color, "%.1f Hz", rate);
 }
-
-
-// External linkage to FFB loop status
-extern std::atomic<bool> g_running;
-extern std::recursive_mutex g_engine_mutex;
-
-float GuiLayer::m_latest_steering_range = 0.0f;
-float GuiLayer::m_latest_steering_angle = 0.0f;
 
 static const float CONFIG_PANEL_WIDTH = 500.0f;
 static const int LATENCY_WARNING_THRESHOLD_MS = 15;
@@ -148,20 +158,6 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
     }
 }
 
-#ifdef LMUFFB_UNIT_TEST
-class GuiLayerTestAccess {
-public:
-    static void GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd);
-};
-
-static std::wstring g_last_shell_execute_args;
-static std::string g_last_system_cmd;
-void GuiLayerTestAccess::GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd) {
-    wArgs = g_last_shell_execute_args;
-    cmd = g_last_system_cmd;
-}
-#endif
-
 void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
     namespace fs = std::filesystem;
 
@@ -197,23 +193,24 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
     std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
 
 #ifdef LMUFFB_UNIT_TEST
-    g_last_shell_execute_args = wArgs;
-#else
+    m_last_shell_execute_args = wArgs;
+#endif
+
+#ifndef LMUFFB_UNIT_TEST
     // 3. Execute
     ShellExecuteW(NULL, L"open", L"cmd.exe", wArgs.c_str(), NULL, SW_SHOWNORMAL);
 #endif
 #else
     std::string cmd = "PYTHONPATH=" + python_path + " python3 -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\"";
 #ifdef LMUFFB_UNIT_TEST
-    g_last_system_cmd = cmd;
-#else
+    m_last_system_cmd = cmd;
+#endif
+
+#ifndef LMUFFB_UNIT_TEST
     system(cmd.c_str());
 #endif
 #endif
 }
-
-
-
 
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
@@ -324,10 +321,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::ALWAYS_ON_TOP);
     ImGui::SameLine();
 
-    bool toggled = Config::show_graphs;
-    if (ImGui::Checkbox("Graphs", &toggled)) {
+    bool graphs_toggled = Config::show_graphs;
+    if (ImGui::Checkbox("Graphs", &graphs_toggled)) {
         SaveCurrentWindowGeometryPlatform(Config::show_graphs);
-        Config::show_graphs = toggled;
+        Config::show_graphs = graphs_toggled;
         int target_w = Config::show_graphs ? Config::win_w_large : Config::win_w_small;
         int target_h = Config::show_graphs ? Config::win_h_large : Config::win_h_small;
         ResizeWindowPlatform(Config::win_pos_x, Config::win_pos_y, target_w, target_h);
@@ -411,7 +408,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         GuiWidgets::Result res = GuiWidgets::Combo(label, v, items, items_count, tooltip);
         if (res.changed) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-            // v is already updated by ImGui, but we lock to ensure visibility and consistency
             Config::Save(engine);
         }
     };
@@ -648,7 +644,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     } else {
         ImGui::NextColumn(); ImGui::NextColumn();
     }
-
     if (ImGui::TreeNodeEx("FFB Safety Features", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
@@ -1030,7 +1025,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
         ImGui::Unindent();
     }
-
     ImGui::Columns(1);
     ImGui::End();
 }
@@ -1347,8 +1341,20 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 
     ImGui::End();
 }
+#else
+void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
+void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {}
+void GuiLayer::UpdateTelemetry(FFBEngine& engine) {}
+void GuiLayer::DrawTuningWindow(FFBEngine& engine) {}
+void GuiLayer::DrawDebugWindow(FFBEngine& engine) {}
+void GuiLayer::SetupGUIStyle() {}
 #endif
 
-#ifndef ENABLE_IMGUI
-void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
+} // namespace LMUFFB
+
+#ifdef LMUFFB_UNIT_TEST
+void GuiLayerTestAccess::GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd) {
+    wArgs = LMUFFB::GuiLayer::m_last_shell_execute_args;
+    cmd = LMUFFB::GuiLayer::m_last_system_cmd;
+}
 #endif

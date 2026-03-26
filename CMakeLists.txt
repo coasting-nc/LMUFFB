@@ -311,6 +311,8 @@ set(UNITY_READY_MAIN
     RestApiProvider.cpp
     DXGIUtils.cpp
     GameConnector.cpp
+    GuiLayer_Common.cpp
+    main.cpp
 )
 
 # 2. Disable Unity inclusion for any main source NOT in the whitelist

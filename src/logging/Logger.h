@@ -13,8 +13,9 @@
 #include <cstdarg>
 #include <algorithm> // For std::max, std::min
 #include <filesystem>
-#include "StringUtils.h" // Include StringUtils.h
+#include "utils/StringUtils.h" // Include StringUtils.h
 
+namespace LMUFFB::Logging {
 // Simple synchronous logger that flushes every line for crash debugging
 class Logger {
 public:
@@ -117,7 +118,7 @@ public:
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
+        LMUFFB::Utils::StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);
@@ -131,7 +132,7 @@ public:
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
+        LMUFFB::Utils::StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);
@@ -218,5 +219,11 @@ private:
     bool m_initialized = false;
     std::ostream* m_testStream = nullptr;
 };
+} // namespace LMUFFB::Logging
+
+// Temporary bridge for legacy code
+namespace LMUFFB {
+    using Logger = LMUFFB::Logging::Logger;
+}
 
 #endif // LOGGER_H

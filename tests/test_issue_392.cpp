@@ -19,7 +19,7 @@ TEST_CASE(test_issue_392_physics_toggle_impact, "Physics") {
     const char* carName = "Ferrari 499P";
 
     // Setup wheel data with significant slip angle to ensure grip < 1.0
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mLongitudinalGroundVel = 20.0;
         data.mWheel[i].mLateralPatchVel = 2.0; // ~0.1 rad slip
         data.mWheel[i].mGripFract = 0.0; // Force fallback
@@ -32,14 +32,14 @@ TEST_CASE(test_issue_392_physics_toggle_impact, "Physics") {
     engine.m_grip_estimation.load_sensitivity_enabled = true;
 
     // Low Load (1500N)
-    data.mWheel[0].mTireLoad = 1500.0;
-    data.mWheel[1].mTireLoad = 1500.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 1500.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 1500.0;
     PumpEngineTime(engine, data, 1.0); // Let it settle
     double grip_low_load = engine.GetDebugBatch().back().calc_front_grip;
 
     // High Load (6000N)
-    data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 6000.0;
     PumpEngineTime(engine, data, 1.0); // Let it settle
     double grip_high_load = engine.GetDebugBatch().back().calc_front_grip;
 
@@ -51,14 +51,14 @@ TEST_CASE(test_issue_392_physics_toggle_impact, "Physics") {
     engine.m_grip_estimation.load_sensitivity_enabled = false;
 
     // Low Load
-    data.mWheel[0].mTireLoad = 1500.0;
-    data.mWheel[1].mTireLoad = 1500.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 1500.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 1500.0;
     PumpEngineTime(engine, data, 1.0);
     double grip_disabled_low = engine.GetDebugBatch().back().calc_front_grip;
 
     // High Load
-    data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 6000.0;
     PumpEngineTime(engine, data, 1.0);
     double grip_disabled_high = engine.GetDebugBatch().back().calc_front_grip;
 

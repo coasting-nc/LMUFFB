@@ -10,7 +10,7 @@ TEST_CASE(test_regression_road_texture_toggle, "RoadTexture") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     engine.m_vibration.road_enabled = false;
     engine.calculate_force(&data);
-    data.mWheel[0].mVerticalTireDeflection = 0.05;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.05;
     engine.m_vibration.road_enabled = true;
     double f = engine.calculate_force(&data);
     ASSERT_TRUE(std::abs(f) < 0.1);
@@ -51,10 +51,10 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     engine.m_invert_force = false;
     
     // Frame 1: 0.0
-    data.mWheel[0].mVerticalTireDeflection = 0.0;
-    data.mWheel[1].mVerticalTireDeflection = 0.0;
-    data.mWheel[0].mTireLoad = 4000.0; // Load Factor 1.0
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0; // Load Factor 1.0
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
 
     // v0.7.69: Ensure vibration multiplier is 1.0 for this test
     FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
@@ -63,8 +63,8 @@ TEST_CASE(test_road_texture_teleport, "RoadTexture") {
     engine.calculate_force(&data);
     
     // Frame 2: Teleport (+0.1m)
-    data.mWheel[0].mVerticalTireDeflection = 0.1;
-    data.mWheel[1].mVerticalTireDeflection = 0.1;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.1;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.1;
     
     // Without Clamp:
     // Delta = 0.1. Sum = 0.2.
@@ -110,8 +110,8 @@ TEST_CASE(test_suspension_bottoming, "RoadTexture") {
     data.mSteeringShaftTorque = 0.0;
     
     // Massive Load Spike (10000N > 8000N threshold)
-    data.mWheel[0].mTireLoad = 10000.0;
-    data.mWheel[1].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 10000.0;
     data.mDeltaTime = 0.01;
     
     // Run multiple frames to check oscillation
@@ -161,7 +161,7 @@ TEST_CASE(test_road_texture_state_persistence, "RoadTexture") {
     InitializeEngine(engine);
     engine.m_vibration.road_enabled = true;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    data.mWheel[0].mVerticalTireDeflection = 0.01;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.01;
     double f1 = engine.calculate_force(&data);
     double f2 = engine.calculate_force(&data);
     ASSERT_NEAR(f1, f2, 0.001);
@@ -178,7 +178,7 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     
     // Method A: Ride Height (Scrape)
     engine.m_vibration.bottoming_method = 0;
-    data.mWheel[0].mRideHeight = 0.001;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.001;
     
     // Set dt to ensure phase doesn't hit 0 crossing (50Hz)
     // 50Hz period = 0.02s. dt=0.01 is half period. PI. sin(PI)=0.
@@ -200,12 +200,12 @@ TEST_CASE(test_universal_bottoming, "RoadTexture") {
     
     // Method B: Suspension Deflection (Spike) - Using 10000N logic from other test
     engine.m_vibration.bottoming_method = 1;
-    data.mWheel[0].mRideHeight = 0.1; // Reset RH
-    data.mWheel[0].mTireLoad = 10000.0; // Trigger spike
-    data.mWheel[1].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; // Reset RH
+    data.mWheel[WHEEL_FL].mTireLoad = 10000.0; // Trigger spike
+    data.mWheel[WHEEL_FR].mTireLoad = 10000.0;
     // Set susp force high to trigger Method 1 (Impulse)
-    data.mWheel[0].mSuspForce = 50000.0;
-    data.mWheel[1].mSuspForce = 50000.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 50000.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 50000.0;
     data.mDeltaTime = 0.005; // 200Hz to catch phase
     
     // Reset Engine to clear phases
@@ -282,8 +282,8 @@ TEST_CASE(test_scrub_drag_fade, "RoadTexture") {
     engine.m_vibration.road_enabled = true;
     engine.m_vibration.scrub_drag_gain = 1.0;
     
-    data.mWheel[0].mLateralPatchVel = 0.25;
-    data.mWheel[1].mLateralPatchVel = 0.25;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 0.25;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 0.25;
     data.mLocalVel.z = -20.0; // Moving fast (v0.6.22)
     engine.m_general.wheelbase_max_nm = 40.0f; engine.m_general.target_rim_nm = 40.0f;
     engine.m_general.gain = 1.0;

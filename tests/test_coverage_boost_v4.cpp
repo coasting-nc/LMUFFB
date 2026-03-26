@@ -3,6 +3,7 @@
 #include "../src/core/Config.h"
 #include "../src/logging/AsyncLogger.h"
 #include "../src/gui/GuiLayer.h"
+#include "test_gui_common.h"
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
 #endif
@@ -12,12 +13,6 @@
 #include <limits>
 #include <fstream>
 #include <filesystem>
-
-class GuiLayerTestAccess {
-public:
-    static void DrawTuningWindow(FFBEngine& engine) { GuiLayer::DrawTuningWindow(engine); }
-    static void DrawDebugWindow(FFBEngine& engine) { GuiLayer::DrawDebugWindow(engine); }
-};
 
 namespace FFBEngineTests {
 
@@ -140,8 +135,8 @@ TEST_CASE(test_engine_calculate_force_fallbacks, "Physics") {
     InitializeEngine(engine);
 
     // 1. Trigger missing load fallback (m_missing_load_frames > 20)
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[1].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0;
     data.mLocalVel.z = 10.0; // speed > 1.0
     for (int i = 0; i < 25; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
@@ -152,24 +147,24 @@ TEST_CASE(test_engine_calculate_force_fallbacks, "Physics") {
     data.mLocalVel.z = 10.0;
 
     // 2. Trigger missing suspension force warning
-    data.mWheel[0].mSuspForce = 0.0;
-    data.mWheel[1].mSuspForce = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 0.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 0.0;
     for (int i = 0; i < 55; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
     }
     // Hit false branches
-    data.mWheel[0].mSuspForce = 1000.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 1000.0;
     engine.calculate_force(&data, "GT3", "911", 0.0f);
-    data.mWheel[0].mSuspForce = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 0.0;
 
     // 3. Trigger missing suspension deflection warning
-    data.mWheel[0].mSuspensionDeflection = 0.0;
-    data.mWheel[1].mSuspensionDeflection = 0.0;
+    data.mWheel[WHEEL_FL].mSuspensionDeflection = 0.0;
+    data.mWheel[WHEEL_FR].mSuspensionDeflection = 0.0;
     for (int i = 0; i < 55; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
     }
     // Hit false branch
-    data.mWheel[0].mSuspensionDeflection = 0.01;
+    data.mWheel[WHEEL_FL].mSuspensionDeflection = 0.01;
     engine.calculate_force(&data, "GT3", "911", 0.0f);
 }
 
@@ -219,7 +214,7 @@ TEST_CASE(test_engine_extra_branches, "Physics") {
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
 
     // 3. Wheel radius branch
-    data.mWheel[0].mStaticUndeflectedRadius = 5; // Very small
+    data.mWheel[WHEEL_FL].mStaticUndeflectedRadius = 5; // Very small
     FFBEngineTestAccess::CallApplySignalConditioning(engine, 1.0, &data, ctx);
 
     // 4. Speed gate branches
@@ -240,8 +235,8 @@ TEST_CASE(test_engine_extra_branches, "Physics") {
     engine.calculate_force(&data, "GT3", "911", 0.1f);
 
     // 7. Rear grip approximated branch
-    data.mWheel[2].mTireLoad = 0.0;
-    data.mWheel[3].mTireLoad = 0.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 0.0;
     engine.calculate_force(&data, "GT3", "911", 0.1f);
 }
 

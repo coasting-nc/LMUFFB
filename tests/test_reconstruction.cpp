@@ -96,7 +96,7 @@ TEST_CASE(test_aux_channel_group_initialization, "DSP") {
     ASSERT_NEAR(engine.m_upsample_steering.GetBeta(), 0.10, 0.001);
     ASSERT_NEAR(engine.m_upsample_throttle.GetAlpha(), 0.95, 0.001);
     ASSERT_NEAR(engine.m_upsample_brake.GetAlpha(), 0.95, 0.001);
-    for(int i=0; i<4; i++) ASSERT_NEAR(engine.m_upsample_brake_pressure[i].GetAlpha(), 0.95, 0.001);
+    for (int i = 0; i < NUM_WHEELS; i++) ASSERT_NEAR(engine.m_upsample_brake_pressure[i].GetAlpha(), 0.95, 0.001);
 
     // Group 2: Texture/Tire (Alpha 0.80, Beta 0.05) - Corrected in Patch 3
     ASSERT_NEAR(engine.m_upsample_vert_deflection[0].GetAlpha(), 0.80, 0.001);
@@ -112,7 +112,7 @@ TEST_CASE(test_aux_channel_group_initialization, "DSP") {
     ASSERT_NEAR(engine.m_upsample_local_accel_z.GetAlpha(), 0.50, 0.001);
     ASSERT_NEAR(engine.m_upsample_local_rot_accel_y.GetAlpha(), 0.50, 0.001);
     ASSERT_NEAR(engine.m_upsample_local_rot_y.GetAlpha(), 0.50, 0.001);
-    for(int i=0; i<4; i++) ASSERT_NEAR(engine.m_upsample_susp_force[i].GetAlpha(), 0.50, 0.001);
+    for (int i = 0; i < NUM_WHEELS; i++) ASSERT_NEAR(engine.m_upsample_susp_force[i].GetAlpha(), 0.50, 0.001);
 }
 
 TEST_CASE(test_aux_channel_mode_switching, "DSP") {

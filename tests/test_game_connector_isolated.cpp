@@ -7,7 +7,9 @@
 #include "../src/io/lmu_sm_interface/LinuxMock.h"
 #endif
 
+namespace LMUFFB {
 extern std::atomic<bool> g_running;
+}
 
 namespace FFBEngineTests {
 
@@ -18,7 +20,7 @@ namespace FFBEngineTests {
  */
 TEST_CASE(test_game_connector_branch_boost_isolated, "System") {
     // 1. Force background threads to stop to avoid MockSM lock contention in unity build context
-    g_running = false;
+    LMUFFB::g_running = false;
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     GameConnector& conn = GameConnector::Get();
@@ -54,14 +56,13 @@ TEST_CASE(test_game_connector_branch_boost_isolated, "System") {
     std::stringstream diag;
     diag << "Conn: " << (conn.IsConnected() ? "YES" : "NO");
     diag << " | Realtime: " << (layout->data.scoring.scoringInfo.mInRealtime ? "T" : "F");
-    #ifndef _WIN32
+
     auto& maps = MockSM::GetMaps();
     if (maps.count("LMU_SharedMemoryLockData")) {
         long* ldata = (long*)maps["LMU_SharedMemoryLockData"].data();
         diag << " | Lock: waiters=" << ldata[0] << " busy=" << ldata[1];
     }
     diag << " | Err: " << MockSM::LastError() << " | Wait: " << MockSM::WaitResult();
-    #endif
 
     ASSERT_TRUE_MSG(copy_res, diag.str());
     ASSERT_FALSE(dest.telemetry.playerHasVehicle);

@@ -2,6 +2,92 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.256]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Transitioned all utility modules in the `src/utils/` directory (`MathUtils.h`, `StringUtils.h`, `TimeUtils.h`) to `namespace LMUFFB::Utils`.
+  - Implemented bridge aliases in `namespace LMUFFB` to maintain backward compatibility for existing call sites.
+  - Updated key project-wide call sites in `main.cpp`, `FFBEngine.cpp`, `FFBSafetyMonitor.cpp`, and the GUI layer.
+  - Relocated mock time globals to `LMUFFB::Utils` to ensure consistency with the new architectural model.
+
+## [0.7.255]
+### Refactored
+- **`src/core/main.cpp` — Code Quality Quick Wins**:
+  - **Named Constants (§2.2)**: Replaced all magic numbers with `constexpr` values in an anonymous namespace — `kFFBTargetHz` (1000), `kPhysicsUpsampleM` (2), `kPhysicsUpsampleL` (5), `kPhysicsTimestepSec` (0.0025 s), `kStaleThresholdMs` (100 ms), `kMaxVehicleIndex` (104), `kHealthWarnCooldownS` (60 s), `kGuiPeriodMs` (16 ms). Every use of these values throughout `FFBThread` and `lmuffb_app_main` now references the named constant, making intent explicit and changes trivially safe.
+  - **Removed `static` Locals (§2.3)**: Converted four `static` local variables (`was_driving`, `last_session`, `last_telem_et`, `lastWarningTime`) inside `FFBThread` to plain locals. These variables serve as "last known state" within a single loop run; `static` was incorrect and caused stale state bleed if the thread were ever restarted, and test-execution interference between test cases.
+  - **Removed Duplicate Log Lines (§2.1)**: Removed two duplicate `Logger::Get().Log(...)` calls (`"Failed to initialize GUI."` and `"Running in HEADLESS mode."` were each emitted twice). The GUI-failure message was also promoted to `LogFile()` so it is persisted to disk in case of a crash.
+  - **Clarified Shutdown Sequencing (§2.4)**: Added a 3-line comment to the `g_running = false` statement in the shutdown path, documenting why the assignment is present even though `g_running` is already `false` at that code point (the GUI `while` loop exits precisely when it becomes `false`). Removes an otherwise confusing apparent no-op.
+  - **Fixed `try`-block Indentation (§2.5)**: Re-indented the entire body of `lmuffb_app_main`'s `try {}` block by one additional level, aligning it correctly with the `#ifdef _WIN32 / timeBeginPeriod(1)` block above it. Purely cosmetic — no behaviour change.
+
+### Documentation
+- **Refactoring Proposals**: Added §9 ("Timing Triage: Now vs. After Phase 6") to `docs/dev_docs/reports/main_cpp_refactoring_proposals.md`, giving a per-proposal recommendation on whether each refactoring is safe to implement now or should wait until the Phase 6 sub-namespace migration reaches the relevant modules.
+- **Unity Build Plan**: Updated `docs/dev_docs/reports/main_code_unity_build_plan.md` with multiple housekeeping corrections: marked the Phase 6 gate condition as met, fixed the malformed `rF2Data.h` TODO checklist item, updated stale Q&A sections that referenced Phase 3 as future work, retired the Phase 3 prediction from §8.3, and expanded §9 with four critical reminders (include rule, `using namespace` placement rule, internal linkage, bridge aliases).
+
+## [0.7.254]
+
+
+### Fixed
+- **Lateral Load Slider Persistence (Issue #475)**:
+  - Resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon application restart, despite the GUI allowing values up to 10.0 (1000%).
+  - Synchronized `LoadForcesConfig::Validate()` clamping limits with the GUI range [0.0, 10.0] to ensure high-intensity lateral load settings are correctly persisted in `config.toml` and user presets.
+
+### Testing
+- **New Regression Test**: Added `tests/repro_issue_475.cpp` verifying that values up to 10.0 are preserved through the validation cycle.
+
+
+## [0.7.253]
+### Changed
+- **Unity Build Expansion (Phase 6 Commencement)**:
+  - Initiated Phase 6 of the Unity Build plan by transitioning all modules in the `src/logging/` directory to `namespace LMUFFB::Logging`.
+  - Implemented temporary bridge `using` declarations (e.g., `namespace LMUFFB { using Logger = LMUFFB::Logging::Logger; }`) in the logging headers to maintain backward compatibility and support qualified lookups while call sites are incrementally updated.
+  - Updated key project-wide call sites in `main.cpp` and `GuiLayer_Common.cpp` with appropriate `using namespace` or qualified lookups.
+  - Enforced strict header hygiene by ensuring no `using namespace` directives exist in core headers like `FFBEngine.h`.
+  - Resolved namespace ambiguity for `FFBEngine` in `AsyncLogger.h` via qualified `using` declarations.
+  - Verified 100% test pass rate (632/632) under the new namespaced architecture.
+
+## [0.7.252]
+### Changed
+- **Codebase-Wide Wheel Index Refactoring**:
+  - Eliminated all magic numbers (0-3) used for vehicle wheel identification (Front-Left, Front-Right, Rear-Left, Rear-Right).
+  - Introduced a centralized `src/core/WheelConstants.h` defining the `WheelIndex` enum and `NUM_WHEELS` / `NUM_AXLES` constants.
+  - Systematically replaced hardcoded indices and loop bounds in `FFBEngine`, `GripLoadEstimation`, `ChannelMonitor`, and all associated physics modules.
+  - Standardized internal state arrays (e.g., `m_prev_slip_angle`, `m_prev_susp_force`) to use named constants for improved readability and safety.
+  - Updated the entire unit and regression test suite (150+ files) to align with the new standardized indexing architecture.
+  - Verified 100% test coverage and 629/629 passing tests.
+
+---
+
+## Cumulative changes from version 0.7.238 till 0.7.252
+### Fixed
+- Fixed default profile being loaded (instead of the last used) after app restart.
+
+---
+
+## [0.7.251]
+### Changed
+- **Unity Build Expansion (Phase 5 Completion)**:
+  - Finalized Phase 5 of the Unity Build plan by fully encapsulating all remaining global symbols (`g_running`, `g_engine`, etc.) and the `FFBThread` within `namespace LMUFFB`.
+  - Whitelisted `src/core/main.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`, officially integrating the application's entry point logic into the unified translation unit.
+  - Updated `src/core/Config.cpp`, `src/ffb/FFBEngine.cpp`, and the GUI layer to correctly reference the namespaced globals, resolving name mangling mismatches.
+  - Updated the entire unit test suite (`main_test_runner.cpp`, `test_main_harness.cpp`, etc.) to align with the new namespaced architecture.
+  - Refactored `src/utils/TimeUtils.h` to position `extern` mock globals within `namespace LMUFFB`.
+
+## [0.7.250]
+### Changed
+- **Unity Build Expansion (Phase 5 Completion)**:
+  - Fully encapsulated the GUI layer (headers and implementation files) within `namespace LMUFFB`, completing Phase 5 of the Unity Build plan.
+  - Refactored platform-specific helper functions (e.g., `WndProc`, `CreateDeviceD3D`, `glfw_error_callback`) and internal static variables into anonymous namespaces within `namespace LMUFFB` to resolve "declared but not defined" and ODR errors during Unity builds.
+  - Whitelisted `src/gui/GuiLayer_Common.cpp` for Unity (Jumbo) builds in `CMakeLists.txt`.
+  - Centralized `GuiLayerTestAccess` in `tests/test_gui_common.h` and removed redundant local definitions across test files to prevent ODR clashes in unified translation units.
+  - Updated `main.cpp` and all GUI-related test files to maintain compatibility with the namespaced GUI module.
+  - Hardened `GuiLayer_Common.cpp` with consolidated preprocessor guards and added missing no-op stubs for headless build support.
+
+### Fixed
+- **UI Logic and Consistency**:
+  - Restored the "Optimal Slip Angle" format string to `%.3f rad` in the GUI.
+  - Corrected a compilation typo `SOP_OUTPUT_SMOOTHING` to the intended `SLOPE_OUTPUT_SMOOTHING` in `GuiLayer_Common.cpp`.
+  - Restored missing `ImGuiCol_Text` styling in `SetupGUIStyle`.
+
 ## [0.7.249]
 ### Changed
 - **Unity Build Expansion (Phase 4 Continuation)**:

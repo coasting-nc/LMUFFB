@@ -66,8 +66,8 @@ TEST_CASE(test_ffb_engine_understeer_edge_cases, "Physics") {
     engine.m_front_axle.understeer_effect = 1.0f;
     
     // Force low grip
-    data.mWheel[0].mGripFract = 0.0;
-    data.mWheel[1].mGripFract = 0.0;
+    data.mWheel[WHEEL_FL].mGripFract = 0.0;
+    data.mWheel[WHEEL_FR].mGripFract = 0.0;
     engine.calculate_force(&data);
     
     // 2. Grip = 0.0 exactly (Floor logic)

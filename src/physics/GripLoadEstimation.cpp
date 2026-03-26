@@ -17,13 +17,17 @@
 #include "core/Config.h"
 #include "logging/Logger.h"
 #include <iostream>
-#include <mutex>
 
-extern std::recursive_mutex g_engine_mutex;
+#include <mutex>
 #include <cmath>
 #include "utils/StringUtils.h"
 
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
 namespace LMUFFB {
+
+extern std::recursive_mutex g_engine_mutex;
 
 // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)
 void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {

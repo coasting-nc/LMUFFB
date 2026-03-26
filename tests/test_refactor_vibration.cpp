@@ -25,17 +25,17 @@ TEST_CASE(test_refactor_vibration_consistency, "RefactorSafety") {
 
     // Create a telemetry state that triggers vibration effects
     TelemInfoV01 data = CreateBasicTestTelemetry(30.0, 0.15); // 30m/s, 15% slip
-    data.mWheel[0].mVerticalTireDeflection = 0.015;
-    data.mWheel[1].mVerticalTireDeflection = 0.012;
-    data.mWheel[2].mVerticalTireDeflection = 0.018;
-    data.mWheel[3].mVerticalTireDeflection = 0.014;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.015;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.012;
+    data.mWheel[WHEEL_RL].mVerticalTireDeflection = 0.018;
+    data.mWheel[WHEEL_RR].mVerticalTireDeflection = 0.014;
     data.mLocalAccel.y = 10.0; // Vertical accel for road texture
-    data.mWheel[2].mSuspForce = 8000.0; // High force for bottoming
-    data.mWheel[3].mSuspForce = 7500.0;
-    data.mWheel[2].mSuspensionDeflection = 0.12; // High deflection for bottoming
-    data.mWheel[3].mSuspensionDeflection = 0.11;
-    data.mWheel[2].mVerticalTireDeflection = 0.05; // Large deflection for bottoming
-    data.mWheel[3].mVerticalTireDeflection = 0.045;
+    data.mWheel[WHEEL_RL].mSuspForce = 8000.0; // High force for bottoming
+    data.mWheel[WHEEL_RR].mSuspForce = 7500.0;
+    data.mWheel[WHEEL_RL].mSuspensionDeflection = 0.12; // High deflection for bottoming
+    data.mWheel[WHEEL_RR].mSuspensionDeflection = 0.11;
+    data.mWheel[WHEEL_RL].mVerticalTireDeflection = 0.05; // Large deflection for bottoming
+    data.mWheel[WHEEL_RR].mVerticalTireDeflection = 0.045;
 
     // Pump the engine to settle filters and accumulators
     PumpEngineSteadyState(engine, data);

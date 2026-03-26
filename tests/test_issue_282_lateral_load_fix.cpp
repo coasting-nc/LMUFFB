@@ -18,10 +18,10 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
 
     auto get_lat_load_force = [&](LoadTransform transform, double fl_load, double fr_load) {
         engine.m_load_forces.lat_load_transform = static_cast<int>(transform);
-        data.mWheel[0].mTireLoad = fl_load;
-        data.mWheel[1].mTireLoad = fr_load;
-        data.mWheel[2].mTireLoad = 4000.0; // Fixed rear
-        data.mWheel[3].mTireLoad = 4000.0;
+        data.mWheel[WHEEL_FL].mTireLoad = fl_load;
+        data.mWheel[WHEEL_FR].mTireLoad = fr_load;
+        data.mWheel[WHEEL_RL].mTireLoad = 4000.0; // Fixed rear
+        data.mWheel[WHEEL_RR].mTireLoad = 4000.0;
         engine.calculate_force(&data);
         auto snap = engine.GetDebugBatch().back();
         return snap.lat_load_force;
@@ -59,10 +59,10 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     // left = 8000+8000=16000. right=0. total=16000. x=1.0.
     auto get_lat_load_force_extreme = [&](LoadTransform transform) {
         engine.m_load_forces.lat_load_transform = static_cast<int>(transform);
-        data.mWheel[0].mTireLoad = 8000.0;
-        data.mWheel[1].mTireLoad = 0.0;
-        data.mWheel[2].mTireLoad = 8000.0;
-        data.mWheel[3].mTireLoad = 0.0;
+        data.mWheel[WHEEL_FL].mTireLoad = 8000.0;
+        data.mWheel[WHEEL_FR].mTireLoad = 0.0;
+        data.mWheel[WHEEL_RL].mTireLoad = 8000.0;
+        data.mWheel[WHEEL_RR].mTireLoad = 0.0;
         engine.calculate_force(&data);
         return engine.GetDebugBatch().back().lat_load_force;
     };
@@ -84,10 +84,10 @@ TEST_CASE_TAGGED(test_issue_282_sign_inversion, "CorePhysics", (std::vector<std:
 
     // Right Turn: Centrifugal force LEFT (+X), Load shift LEFT (FL > FR)
     data.mLocalAccel.x = 9.81;
-    data.mWheel[0].mTireLoad = 6000.0; // FL
-    data.mWheel[1].mTireLoad = 2000.0; // FR
-    data.mWheel[2].mTireLoad = 4000.0; // RL
-    data.mWheel[3].mTireLoad = 4000.0; // RR
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0; // FL
+    data.mWheel[WHEEL_FR].mTireLoad = 2000.0; // FR
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0; // RL
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0; // RR
 
     // Issue #397: Flush the 10ms transient ramp
     PumpEngineTime(engine, data, 0.015);
@@ -111,8 +111,8 @@ TEST_CASE_TAGGED(test_issue_282_decoupling, "CorePhysics", (std::vector<std::str
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 9.81;
-    data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 2000.0;
 
     // Case 1: No boost
     engine.m_rear_axle.oversteer_boost = 0.0f;

@@ -22,7 +22,7 @@ TEST_CASE(test_slope_singularity_rejection, "SlopeFix") {
     data.mLocalAccel.x = 5.0 * 9.81; // 5G spike
     data.mElapsedTime += 0.01;
     // Issue #397: Use FFB loop ticks
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
     }
 
@@ -46,8 +46,8 @@ TEST_CASE(test_slope_steady_state_hold, "SlopeFix") {
     for (int i = 0; i < 20; i++) {
         double slip = 0.01 + (double)i * 0.01; // dAlpha/dt = 1.0 rad/s
         double g = 0.5 + (double)i * 0.05;
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
         data.mLocalAccel.x = g * 9.81;
         PumpEngineTime(engine, data, 0.01);
     }
@@ -96,8 +96,8 @@ TEST_CASE(test_input_smoothing, "SlopeFix") {
     double last_smoothed = 0.0;
     for (int i = 0; i < 100; i++) {
         double slip = (i % 2 == 0) ? 0.05 : 0.06;
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
         engine.calculate_force(&data);
         last_smoothed = engine.m_slope_slip_smoothed;
     }

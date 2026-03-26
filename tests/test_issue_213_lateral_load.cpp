@@ -22,10 +22,10 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_additive, "CorePhysics", (std::vect
 
     // Simulate Right Turn
     data.mLocalAccel.x = 9.81; // 1G Left (Right Turn)
-    data.mWheel[0].mTireLoad = 6000.0; // FL
-    data.mWheel[1].mTireLoad = 2000.0; // FR
-    data.mWheel[2].mTireLoad = 4000.0; // RL
-    data.mWheel[3].mTireLoad = 4000.0; // RR
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0; // FL
+    data.mWheel[WHEEL_FR].mTireLoad = 2000.0; // FR
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0; // RL
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0; // RR
 
     // Run several frames to overcome smoothing
     for (int i = 0; i < 50; i++) {
@@ -53,8 +53,8 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 9.81;
-    data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 2000.0;
 
     // Case 1: ONLY Lateral G
     engine.m_rear_axle.sop_effect = 1.0f;
@@ -65,8 +65,8 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_isolation, "CorePhysics", (std::vec
     // Case 2: ONLY Lateral Load
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_load_forces.lat_load_effect = 1.0f;
-    data.mWheel[2].mTireLoad = 4000.0;
-    data.mWheel[3].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0;
     for (int i = 0; i < 50; i++) engine.calculate_force(&data);
     auto snap = engine.GetDebugBatch().back();
     float force_g_none = snap.sop_force;
@@ -90,14 +90,14 @@ TEST_CASE_TAGGED(test_issue_213_lateral_load_suspension_fallback, "CorePhysics",
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
     // Set direct load to zero to trigger fallback
-    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 0.0;
 
     // Set asymmetric suspension force to simulate load transfer
     // Right Turn: Centrifugal pushed Left. Left gains load.
-    data.mWheel[0].mSuspForce = 5000.0; // FL
-    data.mWheel[1].mSuspForce = 1000.0; // FR
-    data.mWheel[2].mSuspForce = 4000.0; // RL
-    data.mWheel[3].mSuspForce = 2000.0; // RR
+    data.mWheel[WHEEL_FL].mSuspForce = 5000.0; // FL
+    data.mWheel[WHEEL_FR].mSuspForce = 1000.0; // FR
+    data.mWheel[WHEEL_RL].mSuspForce = 4000.0; // RL
+    data.mWheel[WHEEL_RR].mSuspForce = 2000.0; // RR
 
     // Run enough frames to trigger MISSING_LOAD_WARN_THRESHOLD (20) and overcome smoothing
     for (int i = 0; i < 60; i++) {

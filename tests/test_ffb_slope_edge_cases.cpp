@@ -26,8 +26,8 @@ TEST_CASE(test_slope_asymmetry_fix, "SlopeEdgeCases") {
             data.mUnfilteredSteering = steer;
             data.mLocalAccel.x = g * 9.81;
             data.mSteeringShaftTorque = torque;
-            data.mWheel[0].mLateralPatchVel = slip * 20.0;
-            data.mWheel[1].mLateralPatchVel = slip * 20.0;
+            data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+            data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
 
             // Pump 4 ticks per frame
             for(int j=0; j<4; j++) {
@@ -93,8 +93,8 @@ TEST_CASE(test_torque_slope_timing, "SlopeEdgeCases") {
         data.mUnfilteredSteering = steer;
         data.mLocalAccel.x = g * 9.81;
         data.mSteeringShaftTorque = torque;
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
 
         // Pump 4 ticks per frame
         for(int j=0; j<4; j++) {

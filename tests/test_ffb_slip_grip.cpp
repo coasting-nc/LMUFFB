@@ -11,10 +11,10 @@ TEST_CASE(test_approximate_load_fallback, "SlipGrip") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup
-    data.mWheel[0].mTireLoad = 0.0; // Trigger Fallback
-    data.mWheel[1].mTireLoad = 0.0;
-    data.mWheel[0].mSuspForce = 2000.0;
-    data.mWheel[1].mSuspForce = 2000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0; // Trigger Fallback
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 2000.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 2000.0;
     data.mLocalVel.z = 20.0;
     data.mDeltaTime = 0.01;
     
@@ -41,26 +41,26 @@ TEST_CASE(test_combined_grip_loss, "SlipGrip") {
     std::memset(&data, 0, sizeof(data));
     
     // Setup: Full Grip Telemetry (1.0), but we force fallback
-    data.mWheel[0].mGripFract = 0.0; 
-    data.mWheel[1].mGripFract = 0.0;
-    data.mWheel[0].mTireLoad = 4000.0; // Load present
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mGripFract = 0.0; 
+    data.mWheel[WHEEL_FR].mGripFract = 0.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0; // Load present
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
     data.mLocalVel.z = -20.0;
     
     // Case 1: Straight Line, No Slip
-    data.mWheel[0].mStaticUndeflectedRadius = 30;
-    data.mWheel[0].mRotation = 20.0 / 0.3; // Match speed
-    data.mWheel[1].mStaticUndeflectedRadius = 30;
-    data.mWheel[1].mRotation = 20.0 / 0.3;
+    data.mWheel[WHEEL_FL].mStaticUndeflectedRadius = 30;
+    data.mWheel[WHEEL_FL].mRotation = 20.0 / 0.3; // Match speed
+    data.mWheel[WHEEL_FR].mStaticUndeflectedRadius = 30;
+    data.mWheel[WHEEL_FR].mRotation = 20.0 / 0.3;
     data.mDeltaTime = 0.01;
     
     engine.calculate_force(&data, "GT3", "TestCar");
     
     // Case 2: Braking Lockup (Slip Ratio -1.0)
-    data.mWheel[0].mRotation = 0.0;
-    data.mWheel[1].mRotation = 0.0;
-    data.mWheel[0].mLongitudinalPatchVel = -20.0; // Full lock
-    data.mWheel[1].mLongitudinalPatchVel = -20.0;
+    data.mWheel[WHEEL_FL].mRotation = 0.0;
+    data.mWheel[WHEEL_FR].mRotation = 0.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -20.0; // Full lock
+    data.mWheel[WHEEL_FR].mLongitudinalPatchVel = -20.0;
     
     // Issue #397: Flush and Measure
     PumpEngineTime(engine, data, 0.015);
@@ -95,28 +95,28 @@ TEST_CASE(test_rear_force_workaround, "SlipGrip") {
     data.mDeltaTime = 0.01;
     
     // Missing load on all wheels to trigger fallback
-    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 0.0;
 
     // Front Wheels
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[0].mSuspForce = 4000.0;
-    data.mWheel[1].mSuspForce = 4000.0;
-    data.mWheel[0].mLongitudinalGroundVel = 20.0;
-    data.mWheel[1].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FR].mLongitudinalGroundVel = 20.0;
     
     // Rear Wheels
-    data.mWheel[2].mLateralForce = 0.0;
-    data.mWheel[3].mLateralForce = 0.0;
-    data.mWheel[2].mSuspForce = 3000.0;
-    data.mWheel[3].mSuspForce = 3000.0;
-    data.mWheel[2].mGripFract = 0.0; // Trigger approximation
-    data.mWheel[3].mGripFract = 0.0;
+    data.mWheel[WHEEL_RL].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RR].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 3000.0;
+    data.mWheel[WHEEL_RR].mSuspForce = 3000.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0; // Trigger approximation
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
     
-    data.mWheel[2].mLateralPatchVel = 5.0; // Slip angle
-    data.mWheel[3].mLateralPatchVel = 5.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 5.0; // Slip angle
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
     
     // Run for >20 frames to trigger load fallback
     for(int i=0; i<30; i++) {
@@ -149,22 +149,22 @@ TEST_CASE(test_rear_align_effect, "SlipGrip") {
     data.mDeltaTime = 0.01;
     
     // Missing load on all wheels
-    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 0.0;
 
-    data.mWheel[0].mGripFract = 1.0; data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[0].mSuspForce = 4000.0; data.mWheel[1].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0; data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 4000.0; data.mWheel[WHEEL_FR].mSuspForce = 4000.0;
     
-    data.mWheel[2].mLateralForce = 0.0;
-    data.mWheel[3].mLateralForce = 0.0;
-    data.mWheel[2].mSuspForce = 3000.0;
-    data.mWheel[3].mSuspForce = 3000.0;
-    data.mWheel[2].mGripFract = 0.0;
-    data.mWheel[3].mGripFract = 0.0;
+    data.mWheel[WHEEL_RL].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RR].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 3000.0;
+    data.mWheel[WHEEL_RR].mSuspForce = 3000.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0;
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
     
-    data.mWheel[2].mLateralPatchVel = 5.0;
-    data.mWheel[3].mLateralPatchVel = 5.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
     
     for(int i=0; i<30; i++) {
         data.mElapsedTime += 0.01;
@@ -185,7 +185,7 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     engine.m_rear_axle.sop_effect = 1.0;
     engine.m_rear_axle.oversteer_boost = 1.0;
     engine.m_general.gain = 1.0;
@@ -193,26 +193,26 @@ TEST_CASE(test_rear_grip_fallback, "SlipGrip") {
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     
     data.mLocalAccel.x = 9.81;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
-    data.mWheel[0].mSuspForce = 4000.0;
-    data.mWheel[1].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 4000.0;
     
-    data.mWheel[2].mGripFract = 0.0;
-    data.mWheel[3].mGripFract = 0.0;
-    data.mWheel[2].mTireLoad = 4000.0;
-    data.mWheel[3].mTireLoad = 4000.0;
-    data.mWheel[2].mSuspForce = 4000.0;
-    data.mWheel[3].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0;
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RR].mSuspForce = 4000.0;
     
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLateralPatchVel = 0.0;
-    data.mWheel[3].mLateralPatchVel = 0.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 0.0;
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 0.0;
     
     // Seeding call
     FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
@@ -236,26 +236,26 @@ TEST_CASE(test_load_factor_edge_cases, "SlipGrip") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     engine.m_vibration.slide_enabled = true;
     engine.m_vibration.slide_gain = 1.0;
     engine.m_front_axle.understeer_effect = 0.0f;
     engine.m_rear_axle.sop_effect = 0.0f;
     engine.m_vibration.bottoming_enabled = false;
     
-    data.mWheel[0].mLateralPatchVel = 5.1; // Changed to avoid exact zero in sawtooth
-    data.mWheel[1].mLateralPatchVel = 5.1;
-    data.mWheel[0].mGripFract = 0.0; // Low grip to trigger scale
-    data.mWheel[1].mGripFract = 0.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 5.1; // Changed to avoid exact zero in sawtooth
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 5.1;
+    data.mWheel[WHEEL_FL].mGripFract = 0.0; // Low grip to trigger scale
+    data.mWheel[WHEEL_FR].mGripFract = 0.0;
     data.mLocalVel.z = 20.0;
     data.mDeltaTime = 0.01;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     
     // Set low but non-zero suspension force
-    data.mWheel[0].mSuspForce = 100.0;
-    data.mWheel[1].mSuspForce = 100.0;
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[1].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 100.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 100.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0;
     
     for(int i=0; i<30; i++) {
         data.mElapsedTime += 0.01;
@@ -312,22 +312,22 @@ TEST_CASE(test_hysteresis_logic, "SlipGrip") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     data.mLocalVel.z = 10.0;
     engine.m_vibration.slide_enabled = true;
     engine.m_vibration.slide_gain = 1.0;
     
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
-    data.mWheel[0].mLateralPatchVel = 5.0;
-    data.mWheel[1].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 5.0;
     data.mDeltaTime = 0.01;
 
     engine.calculate_force(&data, "GT3", "TestCar");
     ASSERT_TRUE(engine.m_missing_load_frames == 0);
 
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[1].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0;
     for (int i=0; i<5; i++) engine.calculate_force(&data, "GT3", "TestCar");
     ASSERT_TRUE(engine.m_missing_load_frames == 5);
 

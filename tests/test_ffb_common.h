@@ -370,7 +370,7 @@ void InitializeEngine(FFBEngine& engine);
 //       every 10ms to simulate 100Hz telemetry correctly.
 //     - Use this for most tests: interpolator ramp-up (>= 0.015s), settling a
 //       specific effect, or advancing time to check timer/decay values.
-//     - AVOID the inline pattern: for(int i=0;i<4;i++) calculate_force(dt=0.0025)
+//     - AVOID the inline pattern: for (int i = 0; i < NUM_WHEELS; i++) calculate_force(dt=0.0025)
 //       unless you specifically need to capture transients *within* a single
 //       100Hz game frame (i.e., the test cares about sub-frame behaviour).
 //
@@ -477,7 +477,7 @@ public:
     static void SetFlatspotStrength(FFBEngine& e, float val) { e.m_front_axle.flatspot_strength = val; }
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_braking.abs_pulse_enabled = val; }
     static void SetLastLogTime(FFBEngine& e, std::chrono::steady_clock::time_point t) { e.last_log_time = t; }
-    static LMUFFB::ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
+    static Logging::ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
     static void SetRestApiEnabled(FFBEngine& e, bool val) { e.m_advanced.rest_api_enabled = val; }
     static void SetRestApiPort(FFBEngine& e, int val) { e.m_advanced.rest_api_port = val; }
     

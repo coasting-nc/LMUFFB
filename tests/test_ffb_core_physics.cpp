@@ -18,10 +18,10 @@ TEST_CASE(test_base_force_passthrough, "CorePhysics") {
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 10.0; 
-    data.mWheel[0].mGripFract = 1.0; 
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[0].mRideHeight = 0.1; 
-    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0; 
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; 
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
 
     // v0.7.67 normalization:
     // force = (raw_torque * shaft_gain) = 10.0 * 0.5 = 5.0 Nm
@@ -42,7 +42,7 @@ TEST_CASE(test_grip_modulation, "CorePhysics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     data.mLocalVel.z = -20.0; 
 
     engine.m_general.gain = 1.0;
@@ -54,17 +54,17 @@ TEST_CASE(test_grip_modulation, "CorePhysics") {
     engine.m_vibration.slide_enabled = false;
     engine.m_vibration.road_enabled = false;
 
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     engine.m_front_axle.understeer_effect = 1.0;
     
     // Issue #397: Pump for longer to settle HW filters
     double force_full = PumpEngineTime(engine, data, 1.0);
     ASSERT_NEAR(force_full, 0.5, 0.001);
 
-    data.mWheel[0].mGripFract = 0.5;
-    data.mWheel[1].mGripFract = 0.5;
+    data.mWheel[WHEEL_FL].mGripFract = 0.5;
+    data.mWheel[WHEEL_FR].mGripFract = 0.5;
     double force_half = PumpEngineTime(engine, data, 1.0);
     ASSERT_NEAR(force_half, 0.25, 0.001);
 }
@@ -76,9 +76,9 @@ TEST_CASE(test_min_force, "CorePhysics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     engine.m_vibration.slide_enabled = false;
     engine.m_vibration.road_enabled = false;
@@ -101,10 +101,10 @@ TEST_CASE(test_zero_input, "CorePhysics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     
     double force = engine.calculate_force(&data);
     ASSERT_NEAR(force, 0.0, 0.001);
@@ -122,10 +122,10 @@ TEST_CASE(test_grip_low_speed, "CorePhysics") {
     engine.m_vibration.road_enabled = false;
     engine.m_invert_force = false;
 
-    data.mWheel[0].mGripFract = 0.0; 
-    data.mWheel[1].mGripFract = 0.0;
-    data.mWheel[0].mTireLoad = 4000.0; 
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mGripFract = 0.0; 
+    data.mWheel[WHEEL_FR].mGripFract = 0.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0; 
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
     engine.m_general.gain = 1.0;
     engine.m_front_axle.understeer_effect = 1.0;
     data.mSteeringShaftTorque = 40.0; 
@@ -133,10 +133,10 @@ TEST_CASE(test_grip_low_speed, "CorePhysics") {
     
     data.mLocalVel.z = 1.0; 
     
-    data.mWheel[0].mLateralPatchVel = 2.0;
-    data.mWheel[1].mLateralPatchVel = 2.0;
-    data.mWheel[0].mLongitudinalGroundVel = 1.0;
-    data.mWheel[1].mLongitudinalGroundVel = 1.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 2.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 2.0;
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 1.0;
+    data.mWheel[WHEEL_FR].mLongitudinalGroundVel = 1.0;
     
     engine.m_steering_shaft_torque_smoothed = 40.0; 
     
@@ -159,12 +159,12 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
 
     data.mDeltaTime = 0.0025; 
     data.mLocalVel.z = 20.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[2].mRideHeight = 0.1;
-    data.mWheel[3].mRideHeight = 0.1;
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_RL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_RR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
     engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
     engine.m_front_axle.understeer_effect = 0.0;
@@ -227,8 +227,8 @@ TEST_CASE(test_gain_compensation, "CorePhysics") {
     engine.m_vibration.slide_enabled = false;
     engine.m_front_axle.understeer_effect = 0.5;
     data.mSteeringShaftTorque = 10.0;
-    data.mWheel[0].mGripFract = 0.6; 
-    data.mWheel[1].mGripFract = 0.6;
+    data.mWheel[WHEEL_FL].mGripFract = 0.6; 
+    data.mWheel[WHEEL_FR].mGripFract = 0.6;
 
     // Enable Dynamic Normalization to test its consistent scaling
     engine.m_general.dynamic_normalization_enabled = true;
@@ -266,12 +266,12 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.0025;
     data.mLocalVel.z = 20.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[2].mRideHeight = 0.1;
-    data.mWheel[3].mRideHeight = 0.1;
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_RL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_RR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
     engine.m_general.gain = 1.0;
     engine.m_invert_force = false;
     engine.m_front_axle.understeer_effect = 0.0;
@@ -323,8 +323,8 @@ TEST_CASE(test_gain_compensation_disabled, "CorePhysics") {
     engine.m_general.dynamic_normalization_enabled = false;
     engine.m_front_axle.understeer_effect = 0.5;
     data.mSteeringShaftTorque = 10.0;
-    data.mWheel[0].mGripFract = 0.6;
-    data.mWheel[1].mGripFract = 0.6;
+    data.mWheel[WHEEL_FL].mGripFract = 0.6;
+    data.mWheel[WHEEL_FR].mGripFract = 0.6;
 
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     // v0.7.109: Ensure multiplier matches target before first calc
@@ -368,7 +368,7 @@ TEST_CASE(test_high_gain_stability, "CorePhysics") {
     engine.m_braking.brake_load_cap = 10.0f;
     engine.m_rear_axle.oversteer_boost = 4.0f;
     
-    data.mWheel[0].mLongitudinalPatchVel = -15.0; 
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -15.0; 
     data.mUnfilteredBrake = 1.0;
     
     for(int i=0; i<1000; i++) {
@@ -447,7 +447,7 @@ TEST_CASE(test_smoothing_step_response, "CorePhysics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
 
     // v0.7.147 Mapping: 0.5 factor means 50ms Tau.
     // Frame 1 (2.5ms) response: alpha = 2.5 / (50 + 2.5) = 2.5/52.5 approx 0.0476
@@ -548,7 +548,7 @@ TEST_CASE(test_lockup_pitch_scaling, "CorePhysics") {
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     engine.m_braking.lockup_enabled = true;
-    data.mWheel[0].mLongitudinalPatchVel = -5.0; 
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -5.0; 
     data.mDeltaTime = 0.001;
     
     engine.m_braking.lockup_freq_scale = 1.0f;
@@ -598,16 +598,16 @@ TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {
     
     // Setup: Car is sliding sideways (5 m/s) but has Grip (1.0)
     // This means Rear Torque is 0.0 (because grip is good), BUT LPF should be tracking the slide.
-    data.mWheel[2].mLateralPatchVel = 5.0;
-    data.mWheel[3].mLateralPatchVel = 5.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mGripFract = 1.0; // Good grip
-    data.mWheel[3].mGripFract = 1.0;
-    data.mWheel[2].mTireLoad = 4000.0;
-    data.mWheel[3].mTireLoad = 4000.0;
-    data.mWheel[2].mSuspForce = 3700.0; // For load calc
-    data.mWheel[3].mSuspForce = 3700.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mGripFract = 1.0; // Good grip
+    data.mWheel[WHEEL_RR].mGripFract = 1.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 3700.0; // For load calc
+    data.mWheel[WHEEL_RR].mSuspForce = 3700.0;
     data.mDeltaTime = 0.01;
     
     // Run 50 frames. The LPF should settle on the slip angle (~0.24 rad).
@@ -616,8 +616,8 @@ TEST_CASE(test_regression_rear_torque_lpf, "CorePhysics") {
     }
     
     // Now, suddenly drop grip to 0.0 (Oversteer event)
-    data.mWheel[2].mGripFract = 0.0;
-    data.mWheel[3].mGripFract = 0.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0;
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
     
     // The LPF should ALREADY be charged, so force should be immediate.
     double force = engine.calculate_force(&data);

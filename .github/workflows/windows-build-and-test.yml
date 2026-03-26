@@ -602,27 +602,47 @@ jobs:
       shell: bash
       run: |
         cd site
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
         # If .git doesn't exist (first run or checkout failed), initialize it
         if [ ! -d ".git" ]; then
           git init
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git branch -M gh-pages
         fi
-        
-        # Ensure we are on the gh-pages branch
-        # -M renames the current branch (master/main) to gh-pages if it's a fresh repo
-        git branch -M gh-pages
-        
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
         
         git add .
         
         # Only commit and push if there are changes
         if [ -n "$(git status --porcelain)" ]; then
           git commit -m "Update ${{ steps.target.outputs.subdir }} from ${{ github.ref_name }}@${{ github.sha }}"
-          # Use --force if it's the first time or if the remote has diverged and we want to overwrite 
-          # (though with the checkout-merge strategy we should be fast-forwarding mostly)
-          git push origin gh-pages
+          
+          # Robust push with retries and rebase to handle concurrency
+          MAX_RETRIES=5
+          for ((i=1; i<=MAX_RETRIES; i++)); do
+            echo "Attempt $i to push to gh-pages..."
+            if git push origin gh-pages; then
+              echo "✅ Push successful."
+              break
+            fi
+            
+            if [ $i -eq $MAX_RETRIES ]; then
+              echo "❌ Failed to push after $MAX_RETRIES attempts."
+              exit 1
+            fi
+            
+            echo "⚠️ Push failed (likely a race condition). Pulling latest and rebasing..."
+            # Fetch and rebase to incorporate remote changes
+            git fetch origin gh-pages
+            # Use rebase to keep history clean; since each branch uses its own subdir, conflicts are unlikely
+            git rebase origin/gh-pages || git rebase --abort
+            
+            # Wait a bit before retrying with some jitter
+            SLEEP_TIME=$(( (RANDOM % 5) + 2 ))
+            echo "Waiting $SLEEP_TIME seconds before next attempt..."
+            sleep $SLEEP_TIME
+          done
         else
           echo "No changes to commit"
         fi

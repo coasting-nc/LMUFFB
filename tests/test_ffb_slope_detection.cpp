@@ -74,8 +74,8 @@ TEST_CASE(test_slope_grip_past_peak, "SlopeDetection") {
         double slip = 0.05 + (double)i * 0.005;
         double g = 1.5 - (double)i * 0.015; // Decreasing but stays > 0
         
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
         data.mLocalAccel.x = g * 9.81;
         
         // Pump 4 times per 100Hz frame to match 400Hz loop
@@ -112,8 +112,8 @@ TEST_CASE(test_slope_vs_static_comparison, "SlopeDetection") {
     // Run both
     for (int i = 0; i < 40; i++) {
         double slip = 0.05 + (double)i * 0.01;
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
         
         double g = 1.0;
         if (i < 15) g = 1.0 + (double)i * 0.1; // Increasing G
@@ -225,7 +225,7 @@ TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
     
     for (int i = 0; i < 20; i++) {
         data.mLocalAccel.x = (0.5 + i * 0.05) * 9.81;
-        data.mWheel[0].mLateralPatchVel = (0.05 + i * 0.005) * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = (0.05 + i * 0.005) * 20.0;
         PumpEngineTime(engine, data, 0.01);
     }
     
@@ -258,7 +258,7 @@ TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
     // Step 5: Run a few frames and verify clean slope calculation
     for (int i = 0; i < 5; i++) {
         data.mLocalAccel.x = 1.2 * 9.81;  // Constant 1.2G
-        data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;  // Constant slip
+        data.mWheel[WHEEL_FL].mLateralPatchVel = 0.05 * 20.0;  // Constant slip
         PumpEngineTime(engine, data, 0.01);
     }
     
@@ -297,8 +297,8 @@ TEST_CASE(test_slope_detection_no_boost_when_grip_balanced, "SlopeDetection") {
         double slip = 0.05 + (double)i * 0.01;
         double g = 1.0 - (double)i * 0.05; // Slower drop to stay positive for longer
         data.mLocalAccel.x = g * 9.81;
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
         PumpEngineTime(engine, data, 0.01);
 
         auto batch = engine.GetDebugBatch();
@@ -339,7 +339,7 @@ TEST_CASE(test_slope_detection_no_boost_during_oversteer, "SlopeDetection") {
     // Build up positive slope (Front grip = 1.0)
     for (int i = 0; i < 20; i++) {
         data.mLocalAccel.x = (0.5 + i * 0.1) * 9.81;
-        data.mWheel[0].mLateralPatchVel = (0.02 + i * 0.005) * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = (0.02 + i * 0.005) * 20.0;
         PumpEngineTime(engine, data, 0.01);
     }
     
@@ -366,10 +366,10 @@ TEST_CASE(test_lat_g_boost_works_without_slope_detection, "SlopeDetection") {
     data.mLocalAccel.x = 1.5 * 9.81;
     data.mDeltaTime = 0.01;
     
-    data.mWheel[0].mLateralPatchVel = 0.04 * 20.0;
-    data.mWheel[1].mLateralPatchVel = 0.04 * 20.0;
-    data.mWheel[2].mLateralPatchVel = 0.08 * 20.0;
-    data.mWheel[3].mLateralPatchVel = 0.08 * 20.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 0.04 * 20.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 0.04 * 20.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 0.08 * 20.0;
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 0.08 * 20.0;
     
     PumpEngineSteadyState(engine, data);
     FFBSnapshot snap = engine.GetDebugBatch().back();
@@ -402,7 +402,7 @@ TEST_CASE(test_slope_current_in_snapshot, "SlopeDetection") {
     // Frames 1-20: Build up a slope
     for (int i = 0; i < 20; i++) {
         data.mLocalAccel.x = (0.5 + i * 0.1) * 9.81;
-        data.mWheel[0].mLateralPatchVel = (0.02 + i * 0.01) * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = (0.02 + i * 0.01) * 20.0;
         PumpEngineTime(engine, data, 0.01);
     }
     
@@ -434,8 +434,8 @@ TEST_CASE(test_slope_detection_less_aggressive_v071, "SlopeDetection") {
         double g = 1.5 - (double)i * 0.05;
         double slip = 0.05 + (double)i * 0.01;
         data.mLocalAccel.x = g * 9.81;
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
         PumpEngineTime(engine, data, 0.01);
 
         auto batch = engine.GetDebugBatch();
@@ -824,7 +824,7 @@ TEST_CASE(TestSlope_NearThreshold_Singularity, "SlopeDetection") {
         double alpha = 0.1 + (double)i * 0.00021; // Reach threshold
         double g = 1.0 - (double)i * 0.05;
         data.mLocalAccel.x = g * 9.81;
-        data.mWheel[0].mLateralPatchVel = alpha * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = alpha * 20.0;
         PumpEngineTime(engine, data, 0.01);
     }
 
@@ -872,7 +872,7 @@ TEST_CASE(test_slope_sg_filter_dt_independence, "SlopeDetection") {
     for(int i = 0; i < 100; i++) {
         if (i % 4 == 0) {
             data.mLocalAccel.x = (i / 4) * 0.1;
-            data.mWheel[0].mLateralPatchVel = (i / 4) * 0.01;
+            data.mWheel[WHEEL_FL].mLateralPatchVel = (i / 4) * 0.01;
             data.mElapsedTime += 0.01;
         }
         engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
@@ -885,7 +885,7 @@ TEST_CASE(test_slope_sg_filter_dt_independence, "SlopeDetection") {
     // We continue the ramp into the weird frame to see if the derivative math
     // is truly independent of the passed dt (since we use internal_dt).
     data.mLocalAccel.x += 0.1;
-    data.mWheel[0].mLateralPatchVel += 0.01;
+    data.mWheel[WHEEL_FL].mLateralPatchVel += 0.01;
     // Advance elapsedTime so upsamplers don't see it as a stale frame
     data.mElapsedTime += 0.1;
 
@@ -917,7 +917,7 @@ TEST_CASE(test_slope_decay_with_zero_dt, "SlopeDetection") {
     // v0.7.198: We use a large enough ramp to clear noise and trigger slope.
     for (int i = 0; i < 100; i++) {
         data.mLocalAccel.x = 100.0 + (double)i * 0.5 * 9.81; // Keep it high and positive
-        data.mWheel[0].mLateralPatchVel = (double)i * 0.1 * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = (double)i * 0.1 * 20.0;
         data.mElapsedTime += 0.01;
         engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01);
     }
@@ -929,7 +929,7 @@ TEST_CASE(test_slope_decay_with_zero_dt, "SlopeDetection") {
     // 2. Clear inputs and let it stabilize.
     // We need dAlpha_dt to fall below threshold to enter the decay phase.
     data.mLocalAccel.x = 0.0;
-    data.mWheel[0].mLateralPatchVel = 0.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 0.0;
     for (int i = 0; i < 100; i++) {
         data.mElapsedTime += 0.01;
         engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.01);

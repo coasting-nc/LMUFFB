@@ -27,8 +27,8 @@ TEST_CASE(test_surface_type_logging, "AccuracyTools") {
 
     // Create mock telemetry with specific surface types
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.05);
-    data.mWheel[0].mSurfaceType = 5; // Rumblestrip
-    data.mWheel[1].mSurfaceType = 0; // Dry
+    data.mWheel[WHEEL_FL].mSurfaceType = 5; // Rumblestrip
+    data.mWheel[WHEEL_FR].mSurfaceType = 0; // Dry
     data.mDeltaTime = 0.01;
 
     // Run enough frames to trigger logging

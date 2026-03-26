@@ -1,11 +1,14 @@
 #include "DirectInputFFB.h"
-#include "Logger.h"
-#include "StringUtils.h"
+#include "logging/Logger.h"
+#include "utils/StringUtils.h"
 
 // Standard Library Headers
 #include <algorithm> // For std::max, std::min
 #include <mutex>
 #include <cmath>
+
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 // Platform-Specific Headers
 #ifdef _WIN32

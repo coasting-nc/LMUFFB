@@ -39,7 +39,7 @@ TEST_CASE(test_ffb_engine_extreme_edge_cases, "Physics") {
     // 2. Wheel radius < RADIUS_FALLBACK_MIN_M (Line 188 context)
     // Note: circumference > 0 is always true because fallback is 0.33, 
     // but this exercises the defensive logic.
-    data.mWheel[0].mStaticUndeflectedRadius = 0.05f * 100.0f; // 5cm in cm
+    data.mWheel[WHEEL_FL].mStaticUndeflectedRadius = static_cast<unsigned char>(0.05f * 100.0f); // 5cm in cm
     
     engine.calculate_force(&data, "GT3", "911");
 }
@@ -65,9 +65,9 @@ TEST_CASE(test_ffb_engine_dt_and_slip_window_minimums, "Physics") {
     engine.m_braking.lockup_full_pct = 15.0f;
     engine.m_braking.lockup_start_pct = 14.999f; // Window = 0.00001 < 0.01 (MIN_SLIP_WINDOW)
     
-    data.mWheel[0].mBrakePressure = 1.0;
-    data.mWheel[0].mLongitudinalPatchVel = 10.0; // Force slip
-    data.mWheel[0].mRotation = 50.0;
+    data.mWheel[WHEEL_FL].mBrakePressure = 1.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = 10.0; // Force slip
+    data.mWheel[WHEEL_FL].mRotation = 50.0;
     
     FFBEngineTestAccess::CallCalculateLockup_Vibration(engine, &data, ctx);
 }

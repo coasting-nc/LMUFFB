@@ -123,8 +123,8 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     
     // We rely on calculate_wheel_slip_ratio internal logic:
     // w.mLongitudinalPatchVel / v_long
-    data.mWheel[2].mLongitudinalPatchVel = 10.0; // Slip velocity
-    data.mWheel[2].mLongitudinalGroundVel = 20.0; 
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 10.0; // Slip velocity
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0; 
     // Ratio = 0.5. > 0.2 threshold.
     
     FFBEngineTestAccess::CallCalculateWheelSpin(engine, &data, ctx);
@@ -138,8 +138,8 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     // effective_slip_vel > 1.5
     engine.m_vibration.slide_enabled = true;
     engine.m_vibration.slide_gain = 1.0;
-    data.mWheel[0].mLateralPatchVel = 2.0;
-    data.mWheel[1].mLateralPatchVel = 2.0; // Avg = 2.0 > 1.5
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 2.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 2.0; // Avg = 2.0 > 1.5
     FFBEngineTestAccess::CallCalculateSlideTexture(engine, &data, ctx);
     // ctx.slide_noise should be non-zero (unless phase is 0)
     
@@ -149,13 +149,13 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     FFBEngineTestAccess::SetScrubDragGain(engine, 1.0);
     
     // Scrub logic: abs(avg_lat_vel) > 0.001
-    data.mWheel[0].mLateralPatchVel = 1.0;
-    data.mWheel[1].mLateralPatchVel = 1.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 1.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 1.0;
     
     // Road noise logic: deflection delta
     // Need prev deflection to be different.
     // But prev is 0.0 initially.
-    data.mWheel[0].mVerticalTireDeflection = 0.005;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.005;
     
     FFBEngineTestAccess::CallCalculateRoadTexture(engine, &data, ctx);
     
@@ -165,8 +165,8 @@ TEST_CASE(test_coverage_textures, "Coverage") {
     // 4. Road Texture (Accelerometer Path)
     // Speed > 5.0, No Deflection
     ctx.car_speed = 10.0;
-    data.mWheel[0].mVerticalTireDeflection = 0.0;
-    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0;
     // Need prev vs current accel diff
     // FFBEngine uses m_prev_vert_accel (internal state).
     // Calling calculate_road_texture does NOT update m_prev_vert_accel (it's updated in calculate_force).
@@ -210,8 +210,8 @@ TEST_CASE(test_coverage_bottoming_rh, "Coverage") {
     
     // Method 0: Ride Height
     FFBEngineTestAccess::SetBottomingMethod(engine, 0);
-    data.mWheel[0].mRideHeight = 0.001; // < 0.002
-    data.mWheel[1].mRideHeight = 0.001;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.001; // < 0.002
+    data.mWheel[WHEEL_FR].mRideHeight = 0.001;
     
     // First call advances phase from 0
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
@@ -235,7 +235,7 @@ TEST_CASE(test_coverage_bottoming_dforce, "Coverage") {
 
     // Method 1: dForce
     FFBEngineTestAccess::SetBottomingMethod(engine, 1);
-    data.mWheel[0].mSuspForce = 200000.0; // Huge force
+    data.mWheel[WHEEL_FL].mSuspForce = 200000.0; // Huge force
     // Prev is 0. dForce = 20,000,000. > 100,000 thousand.
     
     // First call
@@ -262,8 +262,8 @@ TEST_CASE(test_coverage_bottoming_fallback, "Coverage") {
     FFBEngineTestAccess::SetBottomingMethod(engine, 1);
     
     // Fallback: Max Load
-    data.mWheel[0].mSuspForce = 0.0; // Low force, won't trigger dForce
-    data.mWheel[0].mTireLoad = 9000.0; // > threshold (4500 * 1.6 = 7200) - triggers fallback
+    data.mWheel[WHEEL_FL].mSuspForce = 0.0; // Low force, won't trigger dForce
+    data.mWheel[WHEEL_FL].mTireLoad = 9000.0; // > threshold (4500 * 1.6 = 7200) - triggers fallback
     
     // First call
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);

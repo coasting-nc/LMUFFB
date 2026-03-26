@@ -152,7 +152,7 @@ TEST_CASE(test_coverage_abs_pulse, "Coverage") {
     // Need pressure delta > threshold 2.0
     // prev pressure is 0 by default. set current pressure to 1.0. 
     // delta = (1.0 - 0) / 0.01 = 100.0 > 2.0
-    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 1.0f;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mBrakePressure = 1.0f;
     
     FFBEngineTestAccess::CallCalculateABSPulse(engine, &data, ctx);
     ASSERT_TRUE(std::isfinite(ctx.abs_pulse_force));
@@ -192,16 +192,16 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
     FFBEngineTestAccess::SetABSPulseEnabled(engine, true);
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 100.0); // Extreme scaling for visibility
     data.mUnfilteredBrake = 0.8f;
-    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 1.0f;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mBrakePressure = 1.0f;
     
     data.mElapsedTime += 0.01;
     FFBEngineTestAccess::SetDerivativesSeeded(engine, false); // Trigger seeding
     engine.calculate_force(&data, "GT3", "M4 GT3"); // Prime prev_brake_pressure
-    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 10.0f; // Rapid change
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mBrakePressure = 10.0f; // Rapid change
     
     data.mElapsedTime += 0.01;
     // Issue #397: Interpolator ramp-up requires multiple ticks
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.calculate_force(&data, "GT3", "M4 GT3", 0.0f, true, 0.0025);
     }
     batch = engine.GetDebugBatch();
@@ -212,18 +212,18 @@ TEST_CASE(test_coverage_integrated, "Coverage") {
     // 5. Verify calculate_slope_grip with torque fusion (Line 1225)
     FFBEngineTestAccess::SetSlopeDetectionEnabled(engine, true);
     FFBEngineTestAccess::SetSlopeUseTorque(engine, true);
-    data.mWheel[0].mGripFract = 0.0f;
-    data.mWheel[1].mGripFract = 0.0f;
-    data.mWheel[0].mTireLoad = 1000.0f;
-    data.mWheel[1].mTireLoad = 1000.0f;
+    data.mWheel[WHEEL_FL].mGripFract = 0.0f;
+    data.mWheel[WHEEL_FR].mGripFract = 0.0f;
+    data.mWheel[WHEEL_FL].mTireLoad = 1000.0f;
+    data.mWheel[WHEEL_FR].mTireLoad = 1000.0f;
     
     for(int i=0; i<45; i++) {
         data.mElapsedTime += 0.01;
         data.mSteeringShaftTorque = 1.0f - (static_cast<float>(i) * 0.1f); 
         data.mUnfilteredSteering = 0.1f + (static_cast<float>(i) * 0.01f);
         data.mLocalAccel.x = 5.0f + (static_cast<float>(i) * 0.5f); // Create G derivative
-        data.mWheel[0].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f); // Create Slip derivative
-        data.mWheel[1].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f);
+        data.mWheel[WHEEL_FL].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f); // Create Slip derivative
+        data.mWheel[WHEEL_FR].mLateralPatchVel = 1.0f + (static_cast<float>(i) * 0.1f);
         engine.calculate_force(&data, "GT3", "M4 GT3"); 
     }
     

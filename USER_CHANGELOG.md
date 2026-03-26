@@ -2,7 +2,18 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
-[size=5][b]March 25, 2026[/b][/size]
+[size=5][b]March 26, 2026[/b][/size]
+[b]Version 0.7.252 - Codebase Standardization: Wheel Index Refactoring[/b]
+
+[b]New release[/b] (0.7.252): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Eliminated Magic Numbers[/b]: Replaced all hardcoded wheel indices (0-3) with descriptive constants ([i]WHEEL_FL, WHEEL_FR, etc.[/i]) throughout the entire codebase.
+[*][b]Improved Stability & Maintainability[/b]: Standardized array bounds and loop logic using a centralized [i]NUM_WHEELS[/i] constant, reducing the risk of indexing errors in future updates.
+[*][b]Codebase-Wide Verification[/b]: Updated over 150 test files and verified that all 629+ physics and FFB tests continue to pass with the new standardized architecture.
+[/list]
+
+---
 [b]Version 0.7.236 - Core Systems Modernization (Milestone 2 & 3 Complete)[/b]
 
 [b]New release[/b] (0.7.236): https://github.com/coasting-nc/LMUFFB/releases
