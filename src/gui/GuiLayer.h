@@ -7,6 +7,7 @@
 class GuiLayerTestAccess;
 
 namespace LMUFFB {
+namespace GUI {
 
 class GuiLayer {
 public:
@@ -44,15 +45,27 @@ private:
     static void DrawDebugWindow(LMUFFB::FFBEngine& engine);
 };
 
+} // namespace GUI
 } // namespace LMUFFB
 
 // Platform helper functions (implemented in GuiLayer_Win32.cpp and GuiLayer_Linux.cpp)
 namespace LMUFFB {
+namespace GUI {
 void ResizeWindowPlatform(int x, int y, int w, int h);
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode);
 void SetWindowAlwaysOnTopPlatform(bool enabled);
 bool OpenPresetFileDialogPlatform(std::string& outPath);
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName);
+}
+}
+
+namespace LMUFFB {
+    using GUI::GuiLayer;
+    using GUI::ResizeWindowPlatform;
+    using GUI::SaveCurrentWindowGeometryPlatform;
+    using GUI::SetWindowAlwaysOnTopPlatform;
+    using GUI::OpenPresetFileDialogPlatform;
+    using GUI::SavePresetFileDialogPlatform;
 }
 
 #endif // GUILAYER_H

@@ -204,7 +204,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Transition `logging/` files from `namespace LMUFFB` to `namespace LMUFFB::Logging`. (Initial batch: all six files in `src/logging/`).
 - [x] Transition `utils/` files to `namespace LMUFFB::Utils`. (v0.7.256)
 - [x] Transition `physics/` files to `namespace LMUFFB::Physics`. (v0.7.257)
-- [ ] Transition `gui/` files to `namespace LMUFFB::GUI`.
+- [x] Transition `gui/` files to `namespace LMUFFB::GUI`. (v0.7.258)
 
 ---
 
@@ -229,6 +229,12 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 ---
 
 ## 8. Implementation Notes
+
+### 8.15 Implementation Notes (v0.7.258)
+- **Encountered Issues:**
+  - Encountered linker errors for `g_engine_mutex` and `g_running` within the `LMUFFB::GUI` namespace in `GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, and `GuiLayer_Linux.cpp`. Resolved by ensuring these `extern` declarations are positioned within the root `namespace LMUFFB` while the implementation remains in `namespace LMUFFB::GUI`.
+- **Deviations from the Plan:** None.
+- **Suggestions for the Future:** Phase 6 (Subsystem Namespace Migration) is now complete for all major functional directories. Future efforts should focus on refining internal linkage within these namespaces and potentially migrating remaining root-level files if architectural needs arise.
 
 ### 8.14 Implementation Notes (v0.7.257)
 - **Encountered Issues:**
@@ -338,13 +344,14 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - Namespaced all six logging files instead of just the initial two, as it proved more maintainable for the directory's internal consistency.
 - **Suggestions for the Future:** Continue Phase 6 by transitioning `src/utils/` files (e.g., `MathUtils.h`, `TimeUtils.h`, `StringUtils.h`) to `namespace LMUFFB::Utils`.
 
-## 9. Next Steps: Phase 6 - Subsystem Namespace Migration
-Phase 5 is now complete. All core project files are encapsulated within the `LMUFFB` namespace and are whitelisted for Unity Builds. The next objective is to improve architectural modularity by migrating modules into granular sub-namespaces.
+## 9. Next Steps: Phase 6 Completion and Maintenance
+Phase 6 is now complete. All major logical subsystems (`Logging`, `Utils`, `Physics`, `GUI`) have been migrated to granular sub-namespaces under `LMUFFB`.
 
 ### Your Objectives for the Next PR:
-1. **Continue Phase 6 (Subsystem Namespace Migration):**
-   - Transition `src/gui/` files (e.g., `GuiLayer.h`, `GuiWidgets.h`, `Tooltips.h`) to `namespace LMUFFB::GUI`.
-   - Update call sites in `main.cpp` and other modules accordingly.
+1. **Internal Linkage Audit:**
+   - Conduct a systematic review of all `.cpp` files to ensure that all internal helper functions and variables are correctly positioned within anonymous namespaces to further harden the Unity Build against ODR violations.
+2. **Namespace Hygiene:**
+   - Incremental removal of temporary bridge aliases in root `namespace LMUFFB` as call sites are updated to use fully qualified names or explicit `using namespace` directives in implementation files.
 
 ### Critical Reminders for Phase 6
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.

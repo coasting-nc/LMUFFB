@@ -39,9 +39,12 @@ using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
+    extern std::atomic<bool> g_running;
+    extern std::recursive_mutex g_engine_mutex;
+}
 
-extern std::atomic<bool> g_running;
-extern std::recursive_mutex g_engine_mutex;
+namespace LMUFFB {
+namespace GUI {
 
 float GuiLayer::m_latest_steering_range = 0.0f;
 float GuiLayer::m_latest_steering_angle = 0.0f;
@@ -52,26 +55,28 @@ std::string GuiLayer::m_last_system_cmd;
 #endif
 
 #ifdef ENABLE_IMGUI
-static void DisplayRate(const char* label, double rate, double target) {
-    ImGui::Text("%s", label);
-    
-    // Status colors for performance metrics
-    static const ImVec4 COLOR_RED(1.0F, 0.4F, 0.4F, 1.0F);
-    static const ImVec4 COLOR_GREEN(0.4F, 1.0F, 0.4F, 1.0F);
-    static const ImVec4 COLOR_YELLOW(1.0F, 1.0F, 0.4F, 1.0F);
+namespace {
+    void DisplayRate(const char* label, double rate, double target) {
+        ImGui::Text("%s", label);
 
-    ImVec4 color = COLOR_RED;
-    if (rate >= target * 0.95) {
-        color = COLOR_GREEN;
-    } else if (rate >= target * 0.75) {
-        color = COLOR_YELLOW;
+        // Status colors for performance metrics
+        static const ImVec4 COLOR_RED(1.0F, 0.4F, 0.4F, 1.0F);
+        static const ImVec4 COLOR_GREEN(0.4F, 1.0F, 0.4F, 1.0F);
+        static const ImVec4 COLOR_YELLOW(1.0F, 1.0F, 0.4F, 1.0F);
+
+        ImVec4 color = COLOR_RED;
+        if (rate >= target * 0.95) {
+            color = COLOR_GREEN;
+        } else if (rate >= target * 0.75) {
+            color = COLOR_YELLOW;
+        }
+
+        ImGui::TextColored(color, "%.1f Hz", rate);
     }
-    
-    ImGui::TextColored(color, "%.1f Hz", rate);
-}
 
-static const float CONFIG_PANEL_WIDTH = 500.0f;
-static const int LATENCY_WARNING_THRESHOLD_MS = 15;
+    constexpr float CONFIG_PANEL_WIDTH = 500.0f;
+    constexpr int LATENCY_WARNING_THRESHOLD_MS = 15;
+}
 
 // Professional "Flat Dark" Theme
 void GuiLayer::SetupGUIStyle() {
@@ -1063,10 +1068,11 @@ struct RollingBuffer {
     }
 };
 
-inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
-                          float scale_min, float scale_max,
-                          const ImVec2& size = ImVec2(0, 40),
-                          const char* tooltip = nullptr) {
+namespace {
+    void PlotWithStats(const char* label, const RollingBuffer& buffer,
+                              float scale_min, float scale_max,
+                              const ImVec2& size = ImVec2(0, 40),
+                              const char* tooltip = nullptr) {
     ImGui::Text("%s", label);
     char hidden_label[256];
     StringUtils::SafeFormat(hidden_label, sizeof(hidden_label), "##%s", label);
@@ -1102,12 +1108,13 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
     draw_list->AddText(font, font_size, p_min, IM_COL32(255, 255, 255, 255), stats_overlay);
 }
 
-// Global Buffers
-static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
-static RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
-static RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
+    // Global Buffers
+    RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
+    RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
+    RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
-static bool g_warn_dt = false;
+    bool g_warn_dt = false;
+}
 
 void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
     auto snapshots = engine.GetDebugBatch();
@@ -1350,11 +1357,12 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {}
 void GuiLayer::SetupGUIStyle() {}
 #endif
 
+} // namespace GUI
 } // namespace LMUFFB
 
 #ifdef LMUFFB_UNIT_TEST
 void GuiLayerTestAccess::GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd) {
-    wArgs = LMUFFB::GuiLayer::m_last_shell_execute_args;
-    cmd = LMUFFB::GuiLayer::m_last_system_cmd;
+    wArgs = LMUFFB::GUI::GuiLayer::m_last_shell_execute_args;
+    cmd = LMUFFB::GUI::GuiLayer::m_last_system_cmd;
 }
 #endif

@@ -2,6 +2,7 @@
 #include <cstring>
 
 namespace LMUFFB {
+namespace GUI {
     void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd) {
         memset(&sd, 0, sizeof(sd));
         sd.Width = 0;                               // Use window size
@@ -17,4 +18,5 @@ namespace LMUFFB {
         sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
         sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     }
-}
+} // namespace GUI
+} // namespace LMUFFB
