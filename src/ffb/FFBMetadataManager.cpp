@@ -4,6 +4,7 @@
 #include "physics/VehicleUtils.h"
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 

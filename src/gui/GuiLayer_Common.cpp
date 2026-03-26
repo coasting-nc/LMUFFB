@@ -2,7 +2,7 @@
 #include "Version.h"
 #include "Config.h"
 #include "Tooltips.h"
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"
@@ -36,6 +36,7 @@
 #endif
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 
