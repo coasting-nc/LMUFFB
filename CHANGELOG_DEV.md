@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.259]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Conducted a systematic **Internal Linkage Audit**, transitioning file-local helper functions and variables in `Config.cpp`, `main.cpp`, `GuiLayer_Win32.cpp`, and `GuiLayer_Linux.cpp` to anonymous namespaces within their respective `LMUFFB` scopes.
+  - Implemented **Namespace Hygiene** for the `Logging` subsystem by removing temporary bridge aliases in `Logger.h`, `AsyncLogger.h`, `PerfStats.h`, `RateMonitor.h`, `HealthMonitor.h`, and `ChannelMonitor.h`.
+  - Updated over 50 call sites and forward declarations project-wide to use explicit `Logging::` qualification, completing the decoupling of the Logging subsystem from the root namespace.
+  - Hardened the codebase against ODR violations by removing redundant `static` keywords on functions now protected by internal linkage in anonymous namespaces.
+  - Updated the Unity Build Plan documentation with implementation notes and revised next steps targeting the `Utils` subsystem.
+
 ## [0.7.258]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

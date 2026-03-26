@@ -44,7 +44,7 @@ namespace {
     constexpr int    kGuiPeriodMs          = 16;     // GUI loop sleep period (ms, ≈60 Hz)
 } // anonymous namespace
 
-// --- Helper for Testability ---
+// --- Helper for Testability --- (Exposed for units tests)
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
     info.app_version = LMUFFB_VERSION;
     info.vehicle_name = scoring.mVehicleName;
@@ -81,7 +81,7 @@ extern FFBEngine g_engine;
 extern std::recursive_mutex g_engine_mutex;
 #endif
 
-// --- FFB Loop (High Priority 1000Hz) ---
+// --- FFB Loop (High Priority 1000Hz) --- (Exposed for unit tests)
 void FFBThread() {
     Logger::Get().LogFile("[FFB] Loop Started.");
     RateMonitor loopMonitor;
@@ -304,6 +304,7 @@ void FFBThread() {
 }
 
 #ifndef _WIN32
+// Exposed for unit tests
 void handle_sigterm(int sig) {
     g_running = false;
 }

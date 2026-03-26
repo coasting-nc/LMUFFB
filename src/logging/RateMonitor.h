@@ -52,9 +52,4 @@ private:
 };
 } // namespace LMUFFB::Logging
 
-// Temporary bridge for legacy code
-namespace LMUFFB {
-    using RateMonitor = LMUFFB::Logging::RateMonitor;
-}
-
 #endif // RATEMONITOR_H

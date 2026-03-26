@@ -1782,7 +1782,7 @@ void FFBEngine::ResetNormalization() {
 
     m_smoothed_vibration_mult = 1.0;
 
-    Logger::Get().LogFile("[FFB] Normalization state reset. Structural Peak: %.2f Nm | Load Peak: %.2f N",
+    Logging::Logger::Get().LogFile("[FFB] Normalization state reset. Structural Peak: %.2f Nm | Load Peak: %.2f N",
         m_session_peak_torque, m_auto_peak_front_load);
 }
 

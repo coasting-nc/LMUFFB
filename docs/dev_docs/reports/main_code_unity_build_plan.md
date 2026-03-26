@@ -205,6 +205,8 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Transition `utils/` files to `namespace LMUFFB::Utils`. (v0.7.256)
 - [x] Transition `physics/` files to `namespace LMUFFB::Physics`. (v0.7.257)
 - [x] Transition `gui/` files to `namespace LMUFFB::GUI`. (v0.7.258)
+- [x] Conduct Internal Linkage Audit and harden `.cpp` files with anonymous namespaces. (v0.7.259)
+- [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
 
 ---
 
@@ -229,6 +231,13 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 ---
 
 ## 8. Implementation Notes
+
+### 8.16 Implementation Notes (v0.7.259)
+- **Encountered Issues:**
+  - Encountered multiple "diff did not apply" errors during the refactoring of `Config.cpp`, `main.cpp`, and `FFBEngine.cpp` due to minor formatting mismatches or slightly different code snippets than expected in the search blocks. Resolved by reading the files again to ensure exact search strings were used.
+- **Deviations from the Plan:**
+  - Decided to focus the removal of bridge aliases specifically on the `Logging` subsystem for this iteration to maintain a strictly incremental approach as requested. Other subsystems will be handled in subsequent PRs.
+- **Suggestions for the Future:** Continue the removal of bridge aliases for remaining subsystems (`Utils`, `Physics`, `GUI`) in future increments to fully clean up the root `LMUFFB` namespace.
 
 ### 8.15 Implementation Notes (v0.7.258)
 - **Encountered Issues:**
@@ -344,14 +353,14 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - Namespaced all six logging files instead of just the initial two, as it proved more maintainable for the directory's internal consistency.
 - **Suggestions for the Future:** Continue Phase 6 by transitioning `src/utils/` files (e.g., `MathUtils.h`, `TimeUtils.h`, `StringUtils.h`) to `namespace LMUFFB::Utils`.
 
-## 9. Next Steps: Phase 6 Completion and Maintenance
-Phase 6 is now complete. All major logical subsystems (`Logging`, `Utils`, `Physics`, `GUI`) have been migrated to granular sub-namespaces under `LMUFFB`.
+## 9. Next Steps: Post-Migration Cleanup and Hardening
+Phase 6 and initial hardening are now well underway. All major subsystems are namespaced, and internal linkage hardening has progressed significantly.
 
 ### Your Objectives for the Next PR:
-1. **Internal Linkage Audit:**
-   - Conduct a systematic review of all `.cpp` files to ensure that all internal helper functions and variables are correctly positioned within anonymous namespaces to further harden the Unity Build against ODR violations.
-2. **Namespace Hygiene:**
-   - Incremental removal of temporary bridge aliases in root `namespace LMUFFB` as call sites are updated to use fully qualified names or explicit `using namespace` directives in implementation files.
+1. **Continued Namespace Hygiene:**
+   - Incremental removal of temporary bridge aliases for the `Utils` subsystem in root `namespace LMUFFB` and updating all call sites.
+2. **Extended Internal Linkage Audit:**
+   - Continue the systematic review of remaining subsystems (I/O, FFB) to ensure internal linkage is strictly enforced via anonymous namespaces in `.cpp` files.
 
 ### Critical Reminders for Phase 6
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.

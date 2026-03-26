@@ -78,12 +78,12 @@ public:
     }
 
     bool OpenPresetFileDialog(std::string& outPath) override {
-        Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
+        Logging::Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
         return false;
     }
 
     bool SavePresetFileDialog(std::string& outPath, const std::string& defaultName) override {
-        Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
+        Logging::Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
         return false;
     }
 
@@ -101,10 +101,11 @@ public:
     bool m_always_on_top_mock = false;
 };
 
-static LinuxGuiPlatform g_platform;
+// Internal helpers exposed for tests
+LinuxGuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
 
-// Compatibility Helpers
+// Compatibility Helpers (Exposed for tests)
 void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
 void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
@@ -115,7 +116,7 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 
 namespace {
     void glfw_error_callback(int error, const char* description) {
-        Logger::Get().LogFile("Glfw Error %d: %s", error, description);
+        Logging::Logger::Get().LogFile("Glfw Error %d: %s", error, description);
     }
 }
 
@@ -202,7 +203,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
 #else
 // Stub Implementation for Headless Builds (or if IMGUI disabled)
 bool GuiLayer::Init() {
-    Logger::Get().LogFile("[GUI] Disabled (Headless Mode)");
+    Logging::Logger::Get().LogFile("[GUI] Disabled (Headless Mode)");
     return true;
 }
 void GuiLayer::Shutdown(FFBEngine& engine) {

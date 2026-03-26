@@ -63,10 +63,4 @@ struct ChannelMonitors {
 
 } // namespace LMUFFB::Logging
 
-// Temporary bridge for legacy code
-namespace LMUFFB {
-    using ChannelMonitor = LMUFFB::Logging::ChannelMonitor;
-    using ChannelMonitors = LMUFFB::Logging::ChannelMonitors;
-}
-
 #endif // CHANNELMONITOR_H

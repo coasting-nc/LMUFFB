@@ -44,10 +44,12 @@ std::recursive_mutex Config::m_static_loads_mutex;
 std::atomic<bool> Config::m_needs_save{ false };
 
 std::vector<Preset> Config::presets;
-    
+
+namespace {
+
 #ifdef _WIN32
 // Helper to safely load raw binary/text data from a Windows PE resource
-static std::optional<std::string_view> LoadTextResource(int resourceId) {
+std::optional<std::string_view> LoadTextResource(int resourceId) {
     HMODULE hModule = GetModuleHandle(nullptr);
     
     // Find the resource by ID and type (RT_RCDATA)
@@ -71,7 +73,7 @@ static std::optional<std::string_view> LoadTextResource(int resourceId) {
 #endif
 
 // Helper to compare semantic version strings
-static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
+bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
     if (v1.empty()) return true;
     if (v2.empty()) return false;
 
@@ -99,7 +101,7 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
 
 // --- TOML Serialization Helpers ---
 
-static toml::table PresetToToml(const Preset& p) {
+toml::table PresetToToml(const Preset& p) {
     toml::table tbl;
 
     tbl.insert("name", p.name);
@@ -251,7 +253,7 @@ static toml::table PresetToToml(const Preset& p) {
     return tbl;
 }
 
-static void TomlToPreset(const toml::table& tbl, Preset& p) {
+void TomlToPreset(const toml::table& tbl, Preset& p) {
     auto baseline = p; // Keep defaults for missing keys
 
     if (auto val = tbl["name"].as_string()) p.name = val->get();
@@ -409,7 +411,7 @@ static void TomlToPreset(const toml::table& tbl, Preset& p) {
     }
 }
 
-static std::string SanitizeFilename(std::string name) {
+std::string SanitizeFilename(std::string name) {
     std::string out = name;
     // Replace spaces with underscores
     std::replace(out.begin(), out.end(), ' ', '_');
@@ -421,7 +423,7 @@ static std::string SanitizeFilename(std::string name) {
     return out;
 }
 
-static void SaveUserPresetFile(const Preset& p) {
+void SaveUserPresetFile(const Preset& p) {
     std::string filename = Config::m_user_presets_path + "/" + SanitizeFilename(p.name) + ".toml";
     std::filesystem::create_directories(Config::m_user_presets_path);
     std::ofstream file(filename);
@@ -431,6 +433,32 @@ static void SaveUserPresetFile(const Preset& p) {
 }
 
 // --- End TOML Serialization Helpers ---
+
+void FinalizePreset(Preset& p, const std::string& name, const std::string& version, bool hack, float hack_val) {
+    p.name = name;
+    if (!version.empty()) p.app_version = version;
+
+    if (hack && IsVersionLessEqual(version, "0.7.66")) {
+        p.general.gain *= (15.0f / hack_val);
+    }
+    // Apply Issue #37 reset if necessary
+    if (IsVersionLessEqual(version, "0.7.146")) {
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+    }
+    p.Validate();
+    // Add or Update
+    bool found = false;
+    for (auto& existing : Config::presets) {
+        if (existing.name == name && !existing.is_builtin) {
+            existing = p;
+            found = true;
+            break;
+        }
+    }
+    if (!found) Config::presets.push_back(p);
+}
+
+} // anonymous namespace
 
 // --- Legacy INI Parsing Helpers (Phase 2 Migration Path) ---
 
@@ -829,30 +857,6 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
 }
 
 // --- End Legacy INI Helpers ---
-
-static void FinalizePreset(Preset& p, const std::string& name, const std::string& version, bool hack, float hack_val) {
-    p.name = name;
-    if (!version.empty()) p.app_version = version;
-    
-    if (hack && IsVersionLessEqual(version, "0.7.66")) {
-        p.general.gain *= (15.0f / hack_val);
-    }
-    // Apply Issue #37 reset if necessary
-    if (IsVersionLessEqual(version, "0.7.146")) {
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-    }
-    p.Validate();
-    // Add or Update
-    bool found = false;
-    for (auto& existing : Config::presets) {
-        if (existing.name == name && !existing.is_builtin) {
-            existing = p;
-            found = true;
-            break;
-        }
-    }
-    if (!found) Config::presets.push_back(p);
-}
 
 void Config::Load(FFBEngine& engine, const std::string& filename) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
