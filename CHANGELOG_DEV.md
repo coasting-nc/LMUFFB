@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [0.7.254]
+### Fixed
+- **Lateral Load Slider Persistence (Issue #475)**:
+  - Resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon application restart, despite the GUI allowing values up to 10.0 (1000%).
+  - Synchronized `LoadForcesConfig::Validate()` clamping limits with the GUI range [0.0, 10.0] to ensure high-intensity lateral load settings are correctly persisted in `config.toml` and user presets.
+
+### Testing
+- **New Regression Test**: Added `tests/repro_issue_475.cpp` verifying that values up to 10.0 are preserved through the validation cycle.
+- 
 ## [0.7.253]
 ### Changed
 - **Unity Build Expansion (Phase 6 Commencement)**:
