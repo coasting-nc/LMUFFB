@@ -22,144 +22,119 @@ For each iteration (Phase/Step):
 
 ---
 
-## 3. Iteration Phases (Core Logic)
+## 3. Core Logic Refactoring
 
 ### Phase 1: Math and Physics Constants
 **Goal**: Standardize universal constants like PI and Gravity.
 
-#### 1.1 Universal Physical Constants
+**1.1 Universal Physical Constants**
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:254:41: warning: 9.81 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~3 occurrences (PI, Gravity).
-- **Implementation Steps**:
+- **Steps**:
   1. Audit `src/physics/GripLoadEstimation.cpp` and `src/ffb/FFBEngine.cpp` for `9.81` or `9.80665`.
-  2. Ensure `src/ffb/FFBEngine.h` contains `static constexpr double GRAVITY_MS2 = 9.81;`.
-  3. Replace literals with `FFBEngine::GRAVITY_MS2`.
-  4. Audit all files for `3.14159...` and replace with `LMUFFB::PI` from `MathUtils.h`.
+  2. Use `FFBEngine::GRAVITY_MS2` and `LMUFFB::PI` from `MathUtils.h`.
 
-#### 1.2 Common Mathematical Factors
+**1.2 Common Mathematical Factors**
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:62:43: warning: 0.5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~35 occurrences (specifically `0.5` used for scaling/halving).
-- **Implementation Steps**:
-  1. Identify recurring simple factors like `0.5`, `2.0` (when used as a divisor/multiplier for scaling).
-  2. Define `static constexpr double HALF = 0.5;` in `MathUtils.h`.
-  3. Replace at least the non-obvious factors (e.g., used in smoothing or blending) with named constants.
+- **Current Warning Count**: ~35 occurrences.
+- **Steps**:
+  1. Define `static constexpr double HALF = 0.5;` in `MathUtils.h`.
+  2. Replace non-obvious scaling factors (e.g., used in smoothing or blending) with named constants.
 
 ### Phase 2: Wheel and Axle Indices
 **Goal**: Eliminate remaining hardcoded indices (0-3) for wheel and axle data.
 
-#### 2.1 Direct Array Indexing
+**2.1 Direct Array Indexing**
 - **Example Warning**: `src/ffb/UpSampler.cpp:25:34: warning: 2 is a magic number; consider replacing it with a named constant [readability-magic-numbers]` (In `m_history[2]`)
-- **Current Warning Count**: ~75 occurrences (Manual indexing like `[0]`, `[1]`, `[2]`, `[3]`).
-- **Implementation Steps**:
-  1. Identify manual indexing of wheel or history arrays.
-  2. Replace with `[WHEEL_FL]`, `[WHEEL_FR]`, etc. from `WheelConstants.h`.
-  3. For `UpSampler`, define `HISTORY_LATEST = 2`, `HISTORY_PREV = 1`, etc.
+- **Current Warning Count**: ~75 occurrences.
+- **Steps**:
+  1. Use `[WHEEL_FL]`, `[WHEEL_FR]`, etc. from `WheelConstants.h`.
+  2. For `UpSampler`, define `HISTORY_LATEST = 2`, `HISTORY_PREV = 1`, etc.
 
-#### 2.2 Standardizing Loop Bounds
+**2.2 Standardizing Loop Bounds**
 - **Example Warning**: `src/ffb/FFBEngine.cpp:23:25: warning: 4 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: Low (Most loops already use `NUM_WHEELS`, but some edge cases remain).
-- **Implementation Steps**:
-  1. Search for literal `4` and `2` used in wheel/axle loops.
-  2. Replace with `NUM_WHEELS` and `NUM_AXLES` from `src/core/WheelConstants.h`.
+- **Current Warning Count**: Low.
+- **Steps**: Use `NUM_WHEELS` and `NUM_AXLES` from `src/core/WheelConstants.h`.
+
+---
+
+## 4. Signal Processing & Thresholds
 
 ### Phase 3: Frequency, Time & Upsampling
 **Goal**: Standardize update rates and time-conversion factors.
 
-#### 3.1 Update Rates and Intervals
+**3.1 Update Rates and Intervals**
 - **Example Warning**: `src/core/main.cpp:90:35: warning: 1000 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~30 occurrences (1000.0, 400.0, 0.001).
-- **Implementation Steps**:
-  1. Find usages of `1000.0` and `0.001` in `main.cpp` and physics modules.
-  2. Define `TICKS_PER_SECOND = 1000.0` and `SECONDS_PER_TICK = 0.001`.
-  3. Replace literals to clarify the logic's dependency on the 1000Hz loop rate.
+- **Current Warning Count**: ~30 occurrences.
+- **Steps**: Define `TICKS_PER_SECOND = 1000.0` and `SECONDS_PER_TICK = 0.001`.
 
-#### 3.2 Upsampling & Filter Tuning
+**3.2 Upsampling & Filter Tuning**
 - **Example Warning**: `src/ffb/FFBEngine.cpp:20:35: warning: 0.95 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~20 occurrences (Filter Alphas/Betas in FFBEngine).
-- **Implementation Steps**:
-  1. Identify recurring filter alphas/betas in `FFBEngine::InitializeEngine`.
-  2. Group them by category (e.g., `DRIVER_INPUT_SMOOTHING = 0.95`, `DRIVER_INPUT_PREDICTION = 0.10`).
-  3. Replace the magic floats in `Configure()` calls.
+- **Current Warning Count**: ~20 occurrences.
+- **Steps**: Define named constants like `DRIVER_INPUT_SMOOTHING = 0.95`.
 
-#### 3.3 Resampling Ratios
+**3.3 Resampling Ratios**
 - **Example Warning**: `src/ffb/UpSampler.cpp:46:20: warning: 5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~10 occurrences (Specific to the 5/2 ratio in `UpSampler.cpp`).
-- **Implementation Steps**:
-  1. Update `UpSampler.cpp` to use named constants for the 5/2 ratio.
-  2. Define `static constexpr int RESAMPLE_UP = 5;` and `static constexpr int RESAMPLE_DOWN = 2;`.
+- **Current Warning Count**: ~10 occurrences.
+- **Steps**: Define `RESAMPLE_UP = 5` and `RESAMPLE_DOWN = 2`.
 
 ### Phase 4: Physics and Telemetry Thresholds
 **Goal**: Replace arbitrary thresholds used in physics calculations.
 
-#### 4.1 Speed-Based Logic
+**4.1 Speed-Based Logic**
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:33:17: warning: 2.0 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~15 occurrences (2.0, 5.0, 15.0 m/s thresholds).
-- **Implementation Steps**:
-  1. Identify speed thresholds in `GripLoadEstimation.cpp`.
-  2. Define `static constexpr double MIN_LEARNING_SPEED = 2.0;` and `static constexpr double AERO_TRANSITION_SPEED = 15.0;`.
-  3. Replace literals in the `if` conditions.
+- **Current Warning Count**: ~15 occurrences.
+- **Steps**: Define `MIN_LEARNING_SPEED = 2.0`, `AERO_TRANSITION_SPEED = 15.0`.
 
-#### 4.2 Force and Load Baselines
+**4.2 Force and Load Baselines**
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:35:32: warning: 100.0 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~10 occurrences (100.0, 1000.0 N load validation).
-- **Implementation Steps**:
-  1. Identify load thresholds used to validate telemetry.
-  2. Define named constants like `MIN_VALID_LOAD_N = 100.0;` and `LEARNED_LOAD_THRESHOLD_N = 1000.0;`.
+- **Current Warning Count**: ~10 occurrences.
+- **Steps**: Define `MIN_VALID_LOAD_N = 100.0`, `LEARNED_LOAD_THRESHOLD_N = 1000.0`.
 
 ---
 
-## 4. Iteration Phases (GUI Layer)
+## 5. GUI Layer Refactoring
 
 ### Phase 5: GUI Theme and Style Constants
-**Goal**: Standardize the colors and basic styling of the ImGui interface.
+**Goal**: Standardize colors and rounding values.
 
-#### 5.1 Color Definitions (ImVec4)
+**5.1 Color Definitions (ImVec4)**
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:87:44: warning: 0.12f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~60 occurrences (Color components).
-- **Implementation Steps**:
-  1. Define a `GuiColors` namespace with named `ImVec4` constants (e.g., `COLOR_BACKGROUND`, `COLOR_ACCENT`).
-  2. Replace raw `ImVec4` constructor calls with these constants.
+- **Current Warning Count**: ~60 occurrences.
+- **Steps**: Define `GuiColors` namespace with named `ImVec4` constants.
 
-#### 5.2 Style Rounding and Padding
+**5.2 Style Rounding and Padding**
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:76:28: warning: 5.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~15 occurrences (Rounding values).
-- **Implementation Steps**:
-  1. Define constants for standard rounding (e.g., `STYLE_WINDOW_ROUNDING = 5.0f`).
-  2. Group with other style-specific floats.
+- **Current Warning Count**: ~15 occurrences.
+- **Steps**: Define `STYLE_WINDOW_ROUNDING = 5.0f`, etc.
 
 ### Phase 6: GUI Layout and Spacing
-**Goal**: Standardize window sizes and item spacing.
+**Goal**: Standardize window sizes and structural spacing.
 
-#### 6.1 Window and Panel Dimensions
+**6.1 Window and Panel Dimensions**
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:69:34: warning: 500.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~10 occurrences (Fixed widths).
-- **Implementation Steps**:
-  1. Define `MAIN_WINDOW_WIDTH`, `CONFIG_PANEL_WIDTH`, etc.
-  2. Replace literals in `SetNextWindowPos` and `SetNextWindowSize` calls.
+- **Current Warning Count**: ~10 occurrences.
+- **Steps**: Define `MAIN_WINDOW_WIDTH`, `CONFIG_PANEL_WIDTH`.
 
-#### 6.2 Structural Spacing (SameLine/Dummy/Spacing)
-- **Example Warning**: `src/gui/GuiLayer_Common.cpp:328:24: warning: 20.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]` (In `ImGui::SameLine(20.0f)`)
-- **Current Warning Count**: ~20 occurrences (Manual spacing).
-- **Implementation Steps**:
-  1. Define standard spacing increments (e.g., `LAYOUT_INDENT = 20.0f`, `ITEM_SPACING = 10.0f`).
-  2. Apply to layout-related ImGui calls.
+**6.2 Structural Spacing (SameLine/Spacing)**
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:328:24: warning: 20.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~20 occurrences.
+- **Steps**: Define `LAYOUT_INDENT = 20.0f`, `ITEM_SPACING = 10.0f`.
 
 ### Phase 7: GUI Widget Parameters
-**Goal**: Clean up literal limits and default values passed to widgets.
+**Goal**: Standardize slider limits and default values.
 
-#### 7.1 Slider and Input Bounds
+**7.1 Slider and Input Bounds**
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:569:70: warning: 5.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~100+ occurrences (Min/Max bounds for UI controls).
-- **Implementation Steps**:
-  1. For each group of settings (Braking, Vibration, etc.), define `MIN`/`MAX` constants.
-  2. Replace magic numbers in `SliderFloat`, `InputFloat`, and custom `FloatSetting` calls.
+- **Current Warning Count**: ~150+ occurrences.
+- **Steps**: Define group-specific `MIN`/`MAX` constants for UI controls.
 
 ---
 
-## 5. Verification and Regression Testing
+## 6. Verification and Regression Testing
 - Every change **must** be verified by running the existing regression tests.
-- For physics-related changes (Phase 4), compare the output of `lmuffb_log_analyzer` on a sample log before and after the change to ensure identical FFB output.
+- For physics-related changes, compare the output of `lmuffb_log_analyzer` on a sample log.
 - For UI changes, verify visual consistency across different window sizes.
 
-## 6. Documentation
+## 7. Documentation
 - Update `AGENTS.md` if any new coding standards regarding constants are established during this process.
