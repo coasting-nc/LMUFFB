@@ -11,6 +11,7 @@
 #include <array>
 #include <cstring>
 #include "io/lmu_sm_interface/InternalsPluginWrapper.h"
+#include "core/WheelConstants.h"
 #include "AsyncLogger.h"
 #include "MathUtils.h"
 #include "PerfStats.h"
@@ -176,12 +177,12 @@ public:
     TelemInfoV01 m_working_info; // Persistent storage for upsampled telemetry
     double m_last_telemetry_time = -1.0;
 
-    LMUFFB::HoltWintersFilter m_upsample_lat_patch_vel[4];
-    LMUFFB::HoltWintersFilter m_upsample_long_patch_vel[4];
-    LMUFFB::HoltWintersFilter m_upsample_vert_deflection[4];
-    LMUFFB::HoltWintersFilter m_upsample_susp_force[4];
-    LMUFFB::HoltWintersFilter m_upsample_brake_pressure[4];
-    LMUFFB::HoltWintersFilter m_upsample_rotation[4];
+    LMUFFB::HoltWintersFilter m_upsample_lat_patch_vel[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_long_patch_vel[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_vert_deflection[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_susp_force[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_brake_pressure[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_rotation[NUM_WHEELS];
     LMUFFB::HoltWintersFilter m_upsample_steering;
     LMUFFB::HoltWintersFilter m_upsample_throttle;
     LMUFFB::HoltWintersFilter m_upsample_brake;
@@ -192,12 +193,12 @@ public:
     LMUFFB::HoltWintersFilter m_upsample_local_rot_y;
     LMUFFB::HoltWintersFilter  m_upsample_shaft_torque;
 
-    double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_vert_deflection[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
     double m_prev_vert_accel = 0.0; 
-    double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; 
-    double m_prev_load[4] = {0.0, 0.0, 0.0, 0.0}; // NEW: Smoothed load state
-    double m_prev_rotation[4] = {0.0, 0.0, 0.0, 0.0};    
-    double m_prev_brake_pressure[4] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_slip_angle[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_load[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; // NEW: Smoothed load state
+    double m_prev_rotation[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0};    
+    double m_prev_brake_pressure[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
     
     // Gyro State (v0.4.17)
     double m_prev_steering_angle = 0.0;
@@ -242,7 +243,7 @@ public:
     double m_bottoming_phase = 0.0;
     
     // Internal state for Bottoming (Method B)
-    double m_prev_susp_force[4] = {0.0, 0.0, 0.0, 0.0};
+    double m_prev_susp_force[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0};
 
     // Seeding state (Issue #379)
     bool m_derivatives_seeded = false;

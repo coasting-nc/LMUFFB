@@ -106,7 +106,7 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
     data.mElapsedTime = 1.0f;
     
     // Wheel setup (all 4 wheels)
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mGripFract = 0.0; // Trigger approximation mode
         data.mWheel[i].mTireLoad = 4000.0; // Realistic load
         data.mWheel[i].mStaticUndeflectedRadius = 30; // 0.3m radius
@@ -273,8 +273,8 @@ void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, f
     std::cout << "  [Matrix] Testing Orientation: " << scenario.description << std::endl;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = scenario.lat_accel_x;
-    data.mWheel[0].mTireLoad = scenario.fl_load;
-    data.mWheel[1].mTireLoad = scenario.fr_load;
+    data.mWheel[WHEEL_FL].mTireLoad = scenario.fl_load;
+    data.mWheel[WHEEL_FR].mTireLoad = scenario.fr_load;
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     auto snapshots = engine.GetDebugBatch();
     if (snapshots.empty()) { FAIL_TEST("No snapshots available in VerifyOrientation"); return; }

@@ -64,11 +64,11 @@ TEST_CASE(test_upsampling_extrapolation, "Upsampling") {
 
     TelemInfoV01 data1 = CreateBasicTestTelemetry(20.0, 0.0);
     data1.mElapsedTime = 100.0;
-    data1.mWheel[0].mLateralPatchVel = 1.0;
+    data1.mWheel[WHEEL_FL].mLateralPatchVel = 1.0;
 
     TelemInfoV01 data2 = data1;
     data2.mElapsedTime = 100.01;
-    data2.mWheel[0].mLateralPatchVel = 2.0;
+    data2.mWheel[WHEEL_FL].mLateralPatchVel = 2.0;
 
     // Process two frames to establish velocity for extrapolation
     engine.calculate_force(&data1, "GT3", "Ferrari 296", 0.0f, true, 0.0025);
@@ -83,7 +83,7 @@ TEST_CASE(test_upsampling_extrapolation, "Upsampling") {
     FFBSnapshot snap = engine.GetDebugBatch().back();
 
     // Verify that the interpolated value is increasing
-    // We set data1.mWheel[0] = 1.0 and data2.mWheel[0] = 2.0.
+    // We set data1.mWheel[WHEEL_FL] = 1.0 and data2.mWheel[WHEEL_FL] = 2.0.
     // The average (snap) started at 0.5 (1.0/2) and should move towards 1.0 (2.0/2).
     ASSERT_GT(snap.raw_front_lat_patch_vel, 0.5f);
 }

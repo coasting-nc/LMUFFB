@@ -51,7 +51,7 @@ TEST_CASE(test_logging_aux_nan, "Logging") {
     Logger::Get().SetTestStream(&ss);
 
     // 1. Inject Aux NaN
-    data.mWheel[0].mTireLoad = std::numeric_limits<double>::quiet_NaN();
+    data.mWheel[WHEEL_FL].mTireLoad = std::numeric_limits<double>::quiet_NaN();
     data.mElapsedTime = 10.0;
 
     engine.calculate_force(&data, "GT3", "TestCar");

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.252]
+### Changed
+- **Codebase-Wide Wheel Index Refactoring**:
+  - Eliminated all magic numbers (0-3) used for vehicle wheel identification (Front-Left, Front-Right, Rear-Left, Rear-Right).
+  - Introduced a centralized `src/core/WheelConstants.h` defining the `WheelIndex` enum and `NUM_WHEELS` / `NUM_AXLES` constants.
+  - Systematically replaced hardcoded indices and loop bounds in `FFBEngine`, `GripLoadEstimation`, `ChannelMonitor`, and all associated physics modules.
+  - Standardized internal state arrays (e.g., `m_prev_slip_angle`, `m_prev_susp_force`) to use named constants for improved readability and safety.
+  - Updated the entire unit and regression test suite (150+ files) to align with the new standardized indexing architecture.
+  - Verified 100% test coverage and 629/629 passing tests.
+
 ## [0.7.251]
 ### Changed
 - **Unity Build Expansion (Phase 5 Completion)**:

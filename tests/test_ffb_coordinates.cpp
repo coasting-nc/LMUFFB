@@ -28,10 +28,10 @@ TEST_CASE(test_coordinate_sop_inversion, "Coordinates") {
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
     data.mDeltaTime = 0.01;
     
     // Test Case 1: Right Turn (Body feels left force)
@@ -98,23 +98,23 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[2].mGripFract = 0.0; // Trigger grip approximation for rear
-    data.mWheel[3].mGripFract = 0.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0; // Trigger grip approximation for rear
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
     data.mDeltaTime = 0.01;
     
     // Simulate oversteer: Rear sliding LEFT
     // Game: +X = Left, so lateral velocity = +5.0 (left)
     // Expected: Counter-steer LEFT (negative force) to correct the slide
-    data.mWheel[2].mLateralPatchVel = 5.0; // Sliding left
-    data.mWheel[3].mLateralPatchVel = 5.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mSuspForce = 4000.0;
-    data.mWheel[3].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 5.0; // Sliding left
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RR].mSuspForce = 4000.0;
     data.mLocalVel.z = -20.0; // Moving forward (game: -Z = forward)
     
     // Run multiple frames to let LPF settle
@@ -150,8 +150,8 @@ TEST_CASE(test_coordinate_rear_torque_inversion, "Coordinates") {
     // Game: -X = Right, so lateral velocity = -5.0 (right)
     // Expected: Counter-steer RIGHT (positive force)
     // v0.4.19 FIX: After removing abs() from slip angle, this should now work correctly!
-    data.mWheel[2].mLateralPatchVel = -5.0; // Sliding right
-    data.mWheel[3].mLateralPatchVel = -5.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = -5.0; // Sliding right
+    data.mWheel[WHEEL_RR].mLateralPatchVel = -5.0;
     
     // Run multiple frames to let LPF settle
     for (int i = 0; i < 50; i++) {
@@ -196,18 +196,18 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
     data.mDeltaTime = 0.01;
     
     // Test Case 1: Sliding LEFT
     // Game: +X = Left, so lateral velocity = +1.0 (left)
     // v0.4.20 Fix: We want Torque LEFT (Negative) to stabilize the wheel.
     // Previous logic (Push Right/Positive) was causing positive feedback.
-    data.mWheel[0].mLateralPatchVel = 1.0; // Sliding left
-    data.mWheel[1].mLateralPatchVel = 1.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 1.0; // Sliding left
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 1.0;
     
     double force = PumpEngineTime(engine, data, 0.0125);
     
@@ -222,8 +222,8 @@ TEST_CASE(test_coordinate_scrub_drag_direction, "Coordinates") {
     // Test Case 2: Sliding RIGHT
     // Game: -X = Right, so lateral velocity = -1.0 (right)
     // v0.4.20 Fix: We want Torque RIGHT (Positive) to stabilize.
-    data.mWheel[0].mLateralPatchVel = -1.0; // Sliding right
-    data.mWheel[1].mLateralPatchVel = -1.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = -1.0; // Sliding right
+    data.mWheel[WHEEL_FR].mLateralPatchVel = -1.0;
     
     force = PumpEngineTime(engine, data, 0.0125);
     
@@ -250,23 +250,23 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     engine.m_general.gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
     data.mDeltaTime = 0.01;
     
     // Test Case 1: Front wheels sliding LEFT
     // Game: +X = Left, so lateral velocity = +5.0 (left)
     // Expected: Positive slip angle
-    data.mWheel[0].mLateralPatchVel = 5.0;  // FL sliding left
-    data.mWheel[1].mLateralPatchVel = 5.0;  // FR sliding left
-    data.mWheel[2].mLateralPatchVel = 5.0;  // RL sliding left
-    data.mWheel[3].mLateralPatchVel = 5.0;  // RR sliding left
-    data.mWheel[0].mLongitudinalGroundVel = 20.0;
-    data.mWheel[1].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 5.0;  // FL sliding left
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 5.0;  // FR sliding left
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 5.0;  // RL sliding left
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 5.0;  // RR sliding left
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
     
     PumpEngineTime(engine, data, 0.0125);
     
@@ -299,10 +299,10 @@ TEST_CASE(test_coordinate_debug_slip_angle_sign, "Coordinates") {
     // Test Case 2: Front wheels sliding RIGHT
     // Game: -X = Right, so lateral velocity = -5.0 (right)
     // Expected: Negative slip angle
-    data.mWheel[0].mLateralPatchVel = -5.0;  // FL sliding right
-    data.mWheel[1].mLateralPatchVel = -5.0;  // FR sliding right
-    data.mWheel[2].mLateralPatchVel = -5.0;  // RL sliding right
-    data.mWheel[3].mLateralPatchVel = -5.0;  // RR sliding right
+    data.mWheel[WHEEL_FL].mLateralPatchVel = -5.0;  // FL sliding right
+    data.mWheel[WHEEL_FR].mLateralPatchVel = -5.0;  // FR sliding right
+    data.mWheel[WHEEL_RL].mLateralPatchVel = -5.0;  // RL sliding right
+    data.mWheel[WHEEL_RR].mLateralPatchVel = -5.0;  // RR sliding right
     
     PumpEngineTime(engine, data, 0.0125);
     
@@ -362,10 +362,10 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     
     // Setup wheel data
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     data.mLocalRot.y = 0.0;
@@ -378,19 +378,19 @@ TEST_CASE(test_coordinate_all_effects_alignment, "Coordinates") {
     // We want 10.0 rad/s^2 Yaw Accel
     // data.mLocalRotAccel.y = 10.0; // Replaced by derived logic below
     
-    data.mWheel[2].mLateralPatchVel = -5.0; // Rear Sliding Left (Negative Vel for Correct Code Physics)
-    data.mWheel[3].mLateralPatchVel = -5.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = -5.0; // Rear Sliding Left (Negative Vel for Correct Code Physics)
+    data.mWheel[WHEEL_RR].mLateralPatchVel = -5.0;
     data.mLocalAccel.x = 9.81;           // 1G Left
-    data.mWheel[0].mLateralPatchVel = 2.0; // Front Dragging Left
-    data.mWheel[1].mLateralPatchVel = 2.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 2.0; // Front Dragging Left
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 2.0;
     
     // Auxiliary data for calculations
-    data.mWheel[2].mGripFract = 0.0; // Trigger rear calc
-    data.mWheel[3].mGripFract = 0.0;
-    data.mWheel[2].mSuspForce = 4000.0;
-    data.mWheel[3].mSuspForce = 4000.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0; // Trigger rear calc
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RR].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
     
     // Run to settle LPFs
     for(int i=0; i<40; i++) {
@@ -470,12 +470,12 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     engine.m_invert_force = false;
     
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[2].mGripFract = 0.0; // Rear sliding
-    data.mWheel[3].mGripFract = 0.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0; // Rear sliding
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
     data.mDeltaTime = 0.01;
     
     // Simulate right turn with oversteer
@@ -483,16 +483,16 @@ TEST_CASE(test_regression_no_positive_feedback, "Coordinates") {
     data.mLocalAccel.x = 9.81; // 1G left (right turn)
     
     // Rear sliding left (oversteer in right turn)
-    data.mWheel[2].mLateralPatchVel = -5.0; // Sliding left (ISO Coords for Rear Torque)
-    data.mWheel[3].mLateralPatchVel = -5.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mSuspForce = 4000.0;
-    data.mWheel[3].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = -5.0; // Sliding left (ISO Coords for Rear Torque)
+    data.mWheel[WHEEL_RR].mLateralPatchVel = -5.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mSuspForce = 4000.0;
+    data.mWheel[WHEEL_RR].mSuspForce = 4000.0;
     
     // Front also sliding left (drift)
-    data.mWheel[0].mLateralPatchVel = -3.0;
-    data.mWheel[1].mLateralPatchVel = -3.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = -3.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = -3.0;
     
     data.mLocalVel.z = -20.0; // Moving forward
     
@@ -565,24 +565,24 @@ TEST_CASE(test_regression_phase_explosion, "Coordinates") {
     engine.m_rear_axle.sop_effect = 0.0f;
 
     // Slide Condition: avg_lat_vel > 0.5
-    data.mWheel[0].mLateralPatchVel = 5.0; 
-    data.mWheel[1].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 5.0; 
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 5.0;
     
     // Lockup Condition: Brake > 0.05, Slip < -0.1
     data.mUnfilteredBrake = 1.0;
-    data.mWheel[0].mLongitudinalPatchVel = -5.0; // High slip
-    data.mWheel[0].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -5.0; // High slip
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 20.0;
     
     // Spin Condition: Throttle > 0.05, Slip > 0.2
     data.mUnfilteredThrottle = 1.0;
-    data.mWheel[2].mLongitudinalPatchVel = 30.0; 
-    data.mWheel[2].mLongitudinalGroundVel = 10.0; // Ratio 3.0 -> Slip > 0.2
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 30.0; 
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 10.0; // Ratio 3.0 -> Slip > 0.2
 
     // Load
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
-    data.mWheel[2].mTireLoad = 4000.0;
-    data.mWheel[3].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0;
     data.mDeltaTime = 0.0025;
     data.mLocalVel.z = 20.0;
 

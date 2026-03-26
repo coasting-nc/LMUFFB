@@ -59,17 +59,17 @@ TEST_CASE(test_issue_355_lockup_grounding_robustness, "Physics") {
     ctx.frame_warn_load = true;
 
     // Scenario: Encrypted car where mTireLoad is 0 but mSuspForce is active.
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[0].mSuspForce = 1000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 1000.0;
 
-    data.mWheel[0].mLongitudinalGroundVel = 10.0;
-    data.mWheel[0].mLongitudinalPatchVel = -10.0; // 100% lockup
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 10.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -10.0; // 100% lockup
 
     FFBEngineTestAccess::CallCalculateLockup_Vibration(engine, &data, ctx);
     ASSERT_GT(std::abs(ctx.lockup_rumble), 1e-6);
 
     // Now make it really airborne (approximated load < 50)
-    for (int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mSuspForce = -1000.0;
         data.mWheel[i].mTireLoad = 0.0;
     }
@@ -103,20 +103,20 @@ TEST_CASE(test_issue_355_lockup_grounding_robustness, "Physics") {
     // start = 0.05, full = 0.15.
     // Let's use slip = 0.10.
 
-    data.mWheel[0].mLongitudinalPatchVel = -1.0; // 10% lockup
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -1.0; // 10% lockup
 
     // 1. Grounded: triggers due to predictive decel
-    data.mWheel[0].mSuspForce = 1000.0;
-    data.mWheel[0].mRotation = 0.0; // Decelerating rapidly
+    data.mWheel[WHEEL_FL].mSuspForce = 1000.0;
+    data.mWheel[WHEEL_FL].mRotation = 0.0; // Decelerating rapidly
     // Need to seed prev_rotation
     engine.calculate_force(&data);
-    data.mWheel[0].mRotation = -100.0; // High deceleration
+    data.mWheel[WHEEL_FL].mRotation = -100.0; // High deceleration
 
     FFBEngineTestAccess::CallCalculateLockup_Vibration(engine, &data, ctx);
     ASSERT_GT(std::abs(ctx.lockup_rumble), 1e-6);
 
     // 2. Airborne: does NOT trigger predictive
-    for (int i=0; i<4; i++) data.mWheel[i].mSuspForce = -1000.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mSuspForce = -1000.0;
     ctx.lockup_rumble = 0.0;
     FFBEngineTestAccess::CallCalculateLockup_Vibration(engine, &data, ctx);
     ASSERT_NEAR(ctx.lockup_rumble, 0.0, 1e-9);
@@ -140,7 +140,7 @@ TEST_CASE(test_issue_355_bottoming_impulse_normalization, "Physics") {
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "HYPERCAR", "Cadillac");
     engine.calculate_force(&data);
 
-    data.mWheel[0].mSuspForce += 600.0;
+    data.mWheel[WHEEL_FL].mSuspForce += 600.0;
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
     ASSERT_GT(std::abs(ctx.bottoming_crunch), 1e-6);
 
@@ -148,7 +148,7 @@ TEST_CASE(test_issue_355_bottoming_impulse_normalization, "Physics") {
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "GT3", "Ferrari");
     engine.calculate_force(&data);
 
-    data.mWheel[0].mSuspForce += 461.5;
+    data.mWheel[WHEEL_FL].mSuspForce += 461.5;
     ctx.bottoming_crunch = 0.0;
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
     ASSERT_GT(std::abs(ctx.bottoming_crunch), 1e-6);
@@ -168,8 +168,8 @@ TEST_CASE(test_issue_355_bottoming_safety_fallback, "Physics") {
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
     ctx.frame_warn_load = true;
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[0].mSuspForce = 20000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 20000.0;
 
     FFBEngineTestAccess::CallCalculateSuspensionBottoming(engine, &data, ctx);
     ASSERT_GT(std::abs(ctx.bottoming_crunch), 1e-6);

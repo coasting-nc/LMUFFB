@@ -65,7 +65,7 @@ TEST_CASE(test_mn_missing_load_fallback_susp_force, "CorePhysics") {
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = -20.0;  // speed > SPEED_EPSILON (1.0)
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mTireLoad = 0.0;
         data.mWheel[i].mSuspForce = 500.0; // > MIN_VALID_SUSP_FORCE (10N) â†’ approximate_load path
     }
@@ -99,7 +99,7 @@ TEST_CASE(test_mn_missing_load_fallback_kinematic, "CorePhysics") {
     data.mLocalAccel.x = 2.0 * 9.81; // some lateral accel for kinematic estimate
 
     // Zero both TireLoad AND SuspForce to force kinematic fallback
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mTireLoad = 0.0;
         data.mWheel[i].mSuspForce = 0.0; // < MIN_VALID_SUSP_FORCE â†’ kinematic path
     }
@@ -140,7 +140,7 @@ TEST_CASE(test_mn_missing_susp_force_warning, "CorePhysics") {
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = -20.0;    // |vel.z| > SPEED_EPSILON (1.0)
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mSuspForce = 0.0;
     }
 
@@ -171,7 +171,7 @@ TEST_CASE(test_mn_missing_susp_deflection_warning, "CorePhysics") {
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = -15.0;    // |vel.z| = 15 > SPEED_HIGH_THRESHOLD (10.0)
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mSuspensionDeflection = 0.0;
     }
 
@@ -199,7 +199,7 @@ TEST_CASE(test_mn_missing_lat_force_front_warning, "CorePhysics") {
     data.mDeltaTime = 0.01;
     // Trigger condition: |accel.x| > G_FORCE_THRESHOLD (3.0)
     data.mLocalAccel.x = 5.0 * 9.81;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mLateralForce = 0.0;
     }
 
@@ -220,8 +220,8 @@ TEST_CASE(test_mn_missing_lat_force_rear_warning, "CorePhysics") {
     data.mDeltaTime = 0.01;
     data.mLocalAccel.x = 5.0 * 9.81; // > G_FORCE_THRESHOLD (3.0)
     // Only zero the rear wheels
-    data.mWheel[2].mLateralForce = 0.0;
-    data.mWheel[3].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RL].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RR].mLateralForce = 0.0;
 
     ASSERT_FALSE(engine.m_warned_lat_force_rear);
     RunNFrames(engine, data, 55);
@@ -250,8 +250,8 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
         engine.m_vibration.bottoming_enabled = true;
         engine.m_vibration.bottoming_gain = 1.0f;
         engine.m_vibration.bottoming_method = 0;
-        data.mWheel[0].mRideHeight = 0.002f;
-        data.mWheel[1].mRideHeight = 0.002f;
+        data.mWheel[WHEEL_FL].mRideHeight = 0.002f;
+        data.mWheel[WHEEL_FR].mRideHeight = 0.002f;
 
         // Initialize peak to ensure it doesn't decay from high value and trigger safety
         FFBEngineTestAccess::SetAutoPeakLoad(engine, 4500.0);
@@ -280,8 +280,8 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold, "Texture") {
         FFBEngineTestAccess::SetStaticFrontLoad(engine, 4000.0);
         FFBEngineTestAccess::SetStaticLoadLatched(engine, true);
 
-        data.mWheel[0].mRideHeight = 0.001f;
-        data.mWheel[1].mRideHeight = 0.001f;
+        data.mWheel[WHEEL_FL].mRideHeight = 0.001f;
+        data.mWheel[WHEEL_FR].mRideHeight = 0.001f;
 
         // Seeding call
         FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
@@ -306,8 +306,8 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
     engine.m_vibration.bottoming_method = 0;
 
     // Feed high load to trigger peak follower update
-    data.mWheel[0].mTireLoad = 8000.0;
-    data.mWheel[1].mTireLoad = 8000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 8000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 8000.0;
     // Need to use a car name so InitializeLoadReference doesn't reset us every frame
     // But WAIT: InitializeLoadReference ALWAYS calls ResetNormalization!
     // So we must set toggles AFTER InitializeLoadReference if we want to test mid-session logic.
@@ -321,8 +321,8 @@ TEST_CASE(test_mn_bottoming_ride_height_threshold_enabled, "Texture") {
     double peak = FFBEngineTestAccess::GetAutoPeakLoad(engine);
     std::cout << "  Active peak: " << peak << std::endl;
 
-    data.mWheel[0].mRideHeight = 0.001f;
-    data.mWheel[1].mRideHeight = 0.001f;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.001f;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.001f;
 
     // Seeding call for new telemetry
     FFBEngineTestAccess::SetDerivativesSeeded(engine, false);
@@ -356,15 +356,15 @@ TEST_CASE(test_mn_spin_detection_torque_drop, "Texture") {
     // Rear wheel slip = 0.4 > SPIN_SLIP_THRESHOLD (0.2)
     // slip_ratio = |patch_vel - ground_vel| / |ground_vel|
     // With ground_vel=20.0 and patch_vel=12.0: (20-12)/20 = 0.4
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
-    data.mWheel[2].mLongitudinalPatchVel  = 12.0;
-    data.mWheel[3].mLongitudinalPatchVel  = 12.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel  = 12.0;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel  = 12.0;
     // Front: no spin
-    data.mWheel[0].mLongitudinalGroundVel = 20.0;
-    data.mWheel[1].mLongitudinalGroundVel = 20.0;
-    data.mWheel[0].mLongitudinalPatchVel  = 20.0;
-    data.mWheel[1].mLongitudinalPatchVel  = 20.0;
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel  = 20.0;
+    data.mWheel[WHEEL_FR].mLongitudinalPatchVel  = 20.0;
 
     FFBCalculationContext ctx;
     ctx.dt = 0.01;
@@ -403,7 +403,7 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
 
         TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
         data.mDeltaTime = 0.01;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             data.mWheel[i].mLateralPatchVel = 1.0; // < 1.5
         }
 
@@ -430,7 +430,7 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
 
         TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
         data.mDeltaTime = 0.01;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             data.mWheel[i].mLateralPatchVel = 3.0; // > 1.5
         }
 
@@ -472,8 +472,8 @@ TEST_CASE(test_mn_abs_pulse_magnitude_scaler, "Texture") {
     data.mUnfilteredBrake = 1.0f;  // > ABS_PEDAL_THRESHOLD (0.5)
 
     // pressure_delta = (0.5 - 1.0) / 0.0125 = -40.0 â†’ |40| > ABS_PRESSURE_RATE_THRESHOLD (2.0)
-    data.mWheel[0].mBrakePressure = 0.5f;
-    engine.m_prev_brake_pressure[0] = 1.0;
+    data.mWheel[WHEEL_FL].mBrakePressure = 0.5f;
+    engine.m_prev_brake_pressure[WHEEL_FL] = 1.0;
 
     FFBCalculationContext ctx;
     ctx.dt = 0.0125;

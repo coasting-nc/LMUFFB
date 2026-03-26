@@ -14,11 +14,11 @@ TEST_CASE(test_issue_348_slope_shadow_mode, "SlopeDetection") {
     // Simulate unencrypted telemetry (high grip value)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mGripFract = 0.95f; // Valid grip
-    data.mWheel[1].mGripFract = 0.95f;
+    data.mWheel[WHEEL_FL].mGripFract = 0.95f; // Valid grip
+    data.mWheel[WHEEL_FR].mGripFract = 0.95f;
     data.mLocalAccel.x = 1.5 * 9.81;
-    data.mWheel[0].mLateralPatchVel = 0.05 * 20.0;
-    data.mWheel[1].mLateralPatchVel = 0.05 * 20.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 0.05 * 20.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 0.05 * 20.0;
 
     // Seed steady state to avoid ramp-up transients from 0.0
     PumpEngineTime(engine, data, 0.5);
@@ -29,8 +29,8 @@ TEST_CASE(test_issue_348_slope_shadow_mode, "SlopeDetection") {
         double slip = 0.05 + (double)i * 0.01;
         double g = 1.5 - (double)i * 0.05;
 
-        data.mWheel[0].mLateralPatchVel = slip * 20.0;
-        data.mWheel[1].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = slip * 20.0;
+        data.mWheel[WHEEL_FR].mLateralPatchVel = slip * 20.0;
         data.mLocalAccel.x = g * 9.81;
 
         // Use high-level PumpEngineTime (it handles upsampling ticks)

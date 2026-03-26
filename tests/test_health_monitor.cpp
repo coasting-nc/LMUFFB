@@ -83,14 +83,14 @@ TEST_CASE(test_channel_monitors_regression, "Diagnostics") {
     telem.mUnfilteredSteering = 0.13;
     telem.mFilteredSteering = 0.14;
     telem.mEngineRPM = 1500.0;
-    telem.mWheel[0].mTireLoad = 1600.0;
-    telem.mWheel[1].mTireLoad = 1700.0;
-    telem.mWheel[2].mTireLoad = 1800.0;
-    telem.mWheel[3].mTireLoad = 1900.0;
-    telem.mWheel[0].mLateralForce = 2000.0;
-    telem.mWheel[1].mLateralForce = 2100.0;
-    telem.mWheel[2].mLateralForce = 2200.0;
-    telem.mWheel[3].mLateralForce = 2300.0;
+    telem.mWheel[WHEEL_FL].mTireLoad = 1600.0;
+    telem.mWheel[WHEEL_FR].mTireLoad = 1700.0;
+    telem.mWheel[WHEEL_RL].mTireLoad = 1800.0;
+    telem.mWheel[WHEEL_RR].mTireLoad = 1900.0;
+    telem.mWheel[WHEEL_FL].mLateralForce = 2000.0;
+    telem.mWheel[WHEEL_FR].mLateralForce = 2100.0;
+    telem.mWheel[WHEEL_RL].mLateralForce = 2200.0;
+    telem.mWheel[WHEEL_RR].mLateralForce = 2300.0;
     telem.mPos = {24.0, 25.0, 26.0};
     telem.mDeltaTime = 0.027f;
 

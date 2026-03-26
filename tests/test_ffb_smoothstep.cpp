@@ -51,12 +51,12 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
     engine.m_vibration.road_gain = 1.0f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
     TelemInfoV01 data_25 = CreateBasicTestTelemetry(2.0);
-    data_25.mWheel[0].mVerticalTireDeflection = 0.002;
-    data_25.mWheel[1].mVerticalTireDeflection = 0.002;
+    data_25.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.002;
+    data_25.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.002;
 
     TelemInfoV01 data_50 = CreateBasicTestTelemetry(3.0);
-    data_50.mWheel[0].mVerticalTireDeflection = 0.002;
-    data_50.mWheel[1].mVerticalTireDeflection = 0.002;
+    data_50.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.002;
+    data_50.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.002;
 
     auto get_peak_road_force = [&](TelemInfoV01& d) {
         // Reset state
@@ -67,17 +67,17 @@ TEST_CASE(test_speed_gate_uses_smoothstep, "SpeedGate") {
         engine.m_vibration.road_gain = 1.0f;
 
         // Steady state (deflection 0)
-        d.mWheel[0].mVerticalTireDeflection = 0.0;
-        d.mWheel[1].mVerticalTireDeflection = 0.0;
+        d.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0;
+        d.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0;
         PumpEngineSteadyState(engine, d);
 
         // Trigger ramp
-        d.mWheel[0].mVerticalTireDeflection = 0.002;
-        d.mWheel[1].mVerticalTireDeflection = 0.002;
+        d.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.002;
+        d.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.002;
         d.mElapsedTime += 0.01;
 
         double peak = 0.0;
-        for(int i=0; i<4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             double f = engine.calculate_force(&d, nullptr, nullptr, 0.0f, true, 0.0025);
             peak = std::max(peak, std::abs(f));
         }
@@ -138,17 +138,17 @@ TEST_CASE(test_speed_gate_custom_thresholds, "SpeedGate") {
     engine.m_vibration.texture_load_cap = 1.0f;
 
     // Steady state
-    data.mWheel[0].mVerticalTireDeflection = 0.0;
-    data.mWheel[1].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0;
     PumpEngineSteadyState(engine, data);
 
     // Trigger ramp
-    data.mWheel[0].mVerticalTireDeflection = 0.001;
-    data.mWheel[1].mVerticalTireDeflection = 0.001;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.001;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.001;
     data.mElapsedTime += 0.01;
     
     double force = 0.0;
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         double f = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
         force = std::max(force, std::abs(f));
     }

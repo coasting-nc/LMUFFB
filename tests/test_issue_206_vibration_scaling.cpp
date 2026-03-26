@@ -27,21 +27,21 @@ TEST_CASE(test_issue_206_vibration_scaling, "Functional") {
     tel.mPhysicalSteeringWheelRange = 9.4247f; // ~540 deg
 
     // Trigger Road Texture (delta deflection)
-    tel.mWheel[0].mVerticalTireDeflection = 0.01f;
+    tel.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.01f;
 
     // Trigger Lockup (slip > threshold)
-    tel.mWheel[0].mRotation = 0.0f;
-    tel.mWheel[1].mRotation = 0.0f;
+    tel.mWheel[WHEEL_FL].mRotation = 0.0f;
+    tel.mWheel[WHEEL_FR].mRotation = 0.0f;
 
     // Trigger ABS Pulse (high pedal + high pressure rate)
     tel.mUnfilteredBrake = 1.0f;
-    tel.mWheel[0].mBrakePressure = 10.0f; // High delta from 0.0
+    tel.mWheel[WHEEL_FL].mBrakePressure = 10.0f; // High delta from 0.0
 
     // Trigger Slide (patch vel)
-    tel.mWheel[0].mLateralPatchVel = 5.0f;
+    tel.mWheel[WHEEL_FL].mLateralPatchVel = 5.0f;
 
     // Trigger Bottoming (ride height)
-    tel.mWheel[0].mRideHeight = 0.001f; // < 2mm
+    tel.mWheel[WHEEL_FL].mRideHeight = 0.001f; // < 2mm
 
     // Case 1: Vibration Gain = 1.0 (Baseline)
     engine.m_vibration.vibration_gain = 1.0f;

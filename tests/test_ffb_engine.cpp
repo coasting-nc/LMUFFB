@@ -9,12 +9,12 @@ TEST_CASE(test_load_weighted_grip, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
 
     // Wheel 0 (Outside): Load = 10000N, Grip = 0.8 (Sliding)
-    data.mWheel[0].mTireLoad = 10000.0;
-    data.mWheel[0].mGripFract = 0.8;
+    data.mWheel[WHEEL_FL].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FL].mGripFract = 0.8;
 
     // Wheel 1 (Inside): Load = 500N, Grip = 1.0 (Not sliding)
-    data.mWheel[1].mTireLoad = 500.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 500.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     double prev_slip1 = 0.0;
     double prev_slip2 = 0.0;
@@ -22,7 +22,7 @@ TEST_CASE(test_load_weighted_grip, "Physics") {
     bool warned = false;
 
     GripResult result = engine.calculate_axle_grip(
-        data.mWheel[0], data.mWheel[1], 5250.0, warned,
+        data.mWheel[WHEEL_FL], data.mWheel[WHEEL_FR], 5250.0, warned,
         prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", &data, true
     );
 
@@ -191,12 +191,12 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
 
     // 1. Normal State (No Kerb)
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    data.mWheel[2].mTireLoad = 5000.0;
-    data.mWheel[3].mTireLoad = 5000.0;
-    data.mWheel[2].mLateralPatchVel = 2.0; // 0.1 rad slip angle at 20m/s
-    data.mWheel[3].mLateralPatchVel = 2.0;
-    data.mWheel[2].mSurfaceType = 0; // Dry
-    data.mWheel[3].mSurfaceType = 0;
+    data.mWheel[WHEEL_RL].mTireLoad = 5000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 5000.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 2.0; // 0.1 rad slip angle at 20m/s
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 2.0;
+    data.mWheel[WHEEL_RL].mSurfaceType = 0; // Dry
+    data.mWheel[WHEEL_RR].mSurfaceType = 0;
 
     // Issue #397: Flush the 10ms transient ramp
     PumpEngineTime(engine, data, 1.0);
@@ -213,7 +213,7 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     double normal_torque = snap1.ffb_rear_torque;
 
     // 2. Kerb Strike via Surface Type
-    data.mWheel[2].mSurfaceType = 5; // Rumblestrip
+    data.mWheel[WHEEL_RL].mSurfaceType = 5; // Rumblestrip
     // Issue #397: Flush the 10ms transient ramp
     PumpEngineTime(engine, data, 0.015);
     auto snap2 = engine.GetDebugBatch().back();
@@ -222,23 +222,23 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     ASSERT_GT(FFBEngineTestAccess::GetKerbTimer(engine), 0.05);
 
     // 3. Hold timer verification
-    data.mWheel[2].mSurfaceType = 0;
+    data.mWheel[WHEEL_RL].mSurfaceType = 0;
     engine.calculate_force(&data);
     auto snap3 = engine.GetDebugBatch().back();
     ASSERT_NEAR(snap3.ffb_rear_torque, 0.0f, 0.001f);
 
     // 4. Kerb Strike via Suspension Velocity
     FFBEngineTestAccess::SetKerbTimer(engine, 0.0);
-    data.mWheel[2].mVerticalTireDeflection = 0.05; // 5cm jump
+    data.mWheel[WHEEL_RL].mVerticalTireDeflection = 0.05; // 5cm jump
     // Need to have called it before to have a prev_deflection
     PumpEngineSteadyState(engine, data);
-    data.mWheel[2].mVerticalTireDeflection = 0.10; // +5cm in one frame (0.01s)
+    data.mWheel[WHEEL_RL].mVerticalTireDeflection = 0.10; // +5cm in one frame (0.01s)
     data.mElapsedTime += 0.01;
     // Issue #397: Force 10ms transient ramp
     // The violent bump is detected by comparing current vs previous in m_working_info.
     // We need to find the peak detection during the ramp.
     bool detected = false;
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
         if (FFBEngineTestAccess::GetKerbTimer(engine) > 0.0) detected = true;
     }
@@ -247,8 +247,8 @@ TEST_CASE(test_kerb_strike_rejection, "Physics") {
     // 5. Physics Saturation Verification (Always On)
     engine.m_rear_axle.kerb_strike_rejection = 0.0f; // Disable rejection
     FFBEngineTestAccess::SetKerbTimer(engine, 0.0);
-    data.mWheel[2].mTireLoad = 50000.0; // 10x static load!
-    data.mWheel[3].mTireLoad = 50000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 50000.0; // 10x static load!
+    data.mWheel[WHEEL_RR].mTireLoad = 50000.0;
 
     // Issue #397: Flush the 10ms transient ramp
     PumpEngineTime(engine, data, 1.0);

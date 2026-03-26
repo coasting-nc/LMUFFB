@@ -32,7 +32,7 @@ TEST_CASE(test_yaw_kick_derived_from_rate, "YawKick") {
     
     // Issue #397: Force propagates through 10ms interpolator
     double force = 0.0;
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
     }
     

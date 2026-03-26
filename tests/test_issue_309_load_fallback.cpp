@@ -20,16 +20,16 @@ TEST_CASE(test_issue_309_load_fallback_accuracy, "Physics") {
     data.mElapsedTime = 1.0;
 
     // Set some suspension forces
-    data.mWheel[0].mSuspForce = 2000.0; // FL
-    data.mWheel[1].mSuspForce = 2100.0; // FR
-    data.mWheel[2].mSuspForce = 1800.0; // RL
-    data.mWheel[3].mSuspForce = 1900.0; // RR
+    data.mWheel[WHEEL_FL].mSuspForce = 2000.0; // FL
+    data.mWheel[WHEEL_FR].mSuspForce = 2100.0; // FR
+    data.mWheel[WHEEL_RL].mSuspForce = 1800.0; // RL
+    data.mWheel[WHEEL_RR].mSuspForce = 1900.0; // RR
 
     // Tire loads are missing (0)
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[1].mTireLoad = 0.0;
-    data.mWheel[2].mTireLoad = 0.0;
-    data.mWheel[3].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 0.0;
 
     data.mLocalVel.z = 20.0; // Speed to trigger missing load detection
 

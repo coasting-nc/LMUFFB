@@ -20,10 +20,10 @@ FFBEngine::FFBEngine() {
     m_upsample_steering.Configure(0.95, 0.10);
     m_upsample_throttle.Configure(0.95, 0.10);
     m_upsample_brake.Configure(0.95, 0.10);
-    for (int i = 0; i < 4; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.10);
+    for (int i = 0; i < NUM_WHEELS; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.10);
 
     // Group 2: Texture & Slip (Balanced) - TIED TO UI TOGGLE
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_upsample_vert_deflection[i].Configure(0.80, 0.05);
         m_upsample_lat_patch_vel[i].Configure(0.80, 0.05);
         m_upsample_long_patch_vel[i].Configure(0.80, 0.05);
@@ -36,7 +36,7 @@ FFBEngine::FFBEngine() {
     m_upsample_local_accel_z.Configure(0.50, 0.0);
     m_upsample_local_rot_accel_y.Configure(0.50, 0.0);
     m_upsample_local_rot_y.Configure(0.50, 0.0);
-    for (int i = 0; i < 4; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);
+    for (int i = 0; i < NUM_WHEELS; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);
 
     LMUFFB::Preset::ApplyDefaultsToEngine(*this);
 
@@ -102,7 +102,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
     }
     m_prev_ac_torque = ac_torque;
 
-    const TelemWheelV01& fl_ref = data->mWheel[0];
+    const TelemWheelV01& fl_ref = data->mWheel[WHEEL_FL];
     double radius = (double)fl_ref.mStaticUndeflectedRadius / UNIT_CM_TO_M;
     if (radius < RADIUS_FALLBACK_MIN_M) radius = RADIUS_FALLBACK_DEFAULT_M;
     double circumference = TWO_PI * radius;
@@ -161,7 +161,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_upsample_local_rot_accel_y.Reset();
         m_upsample_local_rot_y.Reset();
         m_slope_buffer_count = 0;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             m_upsample_lat_patch_vel[i].Reset();
             m_upsample_long_patch_vel[i].Reset();
             m_upsample_vert_deflection[i].Reset();
@@ -246,7 +246,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // This protects the filters AND seamlessly triggers our existing fallback logic
     // (e.g., approximate_load) if the data is encrypted or missing.
     bool aux_nan_detected = false;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) { m_working_info.mWheel[i].mTireLoad = 0.0; aux_nan_detected = true; }
         if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) { m_working_info.mWheel[i].mGripFract = 0.0; aux_nan_detected = true; }
         if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) { m_working_info.mWheel[i].mSuspForce = 0.0; aux_nan_detected = true; }
@@ -269,7 +269,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Update wheels in working_info (Channels used for derivatives)
     // Use sanitized m_working_info as input for upsamplers
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_working_info.mWheel[i].mLateralPatchVel = m_upsample_lat_patch_vel[i].Process(m_working_info.mWheel[i].mLateralPatchVel, ffb_dt, is_new_frame);
         m_working_info.mWheel[i].mLongitudinalPatchVel = m_upsample_long_patch_vel[i].Process(m_working_info.mWheel[i].mLongitudinalPatchVel, ffb_dt, is_new_frame);
         m_working_info.mWheel[i].mVerticalTireDeflection = m_upsample_vert_deflection[i].Process(m_working_info.mWheel[i].mVerticalTireDeflection, ffb_dt, is_new_frame);
@@ -346,7 +346,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // SEEDING GATE (Issue #379): Prevent teleport spikes from Garage -> Track
     if (!m_derivatives_seeded && allowed) {
         // 1. Update all "prev" states used for derivatives to current values
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
             m_prev_rotation[i] = data->mWheel[i].mRotation;
             m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
@@ -362,15 +362,15 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_sop_lat_g_smoothed = upsampled_data->mLocalAccel.x / GRAVITY_MS2;
 
         // Use approximate loads for SoP seeding if necessary
-        double fl_l = upsampled_data->mWheel[0].mTireLoad;
-        double fr_l = upsampled_data->mWheel[1].mTireLoad;
-        double rl_l = upsampled_data->mWheel[2].mTireLoad;
-        double rr_l = upsampled_data->mWheel[3].mTireLoad;
+        double fl_l = upsampled_data->mWheel[WHEEL_FL].mTireLoad;
+        double fr_l = upsampled_data->mWheel[WHEEL_FR].mTireLoad;
+        double rl_l = upsampled_data->mWheel[WHEEL_RL].mTireLoad;
+        double rr_l = upsampled_data->mWheel[WHEEL_RR].mTireLoad;
         if (fl_l < 1.0) {
-            fl_l = approximate_load(upsampled_data->mWheel[0]);
-            fr_l = approximate_load(upsampled_data->mWheel[1]);
-            rl_l = approximate_rear_load(upsampled_data->mWheel[2]);
-            rr_l = approximate_rear_load(upsampled_data->mWheel[3]);
+            fl_l = approximate_load(upsampled_data->mWheel[WHEEL_FL]);
+            fr_l = approximate_load(upsampled_data->mWheel[WHEEL_FR]);
+            rl_l = approximate_rear_load(upsampled_data->mWheel[WHEEL_RL]);
+            rr_l = approximate_rear_load(upsampled_data->mWheel[WHEEL_RR]);
         }
         double t_load = fl_l + fr_l + rl_l + rr_l;
         m_sop_load_smoothed = (t_load > 1.0) ? (fr_l + rr_l - fl_l - rl_l) / t_load : 0.0;
@@ -484,8 +484,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // --- 3. TELEMETRY PROCESSING ---
     // Front Wheels
-    const TelemWheelV01& fl = upsampled_data->mWheel[0];
-    const TelemWheelV01& fr = upsampled_data->mWheel[1];
+    const TelemWheelV01& fl = upsampled_data->mWheel[WHEEL_FL];
+    const TelemWheelV01& fr = upsampled_data->mWheel[WHEEL_FR];
 
     // Raw Inputs
     double raw_torque = raw_torque_input;
@@ -562,7 +562,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // 4. Rear Lateral Force (mLateralForce)
-    double avg_lat_force_rear = (std::abs(data->mWheel[2].mLateralForce) + std::abs(data->mWheel[3].mLateralForce)) / DUAL_DIVISOR;
+    double avg_lat_force_rear = (std::abs(data->mWheel[WHEEL_RL].mLateralForce) + std::abs(data->mWheel[WHEEL_RR].mLateralForce)) / DUAL_DIVISOR;
     if (avg_lat_force_rear < MIN_VALID_LAT_FORCE_N && std::abs(data->mLocalAccel.x) > G_FORCE_THRESHOLD) {
         m_missing_lat_force_rear_frames++;
     } else {
@@ -586,11 +586,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
     
     // Calculate Rear Load early for learning (v0.7.164)
-    double calc_load_rl = upsampled_data->mWheel[2].mTireLoad;
-    double calc_load_rr = upsampled_data->mWheel[3].mTireLoad;
+    double calc_load_rl = upsampled_data->mWheel[WHEEL_RL].mTireLoad;
+    double calc_load_rr = upsampled_data->mWheel[WHEEL_RR].mTireLoad;
     if (ctx.frame_warn_load) {
-        calc_load_rl = approximate_rear_load(upsampled_data->mWheel[2]);
-        calc_load_rr = approximate_rear_load(upsampled_data->mWheel[3]);
+        calc_load_rl = approximate_rear_load(upsampled_data->mWheel[WHEEL_RL]);
+        calc_load_rr = approximate_rear_load(upsampled_data->mWheel[WHEEL_RR]);
     }
     ctx.avg_rear_load = (calc_load_rl + calc_load_rr) / DUAL_DIVISOR;
 
@@ -661,8 +661,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Grip Estimation (v0.4.5 FIX)
     // Issue #397: Pass upsampled data pointer to ensure slope detection uses smoothed G-force
     GripResult front_grip_res = calculate_axle_grip(fl, fr, ctx.avg_front_load, m_warned_grip,
-                                                m_prev_slip_angle[0], m_prev_slip_angle[1],
-                                                m_prev_load[0], m_prev_load[1], // NEW
+                                                m_prev_slip_angle[WHEEL_FL], m_prev_slip_angle[WHEEL_FR],
+                                                m_prev_load[WHEEL_FL], m_prev_load[WHEEL_FR], // NEW
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, upsampled_data, true /* is_front */);
     ctx.avg_front_grip = front_grip_res.value;
     m_grip_diag.front_original = front_grip_res.original;
@@ -842,15 +842,15 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // stale state issues when effects are toggled on/off.
     // v0.7.116: Use upsampled_data to ensure derivatives (current - prev) / dt
     // are calculated correctly over the 400Hz 2.5ms interval.
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_prev_vert_deflection[i] = upsampled_data->mWheel[i].mVerticalTireDeflection;
         m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
         m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
     }
     // FIX (Issue #355): Update m_prev_susp_force at the END of the calculate_force loop
     // to ensure correct dForce calculation for Method 1 next frame.
-    m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
-    m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
+    m_prev_susp_force[WHEEL_FL] = upsampled_data->mWheel[WHEEL_FL].mSuspForce;
+    m_prev_susp_force[WHEEL_FR] = upsampled_data->mWheel[WHEEL_FR].mSuspForce;
     
     // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
     // Previously only updated inside calculate_road_texture when enabled.
@@ -914,7 +914,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle;
 
             snap.raw_front_slip_angle = (float)calculate_raw_slip_angle_pair(fl, fr);
-            snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[2], data->mWheel[3]);
+            snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[WHEEL_RL], data->mWheel[WHEEL_RR]);
 
             // Telemetry
             snap.steer_force = (float)raw_torque;
@@ -923,10 +923,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_input_steering = (float)data->mUnfilteredSteering;
             snap.raw_front_tire_load = (float)raw_front_load;
             snap.raw_front_grip_fract = (float)raw_front_grip;
-            snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / DUAL_DIVISOR);
+            snap.raw_rear_grip = (float)((data->mWheel[WHEEL_RL].mGripFract + data->mWheel[WHEEL_RR].mGripFract) / DUAL_DIVISOR);
             snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / DUAL_DIVISOR);
             snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
-            snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / DUAL_DIVISOR);
+            snap.raw_rear_lat_force = (float)((data->mWheel[WHEEL_RL].mLateralForce + data->mWheel[WHEEL_RR].mLateralForce) / DUAL_DIVISOR);
             snap.raw_car_speed = (float)ctx.car_speed_long;
             snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
             snap.raw_input_brake = (float)data->mUnfilteredBrake;
@@ -934,8 +934,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / DUAL_DIVISOR);
             snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / DUAL_DIVISOR);
             snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / DUAL_DIVISOR);
-            snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / DUAL_DIVISOR);
-            snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / DUAL_DIVISOR);
+            snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[WHEEL_RL].mLateralPatchVel) + std::abs(data->mWheel[WHEEL_RR].mLateralPatchVel)) / DUAL_DIVISOR);
+            snap.raw_rear_long_patch_vel = (float)((data->mWheel[WHEEL_RL].mLongitudinalPatchVel + data->mWheel[WHEEL_RR].mLongitudinalPatchVel) / DUAL_DIVISOR);
 
             snap.steering_range_deg = range_deg;
             snap.steering_angle_deg = steering_angle_deg;
@@ -984,76 +984,76 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.raw_game_shaft_torque = (float)data->mSteeringShaftTorque;
         frame.raw_game_gen_torque = (float)genFFBTorque;
 
-        frame.raw_load_fl = (float)data->mWheel[0].mTireLoad;
-        frame.raw_load_fr = (float)data->mWheel[1].mTireLoad;
-        frame.raw_load_rl = (float)data->mWheel[2].mTireLoad;
-        frame.raw_load_rr = (float)data->mWheel[3].mTireLoad;
+        frame.raw_load_fl = (float)data->mWheel[WHEEL_FL].mTireLoad;
+        frame.raw_load_fr = (float)data->mWheel[WHEEL_FR].mTireLoad;
+        frame.raw_load_rl = (float)data->mWheel[WHEEL_RL].mTireLoad;
+        frame.raw_load_rr = (float)data->mWheel[WHEEL_RR].mTireLoad;
 
-        frame.raw_slip_vel_lat_fl = (float)data->mWheel[0].mLateralPatchVel;
-        frame.raw_slip_vel_lat_fr = (float)data->mWheel[1].mLateralPatchVel;
-        frame.raw_slip_vel_lat_rl = (float)data->mWheel[2].mLateralPatchVel;
-        frame.raw_slip_vel_lat_rr = (float)data->mWheel[3].mLateralPatchVel;
+        frame.raw_slip_vel_lat_fl = (float)data->mWheel[WHEEL_FL].mLateralPatchVel;
+        frame.raw_slip_vel_lat_fr = (float)data->mWheel[WHEEL_FR].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rl = (float)data->mWheel[WHEEL_RL].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rr = (float)data->mWheel[WHEEL_RR].mLateralPatchVel;
 
-        frame.raw_slip_vel_long_fl = (float)data->mWheel[0].mLongitudinalPatchVel;
-        frame.raw_slip_vel_long_fr = (float)data->mWheel[1].mLongitudinalPatchVel;
-        frame.raw_slip_vel_long_rl = (float)data->mWheel[2].mLongitudinalPatchVel;
-        frame.raw_slip_vel_long_rr = (float)data->mWheel[3].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_fl = (float)data->mWheel[WHEEL_FL].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_fr = (float)data->mWheel[WHEEL_FR].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rl = (float)data->mWheel[WHEEL_RL].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rr = (float)data->mWheel[WHEEL_RR].mLongitudinalPatchVel;
 
-        frame.raw_ride_height_fl = (float)data->mWheel[0].mRideHeight;
-        frame.raw_ride_height_fr = (float)data->mWheel[1].mRideHeight;
-        frame.raw_ride_height_rl = (float)data->mWheel[2].mRideHeight;
-        frame.raw_ride_height_rr = (float)data->mWheel[3].mRideHeight;
+        frame.raw_ride_height_fl = (float)data->mWheel[WHEEL_FL].mRideHeight;
+        frame.raw_ride_height_fr = (float)data->mWheel[WHEEL_FR].mRideHeight;
+        frame.raw_ride_height_rl = (float)data->mWheel[WHEEL_RL].mRideHeight;
+        frame.raw_ride_height_rr = (float)data->mWheel[WHEEL_RR].mRideHeight;
 
-        frame.raw_susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
-        frame.raw_susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
-        frame.raw_susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
-        frame.raw_susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
+        frame.raw_susp_deflection_fl = (float)data->mWheel[WHEEL_FL].mSuspensionDeflection;
+        frame.raw_susp_deflection_fr = (float)data->mWheel[WHEEL_FR].mSuspensionDeflection;
+        frame.raw_susp_deflection_rl = (float)data->mWheel[WHEEL_RL].mSuspensionDeflection;
+        frame.raw_susp_deflection_rr = (float)data->mWheel[WHEEL_RR].mSuspensionDeflection;
 
-        frame.raw_susp_force_fl = (float)data->mWheel[0].mSuspForce;
-        frame.raw_susp_force_fr = (float)data->mWheel[1].mSuspForce;
-        frame.raw_susp_force_rl = (float)data->mWheel[2].mSuspForce;
-        frame.raw_susp_force_rr = (float)data->mWheel[3].mSuspForce;
+        frame.raw_susp_force_fl = (float)data->mWheel[WHEEL_FL].mSuspForce;
+        frame.raw_susp_force_fr = (float)data->mWheel[WHEEL_FR].mSuspForce;
+        frame.raw_susp_force_rl = (float)data->mWheel[WHEEL_RL].mSuspForce;
+        frame.raw_susp_force_rr = (float)data->mWheel[WHEEL_RR].mSuspForce;
 
-        frame.raw_brake_pressure_fl = (float)data->mWheel[0].mBrakePressure;
-        frame.raw_brake_pressure_fr = (float)data->mWheel[1].mBrakePressure;
-        frame.raw_brake_pressure_rl = (float)data->mWheel[2].mBrakePressure;
-        frame.raw_brake_pressure_rr = (float)data->mWheel[3].mBrakePressure;
+        frame.raw_brake_pressure_fl = (float)data->mWheel[WHEEL_FL].mBrakePressure;
+        frame.raw_brake_pressure_fr = (float)data->mWheel[WHEEL_FR].mBrakePressure;
+        frame.raw_brake_pressure_rl = (float)data->mWheel[WHEEL_RL].mBrakePressure;
+        frame.raw_brake_pressure_rr = (float)data->mWheel[WHEEL_RR].mBrakePressure;
 
-        frame.raw_rotation_fl = (float)data->mWheel[0].mRotation;
-        frame.raw_rotation_fr = (float)data->mWheel[1].mRotation;
-        frame.raw_rotation_rl = (float)data->mWheel[2].mRotation;
-        frame.raw_rotation_rr = (float)data->mWheel[3].mRotation;
+        frame.raw_rotation_fl = (float)data->mWheel[WHEEL_FL].mRotation;
+        frame.raw_rotation_fr = (float)data->mWheel[WHEEL_FR].mRotation;
+        frame.raw_rotation_rl = (float)data->mWheel[WHEEL_RL].mRotation;
+        frame.raw_rotation_rr = (float)data->mWheel[WHEEL_RR].mRotation;
 
         // --- ALGORITHM STATE (400Hz) ---
         frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
         frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
-        frame.slip_angle_rl = (float)upsampled_data->mWheel[2].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
-        frame.slip_angle_rr = (float)upsampled_data->mWheel[3].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rl = (float)upsampled_data->mWheel[WHEEL_RL].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rr = (float)upsampled_data->mWheel[WHEEL_RR].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
 
         frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);
         frame.slip_ratio_fr = (float)calculate_wheel_slip_ratio(fr);
-        frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[2]);
-        frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[3]);
+        frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[WHEEL_RL]);
+        frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[WHEEL_RR]);
 
         frame.grip_fl = (float)fl.mGripFract;
         frame.grip_fr = (float)fr.mGripFract;
-        frame.grip_rl = (float)upsampled_data->mWheel[2].mGripFract;
-        frame.grip_rr = (float)upsampled_data->mWheel[3].mGripFract;
+        frame.grip_rl = (float)upsampled_data->mWheel[WHEEL_RL].mGripFract;
+        frame.grip_rr = (float)upsampled_data->mWheel[WHEEL_RR].mGripFract;
 
         frame.load_fl = (float)fl.mTireLoad;
         frame.load_fr = (float)fr.mTireLoad;
-        frame.load_rl = (float)upsampled_data->mWheel[2].mTireLoad;
-        frame.load_rr = (float)upsampled_data->mWheel[3].mTireLoad;
+        frame.load_rl = (float)upsampled_data->mWheel[WHEEL_RL].mTireLoad;
+        frame.load_rr = (float)upsampled_data->mWheel[WHEEL_RR].mTireLoad;
 
         frame.ride_height_fl = (float)fl.mRideHeight;
         frame.ride_height_fr = (float)fr.mRideHeight;
-        frame.ride_height_rl = (float)upsampled_data->mWheel[2].mRideHeight;
-        frame.ride_height_rr = (float)upsampled_data->mWheel[3].mRideHeight;
+        frame.ride_height_rl = (float)upsampled_data->mWheel[WHEEL_RL].mRideHeight;
+        frame.ride_height_rr = (float)upsampled_data->mWheel[WHEEL_RR].mRideHeight;
 
         frame.susp_deflection_fl = (float)fl.mSuspensionDeflection;
         frame.susp_deflection_fr = (float)fr.mSuspensionDeflection;
-        frame.susp_deflection_rl = (float)upsampled_data->mWheel[2].mSuspensionDeflection;
-        frame.susp_deflection_rr = (float)upsampled_data->mWheel[3].mSuspensionDeflection;
+        frame.susp_deflection_rl = (float)upsampled_data->mWheel[WHEEL_RL].mSuspensionDeflection;
+        frame.susp_deflection_rr = (float)upsampled_data->mWheel[WHEEL_RR].mSuspensionDeflection;
         
         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;
         frame.calc_slip_angle_rear = (float)m_grip_diag.rear_slip_angle;
@@ -1129,8 +1129,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
         frame.approx_load_fl = (float)approximate_load(fl);
         frame.approx_load_fr = (float)approximate_load(fr);
-        frame.approx_load_rl = (float)approximate_rear_load(upsampled_data->mWheel[2]);
-        frame.approx_load_rr = (float)approximate_rear_load(upsampled_data->mWheel[3]);
+        frame.approx_load_rl = (float)approximate_rear_load(upsampled_data->mWheel[WHEEL_RL]);
+        frame.approx_load_rr = (float)approximate_rear_load(upsampled_data->mWheel[WHEEL_RR]);
 
         // --- SYSTEM (400Hz) ---
         frame.physics_rate = (float)m_physics_rate;
@@ -1164,16 +1164,16 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
     // 2. Global Normalized Lateral Load Transfer (Chassis Roll) - Issue #306
-    double fl_load = data->mWheel[0].mTireLoad;
-    double fr_load = data->mWheel[1].mTireLoad;
-    double rl_load = data->mWheel[2].mTireLoad;
-    double rr_load = data->mWheel[3].mTireLoad;
+    double fl_load = data->mWheel[WHEEL_FL].mTireLoad;
+    double fr_load = data->mWheel[WHEEL_FR].mTireLoad;
+    double rl_load = data->mWheel[WHEEL_RL].mTireLoad;
+    double rr_load = data->mWheel[WHEEL_RR].mTireLoad;
 
     if (ctx.frame_warn_load) {
-        fl_load = approximate_load(data->mWheel[0]);
-        fr_load = approximate_load(data->mWheel[1]);
-        rl_load = approximate_rear_load(data->mWheel[2]);
-        rr_load = approximate_rear_load(data->mWheel[3]);
+        fl_load = approximate_load(data->mWheel[WHEEL_FL]);
+        fr_load = approximate_load(data->mWheel[WHEEL_FR]);
+        rl_load = approximate_rear_load(data->mWheel[WHEEL_RL]);
+        rr_load = approximate_rear_load(data->mWheel[WHEEL_RR]);
     }
 
     double left_load = fl_load + rl_load;
@@ -1221,9 +1221,9 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
-    GripResult rear_grip_res = calculate_axle_grip(data->mWheel[2], data->mWheel[3], ctx.avg_front_load, m_warned_rear_grip,
-                                                m_prev_slip_angle[2], m_prev_slip_angle[3],
-                                                m_prev_load[2], m_prev_load[3], // NEW
+    GripResult rear_grip_res = calculate_axle_grip(data->mWheel[WHEEL_RL], data->mWheel[WHEEL_RR], ctx.avg_front_load, m_warned_rear_grip,
+                                                m_prev_slip_angle[WHEEL_RL], m_prev_slip_angle[WHEEL_RR],
+                                                m_prev_load[WHEEL_RL], m_prev_load[WHEEL_RR], // NEW
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
     ctx.avg_rear_grip = rear_grip_res.value;
     m_grip_diag.rear_original = rear_grip_res.original;
@@ -1261,13 +1261,13 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 
     if (m_rear_axle.kerb_strike_rejection > 0.0) {
         // A. Surface Type Detection (Works on ALL cars)
-        bool on_kerb = (data->mWheel[2].mSurfaceType == 5) || (data->mWheel[3].mSurfaceType == 5);
+        bool on_kerb = (data->mWheel[WHEEL_RL].mSurfaceType == 5) || (data->mWheel[WHEEL_RR].mSurfaceType == 5);
 
         // B. Suspension Velocity Detection (Works on unencrypted cars)
         bool violent_bump = false;
         if (m_missing_vert_deflection_frames <= MISSING_TELEMETRY_WARN_THRESHOLD) {
-            double susp_vel_rl = std::abs(data->mWheel[2].mVerticalTireDeflection - m_prev_vert_deflection[2]) / ctx.dt;
-            double susp_vel_rr = std::abs(data->mWheel[3].mVerticalTireDeflection - m_prev_vert_deflection[3]) / ctx.dt;
+            double susp_vel_rl = std::abs(data->mWheel[WHEEL_RL].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_RL]) / ctx.dt;
+            double susp_vel_rr = std::abs(data->mWheel[WHEEL_RR].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_RR]) / ctx.dt;
             violent_bump = std::max(susp_vel_rl, susp_vel_rr) > KERB_DETECTION_THRESHOLD_M_S;
         }
 
@@ -1369,8 +1369,8 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     // --- C. Power Yaw Kick (Acceleration / Traction Loss) ---
     double power_yaw_force = 0.0;
     if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_rear_axle.power_yaw_gain > 0.001f) {
-        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[2]);
-        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[3]);
+        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RL]);
+        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RR]);
         double max_rear_spin = (std::max)({ 0.0, slip_rl, slip_rr });
 
         double slip_start = (double)m_rear_axle.power_slip_threshold * 0.5;
@@ -1453,7 +1453,7 @@ void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationCont
     if (!m_braking.abs_pulse_enabled) return;
     
     bool abs_active = false;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         // Detection: Sudden pressure oscillation + high brake pedal
         double pressure_delta = (data->mWheel[i].mBrakePressure - m_prev_brake_pressure[i]) / ctx.dt;
         if (data->mUnfilteredBrake > ABS_PEDAL_THRESHOLD && std::abs(pressure_delta) > ABS_PRESSURE_RATE_THRESHOLD) {
@@ -1479,11 +1479,11 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
     double chosen_pressure_factor = 0.0;
     
     // Calculate reference slip for front wheels (v0.4.38)
-    double slip_fl = calculate_wheel_slip_ratio(data->mWheel[0]);
-    double slip_fr = calculate_wheel_slip_ratio(data->mWheel[1]);
+    double slip_fl = calculate_wheel_slip_ratio(data->mWheel[WHEEL_FL]);
+    double slip_fr = calculate_wheel_slip_ratio(data->mWheel[WHEEL_FR]);
     double worst_front = (std::min)(slip_fl, slip_fr);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         const auto& w = data->mWheel[i];
         double slip = calculate_wheel_slip_ratio(w);
         double slip_abs = std::abs(slip);
@@ -1532,7 +1532,7 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
             
             // Frequency calculation
             double freq_mult = 1.0;
-            if (i >= 2) {
+            if (i >= NUM_AXLES) {
                 // v0.4.38: Rear wheels use a different frequency to distinguish front/rear lockup
                 if (slip < (worst_front - AXLE_DIFF_HYSTERESIS)) {
                     freq_mult = LOCKUP_FREQ_MULTIPLIER_REAR;
@@ -1571,8 +1571,8 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
 // Helper: Calculate Wheel Spin Vibration (v0.6.36)
 void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     if (m_vibration.spin_enabled && data->mUnfilteredThrottle > SPIN_THROTTLE_THRESHOLD) {
-        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[2]);
-        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[3]);
+        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RL]);
+        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RR]);
         double max_slip = (std::max)(slip_rl, slip_rr);
         
         if (max_slip > SPIN_SLIP_THRESHOLD) {
@@ -1592,7 +1592,7 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
             m_spin_phase = std::fmod(m_spin_phase, TWO_PI);
             
             // Issue #306: Scale vibration amplitude by rear load factor
-            double current_rear_load = (data->mWheel[2].mTireLoad + data->mWheel[3].mTireLoad) / DUAL_DIVISOR;
+            double current_rear_load = (data->mWheel[WHEEL_RL].mTireLoad + data->mWheel[WHEEL_RR].mTireLoad) / DUAL_DIVISOR;
             double rear_load_factor = std::clamp(current_rear_load / (m_static_front_load + 1.0), 0.2, 2.0);
 
             double amp = severity * m_vibration.spin_gain * (double)BASE_NM_SPIN_VIBRATION * rear_load_factor;
@@ -1606,13 +1606,13 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
     if (!m_vibration.slide_enabled) return;
     
     // Use average lateral patch velocity of front wheels
-    double lat_vel_fl = std::abs(data->mWheel[0].mLateralPatchVel);
-    double lat_vel_fr = std::abs(data->mWheel[1].mLateralPatchVel);
+    double lat_vel_fl = std::abs(data->mWheel[WHEEL_FL].mLateralPatchVel);
+    double lat_vel_fr = std::abs(data->mWheel[WHEEL_FR].mLateralPatchVel);
     double front_slip_avg = (lat_vel_fl + lat_vel_fr) / DUAL_DIVISOR;
 
     // Use average lateral patch velocity of rear wheels
-    double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
-    double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
+    double lat_vel_rl = std::abs(data->mWheel[WHEEL_RL].mLateralPatchVel);
+    double lat_vel_rr = std::abs(data->mWheel[WHEEL_RR].mLateralPatchVel);
     double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / DUAL_DIVISOR;
 
     // Use the max slide velocity between axles
@@ -1642,7 +1642,7 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
 void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     // 1. Scrub Drag (Longitudinal resistive force from lateral sliding)
     if (m_vibration.scrub_drag_gain > 0.0) {
-        double avg_lat_vel = (data->mWheel[0].mLateralPatchVel + data->mWheel[1].mLateralPatchVel) / DUAL_DIVISOR;
+        double avg_lat_vel = (data->mWheel[WHEEL_FL].mLateralPatchVel + data->mWheel[WHEEL_FR].mLateralPatchVel) / DUAL_DIVISOR;
         double abs_lat_vel = std::abs(avg_lat_vel);
         
         if (abs_lat_vel > SCRUB_VEL_THRESHOLD) {
@@ -1658,8 +1658,8 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     // 2. Road Texture (Deflection Velocity Method)
     // Convert position delta to velocity (m/s) to ensure Time-Domain Independence
     // v0.7.200 (Issue #402): Fixed bug where effect was 4x weaker at 400Hz than 100Hz.
-    double vel_l = (data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0]) / ctx.dt;
-    double vel_r = (data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1]) / ctx.dt;
+    double vel_l = (data->mWheel[WHEEL_FL].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_FL]) / ctx.dt;
+    double vel_r = (data->mWheel[WHEEL_FR].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_FR]) / ctx.dt;
     
     // Safety: Sanitize derivatives against NaN/Inf (v0.7.200 Review feedback)
     if (!std::isfinite(vel_l)) vel_l = 0.0;
@@ -1704,7 +1704,7 @@ void FFBEngine::ApplyAuxReconstructionMode() {
     m_upsample_throttle.SetZeroLatency(true);
     m_upsample_brake.Configure(0.95, 0.10);
     m_upsample_brake.SetZeroLatency(true);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_upsample_brake_pressure[i].Configure(0.95, 0.10);
         m_upsample_brake_pressure[i].SetZeroLatency(true);
     }
@@ -1712,7 +1712,7 @@ void FFBEngine::ApplyAuxReconstructionMode() {
     // Group 2: User Selectable (High-Frequency Texture)
     // Dynamic Beta Forcing: Force Beta=0.0 to prevent Nyquist ringing in Zero Latency mode
     double group2_beta = user_wants_raw ? 0.00 : 0.05;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_upsample_vert_deflection[i].Configure(0.80, group2_beta);
         m_upsample_vert_deflection[i].SetZeroLatency(user_wants_raw);
         m_upsample_lat_patch_vel[i].Configure(0.80, group2_beta);
@@ -1729,7 +1729,7 @@ void FFBEngine::ApplyAuxReconstructionMode() {
     m_upsample_local_accel_z.SetZeroLatency(false);
     m_upsample_local_rot_accel_y.SetZeroLatency(false);
     m_upsample_local_rot_y.SetZeroLatency(false);
-    for (int i = 0; i < 4; i++) m_upsample_susp_force[i].SetZeroLatency(false);
+    for (int i = 0; i < NUM_WHEELS; i++) m_upsample_susp_force[i].SetZeroLatency(false);
 
     m_last_aux_recon_mode = m_advanced.aux_telemetry_reconstruction;
 }
@@ -1789,7 +1789,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
     
     // Method 0: Direct Ride Height Monitoring
     if (m_vibration.bottoming_method == 0) {
-        double min_rh = (std::min)(data->mWheel[0].mRideHeight, data->mWheel[1].mRideHeight);
+        double min_rh = (std::min)(data->mWheel[WHEEL_FL].mRideHeight, data->mWheel[WHEEL_FR].mRideHeight);
         if (min_rh < BOTTOMING_RH_THRESHOLD_M && min_rh > -1.0) { // < 2mm
             triggered = true;
             intensity = (BOTTOMING_RH_THRESHOLD_M - min_rh) / BOTTOMING_RH_THRESHOLD_M; // Map 2mm->0mm to 0.0->1.0
@@ -1803,8 +1803,8 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
         // for the exact same physical bump.
         double mr = GetMotionRatioForClass(m_metadata.GetCurrentClass());
 
-        double dForceL = ((data->mWheel[0].mSuspForce - m_prev_susp_force[0]) * mr) / ctx.dt;
-        double dForceR = ((data->mWheel[1].mSuspForce - m_prev_susp_force[1]) * mr) / ctx.dt;
+        double dForceL = ((data->mWheel[WHEEL_FL].mSuspForce - m_prev_susp_force[WHEEL_FL]) * mr) / ctx.dt;
+        double dForceR = ((data->mWheel[WHEEL_FR].mSuspForce - m_prev_susp_force[WHEEL_FR]) * mr) / ctx.dt;
         double max_dForce = (std::max)(dForceL, dForceR);
         
         if (max_dForce > BOTTOMING_IMPULSE_THRESHOLD_N_S) { // 100kN/s impulse at the WHEEL
@@ -1816,8 +1816,8 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
     // Safety Trigger: Raw Load Peak (Catches Method 0/1 failures)
     if (!triggered) {
         // FIX (Issue #355): Support encrypted cars by using the approximation fallback
-        double load_l = ctx.frame_warn_load ? approximate_load(data->mWheel[0]) : data->mWheel[0].mTireLoad;
-        double load_r = ctx.frame_warn_load ? approximate_load(data->mWheel[1]) : data->mWheel[1].mTireLoad;
+        double load_l = ctx.frame_warn_load ? approximate_load(data->mWheel[WHEEL_FL]) : data->mWheel[WHEEL_FL].mTireLoad;
+        double load_r = ctx.frame_warn_load ? approximate_load(data->mWheel[WHEEL_FR]) : data->mWheel[WHEEL_FR].mTireLoad;
         double max_load = (std::max)(load_l, load_r);
 
         double bottoming_threshold = m_static_front_load * BOTTOMING_LOAD_MULT;

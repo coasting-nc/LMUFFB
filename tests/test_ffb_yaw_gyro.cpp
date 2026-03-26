@@ -43,8 +43,8 @@ TEST_CASE(test_sop_yaw_kick, "YawGyro") {
     
     // Ensure no other inputs
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     
     // Issue #397: Use PumpEngineTime
@@ -92,10 +92,10 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     
     // Ensure no other inputs
     data.mSteeringShaftTorque = 0.0;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
     
     // Issue #397: Use peak-finding loop to capture damping force during the 10ms ramp
     auto get_peak_gyro = [&](double steer_target, double speed) {
@@ -104,7 +104,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
         data.mElapsedTime += 0.01;
 
         double peak = 0.0;
-        for(int i=0; i<4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
             auto b = engine.GetDebugBatch();
             if (!b.empty()) {
@@ -177,8 +177,8 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine.m_advanced.gyro_gain = 0.0f;
     engine.m_invert_force = false;
     
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     data.mSteeringShaftTorque = 0.0;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
     
@@ -242,8 +242,8 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     
     TelemInfoV01 data2;
     std::memset(&data2, 0, sizeof(data2));
-    data2.mWheel[0].mRideHeight = 0.1;
-    data2.mWheel[1].mRideHeight = 0.1;
+    data2.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data2.mWheel[WHEEL_FR].mRideHeight = 0.1;
     data2.mSteeringShaftTorque = 0.0;
     
     // Run 20 frames of alternating noise
@@ -294,9 +294,9 @@ TEST_CASE(test_yaw_accel_convergence, "YawGyro") {
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_advanced.gyro_gain = 0.0f;
     
-    data.mWheel[0].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
     data.mLocalVel.z = 20.0; // v0.4.42: Ensure speed > 5 m/s for Yaw Kick
-    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     data.mSteeringShaftTorque = 0.0;
     
     // Test: Verify convergence to steady-state value
@@ -372,10 +372,10 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     engine.m_rear_axle.rear_align_effect = 0.0f;
     engine.m_advanced.gyro_gain = 0.0f;
     
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
     data.mSteeringShaftTorque = 0.0;
     data.mDeltaTime = 0.0025; // 400Hz
     
@@ -386,8 +386,8 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     // 4. Feedback loop: wheel shakes harder
     
     // Set up lateral sliding (triggers Slide Rumble)
-    data.mWheel[0].mLateralPatchVel = 5.0;
-    data.mWheel[1].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 5.0;
     
     // Simulate high-frequency yaw acceleration noise (what Slide Rumble would cause)
     // Alternate between +10 and -10 rad/s^2 (extreme noise)
@@ -432,8 +432,8 @@ TEST_CASE(test_regression_yaw_slide_feedback, "YawGyro") {
     // Verify that the smoothing state doesn't explode
     // Check internal state by running a few more frames with zero input
     // Stop increasing rate
-    data.mWheel[0].mLateralPatchVel = 0.0;
-    data.mWheel[1].mLateralPatchVel = 0.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 0.0;
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 0.0;
     
     for (int i = 0; i < 10; i++) {
         data.mElapsedTime += 0.0025;

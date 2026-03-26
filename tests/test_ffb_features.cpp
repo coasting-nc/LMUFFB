@@ -21,8 +21,8 @@ TEST_CASE(test_stationary_gate, "Texture") {
         engine.m_vibration.road_gain = 1.0;
         
         // Simulate Engine Idle Vibration (Deflection Delta)
-        data.mWheel[0].mVerticalTireDeflection = 0.001; 
-        data.mWheel[1].mVerticalTireDeflection = 0.001;
+        data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.001; 
+        data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.001;
         // Previous was 0.0 at initialization, so delta is 0.001
         
         double force = engine.calculate_force(&data);
@@ -35,8 +35,8 @@ TEST_CASE(test_stationary_gate, "Texture") {
     {
         TelemInfoV01 data = CreateBasicTestTelemetry(0.5);
         engine.m_vibration.road_enabled = true;
-        data.mWheel[0].mVerticalTireDeflection = 0.001; 
-        data.mWheel[1].mVerticalTireDeflection = 0.001;
+        data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.001; 
+        data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.001;
         
         double force = engine.calculate_force(&data);
         ASSERT_NEAR(force, 0.0, 0.0001);
@@ -54,17 +54,17 @@ TEST_CASE(test_stationary_gate, "Texture") {
         FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
 
         // Steady state
-        data.mWheel[0].mVerticalTireDeflection = 0.0;
-        data.mWheel[1].mVerticalTireDeflection = 0.0;
+        data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0;
+        data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0;
         PumpEngineSteadyState(engine, data);
 
         // Trigger ramp
-        data.mWheel[0].mVerticalTireDeflection = 0.001;
-        data.mWheel[1].mVerticalTireDeflection = 0.001;
+        data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.001;
+        data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.001;
         data.mElapsedTime += 0.01;
         
         double force = 0.0;
-        for(int i=0; i<4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             double f = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
             force = std::max(force, std::abs(f));
         }
@@ -207,7 +207,7 @@ TEST_CASE(test_slide_texture, "Texture") {
         TelemInfoV01 data;
         std::memset(&data, 0, sizeof(data));
         // Default RH to avoid scraping
-        data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+        data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
         
         engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Standard scale for test
         engine.m_vibration.slide_enabled = true;
@@ -216,16 +216,16 @@ TEST_CASE(test_slide_texture, "Texture") {
         data.mSteeringShaftTorque = 0.0;
         
         // Front Sliding WITH GRIP LOSS (v0.4.39 Fix)
-        data.mWheel[0].mLateralPatchVel = 5.0; 
-        data.mWheel[1].mLateralPatchVel = 5.0;
-        data.mWheel[2].mLateralPatchVel = 0.0; // Rear Grip
-        data.mWheel[3].mLateralPatchVel = 0.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = 5.0; 
+        data.mWheel[WHEEL_FR].mLateralPatchVel = 5.0;
+        data.mWheel[WHEEL_RL].mLateralPatchVel = 0.0; // Rear Grip
+        data.mWheel[WHEEL_RR].mLateralPatchVel = 0.0;
         
         // Set grip to 0.0 to trigger approximation AND grip loss
-        data.mWheel[0].mGripFract = 0.0; // Missing -> Triggers approximation
-        data.mWheel[1].mGripFract = 0.0;
-        data.mWheel[0].mTireLoad = 4000.0; // Valid load (prevents low-speed cutoff)
-        data.mWheel[1].mTireLoad = 4000.0;
+        data.mWheel[WHEEL_FL].mGripFract = 0.0; // Missing -> Triggers approximation
+        data.mWheel[WHEEL_FR].mGripFract = 0.0;
+        data.mWheel[WHEEL_FL].mTireLoad = 4000.0; // Valid load (prevents low-speed cutoff)
+        data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
         data.mLocalVel.z = 20.0; // Moving fast (> 5.0 m/s cutoff)
         
         engine.m_vibration.slide_freq = 1.0f;
@@ -250,7 +250,7 @@ TEST_CASE(test_slide_texture, "Texture") {
         InitializeEngine(engine); // v0.5.12: Initialize with T300 defaults
         TelemInfoV01 data;
         std::memset(&data, 0, sizeof(data));
-        data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+        data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
 
         engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
         engine.m_vibration.slide_enabled = true;
@@ -260,17 +260,17 @@ TEST_CASE(test_slide_texture, "Texture") {
         data.mSteeringShaftTorque = 0.0;
         
         // Front Grip, Rear Sliding
-        data.mWheel[0].mLateralPatchVel = 0.0; 
-        data.mWheel[1].mLateralPatchVel = 0.0;
-        data.mWheel[2].mLateralPatchVel = 10.0; // High Rear Slip
-        data.mWheel[3].mLateralPatchVel = 10.0;
+        data.mWheel[WHEEL_FL].mLateralPatchVel = 0.0; 
+        data.mWheel[WHEEL_FR].mLateralPatchVel = 0.0;
+        data.mWheel[WHEEL_RL].mLateralPatchVel = 10.0; // High Rear Slip
+        data.mWheel[WHEEL_RR].mLateralPatchVel = 10.0;
         
         data.mDeltaTime = 0.013;
         data.mLocalVel.z = 20.0; 
-        data.mWheel[0].mGripFract = 0.5; // Simulate front grip loss to enable global slide effect
-        data.mWheel[1].mGripFract = 0.5;
-        data.mWheel[0].mTireLoad = 4000.0; // Front Load required for effect amplitude scaling
-        data.mWheel[1].mTireLoad = 4000.0;
+        data.mWheel[WHEEL_FL].mGripFract = 0.5; // Simulate front grip loss to enable global slide effect
+        data.mWheel[WHEEL_FR].mGripFract = 0.5;
+        data.mWheel[WHEEL_FL].mTireLoad = 4000.0; // Front Load required for effect amplitude scaling
+        data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
 
         engine.calculate_force(&data);
         double force = engine.calculate_force(&data);
@@ -294,12 +294,12 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     data.mLocalVel.z = -20.0;
     
     // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     
     // Default State: Full Game Force
     data.mSteeringShaftTorque = 10.0; // 10 Nm (0.5 normalized)
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
     engine.m_front_axle.understeer_effect = 0.0; // Disabled effect initially
     engine.m_rear_axle.sop_effect = 0.0;
     engine.m_vibration.slide_enabled = false;
@@ -325,8 +325,8 @@ TEST_CASE(test_dynamic_tuning, "Texture") {
     // And grip drops
     engine.m_general.gain = 1.0; // Reset gain
     engine.m_front_axle.understeer_effect = 1.0;
-    data.mWheel[0].mGripFract = 0.5;
-    data.mWheel[1].mGripFract = 0.5;
+    data.mWheel[WHEEL_FL].mGripFract = 0.5;
+    data.mWheel[WHEEL_FR].mGripFract = 0.5;
     
     double force_grip_loss = PumpEngineTime(engine, data, 1.0);
     // 10.0 * 0.5 = 5.0 -> 0.25 normalized
@@ -344,7 +344,7 @@ TEST_CASE(test_oversteer_boost, "Texture") {
     std::memset(&data, 0, sizeof(data));
     
     // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     
     engine.m_rear_axle.sop_effect = 1.0;
     engine.m_rear_axle.oversteer_boost = 1.0;
@@ -357,17 +357,17 @@ TEST_CASE(test_oversteer_boost, "Texture") {
     engine.m_invert_force = false;
     
     // Scenario: Front has grip, rear is sliding
-    data.mWheel[0].mGripFract = 1.0; // FL
-    data.mWheel[1].mGripFract = 1.0; // FR
-    data.mWheel[2].mGripFract = 0.5; // RL (sliding)
-    data.mWheel[3].mGripFract = 0.5; // RR (sliding)
+    data.mWheel[WHEEL_FL].mGripFract = 1.0; // FL
+    data.mWheel[WHEEL_FR].mGripFract = 1.0; // FR
+    data.mWheel[WHEEL_RL].mGripFract = 0.5; // RL (sliding)
+    data.mWheel[WHEEL_RR].mGripFract = 0.5; // RR (sliding)
     
     // Lateral G (cornering)
     data.mLocalAccel.x = 9.81; // 1G lateral
     
     // Rear lateral force (resisting slide)
-    data.mWheel[2].mLateralForce = 2000.0;
-    data.mWheel[3].mLateralForce = 2000.0;
+    data.mWheel[WHEEL_RL].mLateralForce = 2000.0;
+    data.mWheel[WHEEL_RR].mLateralForce = 2000.0;
     
     // Run for multiple frames to let smoothing settle
     double force = 0.0;
@@ -391,7 +391,7 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     std::memset(&data, 0, sizeof(data));
     
     // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     
     engine.m_vibration.spin_enabled = true;
     engine.m_vibration.spin_gain = 1.0;
@@ -405,10 +405,10 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     data.mSteeringShaftTorque = 10.0; // 10 Nm
     
     // Set Grip to 1.0 so Game Force isn't killed by Understeer Effect
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[2].mGripFract = 1.0;
-    data.mWheel[3].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_RL].mGripFract = 1.0;
+    data.mWheel[WHEEL_RR].mGripFract = 1.0;
     
     // No spin initially
     data.mUnfilteredThrottle = 0.0;
@@ -425,10 +425,10 @@ TEST_CASE(test_spin_torque_drop_interaction, "Texture") {
     
     // 70% slip (severe = 1.0)
     double ground_vel = 20.0;
-    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
-    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
-    data.mWheel[2].mLongitudinalPatchVel = 0.7 * ground_vel;
-    data.mWheel[3].mLongitudinalPatchVel = 0.7 * ground_vel;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 0.7 * ground_vel;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 0.7 * ground_vel;
 
     data.mDeltaTime = 0.01;
     
@@ -477,11 +477,11 @@ TEST_CASE(test_static_notch_integration, "Texture") {
     engine.m_front_axle.understeer_effect = 0.0;   // Disable grip logic clamping
 
     data.mDeltaTime = 0.0025; // 400Hz
-    data.mWheel[0].mRideHeight = 0.1; // Valid RH
-    data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; // Valid RH
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     data.mLocalVel.z = 20.0; // Valid Speed
-    data.mWheel[0].mTireLoad = 4000.0; // Valid Load
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0; // Valid Load
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
     
     // 1. Target Frequency (11Hz) - Should be attenuated
     double max_amp_target = 0.0;
@@ -655,17 +655,17 @@ TEST_CASE(test_phase_wraparound, "Texture") {
     std::memset(&data, 0, sizeof(data));
     
     // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     
     engine.m_braking.lockup_enabled = true;
     engine.m_braking.lockup_gain = 1.0;
     
     data.mUnfilteredBrake = 1.0;
     // Slip ratio -0.3
-    data.mWheel[0].mLongitudinalGroundVel = 20.0;
-    data.mWheel[1].mLongitudinalGroundVel = 20.0;
-    data.mWheel[0].mLongitudinalPatchVel = -0.3 * 20.0;
-    data.mWheel[1].mLongitudinalPatchVel = -0.3 * 20.0;
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FR].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -0.3 * 20.0;
+    data.mWheel[WHEEL_FR].mLongitudinalPatchVel = -0.3 * 20.0;
     
     data.mLocalVel.z = 20.0; // 20 m/s
     data.mDeltaTime = 0.01;
@@ -708,13 +708,13 @@ TEST_CASE(test_multi_effect_interaction, "Texture") {
     std::memset(&data, 0, sizeof(data));
     
     // Default RH to avoid scraping
-    data.mWheel[0].mRideHeight = 0.1; data.mWheel[1].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1; data.mWheel[WHEEL_FR].mRideHeight = 0.1;
     
     // Set tire radius for snapshot (v0.4.41)
-    data.mWheel[0].mStaticUndeflectedRadius = 33; // 33cm = 0.33m
-    data.mWheel[1].mStaticUndeflectedRadius = 33;
-    data.mWheel[2].mStaticUndeflectedRadius = 33;
-    data.mWheel[3].mStaticUndeflectedRadius = 33;
+    data.mWheel[WHEEL_FL].mStaticUndeflectedRadius = 33; // 33cm = 0.33m
+    data.mWheel[WHEEL_FR].mStaticUndeflectedRadius = 33;
+    data.mWheel[WHEEL_RL].mStaticUndeflectedRadius = 33;
+    data.mWheel[WHEEL_RR].mStaticUndeflectedRadius = 33;
     
     // Set base steering torque
     data.mSteeringShaftTorque = 5.0; // 5 Nm base force
@@ -731,21 +731,21 @@ TEST_CASE(test_multi_effect_interaction, "Texture") {
     
     data.mLocalVel.z = 20.0;
     double ground_vel = 20.0;
-    data.mWheel[0].mLongitudinalGroundVel = ground_vel;
-    data.mWheel[1].mLongitudinalGroundVel = ground_vel;
-    data.mWheel[2].mLongitudinalGroundVel = ground_vel;
-    data.mWheel[3].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_FR].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = ground_vel;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = ground_vel;
 
     // Front Locked (-0.3 slip ratio)
     // Slip ratio = PatchVel / GroundVel, so PatchVel = slip_ratio * GroundVel
     // For -0.3 slip: PatchVel = -0.3 * 20 = -6.0 m/s
-    data.mWheel[0].mLongitudinalPatchVel = -0.3 * ground_vel;
-    data.mWheel[1].mLongitudinalPatchVel = -0.3 * ground_vel;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -0.3 * ground_vel;
+    data.mWheel[WHEEL_FR].mLongitudinalPatchVel = -0.3 * ground_vel;
     
     // Rear Spinning (+0.5 slip ratio)
     // For +0.5 slip: PatchVel = 0.5 * 20 = 10.0 m/s
-    data.mWheel[2].mLongitudinalPatchVel = 0.5 * ground_vel;
-    data.mWheel[3].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 0.5 * ground_vel;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 0.5 * ground_vel;
 
     data.mDeltaTime = 0.01;
     data.mElapsedTime = 0.0; // Initialize elapsed time
@@ -837,8 +837,8 @@ TEST_CASE(test_frequency_estimator, "Texture") {
         data.mElapsedTime = t;
         
         // Ensure no other effects trigger
-        data.mWheel[0].mRideHeight = 0.1;
-        data.mWheel[1].mRideHeight = 0.1;
+        data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+        data.mWheel[WHEEL_FR].mRideHeight = 0.1;
         
         // Advance time every 4 ticks to simulate 100Hz game cadence
         if (i % 4 == 0) data.mElapsedTime += 0.01;

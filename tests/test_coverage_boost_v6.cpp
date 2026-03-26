@@ -268,7 +268,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
         t.mUnfilteredSteering = 1.0;
         t.mFilteredSteering = 1.0;
         t.mEngineRPM = 1000.0;
-        for(int i=0; i<4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             t.mWheel[i].mTireLoad = 1000.0;
             t.mWheel[i].mLateralForce = 1000.0;
         }
@@ -305,7 +305,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
                 l->data.telemetry.telemInfo[0].mUnfilteredSteering += 0.01;
                 l->data.telemetry.telemInfo[0].mFilteredSteering += 0.01;
                 l->data.telemetry.telemInfo[0].mEngineRPM += 1.0;
-                for(int i=0; i<4; i++) {
+                for (int i = 0; i < NUM_WHEELS; i++) {
                     l->data.telemetry.telemInfo[0].mWheel[i].mTireLoad += 1.0;
                     l->data.telemetry.telemInfo[0].mWheel[i].mLateralForce += 1.0;
                 }

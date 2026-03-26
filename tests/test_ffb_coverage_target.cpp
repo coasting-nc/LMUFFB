@@ -58,7 +58,7 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     
     // Path 3: Enabled but inactive (no pulse - pressure rate below threshold)
     data.mUnfilteredBrake = 1.0f; 
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mBrakePressure = 0.0f;
         engine.m_prev_brake_pressure[i] = 0.0f;
     }
@@ -67,7 +67,7 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     
     // Path 4: Enabled and active
     data.mUnfilteredBrake = 1.0f; 
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         engine.m_prev_brake_pressure[i] = 0.0f;
         data.mWheel[i].mBrakePressure = 1.0f; // Create delta of 1.0/0.01 = 100.0 > 2.0
     }
@@ -111,10 +111,10 @@ TEST_CASE(test_ffb_engine_full_integration_target, "Coverage") {
     // 2. ABS Pulse Integration
     engine.m_braking.abs_pulse_enabled = true;
     data.mUnfilteredBrake = 1.0f;
-    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 1.0f;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mBrakePressure = 1.0f;
     engine.calculate_force(&data); // Hits Line 1612 (update m_prev_brake_pressure)
     
-    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 10.0f; // High delta
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mBrakePressure = 10.0f; // High delta
     engine.calculate_force(&data); // Hits Line 1938 & 1947
     
     // Verify snapshots in batch

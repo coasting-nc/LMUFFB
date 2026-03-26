@@ -72,37 +72,37 @@ TEST_CASE(test_engine_branch_boost, "Physics") {
     // 9. Telemetry Fallbacks (m_missing_..._frames)
     // a. Missing Load Fallback
     data.mLocalVel.z = 10.0f;
-    data.mWheel[0].mTireLoad = 0.0f;
-    data.mWheel[1].mTireLoad = 0.0f;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0f;
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0f;
     for (int i = 0; i < 25; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
     }
 
     // b. Missing Susp Force
-    data.mWheel[0].mSuspForce = 0.0f;
-    data.mWheel[1].mSuspForce = 0.0f;
+    data.mWheel[WHEEL_FL].mSuspForce = 0.0f;
+    data.mWheel[WHEEL_FR].mSuspForce = 0.0f;
     for (int i = 0; i < 55; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
     }
 
     // c. Missing Susp Deflection
-    data.mWheel[0].mSuspensionDeflection = 0.0f;
-    data.mWheel[1].mSuspensionDeflection = 0.0f;
+    data.mWheel[WHEEL_FL].mSuspensionDeflection = 0.0f;
+    data.mWheel[WHEEL_FR].mSuspensionDeflection = 0.0f;
     for (int i = 0; i < 55; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
     }
 
     // d. Missing Lat Force
     data.mLocalAccel.x = 5.0f;
-    data.mWheel[0].mLateralForce = 0.0f;
-    data.mWheel[1].mLateralForce = 0.0f;
+    data.mWheel[WHEEL_FL].mLateralForce = 0.0f;
+    data.mWheel[WHEEL_FR].mLateralForce = 0.0f;
     for (int i = 0; i < 55; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
     }
 
     // e. Missing Vert Deflection
-    data.mWheel[0].mVerticalTireDeflection = 0.0f;
-    data.mWheel[1].mVerticalTireDeflection = 0.0f;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.0f;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.0f;
     for (int i = 0; i < 55; i++) {
         engine.calculate_force(&data, "GT3", "911", 0.0f);
     }
@@ -112,19 +112,19 @@ TEST_CASE(test_engine_branch_boost, "Physics") {
     engine.calculate_force(&data, "GT3", "911", 0.0f);
     FFBEngineTestAccess::SetABSPulseEnabled(engine, true);
     data.mUnfilteredBrake = 0.8f;
-    data.mWheel[0].mBrakePressure = 1.0f;
+    data.mWheel[WHEEL_FL].mBrakePressure = 1.0f;
     engine.calculate_force(&data, "GT3", "911", 0.0f);
 
     // 11. calculate_lockup_vibration
     FFBEngineTestAccess::SetLockupEnabled(engine, false);
     engine.calculate_force(&data, "GT3", "911", 0.0f);
     FFBEngineTestAccess::SetLockupEnabled(engine, true);
-    data.mWheel[0].mRotation = 0.0f; // Full lock
+    data.mWheel[WHEEL_FL].mRotation = 0.0f; // Full lock
     engine.calculate_force(&data, "GT3", "911", 0.0f);
 
     // Rear lockup
-    data.mWheel[0].mRotation = 100.0f;
-    data.mWheel[2].mRotation = 0.0f; // Rear lock
+    data.mWheel[WHEEL_FL].mRotation = 100.0f;
+    data.mWheel[WHEEL_RL].mRotation = 0.0f; // Rear lock
     engine.calculate_force(&data, "GT3", "911", 0.0f);
 }
 

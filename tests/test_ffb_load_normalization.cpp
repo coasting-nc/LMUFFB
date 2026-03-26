@@ -11,10 +11,10 @@ TEST_CASE(test_class_seeding, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // 1. Test Default/Unknown (Now 4500)
     engine.calculate_force(&data, "UnknownClass", "UnknownCar");
@@ -56,10 +56,10 @@ TEST_CASE(test_fallback_seeding, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // 1. Hypercar name fallback
     engine.calculate_force(&data, "Fallback_HC", "Ferrari 499P");
@@ -91,17 +91,17 @@ TEST_CASE(test_peak_hold_adaptation, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Seed as GT3 (4800N)
     engine.calculate_force(&data, "LMGT3");
 
     // Feed 6000N load
-    data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 6000.0;
 
     engine.calculate_force(&data, "LMGT3");
 
@@ -118,17 +118,17 @@ TEST_CASE(test_peak_hold_adaptation_disabled, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Seed as GT3 (4800N)
     engine.calculate_force(&data, "LMGT3");
 
     // Feed 6000N load
-    data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 6000.0;
 
     engine.calculate_force(&data, "LMGT3");
 
@@ -146,18 +146,18 @@ TEST_CASE(test_peak_hold_decay, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Set peak to 8000N
     engine.calculate_force(&data, "Hypercar"); // Seed high
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 8000.0);
 
     // Feed 4000N load for 1 second (100 steps of 0.01s)
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
 
     for (int i = 0; i < 100; i++) {
         engine.calculate_force(&data, "Hypercar");
@@ -177,10 +177,10 @@ TEST_CASE(test_peak_hold_decay_disabled, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mRideHeight = 0.1;
-    data.mWheel[1].mRideHeight = 0.1;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.1;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Ensure seeded for Hypercar (9500N)
     engine.calculate_force(&data, "Hypercar");
@@ -189,8 +189,8 @@ TEST_CASE(test_peak_hold_decay_disabled, "Physics") {
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 8000.0);
 
     // Feed 4000N load for 1 second (100 steps of 0.01s)
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
 
     for (int i = 0; i < 100; i++) {
         engine.calculate_force(&data, "Hypercar");
@@ -210,8 +210,8 @@ TEST_CASE(test_lmp2_restricted_load, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Test LMP2 Restricted (Issue #225: Should be 7500N)
     engine.calculate_force(&data, "LMP2", "Generic ORECA");
@@ -232,8 +232,8 @@ TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.005;
     data.mLocalVel.z = -20.0;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Seed as Hypercar (9500N)
     engine.calculate_force(&data, "Hypercar");
@@ -241,8 +241,8 @@ TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {
     FFBEngineTestAccess::SetDerivativesSeeded(engine, true);
 
     // 1. Test 10000N load (Should be below threshold 9500 * 2.5 = 23750)
-    data.mWheel[0].mTireLoad = 10000.0;
-    data.mWheel[1].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 10000.0;
     data.mDeltaTime = 0.003; // Change dt to avoid phase cancellation
 
     engine.calculate_force(&data, "Hypercar");
@@ -253,8 +253,8 @@ TEST_CASE(test_hypercar_bottoming_threshold, "Physics") {
     }
 
     // 2. Test 30000N load (Should be ABOVE threshold 23750)
-    data.mWheel[0].mTireLoad = 30000.0;
-    data.mWheel[1].mTireLoad = 30000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 30000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 30000.0;
     data.mDeltaTime = 0.003; // Change dt to avoid phase cancellation
 
     engine.calculate_force(&data, "Hypercar");
@@ -273,8 +273,8 @@ TEST_CASE(test_static_load_fallback_class_aware, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Seed as Hypercar (9500N)
     engine.calculate_force(&data, "Hypercar");
@@ -298,8 +298,8 @@ TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Seed as GT3 (5000N)
     engine.calculate_force(&data, "LMGT3");
@@ -308,8 +308,8 @@ TEST_CASE(test_load_normalization_disabled_behavior, "Physics") {
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 5000.0, 1.0);
 
     // Feed massive load
-    data.mWheel[0].mTireLoad = 10000.0;
-    data.mWheel[1].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 10000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 10000.0;
 
     data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "LMGT3");
@@ -343,8 +343,8 @@ TEST_CASE(test_static_load_fallback_class_aware_disabled, "Physics") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     data.mDeltaTime = 0.01;
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
 
     // Seed as Hypercar (9500N)
     engine.calculate_force(&data, "Hypercar");

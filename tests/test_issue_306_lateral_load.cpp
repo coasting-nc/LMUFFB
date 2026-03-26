@@ -17,7 +17,7 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
     data.mLocalAccel.x = 0.0;
 
     // Baseline: All wheels equal load
-    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 2000.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 2000.0;
 
     engine.calculate_force(&data);
     auto snap = engine.GetDebugBatch().back();
@@ -27,10 +27,10 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
     // Left = 3000 (FL), Right = 1000 (FR). Rears = 2000.
     // Total = 8000. Left = 3000 + 2000 = 5000. Right = 1000 + 2000 = 3000.
     // lat_load_norm = (3000 - 5000) / 8000 = -0.25
-    data.mWheel[0].mTireLoad = 3000.0; // FL
-    data.mWheel[1].mTireLoad = 1000.0; // FR
-    data.mWheel[2].mTireLoad = 2000.0; // RL
-    data.mWheel[3].mTireLoad = 2000.0; // RR
+    data.mWheel[WHEEL_FL].mTireLoad = 3000.0; // FL
+    data.mWheel[WHEEL_FR].mTireLoad = 1000.0; // FR
+    data.mWheel[WHEEL_RL].mTireLoad = 2000.0; // RL
+    data.mWheel[WHEEL_RR].mTireLoad = 2000.0; // RR
 
     engine.calculate_force(&data);
     snap = engine.GetDebugBatch().back();
@@ -39,10 +39,10 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
     // Test 2: Only rear wheels asymmetric (Proves Issue #306 fix)
     // Fronts = 2000. Left = 2000 + 3000 = 5000. Right = 2000 + 1000 = 3000.
     // lat_load_norm = (3000 - 5000) / 8000 = -0.25
-    data.mWheel[0].mTireLoad = 2000.0;
-    data.mWheel[1].mTireLoad = 2000.0;
-    data.mWheel[2].mTireLoad = 3000.0; // RL
-    data.mWheel[3].mTireLoad = 1000.0; // RR
+    data.mWheel[WHEEL_FL].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 3000.0; // RL
+    data.mWheel[WHEEL_RR].mTireLoad = 1000.0; // RR
 
     engine.calculate_force(&data);
     snap = engine.GetDebugBatch().back();
@@ -51,10 +51,10 @@ TEST_CASE_TAGGED(test_issue_306_4_wheel_lateral_load, "CorePhysics", (std::vecto
     // Test 3: All wheels asymmetric
     // Left = 3000 + 3000 = 6000. Right = 1000 + 1000 = 2000. Total = 8000.
     // lat_load_norm = (2000 - 6000) / 8000 = -0.5
-    data.mWheel[0].mTireLoad = 3000.0;
-    data.mWheel[1].mTireLoad = 1000.0;
-    data.mWheel[2].mTireLoad = 3000.0;
-    data.mWheel[3].mTireLoad = 1000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 3000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 1000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 3000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 1000.0;
 
     engine.calculate_force(&data);
     snap = engine.GetDebugBatch().back();
@@ -73,10 +73,10 @@ TEST_CASE_TAGGED(test_issue_306_sign_convention, "CorePhysics", (std::vector<std
 
     // Right Turn: Centrifugal force LEFT (+X), Load shift LEFT (FL > FR, RL > RR)
     data.mLocalAccel.x = 9.81;
-    data.mWheel[0].mTireLoad = 3000.0; // FL
-    data.mWheel[1].mTireLoad = 1000.0; // FR
-    data.mWheel[2].mTireLoad = 3000.0; // RL
-    data.mWheel[3].mTireLoad = 1000.0; // RR
+    data.mWheel[WHEEL_FL].mTireLoad = 3000.0; // FL
+    data.mWheel[WHEEL_FR].mTireLoad = 1000.0; // FR
+    data.mWheel[WHEEL_RL].mTireLoad = 3000.0; // RL
+    data.mWheel[WHEEL_RR].mTireLoad = 1000.0; // RR
 
     // Issue #397: Flush the 10ms transient ramp
     PumpEngineTime(engine, data, 0.015);
@@ -98,19 +98,19 @@ TEST_CASE_TAGGED(test_issue_306_scrub_drag_scaling, "CorePhysics", (std::vector<
     engine.m_static_front_load = 4000.0; // Static front load (per axle)
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    data.mWheel[0].mLateralPatchVel = 1.0; // Scrubbing
-    data.mWheel[1].mLateralPatchVel = 1.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 1.0; // Scrubbing
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 1.0;
 
     // Case 1: Standard load (4000N per axle) -> texture_load_factor approx 1.0
-    data.mWheel[0].mTireLoad = 2000.0;
-    data.mWheel[1].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 2000.0;
 
     engine.calculate_force(&data);
     float scrub_1 = engine.GetDebugBatch().back().ffb_scrub_drag;
 
     // Case 2: High load (8000N per axle) -> texture_load_factor > 1.0
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
 
     engine.calculate_force(&data);
     float scrub_2 = engine.GetDebugBatch().back().ffb_scrub_drag;
@@ -128,12 +128,12 @@ TEST_CASE_TAGGED(test_issue_306_wheel_spin_scaling, "CorePhysics", (std::vector<
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mUnfilteredThrottle = 1.0;
-    data.mWheel[2].mLongitudinalPatchVel = 10.0; // RL Spinning
-    data.mWheel[3].mLongitudinalPatchVel = 10.0; // RR Spinning
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 10.0; // RL Spinning
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 10.0; // RR Spinning
 
     // Case 1: Low rear load
-    data.mWheel[2].mTireLoad = 500.0;
-    data.mWheel[3].mTireLoad = 500.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 500.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 500.0;
 
     engine.calculate_force(&data);
 
@@ -145,8 +145,8 @@ TEST_CASE_TAGGED(test_issue_306_wheel_spin_scaling, "CorePhysics", (std::vector<
     }
 
     // Case 2: High rear load
-    data.mWheel[2].mTireLoad = 4000.0;
-    data.mWheel[3].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0;
 
     float max_spin_2 = 0.0f;
     for(int i=0; i<20; i++) {
@@ -169,13 +169,13 @@ TEST_CASE_TAGGED(test_issue_306_suspension_fallback_4_wheel, "CorePhysics", (std
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     // Force missing load warning
-    for(int i=0; i<4; i++) data.mWheel[i].mTireLoad = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mTireLoad = 0.0;
 
     // Set asymmetric suspension forces
-    data.mWheel[0].mSuspForce = 5000.0; // FL
-    data.mWheel[1].mSuspForce = 1000.0; // FR
-    data.mWheel[2].mSuspForce = 4000.0; // RL
-    data.mWheel[3].mSuspForce = 2000.0; // RR
+    data.mWheel[WHEEL_FL].mSuspForce = 5000.0; // FL
+    data.mWheel[WHEEL_FR].mSuspForce = 1000.0; // FR
+    data.mWheel[WHEEL_RL].mSuspForce = 4000.0; // RL
+    data.mWheel[WHEEL_RR].mSuspForce = 2000.0; // RR
 
     // We need to trigger the warning threshold
     for(int i=0; i<60; i++) {

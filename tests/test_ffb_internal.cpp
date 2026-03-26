@@ -11,10 +11,10 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
 
     // Setup input values
     // Case: Missing Tire Load (0) but Valid Susp Force (1000)
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[1].mTireLoad = 0.0;
-    data.mWheel[0].mSuspForce = 1000.0;
-    data.mWheel[1].mSuspForce = 1000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 1000.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 1000.0;
     
     // Other inputs
     data.mLocalVel.z = 20.0; // Moving
@@ -22,8 +22,8 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
     data.mUnfilteredBrake = 0.2;
     // data.mRideHeight = 0.05; // Removed invalid field
     // Wait, TelemInfoV01 has mWheel[].mRideHeight.
-    data.mWheel[0].mRideHeight = 0.03;
-    data.mWheel[1].mRideHeight = 0.04; // Min is 0.03
+    data.mWheel[WHEEL_FL].mRideHeight = 0.03;
+    data.mWheel[WHEEL_FR].mRideHeight = 0.04; // Min is 0.03
 
     // Trigger missing load logic
     // Need > 20 frames of missing load
@@ -75,23 +75,23 @@ TEST_CASE(test_snapshot_data_integrity, "Internal") {
     // New Test Requirement: Distinct Front/Rear Grip
     // Reset data for a clean frame
     std::memset(&data, 0, sizeof(data));
-    data.mWheel[0].mGripFract = 1.0; // FL
-    data.mWheel[1].mGripFract = 1.0; // FR
-    data.mWheel[2].mGripFract = 0.5; // RL
-    data.mWheel[3].mGripFract = 0.5; // RR
+    data.mWheel[WHEEL_FL].mGripFract = 1.0; // FL
+    data.mWheel[WHEEL_FR].mGripFract = 1.0; // FR
+    data.mWheel[WHEEL_RL].mGripFract = 0.5; // RL
+    data.mWheel[WHEEL_RR].mGripFract = 0.5; // RR
     
     // Set some valid load so we don't trigger missing load logic
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[1].mTireLoad = 4000.0;
-    data.mWheel[2].mTireLoad = 4000.0;
-    data.mWheel[3].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_RR].mTireLoad = 4000.0;
     
     data.mLocalVel.z = 20.0;
     data.mDeltaTime = 0.01;
     
     // Set Deflection for Renaming Test
-    data.mWheel[0].mVerticalTireDeflection = 0.05;
-    data.mWheel[1].mVerticalTireDeflection = 0.05;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection = 0.05;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection = 0.05;
 
     // Seeding call
     engine.calculate_force(&data);
@@ -169,24 +169,24 @@ TEST_CASE(test_zero_effects_leakage, "Internal") {
     data.mLocalAccel.x = 9.81; 
     
     // Rear Align Trigger: Lat Force + Slip
-    data.mWheel[2].mLateralForce = 0.0; // Simulate missing force (workaround trigger)
-    data.mWheel[3].mLateralForce = 0.0;
-    data.mWheel[2].mTireLoad = 3000.0; // Load
-    data.mWheel[3].mTireLoad = 3000.0;
-    data.mWheel[2].mGripFract = 0.0; // Trigger approx
-    data.mWheel[3].mGripFract = 0.0;
-    data.mWheel[2].mLateralPatchVel = 5.0; // Slip
-    data.mWheel[3].mLateralPatchVel = 5.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLateralForce = 0.0; // Simulate missing force (workaround trigger)
+    data.mWheel[WHEEL_RR].mLateralForce = 0.0;
+    data.mWheel[WHEEL_RL].mTireLoad = 3000.0; // Load
+    data.mWheel[WHEEL_RR].mTireLoad = 3000.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.0; // Trigger approx
+    data.mWheel[WHEEL_RR].mGripFract = 0.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 5.0; // Slip
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
     
     // Bottoming Trigger: Ride Height
-    data.mWheel[0].mRideHeight = 0.001; // Scraping
-    data.mWheel[1].mRideHeight = 0.001;
+    data.mWheel[WHEEL_FL].mRideHeight = 0.001; // Scraping
+    data.mWheel[WHEEL_FR].mRideHeight = 0.001;
     
     // Textures Trigger:
-    data.mWheel[0].mLateralPatchVel = 5.0; // Slide
-    data.mWheel[1].mLateralPatchVel = 5.0;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 5.0; // Slide
+    data.mWheel[WHEEL_FR].mLateralPatchVel = 5.0;
     
     data.mDeltaTime = 0.01;
     data.mLocalVel.z = 20.0;
@@ -225,16 +225,16 @@ TEST_CASE(test_snapshot_data_v049, "Internal") {
     data.mDeltaTime = 0.01;
     
     // Front Wheels
-    data.mWheel[0].mLongitudinalPatchVel = 1.0;
-    data.mWheel[1].mLongitudinalPatchVel = 1.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = 1.0;
+    data.mWheel[WHEEL_FR].mLongitudinalPatchVel = 1.0;
     
     // Rear Wheels (Sliding Lat + Long)
-    data.mWheel[2].mLateralPatchVel = 2.0;
-    data.mWheel[3].mLateralPatchVel = 2.0;
-    data.mWheel[2].mLongitudinalPatchVel = 3.0;
-    data.mWheel[3].mLongitudinalPatchVel = 3.0;
-    data.mWheel[2].mLongitudinalGroundVel = 20.0;
-    data.mWheel[3].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RL].mLateralPatchVel = 2.0;
+    data.mWheel[WHEEL_RR].mLateralPatchVel = 2.0;
+    data.mWheel[WHEEL_RL].mLongitudinalPatchVel = 3.0;
+    data.mWheel[WHEEL_RR].mLongitudinalPatchVel = 3.0;
+    data.mWheel[WHEEL_RL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_RR].mLongitudinalGroundVel = 20.0;
 
     // Run Engine
     engine.calculate_force(&data);
@@ -303,10 +303,10 @@ TEST_CASE(test_refactor_snapshot_sop, "Internal") {
     data.mLocalAccel.x = 9.81; // 1G Lat
 
     // Trigger Boost: Rear Grip Loss
-    data.mWheel[0].mGripFract = 1.0;
-    data.mWheel[1].mGripFract = 1.0;
-    data.mWheel[2].mGripFract = 0.5;
-    data.mWheel[3].mGripFract = 0.5;
+    data.mWheel[WHEEL_FL].mGripFract = 1.0;
+    data.mWheel[WHEEL_FR].mGripFract = 1.0;
+    data.mWheel[WHEEL_RL].mGripFract = 0.5;
+    data.mWheel[WHEEL_RR].mGripFract = 0.5;
     // Delta = 0.5. Boost = 1.0 + (0.5 * 1.0 * 2.0) = 2.0x.
 
     // Expected:
@@ -397,8 +397,8 @@ void FFBEngineTestAccess::test_unit_abs_pulse() {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mUnfilteredBrake = 1.0;
-    data.mWheel[0].mBrakePressure = 0.5;
-    engine.m_prev_brake_pressure[0] = 1.0; 
+    data.mWheel[WHEEL_FL].mBrakePressure = 0.5;
+    engine.m_prev_brake_pressure[WHEEL_FL] = 1.0; 
 
     engine.m_braking.abs_pulse_enabled = true;
     engine.m_braking.abs_gain = 1.0;

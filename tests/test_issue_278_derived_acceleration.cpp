@@ -31,7 +31,7 @@ TEST_CASE(test_issue_278_road_texture_spike_rejection, "DerivedAccel") {
     data.mDeltaTime = 0.01; // 100Hz game tick
 
     // Ensure deflection is zero to force fallback to vertical acceleration
-    for(int i=0; i<4; i++) data.mWheel[i].mVerticalTireDeflection = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mVerticalTireDeflection = 0.0;
 
     // Step 1: Steady state
     data.mLocalVel.y = 0.0;
@@ -68,7 +68,7 @@ TEST_CASE(test_issue_278_road_texture_velocity_response, "DerivedAccel") {
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
     data.mDeltaTime = 0.01;
-    for(int i=0; i<4; i++) data.mWheel[i].mVerticalTireDeflection = 0.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mVerticalTireDeflection = 0.0;
 
     // Step 1: Seed
     data.mLocalVel.y = 0.0;
@@ -116,7 +116,7 @@ TEST_CASE(test_issue_278_lockup_continuity, "DerivedAccel") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
     data.mDeltaTime = 0.01;
     data.mUnfilteredBrake = 1.0;
-    for(int i=0; i<4; i++) data.mWheel[i].mSuspForce = 1000.0;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mSuspForce = 1000.0;
 
     // Step 1: Seed
     data.mLocalVel.z = 20.0;
@@ -128,18 +128,18 @@ TEST_CASE(test_issue_278_lockup_continuity, "DerivedAccel") {
     // Step 2: Decelerate chassis
     // dv_z = -0.5 m/s -> accel = -50 m/s^2
     data.mLocalVel.z = 19.5;
-    for(int i=0; i<4; i++) data.mWheel[i].mLongitudinalGroundVel = 19.5;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mLongitudinalGroundVel = 19.5;
 
     // Decelerate wheel more to trigger predictive lockup
     // Initial rotation (at v=20) = 20 / 0.33 = 60.60 rad/s
     // Target rotation = 55.54 rad/s (significant deceleration)
-    data.mWheel[0].mRotation = 55.54;
+    data.mWheel[WHEEL_FL].mRotation = 55.54;
 
     // Set slip velocity to exceed start threshold (5%)
     // slip = mLongitudinalPatchVel / v_long.
     // Target slip = 0.07 -> mLongitudinalPatchVel = 0.07 * 19.5 = 1.365
     // We use negative for braking slip
-    data.mWheel[0].mLongitudinalPatchVel = -1.4;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -1.4;
 
     // Inject raw long accel noise in opposite direction (acceleration spike)
     // If we relied on this, car_dec_ang would be positive/small, and predictive trigger would fail.

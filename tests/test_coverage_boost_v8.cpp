@@ -139,8 +139,8 @@ TEST_CASE(test_ffb_engine_missing_load_fallback_frames, "Diagnostics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // 1. Missing load
-    data.mWheel[0].mTireLoad = 0.0;
-    data.mWheel[1].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 0.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 0.0;
     
     // Need to hit threshold (50 frames)
     for(int i=0; i<60; i++) {
@@ -181,15 +181,15 @@ TEST_CASE(test_ffb_engine_soft_knee_compression_branches, "Physics") {
     // This part of calculate_force is hard to test in isolation without calling calculate_force
     // But calculate_force is too big. I'll use calculate_force with specific loads.
     
-    data.mWheel[0].mTireLoad = 2000.0;
-    data.mWheel[1].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 2000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 2000.0;
     engine.calculate_force(&data);
     double mult_high = FFBEngineTestAccess::GetSmoothedVibrationMult(engine);
     
     // 2. In knee region (x = 1.5)
     FFBEngineTestAccess::SetSmoothedVibrationMult(engine, 1.0);
-    data.mWheel[0].mTireLoad = 1500.0;
-    data.mWheel[1].mTireLoad = 1500.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 1500.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 1500.0;
     engine.calculate_force(&data);
     double mult_knee = FFBEngineTestAccess::GetSmoothedVibrationMult(engine);
     

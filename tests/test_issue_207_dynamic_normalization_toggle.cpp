@@ -121,8 +121,8 @@ TEST_CASE(test_auto_load_normalization_reset_behavior, "Physics") {
 
     // 1. Enable and "Learn" a higher peak
     engine.m_general.auto_load_normalization_enabled = true;
-    data.mWheel[0].mTireLoad = 6000.0;
-    data.mWheel[1].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 6000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 6000.0;
     data.mElapsedTime += 0.01;
     engine.calculate_force(&data, "GT3");
     ASSERT_NEAR(FFBEngineTestAccess::GetAutoPeakLoad(engine), 6000.0, 1.0);
@@ -148,8 +148,8 @@ TEST_CASE(test_load_normalization_disabled_no_learning, "Physics") {
     ASSERT_FALSE(engine.m_general.auto_load_normalization_enabled);
 
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0); // 10 m/s is learning range
-    data.mWheel[0].mTireLoad = 8000.0;
-    data.mWheel[1].mTireLoad = 8000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 8000.0;
+    data.mWheel[WHEEL_FR].mTireLoad = 8000.0;
 
     // Seed as GT3 (5000N baseline)
     // We expect the auto peak to stay at 5000, but static load WILL learn

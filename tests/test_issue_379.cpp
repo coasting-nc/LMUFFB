@@ -63,8 +63,8 @@ TEST_CASE(test_issue_379_teleport_spike_prevention, "Regression") {
     engine.calculate_force(&data, "GT3", "Ferrari 296", 0.0f, false);
 
     // 2. Teleport to track (allowed=true) with HUGE suspension force jump
-    data.mWheel[0].mSuspForce = 50000.0;
-    data.mWheel[1].mSuspForce = 50000.0;
+    data.mWheel[WHEEL_FL].mSuspForce = 50000.0;
+    data.mWheel[WHEEL_FR].mSuspForce = 50000.0;
     data.mElapsedTime += 0.0025;
 
     // This call should trigger seeding and return 0, NOT a massive bottoming thump

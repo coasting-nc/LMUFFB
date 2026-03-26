@@ -26,13 +26,13 @@ TEST_CASE(test_refactor_braking_consistency, "RefactorSafety") {
     data.mUnfilteredBrake = 0.8; // High brake pedal for ABS
 
     // Front wheels locking up (10% slip)
-    data.mWheel[0].mLateralPatchVel = 0.0;
-    data.mWheel[0].mLongitudinalPatchVel = -2.0;
-    data.mWheel[0].mLongitudinalGroundVel = 20.0;
-    data.mWheel[0].mRotation = 18.0 / 0.33;
-    data.mWheel[0].mStaticUndeflectedRadius = 33;
-    data.mWheel[0].mTireLoad = 4000.0;
-    data.mWheel[0].mBrakePressure = 0.5;
+    data.mWheel[WHEEL_FL].mLateralPatchVel = 0.0;
+    data.mWheel[WHEEL_FL].mLongitudinalPatchVel = -2.0;
+    data.mWheel[WHEEL_FL].mLongitudinalGroundVel = 20.0;
+    data.mWheel[WHEEL_FL].mRotation = 18.0 / 0.33;
+    data.mWheel[WHEEL_FL].mStaticUndeflectedRadius = 33;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mBrakePressure = 0.5;
     data.mSteeringShaftTorque = 5.0;
 
     // 3. Establish baseline - run exactly 40 frames to settle
@@ -43,7 +43,7 @@ TEST_CASE(test_refactor_braking_consistency, "RefactorSafety") {
 
     // Now trigger the ABS oscillation
     data.mElapsedTime += 0.0025;
-    data.mWheel[0].mBrakePressure = 0.8;
+    data.mWheel[WHEEL_FL].mBrakePressure = 0.8;
     double final_force = engine.calculate_force(&data, "GT3", "Ferrari", 0.0f, true, 0.0025);
 
     // 4. ASSERT THE VALUE

@@ -21,7 +21,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     data.mDeltaTime = 0.01f;
     data.mElapsedTime = 0.01;
     data.mUnfilteredBrake = 1.0f;
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mBrakePressure = 1.0f;
     }
 
@@ -30,7 +30,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
 
     // Second call to trigger ABS (high delta)
     data.mElapsedTime += 0.01;
-    for(int i=0; i<4; i++) data.mWheel[i].mBrakePressure = 0.7f;
+    for (int i = 0; i < NUM_WHEELS; i++) data.mWheel[i].mBrakePressure = 0.7f;
 
     // Set other gains to 0 to isolate textures
     engine.m_general.gain = 1.0f;
@@ -45,7 +45,7 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
 
     // Issue #397: Flush the 10ms transient ramp
     double force = 0.0;
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
     }
     auto batch = engine.GetDebugBatch();
@@ -63,14 +63,14 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     // Trigger lockup: car speed 20, wheel slip high
     data.mLocalVel.z = 20.0f;
     data.mUnfilteredBrake = 1.0f;
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mLongitudinalGroundVel = 20.0;
         data.mWheel[i].mLongitudinalPatchVel = -10.0; // 50% slip
         data.mWheel[i].mSuspForce = 1000.0f; // Grounded
     }
     data.mElapsedTime += 0.01;
     // Issue #397: Flush the 10ms transient ramp
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
     }
     batch = engine.GetDebugBatch();
@@ -84,14 +84,14 @@ TEST_CASE(test_issue_290_fix_verification, "Issue290") {
     engine.m_braking.abs_pulse_enabled = false;
     engine.m_braking.lockup_enabled = false;
 
-    data.mWheel[0].mVerticalTireDeflection += 0.02;
-    data.mWheel[1].mVerticalTireDeflection += 0.02;
+    data.mWheel[WHEEL_FL].mVerticalTireDeflection += 0.02;
+    data.mWheel[WHEEL_FR].mVerticalTireDeflection += 0.02;
     data.mElapsedTime += 0.01;
-    data.mWheel[0].mTireLoad = 4000.0; // Needs load for scaling
-    data.mWheel[1].mTireLoad = 4000.0;
+    data.mWheel[WHEEL_FL].mTireLoad = 4000.0; // Needs load for scaling
+    data.mWheel[WHEEL_FR].mTireLoad = 4000.0;
 
     // Issue #397: Flush the 10ms transient ramp
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         force = engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
     }
     batch = engine.GetDebugBatch();
