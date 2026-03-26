@@ -4,7 +4,7 @@
 #include <cmath>
 #include <limits>
 
-namespace LMUFFB {
+namespace LMUFFB::Logging {
 
 // Stats helper
 struct ChannelStats {
@@ -53,6 +53,11 @@ struct ChannelStats {
     void Reset() { ResetInterval(); }
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::Logging
+
+// Temporary bridge for legacy code
+namespace LMUFFB {
+    using ChannelStats = LMUFFB::Logging::ChannelStats;
+}
 
 #endif // PERF_STATS_H

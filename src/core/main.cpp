@@ -25,6 +25,8 @@
 #include "TimeUtils.h"
 #include "ChannelMonitor.h"
 
+using namespace LMUFFB::Logging;
+
 namespace LMUFFB {
 
 // --- Helper for Testability ---

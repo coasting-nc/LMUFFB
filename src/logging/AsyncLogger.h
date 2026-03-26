@@ -18,9 +18,13 @@
 #include "ffb/FFBConfig.h"
 
 namespace LMUFFB {
+class FFBEngine;
+}
+
+namespace LMUFFB::Logging {
 
 // Forward declaration
-class FFBEngine;
+using FFBEngine = LMUFFB::FFBEngine;
 
 // Log frame structure - captures one physics tick
 #pragma pack(push, 1)
@@ -541,6 +545,13 @@ private:
     static const int FLUSH_INTERVAL_SECONDS = 5; // Flush every 5 seconds
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::Logging
+
+// Temporary bridge for legacy code
+namespace LMUFFB {
+    using AsyncLogger = LMUFFB::Logging::AsyncLogger;
+    using LogFrame = LMUFFB::Logging::LogFrame;
+    using SessionInfo = LMUFFB::Logging::SessionInfo;
+}
 
 #endif // ASYNCLOGGER_H

@@ -180,7 +180,7 @@ This section tracks the progress made towards fully refactoring the main code an
 ### 6.4 Phase 3: Core Logic (FFB & Physics)
 - [x] Refactor `ffb/UpSampler.h` & `.cpp`.
 - [x] Refactor `ffb/FFBSafetyMonitor.h` & `.cpp`.
-- [x] Refactor `ffb/FFBDebugBuffer.h` & `.cpp`.
+- [x] Refactor `ffb/FFBDebugBuffer.h" & `.cpp`.
 - [x] Refactor `physics/GripLoadEstimation.cpp`.
 - [x] Refactor `ffb/FFBEngine.h` & `.cpp` (Central consumer wrapped).
 
@@ -198,7 +198,7 @@ This section tracks the progress made towards fully refactoring the main code an
 
 ### 6.7 Phase 6: Subsystem Namespace Migration (Post-Unity Stability)
 - [ ] **IMPORTANT**: Only begin this phase AFTER Phase 1-5 are 100% complete and the Unity Build is stable.
-- [ ] Transition `logging/` files from `namespace LMUFFB` to `namespace LMUFFB::Logging`.
+- [x] Transition `logging/` files from `namespace LMUFFB` to `namespace LMUFFB::Logging`. (Initial batch: all six files in `src/logging/`).
 - [ ] Transition `physics/` files to `namespace LMUFFB::Physics`.
 - [ ] Transition `gui/` files to `namespace LMUFFB::GUI`.
 
@@ -304,14 +304,23 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - Standardized on `LMUFFB::lmuffb_app_main` as the namespaced entry point to ensure link-time compatibility with existing unit test conventions.
 - **Suggestions for the Future:** With Phase 5 complete and all core files whitelisted for Unity builds, Phase 6 can begin. This will involve moving files from the root `LMUFFB` namespace into more granular sub-namespaces (`LMUFFB::Physics`, `LMUFFB::GUI`, etc.). Start with the leaf modules refactored in Phase 1.
 
+### 8.12 Implementation Notes (v0.7.253)
+- **Encountered Issues:**
+  - Namespacing `Logger.h` required widespread updates. To minimize immediate impact, temporary `using` bridges were added inside `namespace LMUFFB` within the logging headers.
+  - Discovered that `using namespace` in headers (specifically `FFBEngine.h`) is an anti-pattern and was removed after code review.
+  - Handled namespace ambiguity for `FFBEngine` within `AsyncLogger.h` by using a qualified `using` declaration.
+- **Deviations from the Plan:**
+  - Namespaced all six logging files instead of just the initial two, as it proved more maintainable for the directory's internal consistency.
+- **Suggestions for the Future:** Continue Phase 6 by transitioning `src/utils/` files (e.g., `MathUtils.h`, `TimeUtils.h`, `StringUtils.h`) to `namespace LMUFFB::Utils`.
+
 ## 9. Next Steps: Phase 6 - Subsystem Namespace Migration
 Phase 5 is now complete. All core project files are encapsulated within the `LMUFFB` namespace and are whitelisted for Unity Builds. The next objective is to improve architectural modularity by migrating modules into granular sub-namespaces.
 
 ### Your Objectives for the Next PR:
-1. **Initiate Phase 6 (Subsystem Namespace Migration):**
-   - Begin transitioning leaf utility modules from Phase 1 to their respective sub-namespaces (e.g., `LMUFFB::Logging`, `LMUFFB::Physics`, `LMUFFB::Utils`).
-   - Update `src/logging/PerfStats.h` and `src/logging/RateMonitor.h` to use `namespace LMUFFB::Logging`.
-   - Update call sites in `FFBEngine.cpp` and `main.cpp` accordingly.
+1. **Continue Phase 6 (Subsystem Namespace Migration):**
+   - Transition `src/utils/` files (e.g., `MathUtils.h`, `TimeUtils.h`, `StringUtils.h`) to `namespace LMUFFB::Utils`.
+   - Transition `src/physics/` files to `namespace LMUFFB::Physics`.
+   - Update call sites in `FFBEngine.cpp`, `main.cpp`, and GUI layer accordingly.
 
 ### Critical Reminder for Unity Builds
 *   **The Include Rule:** Continue to enforce strict discipline: all `#include` directives **MUST** be outside namespace blocks.

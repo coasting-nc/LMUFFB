@@ -4,6 +4,8 @@
 #include "RestApiProvider.h"
 #include "Logger.h"
 #include "../physics/SteeringUtils.h"
+
+using namespace LMUFFB::Logging;
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
 #include <mutex>

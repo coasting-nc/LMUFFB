@@ -15,7 +15,7 @@
 #include <filesystem>
 #include "StringUtils.h" // Include StringUtils.h
 
-namespace LMUFFB {
+namespace LMUFFB::Logging {
 // Simple synchronous logger that flushes every line for crash debugging
 class Logger {
 public:
@@ -219,6 +219,11 @@ private:
     bool m_initialized = false;
     std::ostream* m_testStream = nullptr;
 };
-} // namespace LMUFFB
+} // namespace LMUFFB::Logging
+
+// Temporary bridge for legacy code
+namespace LMUFFB {
+    using Logger = LMUFFB::Logging::Logger;
+}
 
 #endif // LOGGER_H
