@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "Tooltips.h"
 #include "StringUtils.h"
+using namespace LMUFFB;
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"

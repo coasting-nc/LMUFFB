@@ -5,6 +5,7 @@
 #include "Logger.h"
 #include "Config.h"
 #include "StringUtils.h"
+using namespace LMUFFB;
 #include <iostream>
 #include <vector>
 #include <algorithm>
