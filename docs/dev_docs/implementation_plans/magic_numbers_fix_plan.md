@@ -22,7 +22,7 @@ For each iteration (Phase/Step):
 
 ---
 
-## 3. Iteration Phases
+## 3. Iteration Phases (Core Logic)
 
 ### Phase 1: Math and Physics Constants
 **Goal**: Standardize universal constants like PI and Gravity.
@@ -106,29 +106,60 @@ For each iteration (Phase/Step):
   1. Identify load thresholds used to validate telemetry.
   2. Define named constants like `MIN_VALID_LOAD_N = 100.0;` and `LEARNED_LOAD_THRESHOLD_N = 1000.0;`.
 
-### Phase 5: GUI and Layout Constants
-**Goal**: Standardize the ImGui layout and styling values.
+---
 
-#### 5.1 Main Layout Dimensions
-- **Example Warning**: `src/gui/GuiLayer_Common.cpp:69:34: warning: 500.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~215 occurrences (Total float literals in GUI code).
+## 4. Iteration Phases (GUI Layer)
+
+### Phase 5: GUI Theme and Style Constants
+**Goal**: Standardize the colors and basic styling of the ImGui interface.
+
+#### 5.1 Color Definitions (ImVec4)
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:87:44: warning: 0.12f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~60 occurrences (Color components).
 - **Implementation Steps**:
-  1. Audit `GuiLayer_Common.cpp` for window and panel sizes.
-  2. Consolidate into a `GuiConstants` namespace.
+  1. Define a `GuiColors` namespace with named `ImVec4` constants (e.g., `COLOR_BACKGROUND`, `COLOR_ACCENT`).
+  2. Replace raw `ImVec4` constructor calls with these constants.
 
-#### 5.2 Style and Colors
+#### 5.2 Style Rounding and Padding
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:76:28: warning: 5.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~150 occurrences (Rounding, padding, and color literal components).
+- **Current Warning Count**: ~15 occurrences (Rounding values).
 - **Implementation Steps**:
-  1. Define standard rounding values (e.g., `DEFAULT_WINDOW_ROUNDING = 5.0f`).
-  2. Move hardcoded `ImVec4` color values to named constants like `COLOR_ACCENT_BLUE`.
+  1. Define constants for standard rounding (e.g., `STYLE_WINDOW_ROUNDING = 5.0f`).
+  2. Group with other style-specific floats.
+
+### Phase 6: GUI Layout and Spacing
+**Goal**: Standardize window sizes and item spacing.
+
+#### 6.1 Window and Panel Dimensions
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:69:34: warning: 500.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~10 occurrences (Fixed widths).
+- **Implementation Steps**:
+  1. Define `MAIN_WINDOW_WIDTH`, `CONFIG_PANEL_WIDTH`, etc.
+  2. Replace literals in `SetNextWindowPos` and `SetNextWindowSize` calls.
+
+#### 6.2 Structural Spacing (SameLine/Dummy/Spacing)
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:328:24: warning: 20.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]` (In `ImGui::SameLine(20.0f)`)
+- **Current Warning Count**: ~20 occurrences (Manual spacing).
+- **Implementation Steps**:
+  1. Define standard spacing increments (e.g., `LAYOUT_INDENT = 20.0f`, `ITEM_SPACING = 10.0f`).
+  2. Apply to layout-related ImGui calls.
+
+### Phase 7: GUI Widget Parameters
+**Goal**: Clean up literal limits and default values passed to widgets.
+
+#### 7.1 Slider and Input Bounds
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:569:70: warning: 5.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~100+ occurrences (Min/Max bounds for UI controls).
+- **Implementation Steps**:
+  1. For each group of settings (Braking, Vibration, etc.), define `MIN`/`MAX` constants.
+  2. Replace magic numbers in `SliderFloat`, `InputFloat`, and custom `FloatSetting` calls.
 
 ---
 
-## 4. Verification and Regression Testing
+## 5. Verification and Regression Testing
 - Every change **must** be verified by running the existing regression tests.
 - For physics-related changes (Phase 4), compare the output of `lmuffb_log_analyzer` on a sample log before and after the change to ensure identical FFB output.
 - For UI changes, verify visual consistency across different window sizes.
 
-## 5. Documentation
+## 6. Documentation
 - Update `AGENTS.md` if any new coding standards regarding constants are established during this process.
