@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [0.7.253]
 ### Changed
 - **Unity Build Expansion (Phase 6 Commencement)**:
-  - Initiated Phase 6 of the Unity Build plan by transitioning leaf logging modules (`PerfStats.h`, `RateMonitor.h`, `ChannelMonitor.h`) to `namespace LMUFFB::Logging`.
-  - Also encapsulated `Logger.h`, `AsyncLogger.h`, and `HealthMonitor.h` within `namespace LMUFFB::Logging` to ensure consistency within the directory.
-  - Implemented temporary bridge `using` declarations in logging headers to maintain backward compatibility with the global namespace while call sites are incrementally updated.
-  - Updated key project-wide call sites in `main.cpp`, `FFBEngine.h`, and `GuiLayer_Common.cpp` using `using namespace LMUFFB::Logging;` to ensure build stability.
+  - Initiated Phase 6 of the Unity Build plan by transitioning all modules in the `src/logging/` directory to `namespace LMUFFB::Logging`.
+  - Implemented temporary bridge `using` declarations (e.g., `namespace LMUFFB { using Logger = LMUFFB::Logging::Logger; }`) in the logging headers to maintain backward compatibility and support qualified lookups while call sites are incrementally updated.
+  - Updated key project-wide call sites in `main.cpp` and `GuiLayer_Common.cpp` with appropriate `using namespace` or qualified lookups.
+  - Enforced strict header hygiene by ensuring no `using namespace` directives exist in core headers like `FFBEngine.h`.
+  - Resolved namespace ambiguity for `FFBEngine` in `AsyncLogger.h` via qualified `using` declarations.
   - Verified 100% test pass rate (632/632) under the new namespaced architecture.
 
 ## [0.7.252]

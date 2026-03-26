@@ -307,7 +307,9 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 ### 8.12 Implementation Notes (v0.7.253)
 - **Encountered Issues:**
   - Namespacing `Logger.h` required widespread updates. To minimize immediate impact, temporary `using` bridges were added inside `namespace LMUFFB` within the logging headers.
-  - Discovered that `using namespace` in headers (specifically `FFBEngine.h`) is an anti-pattern and was removed after code review.
+  - **Code Review Finding (Header Pollution):** Initial implementation included `using namespace LMUFFB::Logging;` in `FFBEngine.h`. This was flagged as an anti-pattern that pollutes dependent files. Resolved by removing the directive and using qualified names where necessary.
+  - **Code Review Finding (Bridge Placement):** Temporary `using` bridges were initially placed in the global namespace, which would break qualified lookups like `LMUFFB::Logger`. Resolved by wrapping all bridges in `namespace LMUFFB { ... }`.
+  - **Code Review Finding (Doc Inconsistency):** The implementation refactored all six logging files, but documentation initially claimed only a subset were done. Resolved by updating the Progress Checklist and Implementation Notes to accurately reflect the full directory migration.
   - Handled namespace ambiguity for `FFBEngine` within `AsyncLogger.h` by using a qualified `using` declaration.
 - **Deviations from the Plan:**
   - Namespaced all six logging files instead of just the initial two, as it proved more maintainable for the directory's internal consistency.
