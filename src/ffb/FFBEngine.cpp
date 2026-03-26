@@ -3,11 +3,12 @@
 #include "StringUtils.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
-#include "../physics/SteeringUtils.h"
 
-using namespace LMUFFB::Logging;
+#include "../physics/SteeringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
+
+using namespace LMUFFB::Logging;
 #include <mutex>
 #include <algorithm>
 #include <cmath>

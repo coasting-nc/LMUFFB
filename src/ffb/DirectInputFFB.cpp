@@ -2,6 +2,8 @@
 #include "Logger.h"
 #include "StringUtils.h"
 
+using namespace LMUFFB::Logging;
+
 // Standard Library Headers
 #include <algorithm> // For std::max, std::min
 #include <mutex>

@@ -3,6 +3,8 @@
 #include "DXGIUtils.h"
 #include "Version.h"
 #include "Logger.h"
+
+using namespace LMUFFB::Logging;
 #include "Config.h"
 #include "StringUtils.h"
 #include <iostream>

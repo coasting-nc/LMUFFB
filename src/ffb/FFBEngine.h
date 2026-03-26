@@ -319,10 +319,10 @@ public:
     FFBSafetyMonitor m_safety;
 
     // Telemetry Stats
-    ChannelStats s_torque;
-    ChannelStats s_front_load;
-    ChannelStats s_front_grip;
-    ChannelStats s_lat_g;
+    Logging::ChannelStats s_torque;
+    Logging::ChannelStats s_front_load;
+    Logging::ChannelStats s_front_grip;
+    Logging::ChannelStats s_lat_g;
     std::chrono::steady_clock::time_point last_log_time;
 
     LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP

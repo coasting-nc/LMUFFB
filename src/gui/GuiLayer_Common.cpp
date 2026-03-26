@@ -10,8 +10,9 @@
 #include "VehicleUtils.h"
 #include "HealthMonitor.h"
 
-using namespace LMUFFB::Logging;
 #include <string>
+
+using namespace LMUFFB::Logging;
 #include <iostream>
 #include <vector>
 #include <cmath>

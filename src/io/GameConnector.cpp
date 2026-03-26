@@ -8,6 +8,8 @@
 #include <cstring>
 #include "StringUtils.h"
 
+using namespace LMUFFB::Logging;
+
 namespace LMUFFB {
 
 namespace {

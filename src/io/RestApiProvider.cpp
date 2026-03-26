@@ -1,6 +1,8 @@
 #include "RestApiProvider.h"
 #include "Logger.h"
 #include <iostream>
+
+using namespace LMUFFB::Logging;
 #include <regex>
 
 #ifdef _WIN32

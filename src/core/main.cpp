@@ -25,9 +25,9 @@
 #include "TimeUtils.h"
 #include "ChannelMonitor.h"
 
-using namespace LMUFFB::Logging;
-
 namespace LMUFFB {
+
+using namespace LMUFFB::Logging;
 
 // --- Helper for Testability ---
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
@@ -362,17 +362,17 @@ int lmuffb_app_main(int argc, char* argv[]) noexcept {
     
     Config::Save(g_engine);
     if (!headless) {
-        Logger::Get().LogFile("Shutting down GUI...");
+        Logging::Logger::Get().LogFile("Shutting down GUI...");
         GuiLayer::Shutdown(g_engine);
     }
     if (ffb_thread.joinable()) {
-        Logger::Get().LogFile("Stopping FFB Thread...");
+        Logging::Logger::Get().LogFile("Stopping FFB Thread...");
         g_running = false; // Ensure loop breaks
         ffb_thread.join();
-        Logger::Get().LogFile("FFB Thread Stopped.");
+        Logging::Logger::Get().LogFile("FFB Thread Stopped.");
     }
     DirectInputFFB::Get().Shutdown();
-    Logger::Get().Log("Main Loop Ended. Clean Exit.");
+    Logging::Logger::Get().Log("Main Loop Ended. Clean Exit.");
     
     return 0;
     } catch (const std::exception& e) {

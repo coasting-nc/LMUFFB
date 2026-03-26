@@ -3,6 +3,8 @@
 #include "Version.h"
 #include "Config.h"
 #include "Logger.h"
+
+using namespace LMUFFB::Logging;
 #include <iostream>
 #include <vector>
 #include <algorithm>

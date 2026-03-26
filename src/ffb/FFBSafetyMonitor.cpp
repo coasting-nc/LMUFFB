@@ -2,6 +2,8 @@
 
 namespace LMUFFB {
 
+using namespace LMUFFB::Logging;
+
 bool FFBSafetyMonitor::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const {
     // 1. Mute if not player vehicle
     if (!scoring.mIsPlayer) return false;

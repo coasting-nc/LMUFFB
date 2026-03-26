@@ -17,6 +17,8 @@
 #include "core/Config.h"
 #include "logging/Logger.h"
 #include <iostream>
+
+using namespace LMUFFB::Logging;
 #include <mutex>
 #include <cmath>
 #include "utils/StringUtils.h"
