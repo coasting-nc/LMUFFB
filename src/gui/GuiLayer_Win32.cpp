@@ -142,6 +142,7 @@ public:
     }
 };
 
+namespace {
 // Internal helpers exposed for tests
 Win32GuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
@@ -152,6 +153,7 @@ void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().Sa
 void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
 bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
+} // anonymous namespace
 
 
 bool GuiLayer::Init() {
@@ -369,6 +371,7 @@ public:
     bool m_always_on_top_mock = false;
 };
 
+namespace {
 // Internal helpers exposed for tests
 Win32GuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
@@ -379,6 +382,7 @@ void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().Sa
 void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
 bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
+} // anonymous namespace
 
 bool GuiLayer::Init() {
     return true;
