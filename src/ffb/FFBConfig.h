@@ -173,7 +173,7 @@ struct LoadForcesConfig {
     }
 
     void Validate() {
-        lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lat_load_effect));
+        lat_load_effect = (std::max)(0.0f, (std::min)(10.0f, lat_load_effect));
         lat_load_transform = (std::max)(0, (std::min)(3, lat_load_transform));
         long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
         long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
