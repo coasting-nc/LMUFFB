@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-26 07:42:33</td>
+            <td class="headerValue">2026-03-26 07:53:36</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">90.6&nbsp;%</td>
@@ -154,10 +154,10 @@
 <span id="L83"><span class="lineNum">      83</span>   [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 18 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">          20 :         if (!has1 &amp;&amp; !has2) return true;</span></span>
 <span id="L84"><span class="lineNum">      84</span>                 :             : </span>
 <span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">          18 :         int val1 = 0;</span></span>
-<span id="L86"><span class="lineNum">      86</span>   [<span class="tlaGBC" title="Branch 0 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          18 :         try { if (has1) val1 = std::stoi(segment1); } catch (...) {}</span></span>
+<span id="L86"><span class="lineNum">      86</span>   [<span class="tlaGBC" title="Branch 0 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          18 :         try { if (has1) val1 = std::stoi(segment1); } catch (...) { (void)0; }</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
 <span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaGNC">          18 :         int val2 = 0;</span></span>
-<span id="L88"><span class="lineNum">      88</span>   [<span class="tlaGBC" title="Branch 0 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          18 :         try { if (has2) val2 = std::stoi(segment2); } catch (...) {}</span></span>
+<span id="L88"><span class="lineNum">      88</span>   [<span class="tlaGBC" title="Branch 0 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 18 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          18 :         try { if (has2) val2 = std::stoi(segment2); } catch (...) { (void)0; }</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
 <span id="L89"><span class="lineNum">      89</span>                 :             : </span>
 <span id="L90"><span class="lineNum">      90</span>         [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 13 times"> + </span>]:<span class="tlaGNC">          18 :         if (val1 &lt; val2) return true;</span></span>
@@ -1154,7 +1154,7 @@
 <span id="L942"><span class="lineNum">     942</span>                 :             :                 }</span>
 <span id="L943"><span class="lineNum">     943</span>                 :<span class="tlaGNC">          25 :             }</span></span>
 <span id="L944"><span class="lineNum">     944</span>                 :<span class="tlaGNC">          40 :         }</span></span>
-<span id="L945"><span class="lineNum">     945</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          61 :     } catch (...) {}</span></span>
+<span id="L945"><span class="lineNum">     945</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          61 :     } catch (...) { (void)0; }</span></span>
 <span id="L946"><span class="lineNum">     946</span>                 :             : </span>
 <span id="L947"><span class="lineNum">     947</span>         [<span class="tlaGBC" title="Branch 0 was taken 21 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 40 times"> + </span>]:<span class="tlaGNC">          61 :     if (!toml_loaded) {</span></span>
 <span id="L948"><span class="lineNum">     948</span>         [<span class="tlaGBC" title="Branch 0 was taken 21 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          21 :         MigrateFromLegacyIni(engine, final_path);</span></span>
@@ -1356,7 +1356,7 @@
 <span id="L1129"><span class="lineNum">    1129</span>                 :<span class="tlaUNC">           0 :                 }</span></span>
 <span id="L1130"><span class="lineNum">    1130</span>                 :             :             }</span>
 <span id="L1131"><span class="lineNum">    1131</span>                 :<span class="tlaGNC tlaBgGNC">          73 :         }</span></span>
-<span id="L1132"><span class="lineNum">    1132</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaUNC tlaBgUNC">           0 :     } catch (...) {}</span></span>
+<span id="L1132"><span class="lineNum">    1132</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaUNC tlaBgUNC">           0 :     } catch (...) { (void)0; }</span></span>
 <span id="L1133"><span class="lineNum">    1133</span>                 :             : </span>
 <span id="L1134"><span class="lineNum">    1134</span>                 :             :     // 3. Deterministic Sorting: Built-ins first, then &quot;Default&quot; first within that group, then alphabetical.</span>
 <span id="L1135"><span class="lineNum">    1135</span>         [<span class="tlaGBC" title="Branch 0 was taken 73 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">          73 :     std::sort(presets.begin(), presets.end(), [](const Preset&amp; a, const Preset&amp; b) {</span></span>
@@ -1532,7 +1532,7 @@
 <span id="L1293"><span class="lineNum">    1293</span>   [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           2 :                 ParsePresetLine(key + &quot;=&quot; + value, current_preset, config_version, dummy_needs_save, legacy_torque_hack, legacy_torque_val);</span></span>
 <span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
 <span id="L1294"><span class="lineNum">    1294</span>         [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 222 times"> + </span>]:<span class="tlaGNC">         227 :             } else if (in_static_loads) {</span></span>
-<span id="L1295"><span class="lineNum">    1295</span>   [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 5 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           5 :                 try { SetSavedStaticLoad(key, std::stod(value)); } catch (...) {}</span></span>
+<span id="L1295"><span class="lineNum">    1295</span>   [<span class="tlaGBC" title="Branch 0 was taken 5 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 5 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           5 :                 try { SetSavedStaticLoad(key, std::stod(value)); } catch (...) { (void)0; }</span></span>
 <span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
 <span id="L1296"><span class="lineNum">    1296</span>                 :             :             } else {</span>
 <span id="L1297"><span class="lineNum">    1297</span>   [<span class="tlaGBC" title="Branch 0 was taken 222 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 218 times"> + </span> :<span class="tlaGNC">         222 :                 if (key == &quot;ini_version&quot;) { config_version = value; }</span></span>
@@ -1624,7 +1624,7 @@
 <span id="L1370"><span class="lineNum">    1370</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :             SaveUserPresetFile(p);</span></span>
 <span id="L1371"><span class="lineNum">    1371</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :             presets.push_back(p);</span></span>
 <span id="L1372"><span class="lineNum">    1372</span>                 :<span class="tlaUNC">           0 :             return true;</span></span>
-<span id="L1373"><span class="lineNum">    1373</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :         } catch (...) {}</span></span>
+<span id="L1373"><span class="lineNum">    1373</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :         } catch (...) { (void)0; }</span></span>
 <span id="L1374"><span class="lineNum">    1374</span>                 :             :     }</span>
 <span id="L1375"><span class="lineNum">    1375</span>                 :             : </span>
 <span id="L1376"><span class="lineNum">    1376</span>                 :             :     // Fallback to legacy INI import</span>
