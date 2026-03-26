@@ -1,0 +1,595 @@
+[ 29%] Built target LMUFFB_Vendor
+[ 33%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Common.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/gui/GuiLayer_Common.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Common.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Common.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Common.cpp.o -c /app/src/gui/GuiLayer_Common.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007fdda412f3bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007fdda412d4f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007fdda412fb00
+3  libc.so.6            0x00007fdda2e49330
+4  libclang-cpp.so.18.1 0x00007fddab4b5d3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007fddab4ba2f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007fddab5235ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007fddab53129d
+8  libclang-cpp.so.18.1 0x00007fddab5f1af2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+9  libclang-cpp.so.18.1 0x00007fddab5f19e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+10 libclang-cpp.so.18.1 0x00007fddab5417a9 clang::Parser::SkipMalformedDecl() + 297
+11 libclang-cpp.so.18.1 0x00007fddab540ca0 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 3152
+12 libclang-cpp.so.18.1 0x00007fddab5f707f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+13 libclang-cpp.so.18.1 0x00007fddab5f6a39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+14 libclang-cpp.so.18.1 0x00007fddab5f5c65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+15 libclang-cpp.so.18.1 0x00007fddab5f3f7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+16 libclang-cpp.so.18.1 0x00007fddab52b47e clang::ParseAST(clang::Sema&, bool, bool) + 766
+17 libclang-cpp.so.18.1 0x00007fddad39a62c clang::FrontendAction::Execute() + 92
+18 libclang-cpp.so.18.1 0x00007fddad3170b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+19 libclang-cpp.so.18.1 0x00007fddad58e6b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+20 clang-tidy           0x00005643d4d4bab3
+21 libclang-cpp.so.18.1 0x00007fddad58e414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+22 libclang-cpp.so.18.1 0x00007fddad58d17f clang::tooling::ToolInvocation::run() + 1231
+23 libclang-cpp.so.18.1 0x00007fddad5901c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+24 clang-tidy           0x00005643d4d47d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+25 clang-tidy           0x00005643d40c7c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+26 libc.so.6            0x00007fdda2e2e1ca
+27 libc.so.6            0x00007fdda2e2e28b __libc_start_main + 139
+28 clang-tidy           0x00005643d40c2fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:111: CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Common.cpp.o] Error 1
+[ 37%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/gui/DXGIUtils.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/gui/DXGIUtils.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/gui/DXGIUtils.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/gui/DXGIUtils.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/gui/DXGIUtils.cpp.o -c /app/src/gui/DXGIUtils.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f3ac6f443bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f3ac6f424f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f3ac6f44b00
+3  libc.so.6            0x00007f3ac5c5e330
+4  libclang-cpp.so.18.1 0x00007f3ace2cad3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007f3ace2cf2f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007f3ace3385ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f3ace34629d
+8  libclang-cpp.so.18.1 0x00007f3ace3566d2 clang::Parser::SkipMalformedDecl() + 82
+9  libclang-cpp.so.18.1 0x00007f3ace355912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+10 libclang-cpp.so.18.1 0x00007f3ace40c07f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+11 libclang-cpp.so.18.1 0x00007f3ace40ba39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+12 libclang-cpp.so.18.1 0x00007f3ace40ac65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+13 libclang-cpp.so.18.1 0x00007f3ace408f7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+14 libclang-cpp.so.18.1 0x00007f3ace34047e clang::ParseAST(clang::Sema&, bool, bool) + 766
+15 libclang-cpp.so.18.1 0x00007f3ad01af62c clang::FrontendAction::Execute() + 92
+16 libclang-cpp.so.18.1 0x00007f3ad012c0b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+17 libclang-cpp.so.18.1 0x00007f3ad03a36b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+18 clang-tidy           0x0000563338f19ab3
+19 libclang-cpp.so.18.1 0x00007f3ad03a3414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+20 libclang-cpp.so.18.1 0x00007f3ad03a217f clang::tooling::ToolInvocation::run() + 1231
+21 libclang-cpp.so.18.1 0x00007f3ad03a51c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+22 clang-tidy           0x0000563338f15d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+23 clang-tidy           0x0000563338295c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+24 libc.so.6            0x00007f3ac5c431ca
+25 libc.so.6            0x00007f3ac5c4328b __libc_start_main + 139
+26 clang-tidy           0x0000563338290fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:125: CMakeFiles/LMUFFB_Core.dir/src/gui/DXGIUtils.cpp.o] Error 1
+[ 41%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/core/Config.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/core/Config.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/core/Config.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/core/Config.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/core/Config.cpp.o -c /app/src/core/Config.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f279bb9e3bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f279bb9c4f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f279bb9eb00
+3  libc.so.6            0x00007f279a8b8330
+4  libclang-cpp.so.18.1 0x00007f27a2f248e0 clang::Lexer::LexCharConstant(clang::Token&, char const*, clang::tok::TokenKind) + 800
+5  libclang-cpp.so.18.1 0x00007f27a2f29bae clang::Lexer::LexTokenInternal(clang::Token&, bool) + 4078
+6  libclang-cpp.so.18.1 0x00007f27a2f925ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f27a2fa029d
+8  libclang-cpp.so.18.1 0x00007f27a3060af2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+9  libclang-cpp.so.18.1 0x00007f27a3060b23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+10 libclang-cpp.so.18.1 0x00007f27a3060b23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+11 libclang-cpp.so.18.1 0x00007f27a30609e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+12 libclang-cpp.so.18.1 0x00007f27a2fb07a9 clang::Parser::SkipMalformedDecl() + 297
+13 libclang-cpp.so.18.1 0x00007f27a2faf912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+14 libclang-cpp.so.18.1 0x00007f27a306607f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+15 libclang-cpp.so.18.1 0x00007f27a3065a39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+16 libclang-cpp.so.18.1 0x00007f27a3064c65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+17 libclang-cpp.so.18.1 0x00007f27a3062f7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+18 libclang-cpp.so.18.1 0x00007f27a2f9a47e clang::ParseAST(clang::Sema&, bool, bool) + 766
+19 libclang-cpp.so.18.1 0x00007f27a4e0962c clang::FrontendAction::Execute() + 92
+20 libclang-cpp.so.18.1 0x00007f27a4d860b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+21 libclang-cpp.so.18.1 0x00007f27a4ffd6b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+22 clang-tidy           0x000055bf9de45ab3
+23 libclang-cpp.so.18.1 0x00007f27a4ffd414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+24 libclang-cpp.so.18.1 0x00007f27a4ffc17f clang::tooling::ToolInvocation::run() + 1231
+25 libclang-cpp.so.18.1 0x00007f27a4fff1c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+26 clang-tidy           0x000055bf9de41d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+27 clang-tidy           0x000055bf9d1c1c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+28 libc.so.6            0x00007f279a89d1ca
+29 libc.so.6            0x00007f279a89d28b __libc_start_main + 139
+30 clang-tidy           0x000055bf9d1bcfe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:139: CMakeFiles/LMUFFB_Core.dir/src/core/Config.cpp.o] Error 1
+[ 45%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/ffb/DirectInputFFB.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/ffb/DirectInputFFB.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/ffb/DirectInputFFB.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/ffb/DirectInputFFB.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/ffb/DirectInputFFB.cpp.o -c /app/src/ffb/DirectInputFFB.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f4d31f523bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f4d31f504f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f4d31f52b00
+3  libc.so.6            0x00007f4d30c6c330
+4  libclang-cpp.so.18.1 0x00007f4d392d8d3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007f4d392dd2f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007f4d393465ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f4d3935429d
+8  libclang-cpp.so.18.1 0x00007f4d39414af2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+9  libclang-cpp.so.18.1 0x00007f4d394149e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+10 libclang-cpp.so.18.1 0x00007f4d394149e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+11 libclang-cpp.so.18.1 0x00007f4d393647a9 clang::Parser::SkipMalformedDecl() + 297
+12 libclang-cpp.so.18.1 0x00007f4d39363912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+13 libclang-cpp.so.18.1 0x00007f4d3941a07f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+14 libclang-cpp.so.18.1 0x00007f4d39419a39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+15 libclang-cpp.so.18.1 0x00007f4d39418c65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+16 libclang-cpp.so.18.1 0x00007f4d39416f7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+17 libclang-cpp.so.18.1 0x00007f4d3934e47e clang::ParseAST(clang::Sema&, bool, bool) + 766
+18 libclang-cpp.so.18.1 0x00007f4d3b1bd62c clang::FrontendAction::Execute() + 92
+19 libclang-cpp.so.18.1 0x00007f4d3b13a0b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+20 libclang-cpp.so.18.1 0x00007f4d3b3b16b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+21 clang-tidy           0x000055e5ceea1ab3
+22 libclang-cpp.so.18.1 0x00007f4d3b3b1414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+23 libclang-cpp.so.18.1 0x00007f4d3b3b017f clang::tooling::ToolInvocation::run() + 1231
+24 libclang-cpp.so.18.1 0x00007f4d3b3b31c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+25 clang-tidy           0x000055e5cee9dd9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+26 clang-tidy           0x000055e5ce21dc65 clang::tidy::clangTidyMain(int, char const**) + 10005
+27 libc.so.6            0x00007f4d30c511ca
+28 libc.so.6            0x00007f4d30c5128b __libc_start_main + 139
+29 clang-tidy           0x000055e5ce218fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:153: CMakeFiles/LMUFFB_Core.dir/src/ffb/DirectInputFFB.cpp.o] Error 1
+[ 50%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/io/GameConnector.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/io/GameConnector.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/io/GameConnector.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/io/GameConnector.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/io/GameConnector.cpp.o -c /app/src/io/GameConnector.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007fade43c83bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007fade43c64f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007fade43c8b00
+3  libc.so.6            0x00007fade30e2330
+4  libclang-cpp.so.18.1 0x00007fadeb74ed3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007fadeb7532f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007fadeb7bc5ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007fadeb7ca29d
+8  libclang-cpp.so.18.1 0x00007fadeb88aaf2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+9  libclang-cpp.so.18.1 0x00007fadeb88ab23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+10 libclang-cpp.so.18.1 0x00007fadeb88a9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+11 libclang-cpp.so.18.1 0x00007fadeb88a9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+12 libclang-cpp.so.18.1 0x00007fadeb88a9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+13 libclang-cpp.so.18.1 0x00007fadeb7da7df clang::Parser::SkipMalformedDecl() + 351
+14 libclang-cpp.so.18.1 0x00007fadeb7d9912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+15 libclang-cpp.so.18.1 0x00007fadeb89007f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+16 libclang-cpp.so.18.1 0x00007fadeb88fa39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+17 libclang-cpp.so.18.1 0x00007fadeb88ec65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+18 libclang-cpp.so.18.1 0x00007fadeb88cf7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+19 libclang-cpp.so.18.1 0x00007fadeb7c447e clang::ParseAST(clang::Sema&, bool, bool) + 766
+20 libclang-cpp.so.18.1 0x00007faded63362c clang::FrontendAction::Execute() + 92
+21 libclang-cpp.so.18.1 0x00007faded5b00b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+22 libclang-cpp.so.18.1 0x00007faded8276b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+23 clang-tidy           0x0000555f4e1d4ab3
+24 libclang-cpp.so.18.1 0x00007faded827414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+25 libclang-cpp.so.18.1 0x00007faded82617f clang::tooling::ToolInvocation::run() + 1231
+26 libclang-cpp.so.18.1 0x00007faded8291c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+27 clang-tidy           0x0000555f4e1d0d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+28 clang-tidy           0x0000555f4d550c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+29 libc.so.6            0x00007fade30c71ca
+30 libc.so.6            0x00007fade30c728b __libc_start_main + 139
+31 clang-tidy           0x0000555f4d54bfe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:167: CMakeFiles/LMUFFB_Core.dir/src/io/GameConnector.cpp.o] Error 1
+[ 54%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBEngine.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/ffb/FFBEngine.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBEngine.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBEngine.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBEngine.cpp.o -c /app/src/ffb/FFBEngine.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007fcac4a973bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007fcac4a954f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007fcac4a97b00
+3  libc.so.6            0x00007fcac37b1330
+4  libclang-cpp.so.18.1 0x00007fcacbe1dd3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007fcacbe222f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007fcacbe8b5ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007fcacbe9929d
+8  libclang-cpp.so.18.1 0x00007fcacbf59af2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+9  libclang-cpp.so.18.1 0x00007fcacbf59b23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+10 libclang-cpp.so.18.1 0x00007fcacbf59b23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+11 libclang-cpp.so.18.1 0x00007fcacbf59b23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+12 libclang-cpp.so.18.1 0x00007fcacbf59b23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+13 libclang-cpp.so.18.1 0x00007fcacbf59b23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+14 libclang-cpp.so.18.1 0x00007fcacbea97df clang::Parser::SkipMalformedDecl() + 351
+15 libclang-cpp.so.18.1 0x00007fcacbea8912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+16 libclang-cpp.so.18.1 0x00007fcacbf5f07f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+17 libclang-cpp.so.18.1 0x00007fcacbf5ea39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+18 libclang-cpp.so.18.1 0x00007fcacbf5dc65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+19 libclang-cpp.so.18.1 0x00007fcacbf5bf7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+20 libclang-cpp.so.18.1 0x00007fcacbe9347e clang::ParseAST(clang::Sema&, bool, bool) + 766
+21 libclang-cpp.so.18.1 0x00007fcacdd0262c clang::FrontendAction::Execute() + 92
+22 libclang-cpp.so.18.1 0x00007fcacdc7f0b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+23 libclang-cpp.so.18.1 0x00007fcacdef66b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+24 clang-tidy           0x000055b3d578dab3
+25 libclang-cpp.so.18.1 0x00007fcacdef6414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+26 libclang-cpp.so.18.1 0x00007fcacdef517f clang::tooling::ToolInvocation::run() + 1231
+27 libclang-cpp.so.18.1 0x00007fcacdef81c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+28 clang-tidy           0x000055b3d5789d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+29 clang-tidy           0x000055b3d4b09c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+30 libc.so.6            0x00007fcac37961ca
+31 libc.so.6            0x00007fcac379628b __libc_start_main + 139
+32 clang-tidy           0x000055b3d4b04fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:181: CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBEngine.cpp.o] Error 1
+[ 58%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBSafetyMonitor.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/ffb/FFBSafetyMonitor.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBSafetyMonitor.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBSafetyMonitor.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBSafetyMonitor.cpp.o -c /app/src/ffb/FFBSafetyMonitor.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f0cdcabd3bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f0cdcabb4f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f0cdcabdb00
+3  libc.so.6            0x00007f0cdb7d7330
+4  libclang-cpp.so.18.1 0x00007f0ce3e43d3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007f0ce3e482f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007f0ce3eb15ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f0ce3ebf29d
+8  libclang-cpp.so.18.1 0x00007f0ce3f7faf2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+9  libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+10 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+11 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+12 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+13 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+14 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+15 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+16 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+17 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+18 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+19 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+20 libclang-cpp.so.18.1 0x00007f0ce3f7f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+21 libclang-cpp.so.18.1 0x00007f0ce3ecf7a9 clang::Parser::SkipMalformedDecl() + 297
+22 libclang-cpp.so.18.1 0x00007f0ce3ece912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+23 libclang-cpp.so.18.1 0x00007f0ce3f8507f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+24 libclang-cpp.so.18.1 0x00007f0ce3f84a39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+25 libclang-cpp.so.18.1 0x00007f0ce3f83c65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+26 libclang-cpp.so.18.1 0x00007f0ce3f81f7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+27 libclang-cpp.so.18.1 0x00007f0ce3eb947e clang::ParseAST(clang::Sema&, bool, bool) + 766
+28 libclang-cpp.so.18.1 0x00007f0ce5d2862c clang::FrontendAction::Execute() + 92
+29 libclang-cpp.so.18.1 0x00007f0ce5ca50b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+30 libclang-cpp.so.18.1 0x00007f0ce5f1c6b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+31 clang-tidy           0x000055a6efcc8ab3
+32 libclang-cpp.so.18.1 0x00007f0ce5f1c414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+33 libclang-cpp.so.18.1 0x00007f0ce5f1b17f clang::tooling::ToolInvocation::run() + 1231
+34 libclang-cpp.so.18.1 0x00007f0ce5f1e1c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+35 clang-tidy           0x000055a6efcc4d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+36 clang-tidy           0x000055a6ef044c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+37 libc.so.6            0x00007f0cdb7bc1ca
+38 libc.so.6            0x00007f0cdb7bc28b __libc_start_main + 139
+39 clang-tidy           0x000055a6ef03ffe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:195: CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBSafetyMonitor.cpp.o] Error 1
+[ 62%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBMetadataManager.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/ffb/FFBMetadataManager.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBMetadataManager.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBMetadataManager.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBMetadataManager.cpp.o -c /app/src/ffb/FFBMetadataManager.cpp
+1.	<unknown> parser at unknown location
+2.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:52:14: parsing namespace 'std'
+3.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:59:38: parsing function body 'std::basic_string::swap'
+4.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:59:38: in compound statement ('{}')
+5.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:93:12: in compound statement ('{}')
+6.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:94:29: in compound statement ('{}')
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f801d9053bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f801d9034f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f801d905b00
+3  libc.so.6            0x00007f801c61f330
+4  libclang-cpp.so.18.1 0x00007f8024c8bd3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007f8024c902f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007f8024cf95ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f8024dc697c clang::Parser::ExpectAndConsumeSemi(unsigned int, llvm::StringRef) + 764
+8  libclang-cpp.so.18.1 0x00007f8024dab452 clang::Parser::ParseExprStatement(clang::Parser::ParsedStmtContext) + 610
+9  libclang-cpp.so.18.1 0x00007f8024da9471 clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 1073
+10 libclang-cpp.so.18.1 0x00007f8024da8dfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+11 libclang-cpp.so.18.1 0x00007f8024db1aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+12 libclang-cpp.so.18.1 0x00007f8024daa14f clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 4367
+13 libclang-cpp.so.18.1 0x00007f8024da8dfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+14 libclang-cpp.so.18.1 0x00007f8024dac770 clang::Parser::ParseIfStatement(clang::SourceLocation*) + 1584
+15 libclang-cpp.so.18.1 0x00007f8024daa61e clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 5598
+16 libclang-cpp.so.18.1 0x00007f8024da8dfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+17 libclang-cpp.so.18.1 0x00007f8024db1aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+18 libclang-cpp.so.18.1 0x00007f8024daa14f clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 4367
+19 libclang-cpp.so.18.1 0x00007f8024da8dfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+20 libclang-cpp.so.18.1 0x00007f8024daca9f clang::Parser::ParseIfStatement(clang::SourceLocation*) + 2399
+21 libclang-cpp.so.18.1 0x00007f8024daa61e clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 5598
+22 libclang-cpp.so.18.1 0x00007f8024da8dfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+23 libclang-cpp.so.18.1 0x00007f8024db1aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+24 libclang-cpp.so.18.1 0x00007f8024db2b77 clang::Parser::ParseFunctionStatementBody(clang::Decl*, clang::Parser::ParseScope&) + 183
+25 libclang-cpp.so.18.1 0x00007f8024dce0c7 clang::Parser::ParseFunctionDefinition(clang::ParsingDeclarator&, clang::Parser::ParsedTemplateInfo const&, clang::Parser::LateParsedAttrList*) + 3751
+26 libclang-cpp.so.18.1 0x00007f8024dbb294 clang::Parser::ParseSingleDeclarationAfterTemplate(clang::DeclaratorContext, clang::Parser::ParsedTemplateInfo const&, clang::ParsingDeclRAIIObject&, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 3892
+27 libclang-cpp.so.18.1 0x00007f8024db9a56 clang::Parser::ParseTemplateDeclarationOrSpecialization(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 1286
+28 libclang-cpp.so.18.1 0x00007f8024db93d5 clang::Parser::ParseDeclarationStartingWithTemplate(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 229
+29 libclang-cpp.so.18.1 0x00007f8024d152cd clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::ParsedAttributes&, clang::SourceLocation*) + 541
+30 libclang-cpp.so.18.1 0x00007f8024dcb48f clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 191
+31 libclang-cpp.so.18.1 0x00007f8024d31eca clang::Parser::ParseInnerNamespace(llvm::SmallVector<clang::Parser::InnerNamespaceInfo, 4u> const&, unsigned int, clang::SourceLocation&, clang::ParsedAttributes&, clang::BalancedDelimiterTracker&) + 314
+32 libclang-cpp.so.18.1 0x00007f8024d318f3 clang::Parser::ParseNamespace(clang::DeclaratorContext, clang::SourceLocation&, clang::SourceLocation) + 4787
+33 libclang-cpp.so.18.1 0x00007f8024d154a4 clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::ParsedAttributes&, clang::SourceLocation*) + 1012
+34 libclang-cpp.so.18.1 0x00007f8024dcb48f clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 191
+35 libclang-cpp.so.18.1 0x00007f8024dc9f7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+36 libclang-cpp.so.18.1 0x00007f8024d0147e clang::ParseAST(clang::Sema&, bool, bool) + 766
+37 libclang-cpp.so.18.1 0x00007f8026b7062c clang::FrontendAction::Execute() + 92
+38 libclang-cpp.so.18.1 0x00007f8026aed0b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+39 libclang-cpp.so.18.1 0x00007f8026d646b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+40 clang-tidy           0x0000561e245efab3
+41 libclang-cpp.so.18.1 0x00007f8026d64414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+42 libclang-cpp.so.18.1 0x00007f8026d6317f clang::tooling::ToolInvocation::run() + 1231
+43 libclang-cpp.so.18.1 0x00007f8026d661c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+44 clang-tidy           0x0000561e245ebd9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+45 clang-tidy           0x0000561e2396bc65 clang::tidy::clangTidyMain(int, char const**) + 10005
+46 libc.so.6            0x00007f801c6041ca
+47 libc.so.6            0x00007f801c60428b __libc_start_main + 139
+48 clang-tidy           0x0000561e23966fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:209: CMakeFiles/LMUFFB_Core.dir/src/ffb/FFBMetadataManager.cpp.o] Error 1
+[ 66%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/physics/GripLoadEstimation.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/physics/GripLoadEstimation.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/physics/GripLoadEstimation.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/physics/GripLoadEstimation.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/physics/GripLoadEstimation.cpp.o -c /app/src/physics/GripLoadEstimation.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007ff74e8ad3bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007ff74e8ab4f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007ff74e8adb00
+3  libc.so.6            0x00007ff74d5c7330
+4  libclang-cpp.so.18.1 0x00007ff755c33d3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007ff755c382f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007ff755ca15ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007ff755caf29d
+8  libclang-cpp.so.18.1 0x00007ff755d6faf2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+9  libclang-cpp.so.18.1 0x00007ff755d6f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+10 libclang-cpp.so.18.1 0x00007ff755d6f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+11 libclang-cpp.so.18.1 0x00007ff755d6f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+12 libclang-cpp.so.18.1 0x00007ff755d6f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+13 libclang-cpp.so.18.1 0x00007ff755d6f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+14 libclang-cpp.so.18.1 0x00007ff755d6f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+15 libclang-cpp.so.18.1 0x00007ff755d6f9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+16 libclang-cpp.so.18.1 0x00007ff755cbf7df clang::Parser::SkipMalformedDecl() + 351
+17 libclang-cpp.so.18.1 0x00007ff755cbe912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+18 libclang-cpp.so.18.1 0x00007ff755d7507f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+19 libclang-cpp.so.18.1 0x00007ff755d74a39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+20 libclang-cpp.so.18.1 0x00007ff755d73c65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+21 libclang-cpp.so.18.1 0x00007ff755d71f7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+22 libclang-cpp.so.18.1 0x00007ff755ca947e clang::ParseAST(clang::Sema&, bool, bool) + 766
+23 libclang-cpp.so.18.1 0x00007ff757b1862c clang::FrontendAction::Execute() + 92
+24 libclang-cpp.so.18.1 0x00007ff757a950b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+25 libclang-cpp.so.18.1 0x00007ff757d0c6b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+26 clang-tidy           0x000056190fa9fab3
+27 libclang-cpp.so.18.1 0x00007ff757d0c414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+28 libclang-cpp.so.18.1 0x00007ff757d0b17f clang::tooling::ToolInvocation::run() + 1231
+29 libclang-cpp.so.18.1 0x00007ff757d0e1c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+30 clang-tidy           0x000056190fa9bd9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+31 clang-tidy           0x000056190ee1bc65 clang::tidy::clangTidyMain(int, char const**) + 10005
+32 libc.so.6            0x00007ff74d5ac1ca
+33 libc.so.6            0x00007ff74d5ac28b __libc_start_main + 139
+34 clang-tidy           0x000056190ee16fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:237: CMakeFiles/LMUFFB_Core.dir/src/physics/GripLoadEstimation.cpp.o] Error 1
+[ 70%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/physics/SteeringUtils.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/physics/SteeringUtils.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/physics/SteeringUtils.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/physics/SteeringUtils.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/physics/SteeringUtils.cpp.o -c /app/src/physics/SteeringUtils.cpp
+1.	<invalid>: unknown current parser token
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007fc9ba0ab3bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007fc9ba0a94f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007fc9ba0abb00
+3  libc.so.6            0x00007fc9b8dc5330
+4  libclang-cpp.so.18.1 0x00007fc9c143416a clang::Lexer::lexEditorPlaceholder(clang::Token&, char const*) + 106
+5  libclang-cpp.so.18.1 0x00007fc9c143752b clang::Lexer::LexTokenInternal(clang::Token&, bool) + 6507
+6  libclang-cpp.so.18.1 0x00007fc9c149f5ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007fc9c1465f48 clang::Preprocessor::HandleDirective(clang::Token&) + 1288
+8  libclang-cpp.so.18.1 0x00007fc9c1437998 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 7640
+9  libclang-cpp.so.18.1 0x00007fc9c149f5ed clang::Preprocessor::Lex(clang::Token&) + 45
+10 libclang-cpp.so.18.1 0x00007fc9c14ad29d
+11 libclang-cpp.so.18.1 0x00007fc9c156daf2 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1026
+12 libclang-cpp.so.18.1 0x00007fc9c156d9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+13 libclang-cpp.so.18.1 0x00007fc9c156db23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+14 libclang-cpp.so.18.1 0x00007fc9c156d9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+15 libclang-cpp.so.18.1 0x00007fc9c156db23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+16 libclang-cpp.so.18.1 0x00007fc9c156d9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+17 libclang-cpp.so.18.1 0x00007fc9c156db23 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 1075
+18 libclang-cpp.so.18.1 0x00007fc9c156d9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+19 libclang-cpp.so.18.1 0x00007fc9c156d9e5 clang::Parser::SkipUntil(llvm::ArrayRef<clang::tok::TokenKind>, clang::Parser::SkipUntilFlags) + 757
+20 libclang-cpp.so.18.1 0x00007fc9c14bd7df clang::Parser::SkipMalformedDecl() + 351
+21 libclang-cpp.so.18.1 0x00007fc9c14bc912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+22 libclang-cpp.so.18.1 0x00007fc9c157307f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+23 libclang-cpp.so.18.1 0x00007fc9c1572a39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+24 libclang-cpp.so.18.1 0x00007fc9c1571c65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+25 libclang-cpp.so.18.1 0x00007fc9c156ff7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+26 libclang-cpp.so.18.1 0x00007fc9c14a747e clang::ParseAST(clang::Sema&, bool, bool) + 766
+27 libclang-cpp.so.18.1 0x00007fc9c331662c clang::FrontendAction::Execute() + 92
+28 libclang-cpp.so.18.1 0x00007fc9c32930b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+29 libclang-cpp.so.18.1 0x00007fc9c350a6b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+30 clang-tidy           0x0000560643556ab3
+31 libclang-cpp.so.18.1 0x00007fc9c350a414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+32 libclang-cpp.so.18.1 0x00007fc9c350917f clang::tooling::ToolInvocation::run() + 1231
+33 libclang-cpp.so.18.1 0x00007fc9c350c1c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+34 clang-tidy           0x0000560643552d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+35 clang-tidy           0x00005606428d2c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+36 libc.so.6            0x00007fc9b8daa1ca
+37 libc.so.6            0x00007fc9b8daa28b __libc_start_main + 139
+38 clang-tidy           0x00005606428cdfe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:251: CMakeFiles/LMUFFB_Core.dir/src/physics/SteeringUtils.cpp.o] Error 1
+[ 75%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/physics/VehicleUtils.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/physics/VehicleUtils.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/physics/VehicleUtils.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/physics/VehicleUtils.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/physics/VehicleUtils.cpp.o -c /app/src/physics/VehicleUtils.cpp
+1.	<unknown> parser at unknown location
+2.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:52:14: parsing namespace 'std'
+3.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:59:38: parsing function body 'std::basic_string::swap'
+4.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:59:38: in compound statement ('{}')
+5.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:93:12: in compound statement ('{}')
+6.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:94:29: in compound statement ('{}')
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f98a39fa3bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f98a39f84f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f98a39fab00
+3  libc.so.6            0x00007f98a2714330
+4  libclang-cpp.so.18.1 0x00007f98aad80d3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007f98aad852f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007f98aadee5ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f98aaebb97c clang::Parser::ExpectAndConsumeSemi(unsigned int, llvm::StringRef) + 764
+8  libclang-cpp.so.18.1 0x00007f98aaea0452 clang::Parser::ParseExprStatement(clang::Parser::ParsedStmtContext) + 610
+9  libclang-cpp.so.18.1 0x00007f98aae9e471 clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 1073
+10 libclang-cpp.so.18.1 0x00007f98aae9ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+11 libclang-cpp.so.18.1 0x00007f98aaea6aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+12 libclang-cpp.so.18.1 0x00007f98aae9f14f clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 4367
+13 libclang-cpp.so.18.1 0x00007f98aae9ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+14 libclang-cpp.so.18.1 0x00007f98aaea1770 clang::Parser::ParseIfStatement(clang::SourceLocation*) + 1584
+15 libclang-cpp.so.18.1 0x00007f98aae9f61e clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 5598
+16 libclang-cpp.so.18.1 0x00007f98aae9ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+17 libclang-cpp.so.18.1 0x00007f98aaea6aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+18 libclang-cpp.so.18.1 0x00007f98aae9f14f clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 4367
+19 libclang-cpp.so.18.1 0x00007f98aae9ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+20 libclang-cpp.so.18.1 0x00007f98aaea1a9f clang::Parser::ParseIfStatement(clang::SourceLocation*) + 2399
+21 libclang-cpp.so.18.1 0x00007f98aae9f61e clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 5598
+22 libclang-cpp.so.18.1 0x00007f98aae9ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+23 libclang-cpp.so.18.1 0x00007f98aaea6aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+24 libclang-cpp.so.18.1 0x00007f98aaea7b77 clang::Parser::ParseFunctionStatementBody(clang::Decl*, clang::Parser::ParseScope&) + 183
+25 libclang-cpp.so.18.1 0x00007f98aaec30c7 clang::Parser::ParseFunctionDefinition(clang::ParsingDeclarator&, clang::Parser::ParsedTemplateInfo const&, clang::Parser::LateParsedAttrList*) + 3751
+26 libclang-cpp.so.18.1 0x00007f98aaeb0294 clang::Parser::ParseSingleDeclarationAfterTemplate(clang::DeclaratorContext, clang::Parser::ParsedTemplateInfo const&, clang::ParsingDeclRAIIObject&, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 3892
+27 libclang-cpp.so.18.1 0x00007f98aaeaea56 clang::Parser::ParseTemplateDeclarationOrSpecialization(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 1286
+28 libclang-cpp.so.18.1 0x00007f98aaeae3d5 clang::Parser::ParseDeclarationStartingWithTemplate(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 229
+29 libclang-cpp.so.18.1 0x00007f98aae0a2cd clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::ParsedAttributes&, clang::SourceLocation*) + 541
+30 libclang-cpp.so.18.1 0x00007f98aaec048f clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 191
+31 libclang-cpp.so.18.1 0x00007f98aae26eca clang::Parser::ParseInnerNamespace(llvm::SmallVector<clang::Parser::InnerNamespaceInfo, 4u> const&, unsigned int, clang::SourceLocation&, clang::ParsedAttributes&, clang::BalancedDelimiterTracker&) + 314
+32 libclang-cpp.so.18.1 0x00007f98aae268f3 clang::Parser::ParseNamespace(clang::DeclaratorContext, clang::SourceLocation&, clang::SourceLocation) + 4787
+33 libclang-cpp.so.18.1 0x00007f98aae0a4a4 clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::ParsedAttributes&, clang::SourceLocation*) + 1012
+34 libclang-cpp.so.18.1 0x00007f98aaec048f clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 191
+35 libclang-cpp.so.18.1 0x00007f98aaebef7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+36 libclang-cpp.so.18.1 0x00007f98aadf647e clang::ParseAST(clang::Sema&, bool, bool) + 766
+37 libclang-cpp.so.18.1 0x00007f98acc6562c clang::FrontendAction::Execute() + 92
+38 libclang-cpp.so.18.1 0x00007f98acbe20b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+39 libclang-cpp.so.18.1 0x00007f98ace596b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+40 clang-tidy           0x00005575ebfb0ab3
+41 libclang-cpp.so.18.1 0x00007f98ace59414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+42 libclang-cpp.so.18.1 0x00007f98ace5817f clang::tooling::ToolInvocation::run() + 1231
+43 libclang-cpp.so.18.1 0x00007f98ace5b1c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+44 clang-tidy           0x00005575ebfacd9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+45 clang-tidy           0x00005575eb32cc65 clang::tidy::clangTidyMain(int, char const**) + 10005
+46 libc.so.6            0x00007f98a26f91ca
+47 libc.so.6            0x00007f98a26f928b __libc_start_main + 139
+48 clang-tidy           0x00005575eb327fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:265: CMakeFiles/LMUFFB_Core.dir/src/physics/VehicleUtils.cpp.o] Error 1
+[ 79%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/io/RestApiProvider.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/io/RestApiProvider.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/io/RestApiProvider.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/io/RestApiProvider.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/io/RestApiProvider.cpp.o -c /app/src/io/RestApiProvider.cpp
+1.	<unknown> parser at unknown location
+2.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:52:14: parsing namespace 'std'
+3.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:59:38: parsing function body 'std::basic_string::swap'
+4.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:59:38: in compound statement ('{}')
+5.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:93:12: in compound statement ('{}')
+6.	/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/alloc_traits.h:94:29: in compound statement ('{}')
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f878b2ba3bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f878b2b84f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f878b2bab00
+3  libc.so.6            0x00007f8789fd4330
+4  libclang-cpp.so.18.1 0x00007f8792640d3d clang::Lexer::SkipWhitespace(clang::Token&, char const*, bool&) + 45
+5  libclang-cpp.so.18.1 0x00007f87926452f7 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 1847
+6  libclang-cpp.so.18.1 0x00007f87926ae5ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f879277b97c clang::Parser::ExpectAndConsumeSemi(unsigned int, llvm::StringRef) + 764
+8  libclang-cpp.so.18.1 0x00007f8792760452 clang::Parser::ParseExprStatement(clang::Parser::ParsedStmtContext) + 610
+9  libclang-cpp.so.18.1 0x00007f879275e471 clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 1073
+10 libclang-cpp.so.18.1 0x00007f879275ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+11 libclang-cpp.so.18.1 0x00007f8792766aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+12 libclang-cpp.so.18.1 0x00007f879275f14f clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 4367
+13 libclang-cpp.so.18.1 0x00007f879275ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+14 libclang-cpp.so.18.1 0x00007f8792761770 clang::Parser::ParseIfStatement(clang::SourceLocation*) + 1584
+15 libclang-cpp.so.18.1 0x00007f879275f61e clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 5598
+16 libclang-cpp.so.18.1 0x00007f879275ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+17 libclang-cpp.so.18.1 0x00007f8792766aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+18 libclang-cpp.so.18.1 0x00007f879275f14f clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 4367
+19 libclang-cpp.so.18.1 0x00007f879275ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+20 libclang-cpp.so.18.1 0x00007f8792761a9f clang::Parser::ParseIfStatement(clang::SourceLocation*) + 2399
+21 libclang-cpp.so.18.1 0x00007f879275f61e clang::Parser::ParseStatementOrDeclarationAfterAttributes(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*, clang::ParsedAttributes&, clang::ParsedAttributes&) + 5598
+22 libclang-cpp.so.18.1 0x00007f879275ddfc clang::Parser::ParseStatementOrDeclaration(llvm::SmallVector<clang::Stmt*, 32u>&, clang::Parser::ParsedStmtContext, clang::SourceLocation*) + 332
+23 libclang-cpp.so.18.1 0x00007f8792766aa2 clang::Parser::ParseCompoundStatementBody(bool) + 1618
+24 libclang-cpp.so.18.1 0x00007f8792767b77 clang::Parser::ParseFunctionStatementBody(clang::Decl*, clang::Parser::ParseScope&) + 183
+25 libclang-cpp.so.18.1 0x00007f87927830c7 clang::Parser::ParseFunctionDefinition(clang::ParsingDeclarator&, clang::Parser::ParsedTemplateInfo const&, clang::Parser::LateParsedAttrList*) + 3751
+26 libclang-cpp.so.18.1 0x00007f8792770294 clang::Parser::ParseSingleDeclarationAfterTemplate(clang::DeclaratorContext, clang::Parser::ParsedTemplateInfo const&, clang::ParsingDeclRAIIObject&, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 3892
+27 libclang-cpp.so.18.1 0x00007f879276ea56 clang::Parser::ParseTemplateDeclarationOrSpecialization(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 1286
+28 libclang-cpp.so.18.1 0x00007f879276e3d5 clang::Parser::ParseDeclarationStartingWithTemplate(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::AccessSpecifier) + 229
+29 libclang-cpp.so.18.1 0x00007f87926ca2cd clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::ParsedAttributes&, clang::SourceLocation*) + 541
+30 libclang-cpp.so.18.1 0x00007f879278048f clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 191
+31 libclang-cpp.so.18.1 0x00007f87926e6eca clang::Parser::ParseInnerNamespace(llvm::SmallVector<clang::Parser::InnerNamespaceInfo, 4u> const&, unsigned int, clang::SourceLocation&, clang::ParsedAttributes&, clang::BalancedDelimiterTracker&) + 314
+32 libclang-cpp.so.18.1 0x00007f87926e68f3 clang::Parser::ParseNamespace(clang::DeclaratorContext, clang::SourceLocation&, clang::SourceLocation) + 4787
+33 libclang-cpp.so.18.1 0x00007f87926ca4a4 clang::Parser::ParseDeclaration(clang::DeclaratorContext, clang::SourceLocation&, clang::ParsedAttributes&, clang::ParsedAttributes&, clang::SourceLocation*) + 1012
+34 libclang-cpp.so.18.1 0x00007f879278048f clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 191
+35 libclang-cpp.so.18.1 0x00007f879277ef7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+36 libclang-cpp.so.18.1 0x00007f87926b647e clang::ParseAST(clang::Sema&, bool, bool) + 766
+37 libclang-cpp.so.18.1 0x00007f879452562c clang::FrontendAction::Execute() + 92
+38 libclang-cpp.so.18.1 0x00007f87944a20b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+39 libclang-cpp.so.18.1 0x00007f87947196b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+40 clang-tidy           0x0000559e272ccab3
+41 libclang-cpp.so.18.1 0x00007f8794719414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+42 libclang-cpp.so.18.1 0x00007f879471817f clang::tooling::ToolInvocation::run() + 1231
+43 libclang-cpp.so.18.1 0x00007f879471b1c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+44 clang-tidy           0x0000559e272c8d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+45 clang-tidy           0x0000559e26648c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+46 libc.so.6            0x00007f8789fb91ca
+47 libc.so.6            0x00007f8789fb928b __libc_start_main + 139
+48 clang-tidy           0x0000559e26643fe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:279: CMakeFiles/LMUFFB_Core.dir/src/io/RestApiProvider.cpp.o] Error 1
+[ 83%] Building CXX object CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Linux.cpp.o
+Error running 'clang-tidy': PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+Stack dump:
+0.	Program arguments: clang-tidy -checks=-*,readability-magic-numbers --extra-arg-before=--driver-mode=g++ /app/src/gui/GuiLayer_Linux.cpp -- /usr/bin/c++ -DENABLE_IMGUI -DHEADLESS_GUI -DLMUFFB_VERSION=\"0.7.252\" -I/app/src/io/lmu_sm_interface/linux_mock -I/app/src/io/lmu_sm_interface -I/app/src -I/app/src/core -I/app/src/ffb -I/app/src/physics -I/app/src/gui -I/app/src/io -I/app/src/logging -I/app/src/utils -I/app/build/src -isystem /app/build/_deps/lz4-src/lib -isystem /app/build/_deps/imgui-src -isystem /app/build/_deps/imgui-src/backends -isystem /app/build/_deps/tomlplusplus-src/include -g -std=gnu++17 -MD -MT CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Linux.cpp.o -MF CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Linux.cpp.o.d -o CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Linux.cpp.o -c /app/src/gui/GuiLayer_Linux.cpp
+1.	<unknown> parser at unknown location
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  libLLVM.so.18.1      0x00007f97f83283bf llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 63
+1  libLLVM.so.18.1      0x00007f97f83264f9 llvm::sys::RunSignalHandlers() + 89
+2  libLLVM.so.18.1      0x00007f97f8328b00
+3  libc.so.6            0x00007f97f7042330
+4  libclang-cpp.so.18.1 0x00007f97ff6af8a0 clang::Lexer::SkipBlockComment(clang::Token&, char const*, bool&) + 240
+5  libclang-cpp.so.18.1 0x00007f97ff6b2c12 clang::Lexer::LexTokenInternal(clang::Token&, bool) + 82
+6  libclang-cpp.so.18.1 0x00007f97ff71c5ed clang::Preprocessor::Lex(clang::Token&) + 45
+7  libclang-cpp.so.18.1 0x00007f97ff72a29d
+8  libclang-cpp.so.18.1 0x00007f97ff73a6d2 clang::Parser::SkipMalformedDecl() + 82
+9  libclang-cpp.so.18.1 0x00007f97ff739912 clang::Parser::ParseDeclGroup(clang::ParsingDeclSpec&, clang::DeclaratorContext, clang::ParsedAttributes&, clang::SourceLocation*, clang::Parser::ForRangeInit*) + 2242
+10 libclang-cpp.so.18.1 0x00007f97ff7f007f clang::Parser::ParseDeclOrFunctionDefInternal(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec&, clang::AccessSpecifier) + 1087
+11 libclang-cpp.so.18.1 0x00007f97ff7efa39 clang::Parser::ParseDeclarationOrFunctionDefinition(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*, clang::AccessSpecifier) + 489
+12 libclang-cpp.so.18.1 0x00007f97ff7eec65 clang::Parser::ParseExternalDeclaration(clang::ParsedAttributes&, clang::ParsedAttributes&, clang::ParsingDeclSpec*) + 2197
+13 libclang-cpp.so.18.1 0x00007f97ff7ecf7b clang::Parser::ParseTopLevelDecl(clang::OpaquePtr<clang::DeclGroupRef>&, clang::Sema::ModuleImportState&) + 1499
+14 libclang-cpp.so.18.1 0x00007f97ff72447e clang::ParseAST(clang::Sema&, bool, bool) + 766
+15 libclang-cpp.so.18.1 0x00007f980159362c clang::FrontendAction::Execute() + 92
+16 libclang-cpp.so.18.1 0x00007f98015100b4 clang::CompilerInstance::ExecuteAction(clang::FrontendAction&) + 708
+17 libclang-cpp.so.18.1 0x00007f98017876b9 clang::tooling::FrontendActionFactory::runInvocation(std::shared_ptr<clang::CompilerInvocation>, clang::FileManager*, std::shared_ptr<clang::PCHContainerOperations>, clang::DiagnosticConsumer*) + 425
+18 clang-tidy           0x000055bc56826ab3
+19 libclang-cpp.so.18.1 0x00007f9801787414 clang::tooling::ToolInvocation::runInvocation(char const*, clang::driver::Compilation*, std::shared_ptr<clang::CompilerInvocation>, std::shared_ptr<clang::PCHContainerOperations>) + 292
+20 libclang-cpp.so.18.1 0x00007f980178617f clang::tooling::ToolInvocation::run() + 1231
+21 libclang-cpp.so.18.1 0x00007f98017891c1 clang::tooling::ClangTool::run(clang::tooling::ToolAction*) + 5041
+22 clang-tidy           0x000055bc56822d9b clang::tidy::runClangTidy(clang::tidy::ClangTidyContext&, clang::tooling::CompilationDatabase const&, llvm::ArrayRef<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>, bool, bool, llvm::StringRef) + 1083
+23 clang-tidy           0x000055bc55ba2c65 clang::tidy::clangTidyMain(int, char const**) + 10005
+24 libc.so.6            0x00007f97f70271ca
+25 libc.so.6            0x00007f97f702728b __libc_start_main + 139
+26 clang-tidy           0x000055bc55b9dfe5 _start + 37
+Segmentation fault
+gmake[3]: *** [CMakeFiles/LMUFFB_Core.dir/build.make:307: CMakeFiles/LMUFFB_Core.dir/src/gui/GuiLayer_Linux.cpp.o] Error 1
+gmake[3]: Target 'CMakeFiles/LMUFFB_Core.dir/build' not remade because of errors.
+gmake[2]: *** [CMakeFiles/Makefile2:148: CMakeFiles/LMUFFB_Core.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:155: CMakeFiles/LMUFFB_Core.dir/rule] Error 2
+gmake[1]: Target 'LMUFFB_Core' not remade because of errors.
+gmake: *** [Makefile:138: LMUFFB_Core] Error 2
