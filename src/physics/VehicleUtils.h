@@ -4,6 +4,7 @@
 #include <string>
 
 namespace LMUFFB {
+namespace Physics {
 
 enum class ParsedVehicleClass {
     UNKNOWN = 0,
@@ -33,6 +34,17 @@ double GetMotionRatioForClass(ParsedVehicleClass vclass);
 
 // Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)
 double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear);
+
+} // namespace Physics
+
+// Bridge Aliases for backward compatibility during migration
+using ParsedVehicleClass = Physics::ParsedVehicleClass;
+using Physics::ParseVehicleClass;
+using Physics::GetDefaultLoadForClass;
+using Physics::VehicleClassToString;
+using Physics::ParseVehicleBrand;
+using Physics::GetMotionRatioForClass;
+using Physics::GetUnsprungWeightForClass;
 
 } // namespace LMUFFB
 

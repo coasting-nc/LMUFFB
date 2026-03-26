@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.257]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Transitioned all physics-related modules in `src/physics/` (`VehicleUtils.h`, `SteeringUtils.h`, `GripLoadEstimation.cpp`, etc.) to `namespace LMUFFB::Physics`.
+  - Implemented bridge aliases in `namespace LMUFFB` and `namespace LMUFFB::SteeringUtils` to maintain backward compatibility for existing call sites.
+  - Updated key project-wide call sites in `main.cpp`, `FFBEngine.cpp`, `FFBMetadataManager.cpp`, and `GripLoadEstimation.cpp` using the `using namespace` placement rule.
+  - Verified 100% test pass rate under the new granular namespaced architecture.
+
 ## [0.7.256]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

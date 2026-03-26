@@ -7,6 +7,7 @@ using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
+namespace Physics {
 namespace SteeringUtils {
 
 // ---------------------------------------------------------------------------
@@ -72,4 +73,5 @@ void CalculateSoftLock(const TelemInfoV01* data,
 }
 
 } // namespace SteeringUtils
+} // namespace Physics
 } // namespace LMUFFB

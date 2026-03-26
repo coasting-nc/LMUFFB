@@ -6,6 +6,7 @@
 #include "../io/lmu_sm_interface/InternalsPlugin.hpp"
 
 namespace LMUFFB {
+namespace Physics {
 namespace SteeringUtils {
 
 /**
@@ -20,4 +21,9 @@ void CalculateSoftLock(const TelemInfoV01* data,
                        double steering_velocity_smoothed);
 
 } // namespace SteeringUtils
+} // namespace Physics
+
+// Bridge Alias for backward compatibility during migration
+namespace SteeringUtils = Physics::SteeringUtils;
+
 } // namespace LMUFFB

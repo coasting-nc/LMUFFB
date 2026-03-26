@@ -5,6 +5,7 @@
 
 using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
+using namespace LMUFFB::Physics;
 
 namespace LMUFFB {
 
