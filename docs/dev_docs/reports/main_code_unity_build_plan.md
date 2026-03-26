@@ -289,6 +289,7 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - A typo `SOP_OUTPUT_SMOOTHING` (intended to be `SLOPE_OUTPUT_SMOOTHING`) caused compilation failures in `GuiLayer_Common.cpp`.
   - Linker error `undefined reference to GuiLayerTestAccess::GetLastLaunchArgs` occurred due to improper namespacing of test-only globals. Fixed by moving these members into the `GuiLayer` class under `LMUFFB_UNIT_TEST`.
   - Discovered missing no-op stubs for `LaunchLogAnalyzer` and `UpdateTelemetry` in the `#else` (headless) block of `GuiLayer_Common.cpp` which broke non-ImGui builds.
+  - Linker error `unresolved external symbol ImGui_ImplWin32_WndProcHandler` occurred on Windows because the `extern` declaration was mistakenly placed inside an anonymous namespace, causing incorrect symbol mangling. Fixed by moving the declaration to the global scope.
 - **Deviations from the Plan:** None. The GUI layer was successfully namespaced and whitelisted for Unity builds.
 - **Suggestions for the Future:** Phase 5 is nearly complete. The final step is to clean up `core/main.cpp` by removing temporary `using namespace` directives and fully qualifying remaining calls, and then proceeding to Phase 6 (Subsystem Namespace Migration).
 
