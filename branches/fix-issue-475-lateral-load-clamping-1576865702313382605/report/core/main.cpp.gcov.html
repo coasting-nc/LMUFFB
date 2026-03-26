@@ -1,0 +1,501 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - coverage_filtered.info - core/main.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">core</a> - main.cpp<span style="font-size: 80%;"> (source / <a href="main.cpp.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">coverage_filtered.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryLo">68.0&nbsp;%</td>
+            <td class="headerCovTableEntry">206</td>
+            <td class="headerCovTableEntry">140</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2026-03-26 12:57:04</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">4</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryLo">34.5&nbsp;%</td>
+            <td class="headerCovTableEntry">446</td>
+            <td class="headerCovTableEntry">154</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : #ifdef _WIN32</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : #include &lt;windows.h&gt;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : #else</span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : #include &lt;signal.h&gt;</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : #endif</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : #include &lt;iostream&gt;</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : #include &lt;cmath&gt;</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : #include &lt;algorithm&gt;</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : #include &lt;thread&gt;</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : #include &lt;chrono&gt;</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : #include &lt;optional&gt;</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : #include &lt;atomic&gt;</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : #include &lt;mutex&gt;</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : </span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : #include &quot;FFBEngine.h&quot;</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : #include &quot;GuiLayer.h&quot;</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : #include &quot;Config.h&quot;</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : #include &quot;DirectInputFFB.h&quot;</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             : #include &quot;GameConnector.h&quot;</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : #include &quot;Version.h&quot;</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : #include &quot;Logger.h&quot;    // Added Logger</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             : #include &quot;RateMonitor.h&quot;</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             : #include &quot;HealthMonitor.h&quot;</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             : #include &quot;UpSampler.h&quot;</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : #include &quot;TimeUtils.h&quot;</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             : #include &quot;ChannelMonitor.h&quot;</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             : </span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : namespace LMUFFB {</span>
+<span id="L29"><span class="lineNum">      29</span>                 :             : </span>
+<span id="L30"><span class="lineNum">      30</span>                 :             : // --- Helper for Testability ---</span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC tlaBgGNC">           1 : void PopulateSessionInfo(SessionInfo&amp; info, const VehicleScoringInfoV01&amp; scoring, const char* trackName, const FFBEngine&amp; engine) {</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">           1 :     info.app_version = LMUFFB_VERSION;</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">           1 :     info.vehicle_name = scoring.mVehicleName;</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">           1 :     info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));</span></span>
+<span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">           1 :     info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);</span></span>
+<span id="L36"><span class="lineNum">      36</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :     info.track_name = trackName ? trackName : &quot;Unknown&quot;;</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :<span class="tlaGNC">           1 :     info.driver_name = &quot;Auto&quot;;</span></span>
+<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaGNC">           1 :     info.general = engine.m_general;</span></span>
+<span id="L39"><span class="lineNum">      39</span>                 :<span class="tlaGNC">           1 :     info.front_axle = engine.m_front_axle;</span></span>
+<span id="L40"><span class="lineNum">      40</span>                 :<span class="tlaGNC">           1 :     info.rear_axle = engine.m_rear_axle;</span></span>
+<span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaGNC">           1 :     info.load_forces = engine.m_load_forces;</span></span>
+<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaGNC">           1 :     info.grip_estimation = engine.m_grip_estimation;</span></span>
+<span id="L43"><span class="lineNum">      43</span>                 :<span class="tlaGNC">           1 :     info.slope_detection = engine.m_slope_detection;</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC">           1 :     info.braking = engine.m_braking;</span></span>
+<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">           1 :     info.vibration = engine.m_vibration;</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">           1 :     info.advanced = engine.m_advanced;</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">           1 :     info.safety = engine.m_safety.m_config;</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">           1 : }</span></span>
+<span id="L49"><span class="lineNum">      49</span>                 :             : </span>
+<span id="L50"><span class="lineNum">      50</span>                 :             : // Threading Globals</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             : #ifndef LMUFFB_UNIT_TEST</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             : std::atomic&lt;bool&gt; g_running(true);</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             : std::atomic&lt;bool&gt; g_ffb_active(true);</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             : </span>
+<span id="L55"><span class="lineNum">      55</span>                 :             : SharedMemoryObjectOut g_localData; // Local copy of shared memory</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             : </span>
+<span id="L57"><span class="lineNum">      57</span>                 :             : FFBEngine g_engine;</span>
+<span id="L58"><span class="lineNum">      58</span>                 :             : std::recursive_mutex g_engine_mutex; // Protects settings access if GUI changes them</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             : #else</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             : extern std::atomic&lt;bool&gt; g_running;</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             : extern std::atomic&lt;bool&gt; g_ffb_active;</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             : extern SharedMemoryObjectOut g_localData;</span>
+<span id="L63"><span class="lineNum">      63</span>                 :             : extern FFBEngine g_engine;</span>
+<span id="L64"><span class="lineNum">      64</span>                 :             : extern std::recursive_mutex g_engine_mutex;</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             : extern std::chrono::steady_clock::time_point g_mock_time;</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             : extern bool g_use_mock_time;</span>
+<span id="L67"><span class="lineNum">      67</span>                 :             : #endif</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             : </span>
+<span id="L69"><span class="lineNum">      69</span>                 :             : // --- FFB Loop (High Priority 1000Hz) ---</span>
+<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">           9 : void FFBThread() {</span></span>
+<span id="L71"><span class="lineNum">      71</span>   [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           9 :     Logger::Get().LogFile(&quot;[FFB] Loop Started.&quot;);</span></span>
+<span id="L72"><span class="lineNum">      72</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     RateMonitor loopMonitor;</span></span>
+<span id="L73"><span class="lineNum">      73</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     RateMonitor telemMonitor;</span></span>
+<span id="L74"><span class="lineNum">      74</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     RateMonitor hwMonitor;</span></span>
+<span id="L75"><span class="lineNum">      75</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     RateMonitor torqueMonitor;</span></span>
+<span id="L76"><span class="lineNum">      76</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     RateMonitor genTorqueMonitor;</span></span>
+<span id="L77"><span class="lineNum">      77</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     RateMonitor physicsMonitor; // New v0.7.117 (Issue #217)</span></span>
+<span id="L78"><span class="lineNum">      78</span>                 :             : </span>
+<span id="L79"><span class="lineNum">      79</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     PolyphaseResampler resampler;</span></span>
+<span id="L80"><span class="lineNum">      80</span>                 :<span class="tlaGNC">           9 :     int phase_accumulator = 0;</span></span>
+<span id="L81"><span class="lineNum">      81</span>                 :<span class="tlaGNC">           9 :     double current_physics_force = 0.0;</span></span>
+<span id="L82"><span class="lineNum">      82</span>                 :             : </span>
+<span id="L83"><span class="lineNum">      83</span>                 :<span class="tlaGNC">           9 :     double lastET = -1.0;</span></span>
+<span id="L84"><span class="lineNum">      84</span>                 :<span class="tlaGNC">           9 :     double lastTorque = -9999.0;</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">           9 :     float lastGenTorque = -9999.0f;</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :             : </span>
+<span id="L87"><span class="lineNum">      87</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           9 :     ChannelMonitors channelMonitors;</span></span>
+<span id="L88"><span class="lineNum">      88</span>                 :             : </span>
+<span id="L89"><span class="lineNum">      89</span>                 :             :     // Precise Timing: Target 1000Hz (1000 microseconds)</span>
+<span id="L90"><span class="lineNum">      90</span>                 :<span class="tlaGNC">           9 :     const std::chrono::microseconds target_period(1000);</span></span>
+<span id="L91"><span class="lineNum">      91</span>                 :<span class="tlaGNC">           9 :     auto next_tick = TimeUtils::GetTime();</span></span>
+<span id="L92"><span class="lineNum">      92</span>                 :             : </span>
+<span id="L93"><span class="lineNum">      93</span>         [<span class="tlaGBC" title="Branch 0 was taken 11599 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 9 times"> + </span>]:<span class="tlaGNC">       11608 :     while (g_running) {</span></span>
+<span id="L94"><span class="lineNum">      94</span>         [<span class="tlaGBC" title="Branch 0 was taken 11599 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       11599 :         loopMonitor.RecordEvent();</span></span>
+<span id="L95"><span class="lineNum">      95</span>   [<span class="tlaGBC" title="Branch 0 was taken 11599 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11599 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">       11599 :         next_tick += target_period;</span></span>
+<span id="L96"><span class="lineNum">      96</span>                 :             : </span>
+<span id="L97"><span class="lineNum">      97</span>                 :             :         // --- 1. Physics Phase Accumulator (5/2 Ratio) ---</span>
+<span id="L98"><span class="lineNum">      98</span>                 :<span class="tlaGNC">       11599 :         phase_accumulator += 2; // M = 2</span></span>
+<span id="L99"><span class="lineNum">      99</span>                 :<span class="tlaGNC">       11599 :         bool run_physics = false;</span></span>
+<span id="L100"><span class="lineNum">     100</span>                 :             : </span>
+<span id="L101"><span class="lineNum">     101</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6962 times"> + </span>]:<span class="tlaGNC">       11599 :         if (phase_accumulator &gt;= 5) { // L = 5</span></span>
+<span id="L102"><span class="lineNum">     102</span>                 :<span class="tlaGNC">        4637 :             phase_accumulator -= 5;</span></span>
+<span id="L103"><span class="lineNum">     103</span>                 :<span class="tlaGNC">        4637 :             run_physics = true;</span></span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :         }</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             : </span>
+<span id="L106"><span class="lineNum">     106</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 6962 times"> + </span>]:<span class="tlaGNC">       11599 :         if (run_physics) {</span></span>
+<span id="L107"><span class="lineNum">     107</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :             physicsMonitor.RecordEvent();</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :<span class="tlaGNC">        4637 :             bool should_output = false;</span></span>
+<span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC">        4637 :             double force_physics = 0.0;</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :             : </span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">        4637 :             bool in_realtime_phys = false;</span></span>
+<span id="L112"><span class="lineNum">     112</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        4637 :             if (g_ffb_active &amp;&amp; GameConnector::Get().IsConnected()) {</span></span>
+<span class="lineNum">        </span> <span class="tlaGBC" title="Branch 4 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span><span class="tlaGBC" title="Branch 8 was taken 4637 times"> + </span> 
+<span class="lineNum">        </span>             <span class="tlaUNC" title="Branch 9 was not taken"> - </span>]
+<span id="L113"><span class="lineNum">     113</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 GameConnector::Get().CopyTelemetry(g_localData);</span></span>
+<span id="L114"><span class="lineNum">     114</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 g_engine.m_metadata.UpdateMetadata(g_localData); // Update names/classes immediately</span></span>
+<span id="L115"><span class="lineNum">     115</span>                 :             : </span>
+<span id="L116"><span class="lineNum">     116</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 in_realtime_phys = GameConnector::Get().IsInRealtime();</span></span>
+<span id="L117"><span class="lineNum">     117</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 long current_session = GameConnector::Get().GetSessionType();</span></span>
+<span id="L118"><span class="lineNum">     118</span>                 :             : </span>
+<span id="L119"><span class="lineNum">     119</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 bool is_stale = GameConnector::Get().IsStale(100);</span></span>
+<span id="L120"><span class="lineNum">     120</span>                 :             : </span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :                 static bool was_driving = false;</span>
+<span id="L122"><span class="lineNum">     122</span>                 :             :                 static long last_session = -1;</span>
+<span id="L123"><span class="lineNum">     123</span>                 :             : </span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :                 // is_driving uses IsPlayerActivelyDriving() which correctly gates on</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             :                 // inRealtime AND playerControl==0 AND gamePhase!=9 (paused).</span>
+<span id="L126"><span class="lineNum">     126</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 bool is_driving = GameConnector::Get().IsPlayerActivelyDriving();</span></span>
+<span id="L127"><span class="lineNum">     127</span>                 :             : </span>
+<span id="L128"><span class="lineNum">     128</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 bool should_start_log = (is_driving &amp;&amp; !was_driving);</span></span>
+<span id="L129"><span class="lineNum">     129</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 4637 times"> + </span>]:<span class="tlaGNC">        4637 :                 bool should_stop_log  = (!is_driving &amp;&amp; was_driving);</span></span>
+<span id="L130"><span class="lineNum">     130</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        4637 :                 bool session_changed  = (is_driving &amp;&amp; was_driving &amp;&amp; last_session != -1 &amp;&amp; current_session != last_session);</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
+<span id="L131"><span class="lineNum">     131</span>                 :             : </span>
+<span id="L132"><span class="lineNum">     132</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4637 times"> + </span>]:<span class="tlaGNC">        4637 :                 if (session_changed) {</span></span>
+<span id="L133"><span class="lineNum">     133</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :                     Logger::Get().LogFile(&quot;[Game] Session Type Changed (%ld -&gt; %ld). Restarting log.&quot;, last_session, current_session);</span></span>
+<span id="L134"><span class="lineNum">     134</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                     AsyncLogger::Get().Stop();</span></span>
+<span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaUNC">           0 :                     should_start_log = true;</span></span>
+<span id="L136"><span class="lineNum">     136</span>                 :             :                 }</span>
+<span id="L137"><span class="lineNum">     137</span>                 :             : </span>
+<span id="L138"><span class="lineNum">     138</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC tlaBgGNC">        4637 :                 bool manual_start_requested = Config::m_auto_start_logging &amp;&amp; !AsyncLogger::Get().IsLogging() &amp;&amp; is_driving;</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaGBC" title="Branch 7 was taken 4637 times"> + </span>]
+<span id="L139"><span class="lineNum">     139</span>                 :             : </span>
+<span id="L140"><span class="lineNum">     140</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 4637 times"> + </span>]:<span class="tlaGNC">        4637 :                 if (should_start_log || manual_start_requested) {</span></span>
+<span id="L141"><span class="lineNum">     141</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC tlaBgUNC">           0 :                     if (should_start_log) Logger::Get().LogFile(&quot;[Game] User entered driving session (Control: Player).&quot;);</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span>]
+<span id="L142"><span class="lineNum">     142</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :                     else Logger::Get().LogFile(&quot;[Game] Logging manually enabled while driving.&quot;);</span></span>
+<span id="L143"><span class="lineNum">     143</span>                 :             : </span>
+<span id="L144"><span class="lineNum">     144</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                     if (Config::m_auto_start_logging &amp;&amp; !AsyncLogger::Get().IsLogging()) {</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span><span class="tlaUNC" title="Branch 6 was not executed"> # </span><span class="tlaUNC" title="Branch 7 was not executed"> # </span>]
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaUNC">           0 :                         uint8_t idx = g_localData.telemetry.playerVehicleIdx;</span></span>
+<span id="L146"><span class="lineNum">     146</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         if (idx &lt; 104) {</span></span>
+<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaUNC">           0 :                             auto&amp; scoring = g_localData.scoring.vehScoringInfo[idx];</span></span>
+<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaUNC">           0 :                             const char* tName = g_localData.scoring.scoringInfo.mTrackName;</span></span>
+<span id="L149"><span class="lineNum">     149</span>                 :             : </span>
+<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaUNC">           0 :                             SessionInfo info;</span></span>
+<span id="L151"><span class="lineNum">     151</span>                 :             :                             {</span>
+<span id="L152"><span class="lineNum">     152</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                                 std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L153"><span class="lineNum">     153</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                                 PopulateSessionInfo(info, scoring, tName, g_engine);</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaUNC">           0 :                             }</span></span>
+<span id="L155"><span class="lineNum">     155</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :                             AsyncLogger::Get().Start(info, Config::m_log_path);</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :<span class="tlaUNC">           0 :                         }</span></span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :                     }</span>
+<span id="L158"><span class="lineNum">     158</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4637 times"> + </span>]:<span class="tlaGNC tlaBgGNC">        4637 :                 } else if (should_stop_log) {</span></span>
+<span id="L159"><span class="lineNum">     159</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :                     Logger::Get().LogFile(&quot;[Game] User exited driving session.&quot;);</span></span>
+<span id="L160"><span class="lineNum">     160</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :                     if (AsyncLogger::Get().IsLogging()) {</span></span>
+<span id="L161"><span class="lineNum">     161</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         AsyncLogger::Get().Stop();</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :             :                     }</span>
+<span id="L163"><span class="lineNum">     163</span>                 :             :                 }</span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC tlaBgGNC">        4637 :                 was_driving = is_driving;</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">        4637 :                 last_session = current_session;</span></span>
+<span id="L166"><span class="lineNum">     166</span>                 :             : </span>
+<span id="L167"><span class="lineNum">     167</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 4637 times"> + </span>]:<span class="tlaGNC">        4637 :                 if (!is_stale &amp;&amp; g_localData.telemetry.playerHasVehicle) {</span></span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                     uint8_t idx = g_localData.telemetry.playerVehicleIdx;</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :             : </span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :                     // --- LOST FRAME DETECTION (Issue #303) ---</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :                     static double last_telem_et = -1.0;</span>
+<span id="L172"><span class="lineNum">     172</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                     if (g_engine.m_safety.m_config.stutter_safety_enabled &amp;&amp; last_telem_et &gt; 0.0 &amp;&amp; (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) &gt; (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_safety.m_config.stutter_threshold)) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span>]
+<span id="L173"><span class="lineNum">     173</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L174"><span class="lineNum">     174</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         g_engine.m_safety.TriggerSafetyWindow(&quot;Lost Frames&quot;);</span></span>
+<span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaUNC">           0 :                     }</span></span>
+<span id="L176"><span class="lineNum">     176</span>                 :<span class="tlaUNC">           0 :                     last_telem_et = g_localData.telemetry.telemInfo[idx].mElapsedTime;</span></span>
+<span id="L177"><span class="lineNum">     177</span>                 :             : </span>
+<span id="L178"><span class="lineNum">     178</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                     if (idx &lt; 104) {</span></span>
+<span id="L179"><span class="lineNum">     179</span>                 :<span class="tlaUNC">           0 :                         auto&amp; scoring = g_localData.scoring.vehScoringInfo[idx];</span></span>
+<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaUNC">           0 :                         TelemInfoV01* pPlayerTelemetry = &amp;g_localData.telemetry.telemInfo[idx];</span></span>
+<span id="L181"><span class="lineNum">     181</span>                 :             : </span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :                         // Track telemetry update rate</span>
+<span id="L183"><span class="lineNum">     183</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         if (pPlayerTelemetry-&gt;mElapsedTime != lastET) {</span></span>
+<span id="L184"><span class="lineNum">     184</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                             telemMonitor.RecordEvent();</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaUNC">           0 :                             lastET = pPlayerTelemetry-&gt;mElapsedTime;</span></span>
+<span id="L186"><span class="lineNum">     186</span>                 :             :                         }</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             : </span>
+<span id="L188"><span class="lineNum">     188</span>                 :             :                         // Track torque update rates</span>
+<span id="L189"><span class="lineNum">     189</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         if (pPlayerTelemetry-&gt;mSteeringShaftTorque != lastTorque) {</span></span>
+<span id="L190"><span class="lineNum">     190</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                             torqueMonitor.RecordEvent();</span></span>
+<span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaUNC">           0 :                             lastTorque = pPlayerTelemetry-&gt;mSteeringShaftTorque;</span></span>
+<span id="L192"><span class="lineNum">     192</span>                 :             :                         }</span>
+<span id="L193"><span class="lineNum">     193</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         if (g_localData.generic.FFBTorque != lastGenTorque) {</span></span>
+<span id="L194"><span class="lineNum">     194</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                             genTorqueMonitor.RecordEvent();</span></span>
+<span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaUNC">           0 :                             lastGenTorque = g_localData.generic.FFBTorque;</span></span>
+<span id="L196"><span class="lineNum">     196</span>                 :             :                         }</span>
+<span id="L197"><span class="lineNum">     197</span>                 :             : </span>
+<span id="L198"><span class="lineNum">     198</span>                 :             :                         // Extended monitoring (Issue #133)</span>
+<span id="L199"><span class="lineNum">     199</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         channelMonitors.UpdateAll(pPlayerTelemetry);</span></span>
+<span id="L200"><span class="lineNum">     200</span>                 :             : </span>
+<span id="L201"><span class="lineNum">     201</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L202"><span class="lineNum">     202</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                         bool full_allowed = g_engine.m_safety.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) &amp;&amp; is_driving;</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span>]
+<span id="L203"><span class="lineNum">     203</span>                 :             : </span>
+<span id="L204"><span class="lineNum">     204</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl);</span></span>
+<span id="L205"><span class="lineNum">     205</span>                 :             : </span>
+<span id="L206"><span class="lineNum">     206</span>                 :             :                         // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).</span>
+<span id="L207"><span class="lineNum">     207</span>                 :             :                         // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),</span>
+<span id="L208"><span class="lineNum">     208</span>                 :             :                         // while ensuring that AI takeover or other non-player states slew to zero.</span>
+<span id="L209"><span class="lineNum">     209</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         if (scoring.mControl != static_cast&lt;signed char&gt;(ControlMode::PLAYER)) force_physics = 0.0;</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :             : </span>
+<span id="L211"><span class="lineNum">     211</span>                 :             :                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)</span>
+<span id="L212"><span class="lineNum">     212</span>                 :             :                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.</span>
+<span id="L213"><span class="lineNum">     213</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         bool restricted = !full_allowed || (scoring.mFinishStatus != 0);</span></span>
+<span id="L214"><span class="lineNum">     214</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                         force_physics = g_engine.m_safety.ApplySafetySlew(force_physics, 0.0025, restricted);</span></span>
+<span id="L215"><span class="lineNum">     215</span>                 :             : </span>
+<span id="L216"><span class="lineNum">     216</span>                 :<span class="tlaUNC">           0 :                         should_output = true;</span></span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaUNC">           0 :                     }</span></span>
+<span id="L218"><span class="lineNum">     218</span>                 :             :                 }</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             :             }</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :             </span>
+<span id="L221"><span class="lineNum">     221</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">        4637 :             if (!should_output) {</span></span>
+<span id="L222"><span class="lineNum">     222</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L223"><span class="lineNum">     223</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 force_physics = g_engine.m_safety.ApplySafetySlew(0.0, 0.0025, true);</span></span>
+<span id="L224"><span class="lineNum">     224</span>                 :<span class="tlaGNC">        4637 :             }</span></span>
+<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">        4637 :             current_physics_force = force_physics;</span></span>
+<span id="L226"><span class="lineNum">     226</span>                 :             : </span>
+<span id="L227"><span class="lineNum">     227</span>                 :             :             // Warning for low sample rate (Issue #133)</span>
+<span id="L228"><span class="lineNum">     228</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 4636 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        4637 :             static auto lastWarningTime = TimeUtils::GetTime();</span></span>
+<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaGNC">        4637 :             HealthStatus health;</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :             :             {</span>
+<span id="L231"><span class="lineNum">     231</span>         [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        4637 :                 std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L232"><span class="lineNum">     232</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4637 times"> + </span>]:<span class="tlaGNC">        4637 :                 double t_rate = (g_engine.m_front_axle.torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();</span></span>
+<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">        4637 :                 health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_front_axle.torque_source, physicsMonitor.GetRate(),</span></span>
+<span id="L234"><span class="lineNum">     234</span>   [<span class="tlaGBC" title="Branch 0 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">        4637 :                                               GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());</span></span>
+<span class="lineNum">        </span> <span class="tlaGBC" title="Branch 4 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span><span class="tlaGBC" title="Branch 8 was taken 4637 times"> + </span> 
+<span class="lineNum">        </span>       <span class="tlaUNC" title="Branch 9 was not taken"> - </span><span class="tlaGBC" title="Branch 10 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 11 was not taken"> - </span>]
+<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">        4637 :             }</span></span>
+<span id="L236"><span class="lineNum">     236</span>                 :             : </span>
+<span id="L237"><span class="lineNum">     237</span>   [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 4637 times"> + </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">        4637 :             if (in_realtime_phys &amp;&amp; !health.is_healthy) {</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaUNC tlaBgUNC">           0 :                  auto now = TimeUtils::GetTime();</span></span>
+<span id="L239"><span class="lineNum">     239</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                  if (std::chrono::duration_cast&lt;std::chrono::seconds&gt;(now - lastWarningTime).count() &gt;= 60) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span>]
+<span id="L240"><span class="lineNum">     240</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :                      std::string reason = &quot;&quot;;</span></span>
+<span id="L241"><span class="lineNum">     241</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                      if (health.loop_low) reason += &quot;Loop=&quot; + std::to_string((int)health.loop_rate) + &quot;Hz &quot;;</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span><span class="tlaUNC" title="Branch 6 was not executed"> # </span><span class="tlaUNC" title="Branch 7 was not executed"> # </span>]
+<span id="L242"><span class="lineNum">     242</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                      if (health.physics_low) reason += &quot;Physics=&quot; + std::to_string((int)health.physics_rate) + &quot;Hz &quot;;</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span><span class="tlaUNC" title="Branch 6 was not executed"> # </span><span class="tlaUNC" title="Branch 7 was not executed"> # </span>]
+<span id="L243"><span class="lineNum">     243</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                      if (health.telem_low) reason += &quot;Telemetry=&quot; + std::to_string((int)health.telem_rate) + &quot;Hz &quot;;</span></span>
+<span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span><span class="tlaUNC" title="Branch 6 was not executed"> # </span><span class="tlaUNC" title="Branch 7 was not executed"> # </span>]
+<span id="L244"><span class="lineNum">     244</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span> :<span class="tlaUNC">           0 :                      if (health.torque_low) reason += &quot;Torque=&quot; + std::to_string((int)health.torque_rate) + &quot;Hz (Target &quot; + std::to_string((int)health.expected_torque_rate) + &quot;Hz) &quot;;</span></span>
+<span class="lineNum">        </span> <span class="tlaUNC" title="Branch 4 was not executed"> # </span><span class="tlaUNC" title="Branch 5 was not executed"> # </span><span class="tlaUNC" title="Branch 6 was not executed"> # </span><span class="tlaUNC" title="Branch 7 was not executed"> # </span><span class="tlaUNC" title="Branch 8 was not executed"> # </span> 
+<span class="lineNum">        </span>       <span class="tlaUNC" title="Branch 9 was not executed"> # </span><span class="tlaUNC" title="Branch 10 was not executed"> # </span><span class="tlaUNC" title="Branch 11 was not executed"> # </span>]
+<span id="L245"><span class="lineNum">     245</span>                 :             : </span>
+<span id="L246"><span class="lineNum">     246</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :                      Logger::Get().LogFile(&quot;Low Sample Rate detected: %s&quot;, reason.c_str());</span></span>
+<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaUNC">           0 :                      lastWarningTime = now;</span></span>
+<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaUNC">           0 :                  }</span></span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :             }</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :         }</span>
+<span id="L251"><span class="lineNum">     251</span>                 :             : </span>
+<span id="L252"><span class="lineNum">     252</span>                 :             :         // --- 2. 1000Hz Output Phase ---</span>
+<span id="L253"><span class="lineNum">     253</span>                 :             : </span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :         // Pass physics output through Polyphase Resampler</span>
+<span id="L255"><span class="lineNum">     255</span>         [<span class="tlaGBC" title="Branch 0 was taken 11599 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">       11599 :         double force = resampler.Process(current_physics_force, run_physics);</span></span>
+<span id="L256"><span class="lineNum">     256</span>                 :             : </span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :         // Push rates to engine for GUI/Snapshot (1000Hz)</span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :         {</span>
+<span id="L259"><span class="lineNum">     259</span>         [<span class="tlaGBC" title="Branch 0 was taken 11599 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">       11599 :             std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">       11599 :             g_engine.m_ffb_rate = loopMonitor.GetRate();</span></span>
+<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC">       11599 :             g_engine.m_physics_rate = physicsMonitor.GetRate();</span></span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">       11599 :             g_engine.m_telemetry_rate = telemMonitor.GetRate();</span></span>
+<span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">       11599 :             g_engine.m_hw_rate = hwMonitor.GetRate();</span></span>
+<span id="L264"><span class="lineNum">     264</span>                 :<span class="tlaGNC">       11599 :             g_engine.m_torque_rate = torqueMonitor.GetRate();</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :<span class="tlaGNC">       11599 :             g_engine.m_gen_torque_rate = genTorqueMonitor.GetRate();</span></span>
+<span id="L266"><span class="lineNum">     266</span>                 :<span class="tlaGNC">       11599 :         }</span></span>
+<span id="L267"><span class="lineNum">     267</span>                 :             : </span>
+<span id="L268"><span class="lineNum">     268</span>   [<span class="tlaGBC" title="Branch 0 was taken 11599 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 11599 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">       11599 :         if (DirectInputFFB::Get().UpdateForce(force)) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 5 was taken 11598 times"> + </span>]
+<span id="L269"><span class="lineNum">     269</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :             hwMonitor.RecordEvent();</span></span>
+<span id="L270"><span class="lineNum">     270</span>                 :             :         }</span>
+<span id="L271"><span class="lineNum">     271</span>                 :             : </span>
+<span id="L272"><span class="lineNum">     272</span>                 :             :         // Precise Timing: Sleep until next tick</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             : #ifdef LMUFFB_UNIT_TEST</span>
+<span id="L274"><span class="lineNum">     274</span>         [<span class="tlaGBC" title="Branch 0 was taken 1136 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 10463 times"> + </span>]:<span class="tlaGNC">       11599 :         if (g_use_mock_time) {</span></span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :             // In unit test mode with mock time, we don't sleep.</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             :             // We expect the test to advance g_mock_time.</span>
+<span id="L277"><span class="lineNum">     277</span>                 :             :         } else {</span>
+<span id="L278"><span class="lineNum">     278</span>         [<span class="tlaGBC" title="Branch 0 was taken 1136 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        1136 :             std::this_thread::sleep_until(next_tick);</span></span>
+<span id="L279"><span class="lineNum">     279</span>                 :             :         }</span>
+<span id="L280"><span class="lineNum">     280</span>                 :             : #else</span>
+<span id="L281"><span class="lineNum">     281</span>                 :             :         std::this_thread::sleep_until(next_tick);</span>
+<span id="L282"><span class="lineNum">     282</span>                 :             : #endif</span>
+<span id="L283"><span class="lineNum">     283</span>                 :             :     }</span>
+<span id="L284"><span class="lineNum">     284</span>                 :             : </span>
+<span id="L285"><span class="lineNum">     285</span>   [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 9 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           9 :     Logger::Get().LogFile(&quot;[FFB] Loop Stopped.&quot;);</span></span>
+<span id="L286"><span class="lineNum">     286</span>                 :<span class="tlaGNC">           9 : }</span></span>
+<span id="L287"><span class="lineNum">     287</span>                 :             : </span>
+<span id="L288"><span class="lineNum">     288</span>                 :             : #ifndef _WIN32</span>
+<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">           2 : void handle_sigterm(int sig) {</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">           2 :     g_running = false;</span></span>
+<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">           2 : }</span></span>
+<span id="L292"><span class="lineNum">     292</span>                 :             : #endif</span>
+<span id="L293"><span class="lineNum">     293</span>                 :             : </span>
+<span id="L294"><span class="lineNum">     294</span>                 :<span class="tlaGNC">           4 : int lmuffb_app_main(int argc, char* argv[]) noexcept {</span></span>
+<span id="L295"><span class="lineNum">     295</span>                 :             :     try {</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             : #ifdef _WIN32</span>
+<span id="L297"><span class="lineNum">     297</span>                 :             :         timeBeginPeriod(1);</span>
+<span id="L298"><span class="lineNum">     298</span>                 :             : #else</span>
+<span id="L299"><span class="lineNum">     299</span>                 :<span class="tlaGNC">           4 :         signal(SIGTERM, handle_sigterm);</span></span>
+<span id="L300"><span class="lineNum">     300</span>                 :<span class="tlaGNC">           4 :         signal(SIGINT, handle_sigterm);</span></span>
+<span id="L301"><span class="lineNum">     301</span>                 :             : #endif</span>
+<span id="L302"><span class="lineNum">     302</span>                 :             : </span>
+<span id="L303"><span class="lineNum">     303</span>                 :<span class="tlaGNC">           4 :     bool headless = false;</span></span>
+<span id="L304"><span class="lineNum">     304</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">           8 :     for (int i = 1; i &lt; argc; ++i) {</span></span>
+<span id="L305"><span class="lineNum">     305</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           8 :         if (std::string(argv[i]) == &quot;--headless&quot;) headless = true;</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 1 time"> + </span>]
+<span id="L306"><span class="lineNum">     306</span>                 :             :     }</span>
+<span id="L307"><span class="lineNum">     307</span>                 :             : </span>
+<span id="L308"><span class="lineNum">     308</span>                 :             :     // Initialize persistent debug logging for crash analysis</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             :     // First init in current directory or logs folder to catch startup</span>
+<span id="L310"><span class="lineNum">     310</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">          16 :     Logger::Get().Init(&quot;lmuffb_debug.log&quot;, &quot;logs&quot;);</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
+<span id="L311"><span class="lineNum">     311</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :     Logger::Get().Log(&quot;Starting lmuFFB (C++ Port)...&quot;);</span></span>
+<span id="L312"><span class="lineNum">     312</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :     Logger::Get().LogFile(&quot;Application Started. Version: %s&quot;, LMUFFB_VERSION);</span></span>
+<span id="L313"><span class="lineNum">     313</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           4 :     if (headless) Logger::Get().LogFile(&quot;Mode: HEADLESS&quot;);</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
+<span id="L314"><span class="lineNum">     314</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           1 :     else Logger::Get().LogFile(&quot;Mode: GUI&quot;);</span></span>
+<span id="L315"><span class="lineNum">     315</span>                 :             : </span>
+<span id="L316"><span class="lineNum">     316</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           4 :     Preset::ApplyDefaultsToEngine(g_engine);</span></span>
+<span id="L317"><span class="lineNum">     317</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :     Config::Load(g_engine);</span></span>
+<span id="L318"><span class="lineNum">     318</span>                 :             : </span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :     // Re-initialize logger with user-configured path if it changed</span>
+<span id="L320"><span class="lineNum">     320</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           4 :     if (!Config::m_log_path.empty() &amp;&amp; Config::m_log_path != &quot;logs&quot;) {</span></span>
+<span class="lineNum">        </span>    <span class="tlaGBC" title="Branch 4 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaGBC" title="Branch 6 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
+<span id="L321"><span class="lineNum">     321</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           8 :         Logger::Get().Init(&quot;lmuffb_debug.log&quot;, Config::m_log_path);</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
+<span id="L322"><span class="lineNum">     322</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :         Logger::Get().LogFile(&quot;Logger re-initialized with user path: %s&quot;, Config::m_log_path.c_str());</span></span>
+<span id="L323"><span class="lineNum">     323</span>                 :             :     }</span>
+<span id="L324"><span class="lineNum">     324</span>                 :             : </span>
+<span id="L325"><span class="lineNum">     325</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">           4 :     if (!headless) {</span></span>
+<span id="L326"><span class="lineNum">     326</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaUNC" title="Branch 2 was not taken"> - </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">           1 :         if (!GuiLayer::Init()) {</span></span>
+<span id="L327"><span class="lineNum">     327</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :             Logger::Get().Log(&quot;Failed to initialize GUI.&quot;);</span></span>
+<span id="L328"><span class="lineNum">     328</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC">           0 :             Logger::Get().Log(&quot;Failed to initialize GUI.&quot;);</span></span>
+<span id="L329"><span class="lineNum">     329</span>                 :             :         }</span>
+<span id="L330"><span class="lineNum">     330</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC tlaBgGNC">           1 :         DirectInputFFB::Get().Initialize(reinterpret_cast&lt;HWND&gt;(GuiLayer::GetWindowHandle()));</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span>]
+<span id="L331"><span class="lineNum">     331</span>                 :             :     } else {</span>
+<span id="L332"><span class="lineNum">     332</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           3 :         Logger::Get().Log(&quot;Running in HEADLESS mode.&quot;);</span></span>
+<span id="L333"><span class="lineNum">     333</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           3 :         Logger::Get().Log(&quot;Running in HEADLESS mode.&quot;);</span></span>
+<span id="L334"><span class="lineNum">     334</span>   [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 3 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           3 :         DirectInputFFB::Get().Initialize(NULL);</span></span>
+<span id="L335"><span class="lineNum">     335</span>                 :             :     }</span>
+<span id="L336"><span class="lineNum">     336</span>                 :             : </span>
+<span id="L337"><span class="lineNum">     337</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC">           4 :     if (GameConnector::Get().CheckLegacyConflict()) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 4 times"> + </span>]
+<span id="L338"><span class="lineNum">     338</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :         Logger::Get().LogFile(&quot;[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)&quot;);</span></span>
+<span id="L339"><span class="lineNum">     339</span>                 :             :     }</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             : </span>
+<span id="L341"><span class="lineNum">     341</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span> :<span class="tlaGNC tlaBgGNC">           4 :     if (!GameConnector::Get().TryConnect()) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaGBC" title="Branch 5 was taken 4 times"> + </span>]
+<span id="L342"><span class="lineNum">     342</span>   [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span><span class="tlaUNC" title="Branch 2 was not executed"> # </span><span class="tlaUNC" title="Branch 3 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :         Logger::Get().LogFile(&quot;Game not running or Shared Memory not ready. Waiting...&quot;);</span></span>
+<span id="L343"><span class="lineNum">     343</span>                 :             :     }</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             : </span>
+<span id="L345"><span class="lineNum">     345</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC tlaBgGNC">           4 :     std::thread ffb_thread(FFBThread);</span></span>
+<span id="L346"><span class="lineNum">     346</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :     Logger::Get().LogFile(&quot;[GUI] Main Loop Started.&quot;);</span></span>
+<span id="L347"><span class="lineNum">     347</span>                 :             : </span>
+<span id="L348"><span class="lineNum">     348</span>         [<span class="tlaGBC" title="Branch 0 was taken 24 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">          28 :     while (g_running) {</span></span>
+<span id="L349"><span class="lineNum">     349</span>         [<span class="tlaGBC" title="Branch 0 was taken 24 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          24 :         GuiLayer::Render(g_engine);</span></span>
+<span id="L350"><span class="lineNum">     350</span>                 :             : </span>
+<span id="L351"><span class="lineNum">     351</span>                 :             :         // Process background save requests from the FFB thread (v0.7.70)</span>
+<span id="L352"><span class="lineNum">     352</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 22 times"> + </span>]:<span class="tlaGNC">          24 :         if (Config::m_needs_save.exchange(false)) {</span></span>
+<span id="L353"><span class="lineNum">     353</span>   [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :             Config::Save(g_engine);</span></span>
+<span id="L354"><span class="lineNum">     354</span>                 :             :         }</span>
+<span id="L355"><span class="lineNum">     355</span>                 :             : </span>
+<span id="L356"><span class="lineNum">     356</span>                 :             :         // Maintain a consistent 60Hz message loop even when backgrounded</span>
+<span id="L357"><span class="lineNum">     357</span>                 :             :         // to ensure DirectInput performance and reliability.</span>
+<span id="L358"><span class="lineNum">     358</span>         [<span class="tlaGBC" title="Branch 0 was taken 24 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">          24 :         std::this_thread::sleep_for(std::chrono::milliseconds(16));</span></span>
+<span id="L359"><span class="lineNum">     359</span>                 :             :     }</span>
+<span id="L360"><span class="lineNum">     360</span>                 :             :     </span>
+<span id="L361"><span class="lineNum">     361</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :     Config::Save(g_engine);</span></span>
+<span id="L362"><span class="lineNum">     362</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 3 times"> + </span>]:<span class="tlaGNC">           4 :     if (!headless) {</span></span>
+<span id="L363"><span class="lineNum">     363</span>   [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           1 :         Logger::Get().LogFile(&quot;Shutting down GUI...&quot;);</span></span>
+<span id="L364"><span class="lineNum">     364</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :         GuiLayer::Shutdown(g_engine);</span></span>
+<span id="L365"><span class="lineNum">     365</span>                 :             :     }</span>
+<span id="L366"><span class="lineNum">     366</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           4 :     if (ffb_thread.joinable()) {</span></span>
+<span id="L367"><span class="lineNum">     367</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :         Logger::Get().LogFile(&quot;Stopping FFB Thread...&quot;);</span></span>
+<span id="L368"><span class="lineNum">     368</span>                 :<span class="tlaGNC">           4 :         g_running = false; // Ensure loop breaks</span></span>
+<span id="L369"><span class="lineNum">     369</span>         [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           4 :         ffb_thread.join();</span></span>
+<span id="L370"><span class="lineNum">     370</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :         Logger::Get().LogFile(&quot;FFB Thread Stopped.&quot;);</span></span>
+<span id="L371"><span class="lineNum">     371</span>                 :             :     }</span>
+<span id="L372"><span class="lineNum">     372</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :     DirectInputFFB::Get().Shutdown();</span></span>
+<span id="L373"><span class="lineNum">     373</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 4 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">           4 :     Logger::Get().Log(&quot;Main Loop Ended. Clean Exit.&quot;);</span></span>
+<span id="L374"><span class="lineNum">     374</span>                 :             :     </span>
+<span id="L375"><span class="lineNum">     375</span>                 :<span class="tlaGNC">           4 :     return 0;</span></span>
+<span id="L376"><span class="lineNum">     376</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           4 :     } catch (const std::exception&amp; e) {</span></span>
+<span id="L377"><span class="lineNum">     377</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         Logger::Get().LogFile(&quot;Fatal exception: %s&quot;, e.what());</span></span>
+<span id="L378"><span class="lineNum">     378</span>                 :<span class="tlaUNC">           0 :         return 1;</span></span>
+<span id="L379"><span class="lineNum">     379</span>                 :<span class="tlaUNC">           0 :     } catch (...) {</span></span>
+<span id="L380"><span class="lineNum">     380</span>                 :<span class="tlaUNC">           0 :         Logger::Get().LogFile(&quot;Fatal unknown exception.&quot;);</span></span>
+<span id="L381"><span class="lineNum">     381</span>                 :<span class="tlaUNC">           0 :         return 1;</span></span>
+<span id="L382"><span class="lineNum">     382</span>                 :<span class="tlaUNC">           0 :     }</span></span>
+<span id="L383"><span class="lineNum">     383</span>                 :             : }</span>
+<span id="L384"><span class="lineNum">     384</span>                 :             : </span>
+<span id="L385"><span class="lineNum">     385</span>                 :             : } // namespace LMUFFB</span>
+<span id="L386"><span class="lineNum">     386</span>                 :             : </span>
+<span id="L387"><span class="lineNum">     387</span>                 :             : #ifndef LMUFFB_UNIT_TEST</span>
+<span id="L388"><span class="lineNum">     388</span>                 :             : int main(int argc, char* argv[]) noexcept {</span>
+<span id="L389"><span class="lineNum">     389</span>                 :             :     return LMUFFB::lmuffb_app_main(argc, argv);</span>
+<span id="L390"><span class="lineNum">     390</span>                 :             : }</span>
+<span id="L391"><span class="lineNum">     391</span>                 :             : #endif</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
