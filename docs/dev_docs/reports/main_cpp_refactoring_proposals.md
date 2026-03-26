@@ -22,121 +22,63 @@ The proposals below are ordered from lowest to highest invasiveness.
 
 ## 2. Code-Quality Issues (Quick Wins)
 
-### 2.1 Duplicate Log Lines
+### 2.1 Duplicate Log Lines ✅ _Implemented in v0.7.255_
 
-**Lines 327–328 and 332–333** call `Logger::Get().Log(...)` twice with the same string.
-
-```cpp
-// Issue: duplicated log call
-Logger::Get().Log("Failed to initialize GUI.");
-Logger::Get().Log("Failed to initialize GUI."); // <-- redundant
-
-Logger::Get().Log("Running in HEADLESS mode.");
-Logger::Get().Log("Running in HEADLESS mode."); // <-- redundant
-```
-
-**Proposal:** Remove the duplicate calls. Also consider using `LogFile` (which writes to disk) instead of `Log` for failure states so the message survives a crash.
+**Lines 329–330 and 334–335** previously called `Logger::Get().Log(...)` twice with the same string. Both duplicates have been removed. The GUI-failure message was additionally promoted from `Log()` to `LogFile()` so it is persisted to disk in case of a crash.
 
 ---
 
-### 2.2 Magic Numbers
+### 2.2 Magic Numbers ✅ _Implemented in v0.7.255_
 
-Several numeric literals appear inline without named constants:
+All numeric literals listed below have been replaced with named `constexpr` constants in an anonymous namespace at the top of the file:
 
-| Location | Value | Meaning |
+| Constant | Value | Meaning |
 |---|---|---|
-| Line 90 | `1000` | FFB loop target frequency (Hz) |
-| Line 98 | `2` | Upsampling `M` coefficient |
-| Line 101 | `5` | Upsampling `L` coefficient |
-| Line 119 | `100` | Staleness threshold (ms) |
-| Line 146 | `104` | Max vehicle index (game-imposed limit) |
-| Line 204 | `0.0025` | Physics timestep (s) |
-| Line 214 | `0.0025` | Safety slew physics timestep (s) |
-| Line 239 | `60` | Health warning cooldown (seconds) |
-| Line 358 | `16` | GUI loop period (ms, ≈ 60 Hz) |
-
-**Proposal:** Define named constants in an anonymous namespace at the top of the file, or—more ideally—expose the sampling/upsampling constants from `UpSampler.h` and `FFBSafetyMonitor.h` where they conceptually belong.
-
-```cpp
-namespace {
-    constexpr int    kFFBTargetHz         = 1000;
-    constexpr int    kPhysicsUpsampleL    = 5;    // Upsample ratio numerator
-    constexpr int    kPhysicsUpsampleM    = 2;    // Upsample ratio denominator
-    constexpr double kPhysicsTimestepSec  = 0.0025; // 1/400 Hz
-    constexpr int    kStaleThresholdMs    = 100;
-    constexpr int    kMaxVehicleIndex     = 104;
-    constexpr int    kHealthWarnCooldownS = 60;
-    constexpr int    kGuiPeriodMs         = 16;   // ~60 Hz
-} // anonymous namespace
-```
+| `kFFBTargetHz` | `1000` | FFB loop target frequency (Hz) |
+| `kPhysicsUpsampleM` | `2` | Upsampling `M` coefficient |
+| `kPhysicsUpsampleL` | `5` | Upsampling `L` coefficient |
+| `kPhysicsTimestepSec` | `0.0025` | Physics timestep (s) |
+| `kStaleThresholdMs` | `100` | Staleness threshold (ms) |
+| `kMaxVehicleIndex` | `104` | Max vehicle index (game-imposed limit) |
+| `kHealthWarnCooldownS` | `60` | Health warning cooldown (seconds) |
+| `kGuiPeriodMs` | `16` | GUI loop period (ms, ≈60 Hz) |
 
 > [!NOTE]
-> `kPhysicsTimestepSec` (1/400 Hz) and `kPhysicsUpsampleL/M` are directly related to `PolyphaseResampler`'s design and should ideally be declared in `UpSampler.h` as `constexpr` members so they're co-located with the algorithm they describe.
+> `kPhysicsTimestepSec` (1/400 Hz) and `kPhysicsUpsampleL/M` are directly related to `PolyphaseResampler`'s design and should ideally be declared in `UpSampler.h` as `constexpr` members so they're co-located with the algorithm they describe. This is tracked as §4.2.
 
 ---
 
-### 2.3 `static` Locals Inside a Hot Loop
+### 2.3 `static` Locals Inside a Hot Loop ✅ _Implemented in v0.7.255_
 
-`FFBThread` uses several `static` local variables:
-
-```cpp
-static bool was_driving = false;
-static long last_session = -1;
-static double last_telem_et = -1.0;
-static auto lastWarningTime = TimeUtils::GetTime();
-```
-
-**Problems:**
-1. `static` locals are zero-initialized once and retained across loop iterations, which is the correct intent — but this is semantically fragile, since the thread is expected to run only once. If the thread is ever restarted (e.g., reconnect flow, test teardown), the statics retain stale values.
-2. `static` locals inside non-trivially-destructed lambdas or thread functions are a common source of **test flakiness** — they bleed state between test cases.
-3. `static` variables communicate *intent* poorly; a reader must figure out they are serving as "last known state" rather than file-scope or class-scope singletons.
-
-**Proposal:** Promote all loop-state variables to the top of `FFBThread` as plain (non-static) local variables. Since `FFBThread` is not restarted mid-run, this is zero-risk functionally, and it makes state scoping explicit.
+All four `static` local variables in `FFBThread` have been converted to plain (non-static) locals:
 
 ```cpp
 // Before (static locals — fragile in tests)
 static bool was_driving = false;
 static long last_session = -1;
+static double last_telem_et = -1.0;
+static auto lastWarningTime = TimeUtils::GetTime();
 
 // After (ordinary locals — reset on every thread launch)
 bool was_driving = false;
-long last_session = -1;
+long last_session = -1L;
+double last_telem_et = -1.0;
+auto lastWarningTime = TimeUtils::GetTime();
 ```
+
+Since `FFBThread` is not restarted mid-run in production, this is zero-risk functionally, and it makes state scoping explicit. Test suites no longer risk state bleed between test cases through these statics.
 
 ---
 
-### 2.4 `g_running = false` After `ffb_thread.joinable()` Check
+### 2.4 `g_running = false` After `ffb_thread.joinable()` Check ✅ _Implemented in v0.7.255_
 
-```cpp
-if (ffb_thread.joinable()) {
-    Logger::Get().LogFile("Stopping FFB Thread...");
-    g_running = false; // <-- already set by GUI loop exit condition?
-    ffb_thread.join();
-}
-```
-
-`g_running` is the condition that terminates the `while (g_running)` GUI loop (line 348), so it is `false` at this point by the time we reach this code. Setting it again is redundant but harmless. Add a comment explaining the shutdown sequencing to avoid confusion for future readers.
+A 3-line comment has been added to the shutdown path explaining that `g_running` is already `false` at this point (the GUI `while` loop exits precisely when it becomes `false`), but is set explicitly for clarity and defensive safety in case future code paths bypass the main loop.
 
 ---
 
-### 2.5 Indentation Error in `lmuffb_app_main`
+### 2.5 Indentation Error in `lmuffb_app_main` ✅ _Implemented in v0.7.255_
 
-Lines 303–306 are not indented to match the enclosing `try` block (they should be at the same depth as the `#ifdef _WIN32` block above):
-
-```cpp
-int lmuffb_app_main(int argc, char* argv[]) noexcept {
-    try {
-#ifdef _WIN32
-        timeBeginPeriod(1);
-#else
-        ...
-#endif
-
-    bool headless = false;   // <-- missing one level of indent
-    for (int i = 1; i < argc; ++i) {
-```
-
-**Proposal:** Re-indent lines 303–383 consistently inside the `try` body.
+The entire body of the `try {}` block in `lmuffb_app_main` has been re-indented by one level, aligning it consistently with the `#ifdef _WIN32 / timeBeginPeriod(1)` block above it. Purely cosmetic — no behaviour change.
 
 ---
 
@@ -444,18 +386,19 @@ Suggested sub-namespace assignment:
 
 ## 7. Prioritized Implementation Roadmap
 
-| Priority | Proposal | Effort | Risk |
-|---|---|---|---|
-| 🟢 **1** | Fix duplicate log lines (§2.1) | Trivial | Zero |
-| 🟢 **2** | Fix indentation in `lmuffb_app_main` (§2.5) | Trivial | Zero |
-| 🟢 **3** | Replace `static` locals with plain locals (§2.3) | Low | Low |
-| 🟢 **4** | Name the magic number constants (§2.2) | Low | Low |
-| 🟡 **5** | Expose upsample constants from `UpSampler.h` (§4.2) | Low–Medium | Low |
-| 🟡 **6** | Extract `UpdateSessionLogging` helper (§3.1) | Medium | Low |
-| 🟡 **7** | Extract `MaybeEmitHealthWarning` helper (§3.2) | Medium | Low |
-| 🟡 **8** | Move lost-frame detection into `FFBSafetyMonitor` (§3.3) | Medium | Medium |
-| 🔴 **9** | Introduce `PhysicsLoop` class (§4.1) | High | Medium |
-| 🔴 **10** | Introduce `ApplicationState` struct (§5.2) | High | Medium |
+| Priority | Proposal | Effort | Risk | Status |
+|---|---|---|---|---|
+| 🟢 **1** | Fix duplicate log lines (§2.1) | Trivial | Zero | ✅ Done (v0.7.255) |
+| 🟢 **2** | Fix indentation in `lmuffb_app_main` (§2.5) | Trivial | Zero | ✅ Done (v0.7.255) |
+| 🟢 **3** | Replace `static` locals with plain locals (§2.3) | Low | Low | ✅ Done (v0.7.255) |
+| 🟢 **4** | Name the magic number constants (§2.2) | Low | Low | ✅ Done (v0.7.255) |
+| 🟢 **4b** | Clarify `g_running` shutdown comment (§2.4) | Trivial | Zero | ✅ Done (v0.7.255) |
+| 🟡 **5** | Expose upsample constants from `UpSampler.h` (§4.2) | Low–Medium | Low | Open |
+| 🟡 **6** | Extract `UpdateSessionLogging` helper (§3.1) | Medium | Low | Open |
+| 🟡 **7** | Extract `MaybeEmitHealthWarning` helper (§3.2) | Medium | Low | Open |
+| 🟡 **8** | Move lost-frame detection into `FFBSafetyMonitor` (§3.3) | Medium | Medium | Open |
+| 🔴 **9** | Introduce `PhysicsLoop` class (§4.1) | High | Medium | Open |
+| 🔴 **10** | Introduce `ApplicationState` struct (§5.2) | High | Medium | Open |
 
 ---
 
@@ -468,6 +411,111 @@ Suggested sub-namespace assignment:
 | `src/ffb/FFBSafetyMonitor.h/.cpp` | Accept lost-frame detection migration |
 | `src/ffb/PhysicsLoop.h/.cpp` | New file (proposal §4.1) |
 | `src/core/ApplicationState.h` | New file (proposal §5.2), optional |
+
+---
+
+## 9. Timing Triage: Now vs. After Phase 6
+
+> **Context (as of 2026-03-26):**
+> Phases 1–5 of `main_code_unity_build_plan.md` are **complete**. All core source files are encapsulated inside `namespace LMUFFB` and whitelisted for Unity builds.
+> Phase 6 (sub-namespace migration) is **in-progress**: `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253). Next targets are `src/utils/` → `LMUFFB::Utils` and `src/physics/` → `LMUFFB::Physics`.
+>
+> The key question for each proposal is: **does this refactoring interact with or complicate the ongoing namespace migration in Phase 6?**
+
+---
+
+### ✅ Safe to do now (no conflict with Phase 6)
+
+These changes are self-contained within `main.cpp` or involve only additive changes to headers. They do not define new types, move symbols between namespaces, or add new translation units that Phase 6 would later need to re-namespace.
+
+| # | Proposal | Why it's safe now |
+|---|---|---|
+| **2.1** | Remove duplicate log lines | Pure deletion inside an existing function. Zero namespace implications. |
+| **2.5** | Fix indentation in `lmuffb_app_main` | Whitespace-only change inside an already-namespaced function. |
+| **2.3** | Replace `static` locals with plain locals in `FFBThread` | Modifies existing variable declarations inside an already-namespaced function. No new symbols introduced. |
+| **2.4** | Add a comment clarifying `g_running = false` shutdown sequencing | Comment-only. Zero risk. |
+| **2.2** | Name magic number constants in an anonymous namespace in `main.cpp` | Adds `constexpr` constants inside `namespace { }` within an already-Unity-ready file. Fully invisible to other translation units. Phase 6 migrations touching `utils/` or `physics/` will not interact with these constants. |
+
+**Recommendation:** Implement §2.1, §2.5, §2.4 in the current sprint as a quick housekeeping commit. §2.3 and §2.2 can follow immediately after.
+
+---
+
+### ⚠️ Safe now, but warrants care due to Phase 6 overlap
+
+These changes touch files or symbols that **Phase 6 will later rename or reorganise**, so doing them now creates a slightly larger diff in a future Phase 6 PR. They are not blocked, but coordination is needed.
+
+#### §4.2 — Expose upsample constants from `UpSampler.h`
+
+`UpSampler.h` currently lives in `namespace LMUFFB`. Phase 6 does not appear to plan a `LMUFFB::FFB` sub-namespace for the upsampler at this time (the plan only lists `logging`, `utils`, `physics`, `gui`). Therefore adding `constexpr` members to `PolyphaseResampler` now is safe — the class stays in `namespace LMUFFB` for the foreseeable future.
+
+**Recommendation:** Implement now. If `UpSampler.h` is eventually migrated to `LMUFFB::FFB`, the constants move with it trivially.
+
+#### §3.1 — Extract `UpdateSessionLogging` free function
+
+This is an anonymous-namespace free function inside `main.cpp`, which is already namespaced and whitelisted. Extracting it as a helper inside the same file's anonymous namespace has zero namespace implications. If it later moves to a dedicated header, that header will need its own namespace treatment — but that is a separate future decision.
+
+**Recommendation:** Implement now as an in-file helper. Do **not** create a new header for it yet; wait until Phase 6 has settled the `LMUFFB::FFB` or similar sub-namespace before deciding where a `SessionManager.h` would live.
+
+#### §3.2 — Extract `MaybeEmitHealthWarning` free function
+
+Same reasoning as §3.1 — anonymous namespace, in-file helper. Safe to extract now.
+
+**Recommendation:** Implement now.
+
+---
+
+### 🔴 Defer until Phase 6 is complete (or at least `physics/` and `utils/` are migrated)
+
+These proposals introduce **new translation units or new class types** that would immediately need to be in the right sub-namespace. Doing them now in `namespace LMUFFB` root means doing the namespace migration work *twice* — once they will need to be moved when Phase 6 reaches them. They should wait until the sub-namespace plan for these modules is settled.
+
+#### §3.3 — Move lost-frame detection into `FFBSafetyMonitor`
+
+`FFBSafetyMonitor` is currently in `namespace LMUFFB`. Phase 6 is likely to move it to `namespace LMUFFB::FFB` (per the sub-namespace assignment in §6 of this document). Adding new state and methods to `FFBSafetyMonitor` now is low-risk today but creates a larger migration surface when Phase 6 reaches it.
+
+**Recommendation:** Defer until the `ffb/` sub-namespace is decided and migrated. The lost-frame logic in `main.cpp` is well-localised and not urgent.
+
+#### §4.1 — Introduce `PhysicsLoop` class
+
+This is the highest-value proposal but also the most Phase-6-sensitive. `PhysicsLoop` is a new class that would hold `RateMonitor`, `ChannelMonitor`, and `PolyphaseResampler` instances — types from `LMUFFB::Logging` and (eventually) `LMUFFB::FFB`. Creating it now would mean:
+
+1. Deciding its namespace today (either `LMUFFB` root as a temporary home, or `LMUFFB::FFB` which Phase 6 hasn't reached yet).
+2. Immediately importing cross-namespace types (`LMUFFB::Logging::RateMonitor` etc.) inside the new class.
+3. Potentially adding it to `UNITY_READY_MAIN`, which requires all its includes to be outside namespace blocks.
+
+None of this is *impossible* now, but it requires running ahead of Phase 6's namespace design. If `PhysicsLoop` is created in `namespace LMUFFB` root, it will need a re-namespace pass when Phase 6 matures. If created directly in `namespace LMUFFB::FFB` (jumping ahead of Phase 6), it works but adds a new module to the Phase 6 tracking scope.
+
+**Recommendation:** Defer `PhysicsLoop` extraction until Phase 6 has decided the final sub-namespace for `ffb/` modules. That decision will likely be driven by the `FFBEngine.h` migration, which is the most complex remaining Phase 6 item. At that point, `PhysicsLoop` can be created directly in the correct namespace.
+
+**Exception:** The sub-changes within §4.1 that don't require a new class (e.g., pulling the phase accumulator logic into a cleaner helper function *within* `main.cpp`) can be done now as a preparatory step.
+
+#### §5.2 — Introduce `ApplicationState` struct
+
+`ApplicationState` aggregates `FFBEngine`, `SharedMemoryObjectOut`, and the global mutex. These types are currently in `namespace LMUFFB`. The struct itself would be straightforward to create now, but:
+
+- `FFBEngine` is the largest, most coupled class in the codebase and the most significant Phase 6 migration target.
+- Wrapping it in a struct before its own namespace migration is settled adds cognitive load to that future migration.
+- The `#ifdef LMUFFB_UNIT_TEST` refactoring that `ApplicationState` enables (§5.1) is valuable, but not urgent — the current `extern` pattern works correctly.
+
+**Recommendation:** Defer until `FFBEngine` has been migrated to its final sub-namespace (likely `LMUFFB::FFB`). At that point, `ApplicationState` can be created cleanly in `namespace LMUFFB` (root level is appropriate for a top-level aggregator).
+
+---
+
+### Summary Table
+
+| # | Proposal | Timing | Rationale |
+|---|---|---|---|
+| 2.1 | Remove duplicate log lines | ✅ **Done** (v0.7.255) | Pure deletion, no namespace touch |
+| 2.5 | Fix indentation | ✅ **Done** (v0.7.255) | Whitespace only |
+| 2.4 | Comment `g_running` shutdown sequencing | ✅ **Done** (v0.7.255) | Comment only |
+| 2.3 | Replace `static` locals with plain locals | ✅ **Done** (v0.7.255) | Scoped to existing namespaced function |
+| 2.2 | Name magic number constants (anonymous ns) | ✅ **Done** (v0.7.255) | Fully internal to `main.cpp` |
+| 4.2 | Expose upsample constants from `UpSampler.h` | ✅ **Now** | `UpSampler.h` not targeted by near-term Phase 6 |
+| 3.1 | Extract `UpdateSessionLogging` (in-file helper) | ✅ **Now** | Anonymous namespace, no new header needed yet |
+| 3.2 | Extract `MaybeEmitHealthWarning` (in-file helper) | ✅ **Now** | Same as §3.1 |
+| 3.3 | Move lost-frame detection into `FFBSafetyMonitor` | 🔴 **After Phase 6** (`ffb/` migration) | Adds surface area to a soon-to-be-migrated class |
+| 4.1 | Introduce `PhysicsLoop` class | 🔴 **After Phase 6** (`ffb/` namespace settled) | New type needs correct sub-namespace from the start |
+| 5.1 | Audit `#ifdef LMUFFB_UNIT_TEST` pattern | ⚠️ **After §5.2** | Depends on `ApplicationState` |
+| 5.2 | Introduce `ApplicationState` struct | 🔴 **After Phase 6** (`FFBEngine` migration) | Wraps the largest pending migration target |
 
 ---
 

@@ -2,8 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.255]
+### Refactored
+- **`src/core/main.cpp` — Code Quality Quick Wins**:
+  - **Named Constants (§2.2)**: Replaced all magic numbers with `constexpr` values in an anonymous namespace — `kFFBTargetHz` (1000), `kPhysicsUpsampleM` (2), `kPhysicsUpsampleL` (5), `kPhysicsTimestepSec` (0.0025 s), `kStaleThresholdMs` (100 ms), `kMaxVehicleIndex` (104), `kHealthWarnCooldownS` (60 s), `kGuiPeriodMs` (16 ms). Every use of these values throughout `FFBThread` and `lmuffb_app_main` now references the named constant, making intent explicit and changes trivially safe.
+  - **Removed `static` Locals (§2.3)**: Converted four `static` local variables (`was_driving`, `last_session`, `last_telem_et`, `lastWarningTime`) inside `FFBThread` to plain locals. These variables serve as "last known state" within a single loop run; `static` was incorrect and caused stale state bleed if the thread were ever restarted, and test-execution interference between test cases.
+  - **Removed Duplicate Log Lines (§2.1)**: Removed two duplicate `Logger::Get().Log(...)` calls (`"Failed to initialize GUI."` and `"Running in HEADLESS mode."` were each emitted twice). The GUI-failure message was also promoted to `LogFile()` so it is persisted to disk in case of a crash.
+  - **Clarified Shutdown Sequencing (§2.4)**: Added a 3-line comment to the `g_running = false` statement in the shutdown path, documenting why the assignment is present even though `g_running` is already `false` at that code point (the GUI `while` loop exits precisely when it becomes `false`). Removes an otherwise confusing apparent no-op.
+  - **Fixed `try`-block Indentation (§2.5)**: Re-indented the entire body of `lmuffb_app_main`'s `try {}` block by one additional level, aligning it correctly with the `#ifdef _WIN32 / timeBeginPeriod(1)` block above it. Purely cosmetic — no behaviour change.
+
+### Documentation
+- **Refactoring Proposals**: Added §9 ("Timing Triage: Now vs. After Phase 6") to `docs/dev_docs/reports/main_cpp_refactoring_proposals.md`, giving a per-proposal recommendation on whether each refactoring is safe to implement now or should wait until the Phase 6 sub-namespace migration reaches the relevant modules.
+- **Unity Build Plan**: Updated `docs/dev_docs/reports/main_code_unity_build_plan.md` with multiple housekeeping corrections: marked the Phase 6 gate condition as met, fixed the malformed `rF2Data.h` TODO checklist item, updated stale Q&A sections that referenced Phase 3 as future work, retired the Phase 3 prediction from §8.3, and expanded §9 with four critical reminders (include rule, `using namespace` placement rule, internal linkage, bridge aliases).
 
 ## [0.7.254]
+
+
 ### Fixed
 - **Lateral Load Slider Persistence (Issue #475)**:
   - Resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon application restart, despite the GUI allowing values up to 10.0 (1000%).
@@ -11,7 +25,8 @@ All notable changes to this project will be documented in this file.
 
 ### Testing
 - **New Regression Test**: Added `tests/repro_issue_475.cpp` verifying that values up to 10.0 are preserved through the validation cycle.
-- 
+
+
 ## [0.7.253]
 ### Changed
 - **Unity Build Expansion (Phase 6 Commencement)**:
