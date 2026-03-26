@@ -2,8 +2,9 @@
 #include "Logger.h"
 #include <iostream>
 
-using namespace LMUFFB::Logging;
 #include <regex>
+
+using namespace LMUFFB::Logging;
 
 #ifdef _WIN32
 #include <windows.h>

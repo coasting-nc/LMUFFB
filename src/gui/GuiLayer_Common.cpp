@@ -1178,7 +1178,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
     if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
         HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_front_axle.torque_source, engine.m_physics_rate,
-                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
+                                              LMUFFB::GameConnector::Get().IsConnected(), LMUFFB::GameConnector::Get().IsSessionActive(), LMUFFB::GameConnector::Get().GetSessionType(), LMUFFB::GameConnector::Get().IsInRealtime(), LMUFFB::GameConnector::Get().GetPlayerControl());
 
         ImGui::Columns(6, "RateCols", false);
         DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);

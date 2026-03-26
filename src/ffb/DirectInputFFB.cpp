@@ -2,12 +2,12 @@
 #include "Logger.h"
 #include "StringUtils.h"
 
-using namespace LMUFFB::Logging;
-
 // Standard Library Headers
 #include <algorithm> // For std::max, std::min
 #include <mutex>
 #include <cmath>
+
+using namespace LMUFFB::Logging;
 
 // Platform-Specific Headers
 #ifdef _WIN32

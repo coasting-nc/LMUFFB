@@ -7,7 +7,6 @@
 #include "io/lmu_sm_interface/InternalsPluginWrapper.h"
 #include "logging/Logger.h"
 #include "utils/StringUtils.h"
-
 #include "FFBConfig.h"
 
 namespace LMUFFB {

@@ -310,6 +310,8 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - **Code Review Finding (Header Pollution):** Initial implementation included `using namespace LMUFFB::Logging;` in `FFBEngine.h`. This was flagged as an anti-pattern that pollutes all dependent files. Resolved by removing the directive and using qualified names where necessary.
   - **Code Review Finding (Bridge Placement):** Temporary `using` bridges were initially placed in the global namespace, which would break qualified lookups like `LMUFFB::Logger`. Resolved by wrapping all bridges in `namespace LMUFFB { ... }` within the headers.
   - **Code Review Finding (Doc Inconsistency):** The implementation refactored all six logging files, but documentation initially claimed only a subset were done and listed the others as "Next Steps". Resolved by updating the Progress Checklist, Implementation Notes, and Next Steps to accurately reflect the full directory migration and its scope.
+  - **Code Review Finding (FFBSafetyMonitor.h Hygiene):** Accidentally introduced `using namespace LMUFFB::Logging;` inside `namespace LMUFFB` in `FFBSafetyMonitor.h`. This was flagged as redundant and a violation of the established no-header-pollution rule. Resolved by removing the directive.
+  - **Code Review Finding (Doc Typo):** Fixed a formatting regression where a backtick was replaced by a double quote in the progress checklist.
   - Handled namespace ambiguity for `FFBEngine` within `AsyncLogger.h` by using a qualified `using` declaration.
 - **Deviations from the Plan:**
   - Namespaced all six logging files instead of just the initial two, as it proved more maintainable for the directory's internal consistency.

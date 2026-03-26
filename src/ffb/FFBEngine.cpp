@@ -8,10 +8,11 @@
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
 
-using namespace LMUFFB::Logging;
 #include <mutex>
 #include <algorithm>
 #include <cmath>
+
+using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;
