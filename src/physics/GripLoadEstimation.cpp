@@ -5,7 +5,7 @@
 // This file is a source-level split of FFBEngine.cpp (Approach A).
 // All functions here are FFBEngine member methods; FFBEngine.h is unchanged.
 //
-// Rationale: These functions form a self-contained "data preparation" layer â€”
+// Rationale: These functions form a self-contained "data preparation" layer ---
 // they take raw (possibly broken/encrypted) telemetry and produce the best
 // available grip and load values. The FFB engine then consumes those values
 // without needing to know how they were estimated.
@@ -25,6 +25,7 @@
 
 using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
+using namespace LMUFFB::Physics;
 
 namespace LMUFFB {
 
@@ -40,8 +41,8 @@ namespace Physics {
 double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w2) {
     double v_long_1 = std::abs(w1.mLongitudinalGroundVel);
     double v_long_2 = std::abs(w2.mLongitudinalGroundVel);
-    if (v_long_1 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_1 = Physics::MIN_SLIP_ANGLE_VELOCITY;
-    if (v_long_2 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_2 = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    if (v_long_1 < 0.5) v_long_1 = 0.5; // MIN_SLIP_ANGLE_VELOCITY
+    if (v_long_2 < 0.5) v_long_2 = 0.5;
     double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);
     double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);
     return (raw_angle_1 + raw_angle_2) / 2.0;
@@ -49,11 +50,11 @@ double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w
 
 double CalculateSlipAngle(const TelemWheelV01& w, double& prev_state, double dt, float slip_angle_smoothing) {
     double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (v_long < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    if (v_long < 0.5) v_long = 0.5; // MIN_SLIP_ANGLE_VELOCITY
 
     // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity
-    // Positive lateral vel (+X = left) â†’ Positive slip angle
-    // Negative lateral vel (-X = right) â†’ Negative slip angle
+    // Positive lateral vel (+X = left) -> Positive slip angle
+    // Negative lateral vel (-X = right) -> Negative slip angle
     // This sign is critical for directional counter-steering
     double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED
 
@@ -99,7 +100,7 @@ double CalculateManualSlipRatio(const TelemWheelV01& w, double car_speed_ms) {
 // Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
 double CalculateWheelSlipRatio(const TelemWheelV01& w) {
     double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (std::abs(v_long) < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    if (std::abs(v_long) < 0.5) v_long = 0.5; // MIN_SLIP_ANGLE_VELOCITY
     return w.mLongitudinalPatchVel / v_long;
 }
 
@@ -446,7 +447,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // to maintain correctness in tests and variable-rate scenarios.
     // However, we use a fixed 400Hz 'internal_dt' for Savitzky-Golay derivatives
     // because the internal buffers are populated at the 400Hz engine tick rate.
-    const double internal_dt = Physics::PHYSICS_CALC_DT;
+    const double internal_dt = PHYSICS_CALC_DT;
 
     double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_detection.g_slew_limit, dt);
     // v0.7.198 FIX: Must update m_slope_lat_g_prev immediately after computing lat_g_slew
@@ -493,14 +494,14 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // v0.7.198: Added a check to only update G-Slope if the primary axle grip is
     // being approximated (encrypted DLC) OR if we are in Shadow Mode (always calc).
     // shadow_mode is true when m_slope_detection_enabled == false and we still reach
-    // this function — that can only happen when calculate_axle_grip calls us explicitly
+    // this function --- that can only happen when calculate_axle_grip calls us explicitly
     // to run the SG filter in "shadow" mode for diagnostics (Issue #348).
     // It is preserved here for readability and future guard logic; suppressing it would
     // require restructuring the call site instead.
     bool shadow_mode = (m_slope_detection.enabled == false);
     (void)shadow_mode; // Retained for documentation; see call site in calculate_axle_grip
     if (std::abs(dAlpha_dt) > (double)m_slope_detection.alpha_threshold) {
-        m_slope_hold_timer = Physics::SLOPE_HOLD_TIME;
+        m_slope_hold_timer = 0.25; // SLOPE_HOLD_TIME
         m_debug_slope_num = dG_dt * dAlpha_dt;
         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;
         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;
