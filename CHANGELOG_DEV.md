@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.253]
+### Changed
+- **Unity Build Expansion (Phase 6 Commencement)**:
+  - Initiated Phase 6 of the Unity Build plan by transitioning all modules in the `src/logging/` directory to `namespace LMUFFB::Logging`.
+  - Implemented temporary bridge `using` declarations (e.g., `namespace LMUFFB { using Logger = LMUFFB::Logging::Logger; }`) in the logging headers to maintain backward compatibility and support qualified lookups while call sites are incrementally updated.
+  - Updated key project-wide call sites in `main.cpp` and `GuiLayer_Common.cpp` with appropriate `using namespace` or qualified lookups.
+  - Enforced strict header hygiene by ensuring no `using namespace` directives exist in core headers like `FFBEngine.h`.
+  - Resolved namespace ambiguity for `FFBEngine` in `AsyncLogger.h` via qualified `using` declarations.
+  - Verified 100% test pass rate (632/632) under the new namespaced architecture.
+
 ## [0.7.252]
 ### Changed
 - **Codebase-Wide Wheel Index Refactoring**:

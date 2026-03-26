@@ -4,7 +4,7 @@
 #include "RateMonitor.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
-namespace LMUFFB {
+namespace LMUFFB::Logging {
 
 // Extended monitors for Issue #133
 struct ChannelMonitor {
@@ -61,6 +61,12 @@ struct ChannelMonitors {
     }
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::Logging
+
+// Temporary bridge for legacy code
+namespace LMUFFB {
+    using ChannelMonitor = LMUFFB::Logging::ChannelMonitor;
+    using ChannelMonitors = LMUFFB::Logging::ChannelMonitors;
+}
 
 #endif // CHANNELMONITOR_H

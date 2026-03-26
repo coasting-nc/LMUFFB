@@ -1,6 +1,8 @@
 #ifndef HEALTHMONITOR_H
 #define HEALTHMONITOR_H
 
+namespace LMUFFB::Logging {
+
 /**
  * @brief Logic for determining if system sample rates are healthy.
  * Issue #133: Adjusted thresholds to be source-aware.
@@ -83,5 +85,13 @@ public:
         return status;
     }
 };
+
+} // namespace LMUFFB::Logging
+
+// Temporary bridge for legacy code
+namespace LMUFFB {
+    using HealthStatus = LMUFFB::Logging::HealthStatus;
+    using HealthMonitor = LMUFFB::Logging::HealthMonitor;
+}
 
 #endif // HEALTHMONITOR_H

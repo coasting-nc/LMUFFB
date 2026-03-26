@@ -72,7 +72,7 @@ TEST_CASE(test_health_monitor_logic, "Diagnostics") {
 }
 
 TEST_CASE(test_channel_monitors_regression, "Diagnostics") {
-    LMUFFB::ChannelMonitors cms;
+    ChannelMonitors cms;
     TelemInfoV01 telem = {};
 
     // 1. Initial values

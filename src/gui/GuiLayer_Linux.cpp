@@ -3,6 +3,7 @@
 #include "Version.h"
 #include "Config.h"
 #include "Logger.h"
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -21,6 +22,8 @@
 #include <GL/gl.h>
 #endif
 #endif
+
+using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
 extern std::atomic<bool> g_running;

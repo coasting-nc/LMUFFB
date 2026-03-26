@@ -3,12 +3,16 @@
 #include "StringUtils.h"
 #include "RestApiProvider.h"
 #include "Logger.h"
+
 #include "../physics/SteeringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
+
 #include <mutex>
 #include <algorithm>
 #include <cmath>
+
+using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;

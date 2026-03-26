@@ -1,5 +1,7 @@
 #include "FFBSafetyMonitor.h"
 
+using namespace LMUFFB::Logging;
+
 namespace LMUFFB {
 
 bool FFBSafetyMonitor::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const {
