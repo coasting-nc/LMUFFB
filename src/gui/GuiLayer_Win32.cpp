@@ -3,8 +3,6 @@
 #include "DXGIUtils.h"
 #include "Version.h"
 #include "Logger.h"
-
-using namespace LMUFFB::Logging;
 #include "Config.h"
 #include "StringUtils.h"
 #include <iostream>
@@ -32,6 +30,8 @@ using namespace LMUFFB::Logging;
 #include "imgui_impl_dx11.h"
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
+
+using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
 extern std::atomic<bool> g_running;

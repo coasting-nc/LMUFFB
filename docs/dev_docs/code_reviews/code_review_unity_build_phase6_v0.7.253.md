@@ -134,68 +134,39 @@ This makes it explicit that these fields come from the Logging sub-namespace and
 
 ---
 
-### 4.3 `FFBSafetyMonitor.cpp` — `using namespace` Placement Inside a Namespace Block _(Low Severity)_
+### 4.3 `FFBSafetyMonitor.cpp` — `using namespace` Placement Inside a Namespace Block ~~_(Low Severity)_~~ ✅ **Fixed**
 
-**File:** `src/ffb/FFBSafetyMonitor.cpp`, lines 2–6
+**File:** `src/ffb/FFBSafetyMonitor.cpp`
 
-```cpp
-namespace LMUFFB {
+**Issue:** The `using namespace` directive was placed *inside* the `namespace LMUFFB { ... }` block rather than at file scope before it, inconsistent with every other `.cpp` file in the PR.
 
-using namespace LMUFFB::Logging;
-
-bool FFBSafetyMonitor::IsFFBAllowed(...) { ... }
-```
-
-**Issue:** The `using namespace` directive appears *inside* the `namespace LMUFFB { ... }` block rather than at file scope between the `#include`s and the namespace. All other `.cpp` files in this PR consistently place `using namespace LMUFFB::Logging;` at **file scope** (i.e., before `namespace LMUFFB {`). While placing `using namespace` inside a namespace block is technically valid, it is inconsistent with the established project convention and is potentially confusing.
-
-**Recommendation:** Move the directive to file scope, consistent with all other files:
+**Resolution (post-review fix):** Moved `using namespace LMUFFB::Logging;` to file scope, immediately after the `#include` and before `namespace LMUFFB {`:
 
 ```cpp
-// includes...
+#include "FFBSafetyMonitor.h"
 
 using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
-
-bool FFBSafetyMonitor::IsFFBAllowed(...) { ... }
 ```
 
 ---
 
-### 4.4 GUI Layer Files — `using namespace` Is Not Adjacent to System Includes _(Cosmetic, Low Severity)_
+### 4.4 GUI Layer Files — `using namespace` Split Between Includes ~~_(Cosmetic, Low Severity)_~~ ✅ **Fixed**
 
 **Files:** `src/gui/GuiLayer_Common.cpp`, `src/gui/GuiLayer_Linux.cpp`, `src/gui/GuiLayer_Win32.cpp`
 
-**Example from `GuiLayer_Common.cpp` (lines 13–16):**
-```cpp
-#include <string>
+**Issue:** The `using namespace LMUFFB::Logging;` directive was inserted *between* `#include` directives in all three files, splitting the include block and creating the visual impression that it could influence subsequent includes.
 
-using namespace LMUFFB::Logging;
-#include <iostream>
-```
-
-**Example from `GuiLayer_Linux.cpp` (lines 5–8):**
-```cpp
-#include "Logger.h"
-
-using namespace LMUFFB::Logging;
-#include <iostream>
-```
-
-**Issue:** The `using namespace` directive is inserted *between* `#include` directives, splitting the include block. This is technically harmless (using-directives are not preprocessor directives and don't affect what headers see), but it is visually incorrect and creates the impression that the directive might influence subsequent includes.
-
-**Recommendation:** Place the `using namespace` line *after all `#include`s are done*, but before `namespace LMUFFB {` or any code. This is consistent with files like `FFBEngine.cpp` and `GameConnector.cpp` in this same PR. A one-line fix per file:
+**Resolution (post-review fix):** Moved the `using namespace` directive to **after all `#include` directives** in each file, immediately before `namespace LMUFFB {`. The pattern is now consistent across all three files and matches the convention used in `FFBEngine.cpp`, `GameConnector.cpp`, etc.:
 
 ```cpp
-// --- all #includes ---
-#include <iostream>
-#include <vector>
-// ...
+// ... all #includes (project, system, platform-specific, conditional) ...
+#endif
 
 using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
-// ...
 ```
 
 ---
@@ -342,22 +313,72 @@ The updates to `docs/dev_docs/reports/main_code_unity_build_plan.md` are accurat
 
 ## 7. Summary of Findings
 
-| # | Severity | File | Finding |
-|---|---|---|---|
-| 4.1 | 🟡 Cosmetic | `AsyncLogger.h` | Misleading "Forward declaration" comment on a type alias |
-| 4.2 | 🟡 Low | `FFBEngine.h` | `Logging::ChannelStats` in a header — relative qualifier, inconsistent with project style |
-| 4.3 | 🟡 Low | `FFBSafetyMonitor.cpp` | `using namespace` inside namespace block, inconsistent with project convention |
-| 4.4 | 🟡 Cosmetic | 3 GUI `.cpp` files | `using namespace` directive placed between `#include` lines |
-| 4.5 | ℹ️ Info | `SteeringUtils.cpp` | `using namespace LMUFFB::Logging` added — verify if actually used |
-| 4.6 | ℹ️ Info | `test_health_monitor.cpp` | Unqualified `ChannelMonitors` vs. `Logging::` prefix used elsewhere in tests |
-| 5.1–5.3 | ✅ N/A | Prior review claims | All three blocking claims from the prior review were verified as unfounded against the actual diff |
-
-None of the real findings (4.1–4.6) block merging. Items 4.3 and 4.4 are the most worthwhile to fix in a quick follow-up.
+| # | Severity | File | Finding | Status |
+|---|---|---|---|---|
+| 4.1 | 🟡 Cosmetic | `AsyncLogger.h` | Misleading comment: "Forward declaration" on a type alias | Open |
+| 4.2 | 🟡 Low | `FFBEngine.h` | `Logging::ChannelStats` — relative qualifier in header, inconsistent with style | Open |
+| 4.3 | 🟢 Low | `FFBSafetyMonitor.cpp` | `using namespace` inside namespace block | ✅ Fixed |
+| 4.4 | 🟢 Cosmetic | 3 GUI `.cpp` files | `using namespace` split between `#include` lines | ✅ Fixed |
+| 4.5 | ℹ️ Info | `SteeringUtils.cpp` | `using namespace LMUFFB::Logging` — verify if actually needed | Open |
+| 4.6 | ℹ️ Info | `test_health_monitor.cpp` | Unqualified `ChannelMonitors` vs. `Logging::` prefix elsewhere in tests | Open |
+| 5.1–5.3 | ✅ N/A | Prior review | All three blocking claims refuted against actual diff | Closed |
 
 ---
 
-## 8. Verdict
+## 8. Recommendations for Remaining Open Items
 
-✅ **Approved.** The Phase 6 migration is architecturally correct, well-tested (632 passing), and leaves the codebase in a clean state for continuing sub-namespace migrations in `src/utils/` and `src/physics/`. The bridge pattern is implemented consistently and the documentation is accurate and honest about the issues encountered during development. The blocking concerns raised by a prior AI review were fact-checked against the actual `git diff` and current file state and found to be unfounded — they describe intermediate states that were corrected before the final commits were produced.
+The four open items (4.1, 4.2, 4.5, 4.6) are all low-risk and low-effort but have differing cost-benefit profiles. The table below gives a concise triage to help decide whether to fix them now, defer, or leave them permanently.
 
-The minor style findings (§4) can be addressed as a housekeeping follow-up to avoid compounding them across the next phase's changes.
+### 4.1 — Fix the `AsyncLogger.h` comment
+
+| | |
+|---|---|
+| **Effort** | Trivial (1-line comment change) |
+| **Risk** | Zero — comment-only change, no C++ semantics affected |
+| **Benefit (fix now)** | Prevents the next developer who reads `AsyncLogger.h` from misunderstanding the structure of the namespace split. Especially relevant because the `FFBEngine` forward-declaration / type-alias pattern is unusual and will be referenced when future sub-namespace migrations reach `FFBEngine` itself. |
+| **Benefit (defer/skip)** | Negligible — the code compiles and runs correctly regardless. |
+| **Recommendation** | **Fix in the next PR** that touches `AsyncLogger.h`. The cost is literally one line and the clarification has long-term educational value for the codebase. |
+
+---
+
+### 4.2 — Fully-qualify `ChannelStats` in `FFBEngine.h`
+
+| | |
+|---|---|
+| **Effort** | Trivial (4-line change in a header) |
+| **Risk** | Very low. `LMUFFB::Logging::ChannelStats` and `Logging::ChannelStats` resolve identically from within `namespace LMUFFB`. The rename is purely cosmetic from the compiler's perspective. |
+| **Benefit (fix now)** | `FFBEngine.h` is the most-included header in the codebase. Making all type references fully-qualified inside it removes any ambiguity for readers and future refactoring tools. When Phase 6 eventually moves `FFBEngine` itself into a sub-namespace, fully-qualified member types are easier to audit and update. |
+| **Benefit (defer)** | Given that the bridge aliases in `PerfStats.h` are temporary (they will be removed once all call sites are updated), and that `FFBEngine` will itself be refactored in a future phase, the pragmatic argument is to **defer this until `FFBEngine.h` is refactored** — at that point a single pass will update all member types coherently rather than in two separate commits. |
+| **Recommendation** | **Defer until the `FFBEngine.h` Phase 6 refactoring.** Fixing it now in isolation risks a second structural churn of the same lines when the bigger `FFBEngine` refactor arrives. Add a `// TODO Phase 6: use LMUFFB::Logging::ChannelStats` comment if desired. |
+
+---
+
+### 4.5 — Verify `using namespace LMUFFB::Logging;` in `SteeringUtils.cpp`
+
+| | |
+|---|---|
+| **Effort** | 5 minutes to audit; 1-line removal if unneeded |
+| **Risk** | Zero either way. Removing an unused `using namespace` cannot cause a regression (if a type from `LMUFFB::Logging` was truly needed, the bridge alias in `namespace LMUFFB` already makes it available without the directive). |
+| **Benefit (fix now)** | A `using` directive that covers types never referenced in the file is dead code and can mislead maintainers into thinking the file depends on logging types. Removing it makes the dependency graph cleaner. |
+| **Benefit (defer)** | Trivially low — no behavioral consequence of leaving it. |
+| **Recommendation** | **Fix opportunistically.** If `SteeringUtils.cpp` is touched for any reason in the next PR, audit and remove the unnecessary directive at the same time. Not worth a dedicated commit. |
+
+---
+
+### 4.6 — Qualify `ChannelMonitors` in `test_health_monitor.cpp`
+
+| | |
+|---|---|
+| **Effort** | Trivial (1-line type name change in a test file) |
+| **Risk** | Very low. The test file resolves `ChannelMonitors` via the transitive `using namespace LMUFFB;` in `test_ffb_common.h`, making it functionally equivalent to `Logging::ChannelMonitors`. No behavioral change. |
+| **Benefit (fix now)** | Achieves visual consistency with the adjacent test changes that all use `Logging::` as a prefix, reducing future cognitive load when comparing test patterns. |
+| **Benefit (defer/skip)** | The existing bridge infrastructure (`using namespace LMUFFB;` in `test_ffb_common.h`) makes all logging types available unqualified in tests anyway. When the bridge aliases are eventually removed (end of Phase 6), this line will need updating regardless — doing it now is a minor pre-emptive fix. |
+| **Recommendation** | **Fix in the same PR that removes the bridge aliases** from the logging headers. At that point, all unqualified usages will surface as compiler errors anyway, making it trivial to do a single consistent pass across the test suite. |
+
+---
+
+## 9. Verdict
+
+✅ **Approved.** The Phase 6 migration is architecturally correct, well-tested (632 passing), and leaves the codebase in a clean state for continuing sub-namespace migrations in `src/utils/` and `src/physics/`. The bridge pattern is implemented consistently and the documentation is accurate and honest about the issues encountered during development. The blocking concerns raised by a prior AI review were fact-checked against the actual `git diff` and current file state and found to be unfounded.
+
+Findings 4.3 and 4.4 were fixed as a post-review housekeeping step. The four remaining open items (4.1, 4.2, 4.5, 4.6) are all cosmetic or informational, carry zero risk, and have clear recommended deferral strategies outlined in §8 above.

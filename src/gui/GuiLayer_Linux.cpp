@@ -4,7 +4,6 @@
 #include "Config.h"
 #include "Logger.h"
 
-using namespace LMUFFB::Logging;
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -23,6 +22,8 @@ using namespace LMUFFB::Logging;
 #include <GL/gl.h>
 #endif
 #endif
+
+using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
 extern std::atomic<bool> g_running;

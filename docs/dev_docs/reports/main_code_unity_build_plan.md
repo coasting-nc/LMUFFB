@@ -329,3 +329,9 @@ Phase 5 is now complete. All core project files are encapsulated within the `LMU
 ### Critical Reminder for Unity Builds
 *   **The Include Rule:** Continue to enforce strict discipline: all `#include` directives **MUST** be outside namespace blocks.
 *   **Internal Linkage:** Use anonymous namespaces for any helper functions or constants within `.cpp` files to avoid ODR violations when bundled.
+
+### See also:
+
+See a code review of the changes for one iteration of Phase 6. See in particular the final section on recommendations for remaining open (minor) items. 
+
+* `docs\dev_docs\code_reviews\code_review_unity_build_phase6_v0.7.253.md`
