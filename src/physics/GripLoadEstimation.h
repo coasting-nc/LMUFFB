@@ -8,6 +8,9 @@
 namespace LMUFFB {
 namespace Physics {
 
+/**
+ * @brief Load transformation modes for non-linear FFB scaling
+ */
 enum class LoadTransform {
     LINEAR = 0,
     CUBIC = 1,
@@ -15,7 +18,9 @@ enum class LoadTransform {
     HERMITE = 3
 };
 
-// Helper Result Struct for calculate_axle_grip
+/**
+ * @brief Helper Result Struct for calculate_axle_grip
+ */
 struct GripResult {
     double value;           // Final grip value
     bool approximated;      // Was approximation used?
@@ -23,9 +28,16 @@ struct GripResult {
     double slip_angle;      // Calculated slip angle (if approximated)
 };
 
-// Default FFB calculation timestep.
+// Default FFB calculation timestep. Used by FFBCalculationContext (defined before
+// FFBEngine, so cannot reference FFBEngine::DEFAULT_CALC_DT directly).
+// Note: FFBEngine also has a private member of the same name; this file-scope
+// constant does NOT trigger GCC's -Wchanges-meaning because it is only looked up
+// inside FFBCalculationContext, not inside FFBEngine's own class body.
 static constexpr double PHYSICS_CALC_DT = 0.0025; // 400 Hz (1/400 s)
 
+/**
+ * @brief Context structure for FFB calculations in a single frame
+ */
 struct FFBCalculationContext {
     double dt = PHYSICS_CALC_DT;
     double car_speed = 0.0;       // Absolute m/s
@@ -70,14 +82,32 @@ struct FFBCalculationContext {
 
 // --- Physics Logic Functions (Decoupled from FFBEngine) ---
 
+/**
+ * @brief Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
+ * Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)
+ */
 double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w2);
 
+/**
+ * @brief Helper: Calculate Slip Angle with LPF (v0.4.19/v0.4.37)
+ * Preserve sign for directional counter-steering.
+ */
 double CalculateSlipAngle(const TelemWheelV01& w, double& prev_state, double dt, float slip_angle_smoothing);
 
+/**
+ * @brief Helper: Calculate Manual Slip Ratio (v0.4.6)
+ */
 double CalculateManualSlipRatio(const TelemWheelV01& w, double car_speed_ms);
 
+/**
+ * @brief Helper: Calculate Slip Ratio from wheel (v0.6.36)
+ */
 double CalculateWheelSlipRatio(const TelemWheelV01& w);
 
+/**
+ * @brief Helper: Approximate Tire Load from suspension force (v0.4.5/v0.7.175)
+ * Corrects pushrod force to wheel load using Motion Ratio.
+ */
 double CalculateApproximateLoad(const TelemWheelV01& w, ParsedVehicleClass vclass, bool is_rear);
 
 } // namespace Physics
