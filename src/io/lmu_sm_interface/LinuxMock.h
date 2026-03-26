@@ -225,7 +225,7 @@ inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }
 inline HMODULE GetModuleHandle(const char* lpModuleName) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
 inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return reinterpret_cast<HICON>(static_cast<intptr_t>(1)); }
 inline DWORD GetModuleFileNameA(HMODULE hModule, char* lpFilename, DWORD nSize) {
-    StringUtils::SafeCopy(lpFilename, nSize, "LMUFFB.exe");
+    LMUFFB::StringUtils::SafeCopy(lpFilename, nSize, "LMUFFB.exe");
     return (DWORD)strlen(lpFilename);
 }
 inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
