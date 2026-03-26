@@ -173,7 +173,7 @@ This section tracks the progress made towards fully refactoring the main code an
 ### 6.3 Phase 2: Core Data Structures
 - [x] Refactor `core/Config.h` & `.cpp`.
 - [x] Refactor `ffb/FFBConfig.h` (Already wrapped).
-- [x] Refactor `ffb/FFBSnapshot.h` (Wrapped via `FFBDebugBuffer.h`).
+- [x] Refactor `ffb/FFBSnapshot.h` (Wrapped via `ffb/FFBDebugBuffer.h`).
 - [x] Refactor `ffb/FFBMetadataManager.h` & `.cpp`.
 - [ ] TODO: don't do this. This is another vendor / game file, not to be changed. Update the makefile accordingly. -- Wrap isolated I/O wrappers (`io/rF2/rF2Data.h`).
 
@@ -311,7 +311,7 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
   - **Code Review Finding (Bridge Placement):** Temporary `using` bridges were initially placed in the global namespace, which would break qualified lookups like `LMUFFB::Logger`. Resolved by wrapping all bridges in `namespace LMUFFB { ... }` within the headers.
   - **Code Review Finding (Doc Inconsistency):** The implementation refactored all six logging files, but documentation initially claimed only a subset were done and listed the others as "Next Steps". Resolved by updating the Progress Checklist, Implementation Notes, and Next Steps to accurately reflect the full directory migration and its scope.
   - **Code Review Finding (FFBSafetyMonitor.h Hygiene):** Accidentally introduced `using namespace LMUFFB::Logging;` inside `namespace LMUFFB` in `FFBSafetyMonitor.h`. This was flagged as redundant and a violation of the established no-header-pollution rule. Resolved by removing the directive.
-  - **Code Review Finding (Doc Typo):** Fixed a formatting regression where a backtick was replaced by a double quote in the progress checklist.
+  - **Code Review Finding (Doc Typo):** The issue raised regarding a formatting regression (backtick replaced by a double quote for `ffb/FFBDebugBuffer.h` in the progress checklist) was verified as **correct**. This occurred in two places: the prioritized list (Section 4.3) and the Phase 2 checklist (Section 6.3). These have now been fixed.
   - Handled namespace ambiguity for `FFBEngine` within `AsyncLogger.h` by using a qualified `using` declaration.
 - **Deviations from the Plan:**
   - Namespaced all six logging files instead of just the initial two, as it proved more maintainable for the directory's internal consistency.

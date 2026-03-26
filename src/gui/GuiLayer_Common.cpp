@@ -12,8 +12,9 @@
 
 #include <string>
 
-using namespace LMUFFB::Logging;
 #include <iostream>
+
+using namespace LMUFFB::Logging;
 #include <vector>
 #include <cmath>
 #include <algorithm>
