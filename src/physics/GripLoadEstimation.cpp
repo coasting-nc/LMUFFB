@@ -13,6 +13,7 @@
 // See docs/dev_docs/reports/FFBEngine_refactoring_analysis.md for full details.
 // ---------------------------------------------------------------------------
 
+#include "physics/GripLoadEstimation.h"
 #include "ffb/FFBEngine.h"
 #include "core/Config.h"
 #include "logging/Logger.h"
@@ -28,6 +29,105 @@ using namespace LMUFFB::Utils;
 namespace LMUFFB {
 
 extern std::recursive_mutex g_engine_mutex;
+
+namespace Physics {
+
+// --- Physics Logic Implementation (Decoupled) ---
+
+// Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
+// Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)
+// v0.4.19: Removed abs() from lateral velocity to preserve sign for debug visualization
+double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w2) {
+    double v_long_1 = std::abs(w1.mLongitudinalGroundVel);
+    double v_long_2 = std::abs(w2.mLongitudinalGroundVel);
+    if (v_long_1 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_1 = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    if (v_long_2 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_2 = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);
+    double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);
+    return (raw_angle_1 + raw_angle_2) / 2.0;
+}
+
+double CalculateSlipAngle(const TelemWheelV01& w, double& prev_state, double dt, float slip_angle_smoothing) {
+    double v_long = std::abs(w.mLongitudinalGroundVel);
+    if (v_long < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
+
+    // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity
+    // Positive lateral vel (+X = left) â†’ Positive slip angle
+    // Negative lateral vel (-X = right) â†’ Negative slip angle
+    // This sign is critical for directional counter-steering
+    double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED
+
+    // LPF: Time Corrected Alpha (v0.4.37)
+    // Target: Alpha 0.1 at 400Hz (dt = 0.0025)
+    // Formula: alpha = dt / (tau + dt) -> 0.1 = 0.0025 / (tau + 0.0025) -> tau approx 0.0225s
+    // v0.4.40: Using configurable m_slip_angle_smoothing
+    double tau = (double)slip_angle_smoothing;
+    if (tau < 0.0001) tau = 0.0001; // Safety clamp
+
+    double alpha = dt / (tau + dt);
+
+    // Safety clamp
+    alpha = (std::min)(1.0, (std::max)(0.001, alpha));
+    prev_state = prev_state + alpha * (raw_angle - prev_state);
+    return prev_state;
+}
+
+// Helper: Calculate Manual Slip Ratio (v0.4.6)
+double CalculateManualSlipRatio(const TelemWheelV01& w, double car_speed_ms) {
+    // Safety Trap: Force 0 slip at very low speeds (v0.4.6)
+    if (std::abs(car_speed_ms) < 2.0) return 0.0;
+
+    // Radius in meters (stored as cm unsigned char)
+    // Explicit cast to double before division (v0.4.6)
+    double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;
+    if (radius_m < 0.1) radius_m = 0.33; // Fallback if 0 or invalid
+
+    double wheel_vel = w.mRotation * radius_m;
+
+    // Avoid div-by-zero at standstill
+    double denom = std::abs(car_speed_ms);
+    if (denom < 1.0) denom = 1.0;
+
+    // Ratio = (V_wheel - V_car) / V_car
+    // Lockup: V_wheel < V_car -> Ratio < 0
+    // Spin: V_wheel > V_car -> Ratio > 0
+    return (wheel_vel - car_speed_ms) / denom;
+}
+
+// Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)
+// Unified slip ratio calculation for lockup and spin detection.
+// Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
+double CalculateWheelSlipRatio(const TelemWheelV01& w) {
+    double v_long = std::abs(w.mLongitudinalGroundVel);
+    if (std::abs(v_long) < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    return w.mLongitudinalPatchVel / v_long;
+}
+
+// ========================================================================================
+// CRITICAL VEHICLE DYNAMICS NOTE: mSuspForce vs Wheel Load
+// ========================================================================================
+// The LMU telemetry channel `mSuspForce` represents the load on the internal PUSHROD,
+// NOT the load at the tire contact patch.
+// Because race cars use bellcranks, the pushrod has a mechanical advantage (Motion Ratio).
+// For example, a Hypercar with a Motion Ratio of 0.5 means the pushrod moves half as far
+// as the wheel, and therefore carries TWICE the force of the wheel.
+// To approximate the actual Tire Load, we MUST multiply mSuspForce by the Motion Ratio,
+// and then add the unsprung mass (the weight of the wheel, tire, and brakes).
+// ========================================================================================
+
+// Helper: Approximate Load (v0.4.5 / Improved v0.7.171 / Refactored v0.7.175)
+// Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
+// and adds an estimate for unsprung mass.
+double CalculateApproximateLoad(const TelemWheelV01& w, ParsedVehicleClass vclass, bool is_rear) {
+    double motion_ratio = GetMotionRatioForClass(vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(vclass, is_rear);
+
+    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
+}
+
+} // namespace Physics
+
+// --- FFBEngine member implementations ---
 
 // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)
 void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {
@@ -114,10 +214,10 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_slope_smoothed_output = 1.0;
     // -----------------------------------------------------------------------
 
-    ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
+    ParsedVehicleClass vclass = Physics::ParseVehicleClass(className, vehicleName);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
-    m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
+    m_auto_peak_front_load = Physics::GetDefaultLoadForClass(vclass);
 
     std::string vName = vehicleName ? vehicleName : "Unknown";
 
@@ -154,52 +254,22 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
 
     // Issue #368: Log strings with quotes to reveal hidden spaces if detection fails
     Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: '%s', Name: '%s')",
-        VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
+        Physics::VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
 }
 
-// Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
-// Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)
-// v0.4.19: Removed abs() from lateral velocity to preserve sign for debug visualization
 double FFBEngine::calculate_raw_slip_angle_pair(const TelemWheelV01& w1, const TelemWheelV01& w2) {
-    double v_long_1 = std::abs(w1.mLongitudinalGroundVel);
-    double v_long_2 = std::abs(w2.mLongitudinalGroundVel);
-    if (v_long_1 < MIN_SLIP_ANGLE_VELOCITY) v_long_1 = MIN_SLIP_ANGLE_VELOCITY;
-    if (v_long_2 < MIN_SLIP_ANGLE_VELOCITY) v_long_2 = MIN_SLIP_ANGLE_VELOCITY;
-    double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);
-    double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);
-    return (raw_angle_1 + raw_angle_2) / 2.0;
+    return Physics::CalculateRawSlipAnglePair(w1, w2);
 }
 
 double FFBEngine::calculate_slip_angle(const TelemWheelV01& w, double& prev_state, double dt) {
-    double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-    
-    // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity
-    // Positive lateral vel (+X = left) â†’ Positive slip angle
-    // Negative lateral vel (-X = right) â†’ Negative slip angle
-    // This sign is critical for directional counter-steering
-    double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED
-    
-    // LPF: Time Corrected Alpha (v0.4.37)
-    // Target: Alpha 0.1 at 400Hz (dt = 0.0025)
-    // Formula: alpha = dt / (tau + dt) -> 0.1 = 0.0025 / (tau + 0.0025) -> tau approx 0.0225s
-    // v0.4.40: Using configurable m_slip_angle_smoothing
-    double tau = (double)m_grip_estimation.slip_angle_smoothing;
-    if (tau < 0.0001) tau = 0.0001; // Safety clamp 
-    
-    double alpha = dt / (tau + dt);
-    
-    // Safety clamp
-    alpha = (std::min)(1.0, (std::max)(0.001, alpha));
-    prev_state = prev_state + alpha * (raw_angle - prev_state);
-    return prev_state;
+    return Physics::CalculateSlipAngle(w, prev_state, dt, m_grip_estimation.slip_angle_smoothing);
 }
 
 // Helper: Calculate Axle Grip with Fallback (v0.4.6 Hardening)
 // This function calculates the average grip for a pair of wheels (axle).
 // If the primary telemetry grip is missing, it reconstructs it from slip angle and ratio.
 // The avg_axle_load parameter is used as a threshold for triggering the reconstruction fallback.
-GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
+Physics::GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                           const TelemWheelV01& w2,
                           double avg_axle_load,
                           bool& warned_flag,
@@ -215,7 +285,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // Note on mGripFract: The LMU InternalsPlugin.hpp comments state this is the
     // "fraction of the contact patch that is sliding". This is poorly phrased.
     // In actual telemetry output, 1.0 = Full Adhesion (Gripping) and 0.0 = Fully Sliding.
-    GripResult result;
+    Physics::GripResult result;
     double total_load = w1.mTireLoad + w2.mTireLoad;
     if (total_load > 1.0) {
         result.original = (w1.mGripFract * w1.mTireLoad + w2.mGripFract * w2.mTireLoad) / total_load;
@@ -231,17 +301,17 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // ==================================================================================
     // CRITICAL LOGIC FIX (v0.4.14) - DO NOT MOVE INSIDE CONDITIONAL BLOCK
     // ==================================================================================
-    // We MUST calculate slip angle every single frame, regardless of whether the 
+    // We MUST calculate slip angle every single frame, regardless of whether the
     // grip fallback is triggered or not.
     //
-    // Reason 1 (Physics State): The Low Pass Filter (LPF) inside calculate_slip_angle 
-    //           relies on continuous execution. If we skip frames (because telemetry 
-    //           is good), the 'prev_slip' state becomes stale. When telemetry eventually 
+    // Reason 1 (Physics State): The Low Pass Filter (LPF) inside calculate_slip_angle
+    //           relies on continuous execution. If we skip frames (because telemetry
+    //           is good), the 'prev_slip' state becomes stale. When telemetry eventually
     //           fails, the LPF will smooth against ancient history, causing a math spike.
     //
-    // Reason 2 (Dependency): The 'Rear Aligning Torque' effect (calculated later) 
-    //           reads 'result.slip_angle'. If we only calculate this when grip is 
-    //           missing, the Rear Torque effect will toggle ON/OFF randomly based on 
+    // Reason 2 (Dependency): The 'Rear Aligning Torque' effect (calculated later)
+    //           reads 'result.slip_angle'. If we only calculate this when grip is
+    //           missing, the Rear Torque effect will toggle ON/OFF randomly based on
     //           telemetry health, causing violent kicks and "reverse FFB" sensations.
     // ==================================================================================
     double slip1 = calculate_slip_angle(w1, prev_slip1, dt);
@@ -265,31 +335,31 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // Fallback condition: Grip is essentially zero BUT car has significant load
     if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
-        
+
         if (car_speed < 5.0) {
             // Note: We still keep the calculated slip_angle in result.slip_angle
-            // for visualization/rear torque, even if we force grip to 1.0 here.        
+            // for visualization/rear torque, even if we force grip to 1.0 here.
             result.value = 1.0; 
         } else {
             if (m_slope_detection.enabled && is_front && data) {
                 result.value = slope_grip_estimate;
             } else {
                 // --- REFINED: Load-Sensitive Continuous Friction Circle ---
-                
+
                 auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle, double& prev_load) {
                     // 1. Dynamic Load Sensitivity with Slew/Smoothing
                     double raw_load = warned_flag ? approximate_load(w) : w.mTireLoad;
-                    
+
                     // Smooth the load to prevent curb strikes from causing threshold jitter (50ms tau)
                     double load_alpha = dt / (0.050 + dt);
                     prev_load += load_alpha * (raw_load - prev_load);
                     double current_load = prev_load;
-                    
+
                     // Calculate how loaded the tire is compared to the car's static weight
                     double static_ref = is_front ? m_static_front_load : m_static_rear_load;
                     double load_ratio = current_load / (static_ref + 1.0);
                     load_ratio = std::clamp(load_ratio, 0.25, 4.0); // Safety bounds
-                    
+
                     // Tire physics: Optimal slip angle increases with load (Hertzian cube root)
                     // Note: Future thermal/pressure multipliers would be applied here
                     double dynamic_slip_angle = m_grip_estimation.optimal_slip_angle;
@@ -310,9 +380,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                     // 5. Continuous Falloff Curve with Sliding Friction Asymptote
                     double cs2 = combined_slip * combined_slip;
                     double cs4 = cs2 * cs2;
-                    
-                    const double MIN_SLIDING_GRIP = 0.05; 
-                    return MIN_SLIDING_GRIP + ((1.0 - MIN_SLIDING_GRIP) / (1.0 + cs4)); 
+
+                    const double MIN_SLIDING_GRIP = 0.05;
+                    return MIN_SLIDING_GRIP + ((1.0 - MIN_SLIDING_GRIP) / (1.0 + cs4));
                 };
 
                 // Calculate grip for each wheel independently, passing the state reference
@@ -323,10 +393,10 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                 result.value = (grip1 + grip2) / 2.0;
             }
         }
-        
+
         // Clamp to standard 0.0 - 1.0 bounds
         result.value = std::clamp(result.value, 0.0, 1.0);
-        
+
         if (!warned_flag) {
             Logger::Get().LogFile("Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", vehicleName);
             warned_flag = true;
@@ -344,59 +414,16 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     return result;
 }
 
-// ========================================================================================
-// CRITICAL VEHICLE DYNAMICS NOTE: mSuspForce vs Wheel Load
-// ========================================================================================
-// The LMU telemetry channel `mSuspForce` represents the load on the internal PUSHROD,
-// NOT the load at the tire contact patch.
-// Because race cars use bellcranks, the pushrod has a mechanical advantage (Motion Ratio).
-// For example, a Hypercar with a Motion Ratio of 0.5 means the pushrod moves half as far
-// as the wheel, and therefore carries TWICE the force of the wheel.
-// To approximate the actual Tire Load, we MUST multiply mSuspForce by the Motion Ratio,
-// and then add the unsprung mass (the weight of the wheel, tire, and brakes).
-// ========================================================================================
-
-// Helper: Approximate Load (v0.4.5 / Improved v0.7.171 / Refactored v0.7.175)
-// Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
-// and adds an estimate for front unsprung mass.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
-    ParsedVehicleClass vclass = m_metadata.GetCurrentClass();
-    double motion_ratio = GetMotionRatioForClass(vclass);
-    double unsprung_weight = GetUnsprungWeightForClass(vclass, false /* is_rear */);
-
-    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
+    return Physics::CalculateApproximateLoad(w, m_metadata.GetCurrentClass(), false);
 }
 
-// Helper: Approximate Rear Load (v0.4.10 / Improved v0.7.171 / Refactored v0.7.175)
-// Similar to approximate_load, but uses rear-specific unsprung mass estimates.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
-    ParsedVehicleClass vclass = m_metadata.GetCurrentClass();
-    double motion_ratio = GetMotionRatioForClass(vclass);
-    double unsprung_weight = GetUnsprungWeightForClass(vclass, true /* is_rear */);
-
-    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
+    return Physics::CalculateApproximateLoad(w, m_metadata.GetCurrentClass(), true);
 }
 
-// Helper: Calculate Manual Slip Ratio (v0.4.6)
 double FFBEngine::calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms) {
-    // Safety Trap: Force 0 slip at very low speeds (v0.4.6)
-    if (std::abs(car_speed_ms) < 2.0) return 0.0;
-
-    // Radius in meters (stored as cm unsigned char)
-    // Explicit cast to double before division (v0.4.6)
-    double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;
-    if (radius_m < 0.1) radius_m = 0.33; // Fallback if 0 or invalid
-    
-    double wheel_vel = w.mRotation * radius_m;
-    
-    // Avoid div-by-zero at standstill
-    double denom = std::abs(car_speed_ms);
-    if (denom < 1.0) denom = 1.0;
-    
-    // Ratio = (V_wheel - V_car) / V_car
-    // Lockup: V_wheel < V_car -> Ratio < 0
-    // Spin: V_wheel > V_car -> Ratio > 0
-    return (wheel_vel - car_speed_ms) / denom;
+    return Physics::CalculateManualSlipRatio(w, car_speed_ms);
 }
 
 // Helper: Calculate Grip Factor from Slope - v0.7.40 REWRITE
@@ -419,7 +446,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // to maintain correctness in tests and variable-rate scenarios.
     // However, we use a fixed 400Hz 'internal_dt' for Savitzky-Golay derivatives
     // because the internal buffers are populated at the 400Hz engine tick rate.
-    const double internal_dt = DEFAULT_CALC_DT;
+    const double internal_dt = Physics::PHYSICS_CALC_DT;
 
     double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_detection.g_slew_limit, dt);
     // v0.7.198 FIX: Must update m_slope_lat_g_prev immediately after computing lat_g_slew
@@ -473,7 +500,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     bool shadow_mode = (m_slope_detection.enabled == false);
     (void)shadow_mode; // Retained for documentation; see call site in calculate_axle_grip
     if (std::abs(dAlpha_dt) > (double)m_slope_detection.alpha_threshold) {
-        m_slope_hold_timer = SLOPE_HOLD_TIME;
+        m_slope_hold_timer = Physics::SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;
         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;
@@ -523,7 +550,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
 
     // 3. Fusion Logic (Max of both estimators)
     double loss_percent = (std::max)(loss_percent_g, loss_percent_torque);
-    
+
     // Scale loss by confidence and apply floor (0.2)
     // 0% loss (loss_percent=0) -> 1.0 factor
     // 100% loss (loss_percent=1) -> 0.2 factor
@@ -550,13 +577,8 @@ double FFBEngine::calculate_slope_confidence(double dAlpha_dt) {
     return smoothstep((double)m_slope_detection.alpha_threshold, (double)m_slope_detection.confidence_max_rate, std::abs(dAlpha_dt));
 }
 
-// Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)
-// Unified slip ratio calculation for lockup and spin detection.
-// Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
 double FFBEngine::calculate_wheel_slip_ratio(const TelemWheelV01& w) {
-    double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (std::abs(v_long) < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-    return w.mLongitudinalPatchVel / v_long;
+    return Physics::CalculateWheelSlipRatio(w);
 }
 
 } // namespace LMUFFB

@@ -4,6 +4,7 @@
 #include <cctype>
 
 namespace LMUFFB {
+namespace Physics {
 
 namespace {
 // Helper: Trim whitespace from a string
@@ -223,4 +224,5 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
     }
 }
 
+} // namespace Physics
 } // namespace LMUFFB

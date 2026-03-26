@@ -25,10 +25,11 @@
 #include "utils/TimeUtils.h"
 #include "logging/ChannelMonitor.h"
 
-namespace LMUFFB {
-
 using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
+using namespace LMUFFB::Physics;
+
+namespace LMUFFB {
 
 namespace {
     // §2.2 Named constants (replaces magic numbers in FFBThread / lmuffb_app_main)
