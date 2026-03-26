@@ -8,7 +8,7 @@ This plan outlines an incremental approach to eliminate magic numbers in the LMU
 - Systematically resolve `readability-magic-numbers` warnings produced by Clang-Tidy.
 
 ## 2. Iterative Workflow (The Process)
-For each iteration (Phase):
+For each iteration (Phase/Step):
 1.  **Identify Warnings**: Run Clang-Tidy on the target module to get the latest warnings.
     ```bash
     run-clang-tidy -p build -checks="-*,readability-magic-numbers" "src/<module>/.*"
@@ -25,40 +25,91 @@ For each iteration (Phase):
 
 ### Phase 1: Math and Physics Constants
 **Goal**: Standardize universal constants like PI and Gravity.
-- **Identify**: Find usages of `3.14159...`, `9.81`, `9.80665`.
-- **Constants**: Use `LMUFFB::PI` in `src/utils/MathUtils.h` and `LMUFFB::GRAVITY_MS2` in `src/ffb/FFBEngine.h` (or move to a new `PhysicsConstants.h`).
-- **Files**: `src/physics/*.cpp`, `src/ffb/*.cpp`.
+
+#### 1.1 Universal Physical Constants
+- **Example Warning**: `warning: 9.81 is a magic number; consider replacing it with a named constant`
+- **Implementation Steps**:
+  1. Audit `src/physics/GripLoadEstimation.cpp` and `src/ffb/FFBEngine.cpp` for `9.81` or `9.80665`.
+  2. Ensure `src/ffb/FFBEngine.h` contains `static constexpr double GRAVITY_MS2 = 9.81;`.
+  3. Replace literals with `FFBEngine::GRAVITY_MS2`.
+  4. Audit all files for `3.14159...` and replace with `LMUFFB::PI` from `MathUtils.h`.
+
+#### 1.2 Common Mathematical Factors
+- **Example Usage**: `m_static_front_load = m_auto_peak_front_load * 0.5;`
+- **Implementation Steps**:
+  1. Identify recurring simple factors like `0.5`, `2.0` (when used as a divisor/multiplier for scaling).
+  2. Evaluate if they should be named (e.g., `HALF = 0.5`) or if they are excluded by `Clang-Tidy` configuration (often `0` and `1` are ignored).
 
 ### Phase 2: Wheel and Axle Indices
 **Goal**: Eliminate hardcoded indices (0-3) for wheel and axle data.
-- **Identify**: Find loops like `for (int i = 0; i < 4; ++i)` and array accesses like `m_wheels[0]`.
-- **Constants**: Use `WHEEL_FL`, `WHEEL_FR`, `WHEEL_RL`, `WHEEL_RR`, `NUM_WHEELS`, and `NUM_AXLES` from `src/core/WheelConstants.h`.
-- **Files**: `src/ffb/FFBEngine.cpp`, `src/physics/GripLoadEstimation.cpp`, `src/logging/ChannelMonitor.h`, and related tests.
 
-### Phase 3: Frequency and Time Constants
+#### 2.1 Loop Bounds
+- **Example Warning**: `warning: 4 is a magic number; consider replacing it with a named constant`
+- **Implementation Steps**:
+  1. Search for `for (int i = 0; i < 4; ++i)` and `for (int i = 0; i < 2; ++i)`.
+  2. Replace with `for (int i = 0; i < NUM_WHEELS; ++i)` and `for (int i = 0; i < NUM_AXLES; ++i)`.
+  3. Update related array declarations if they use literals.
+
+#### 2.2 Direct Array Indexing
+- **Example Usage**: `m_upsample_brake_pressure[0].Process(...)`
+- **Implementation Steps**:
+  1. Identify manual indexing of wheel arrays: `[0]`, `[1]`, `[2]`, `[3]`.
+  2. Replace with `[WHEEL_FL]`, `[WHEEL_FR]`, `[WHEEL_RL]`, `[WHEEL_RR]`.
+  3. Apply to `FFBEngine.cpp`, `GripLoadEstimation.cpp`, and `ChannelMonitor.h`.
+
+### Phase 3: Frequency, Time & Upsampling
 **Goal**: Standardize update rates and time-conversion factors.
-- **Identify**: Find usages of `1000.0`, `400.0`, `0.001`, `0.0025`.
-- **Constants**:
-  - `TICKS_PER_SECOND = 1000.0` (FFB Loop)
-  - `PHYSICS_TICKS_PER_SECOND = 400.0` (Telemetry rate)
-  - `SECONDS_PER_TICK = 0.001`
-  - `PHYSICS_DT = 0.0025`
-- **Files**: `src/core/main.cpp`, `src/ffb/UpSampler.cpp`, `src/physics/*.cpp`.
+
+#### 3.1 Update Rates and Intervals
+- **Example Usage**: `dt / 0.001`
+- **Implementation Steps**:
+  1. Find usages of `1000.0` and `0.001` in `main.cpp` and physics modules.
+  2. Define `TICKS_PER_SECOND = 1000.0` and `SECONDS_PER_TICK = 0.001`.
+  3. Replace literals to clarify that the logic depends on the 1000Hz loop rate.
+
+#### 3.2 Upsampling & Filter Tuning
+- **Example Usage**: `m_upsample_steering.Configure(0.95, 0.10);`
+- **Implementation Steps**:
+  1. Identify recurring filter alphas/betas in `FFBEngine::InitializeEngine`.
+  2. Group them by category (e.g., `DRIVER_INPUT_SMOOTHING = 0.95`, `DRIVER_INPUT_PREDICTION = 0.10`).
+  3. Replace the magic floats in `Configure()` calls.
+
+#### 3.3 Resampling Ratios
+- **Example Warning**: `src/ffb/UpSampler.cpp:46:20: warning: 5 is a magic number`
+- **Implementation Steps**:
+  1. Update `UpSampler.cpp` to use named constants for the 5/2 ratio.
+  2. Define `static constexpr int RESAMPLE_UP = 5;` and `static constexpr int RESAMPLE_DOWN = 2;`.
 
 ### Phase 4: Physics and Telemetry Thresholds
 **Goal**: Replace arbitrary thresholds used in physics calculations.
-- **Identify**: Values like `2.0`, `15.0` (speed thresholds), `100.0`, `1000.0` (load thresholds).
-- **Constants**:
-  - `MIN_SPEED_FOR_LOAD_ESTIMATION = 2.0`
-  - `AERO_SPEED_THRESHOLD = 15.0`
-  - `LOAD_THRESHOLD_N = 1000.0`
-- **Files**: `src/physics/GripLoadEstimation.cpp`, `src/physics/SteeringUtils.cpp`.
+
+#### 4.1 Speed-Based Logic
+- **Example Usage**: `if (speed > 2.0 && speed < 15.0)`
+- **Implementation Steps**:
+  1. Identify speed thresholds in `GripLoadEstimation.cpp`.
+  2. Define `static constexpr double MIN_LEARNING_SPEED = 2.0;` and `static constexpr double AERO_TRANSITION_SPEED = 15.0;`.
+  3. Replace literals in the `if` conditions.
+
+#### 4.2 Force and Load Baselines
+- **Example Usage**: `if (m_static_front_load < 1000.0)`
+- **Implementation Steps**:
+  1. Identify load thresholds (e.g., `100.0`, `1000.0`) used to validate telemetry.
+  2. Define named constants like `MIN_VALID_LOAD_N = 100.0;` and `LEARNED_LOAD_THRESHOLD_N = 1000.0;`.
 
 ### Phase 5: GUI and Layout Constants
 **Goal**: Standardize the ImGui layout and styling values.
-- **Identify**: Hardcoded padding, widths, and color values in the UI code.
-- **Constants**: Define `static constexpr float` values at the top of `src/gui/GuiLayer_Common.cpp` or in a new `GuiConstants.h`.
-- **Files**: `src/gui/GuiLayer_Common.cpp`.
+
+#### 5.1 Main Layout Dimensions
+- **Example Usage**: `static const float CONFIG_PANEL_WIDTH = 500.0f;`
+- **Implementation Steps**:
+  1. Audit `GuiLayer_Common.cpp` for window and panel sizes.
+  2. Consolidate into a `GuiConstants` namespace if they are used in multiple places.
+
+#### 5.2 Style and Colors
+- **Example Usage**: `style.WindowRounding = 5.0f;`
+- **Implementation Steps**:
+  1. Define standard rounding values (e.g., `DEFAULT_WINDOW_ROUNDING = 5.0f`).
+  2. Move hardcoded `ImVec4` color values to named constants like `COLOR_ACCENT_BLUE`.
 
 ---
 
