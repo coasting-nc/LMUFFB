@@ -10,6 +10,7 @@
 #include <cstring>
 
 namespace LMUFFB {
+namespace GUI {
 namespace GuiWidgets {
 
     /**
@@ -128,6 +129,11 @@ namespace GuiWidgets {
         return res;
     }
 }
+}
+}
+
+namespace LMUFFB {
+    namespace GuiWidgets = GUI::GuiWidgets;
 }
 
 #endif // ENABLE_IMGUI

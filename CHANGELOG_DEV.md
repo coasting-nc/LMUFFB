@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.258]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Transitioned all GUI-related modules in `src/gui/` (`DXGIUtils.h`, `GuiLayer.h`, `GuiPlatform.h`, `GuiWidgets.h`, `Tooltips.h`, etc.) to `namespace LMUFFB::GUI`.
+  - Implemented bridge aliases and namespace aliases in `namespace LMUFFB` to maintain backward compatibility for existing call sites.
+  - Updated key project-wide call sites in `main.cpp` using the `using namespace` placement rule.
+  - Hardened the GUI implementation against ODR violations in Unity Builds by encapsulating file-local functions and variables in anonymous namespaces within `GuiLayer_Common.cpp`.
+  - Verified 100% test pass rate (633/633) under the new granular namespaced architecture.
+
 ## [0.7.257]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

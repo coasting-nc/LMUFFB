@@ -2,6 +2,7 @@
 #include <string>
 
 namespace LMUFFB {
+namespace GUI {
 
 class IGuiPlatform {
 public:
@@ -23,4 +24,11 @@ IGuiPlatform& GetGuiPlatform();
 // Global helper for simple access (compatibility)
 void SetWindowAlwaysOnTopPlatform(bool enabled);
 
+} // namespace GUI
 } // namespace LMUFFB
+
+namespace LMUFFB {
+    using GUI::IGuiPlatform;
+    using GUI::GetGuiPlatform;
+    using GUI::SetWindowAlwaysOnTopPlatform;
+}

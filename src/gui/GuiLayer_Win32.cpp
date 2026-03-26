@@ -34,7 +34,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
-extern std::atomic<bool> g_running;
+    extern std::atomic<bool> g_running;
+}
+
+namespace LMUFFB {
+namespace GUI {
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 
@@ -383,4 +387,5 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 
 #endif
 
+} // namespace GUI
 } // namespace LMUFFB

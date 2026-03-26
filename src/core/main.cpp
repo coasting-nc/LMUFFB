@@ -28,6 +28,7 @@
 using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
 using namespace LMUFFB::Physics;
+using namespace LMUFFB::GUI;
 
 namespace LMUFFB {
 

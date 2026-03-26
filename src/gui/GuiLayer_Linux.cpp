@@ -26,7 +26,11 @@
 using namespace LMUFFB::Logging;
 
 namespace LMUFFB {
-extern std::atomic<bool> g_running;
+    extern std::atomic<bool> g_running;
+}
+
+namespace LMUFFB {
+namespace GUI {
 
 namespace {
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
@@ -209,4 +213,5 @@ void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 #endif
 
+} // namespace GUI
 } // namespace LMUFFB

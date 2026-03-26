@@ -5,6 +5,7 @@
 #include <string>
 
 namespace LMUFFB {
+namespace GUI {
 namespace Tooltips {
 
     // General FFB
@@ -206,6 +207,11 @@ namespace Tooltips {
         FINE_TUNE
     };
 }
+}
+}
+
+namespace LMUFFB {
+    namespace Tooltips = GUI::Tooltips;
 }
 
 #endif // TOOLTIPS_H
