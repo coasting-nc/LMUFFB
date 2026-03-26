@@ -6,9 +6,10 @@
 #include "io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 #include <cstring>
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 

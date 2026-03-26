@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.256]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Transitioned all utility modules in the `src/utils/` directory (`MathUtils.h`, `StringUtils.h`, `TimeUtils.h`) to `namespace LMUFFB::Utils`.
+  - Implemented bridge aliases in `namespace LMUFFB` to maintain backward compatibility for existing call sites.
+  - Updated key project-wide call sites in `main.cpp`, `FFBEngine.cpp`, `FFBSafetyMonitor.cpp`, and the GUI layer.
+  - Relocated mock time globals to `LMUFFB::Utils` to ensure consistency with the new architectural model.
+
 ## [0.7.255]
 ### Refactored
 - **`src/core/main.cpp` — Code Quality Quick Wins**:

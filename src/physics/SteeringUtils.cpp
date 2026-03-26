@@ -1,9 +1,10 @@
 #include "SteeringUtils.h"
-#include "../logging/Logger.h"
+#include "logging/Logger.h"
 #include <cmath>
 #include <algorithm>
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 namespace SteeringUtils {

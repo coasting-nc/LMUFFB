@@ -1,8 +1,8 @@
 #include "FFBEngine.h"
 #include "Config.h"
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 #include "RestApiProvider.h"
-#include "Logger.h"
+#include "logging/Logger.h"
 
 #include "../physics/SteeringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
@@ -13,6 +13,7 @@
 #include <cmath>
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;

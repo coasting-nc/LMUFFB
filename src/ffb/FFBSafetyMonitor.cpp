@@ -1,6 +1,7 @@
 #include "FFBSafetyMonitor.h"
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 

@@ -21,13 +21,14 @@
 #include "Logger.h"    // Added Logger
 #include "RateMonitor.h"
 #include "HealthMonitor.h"
-#include "UpSampler.h"
-#include "TimeUtils.h"
-#include "ChannelMonitor.h"
+#include "ffb/UpSampler.h"
+#include "utils/TimeUtils.h"
+#include "logging/ChannelMonitor.h"
 
 namespace LMUFFB {
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace {
     // §2.2 Named constants (replaces magic numbers in FFBThread / lmuffb_app_main)
@@ -76,8 +77,6 @@ extern std::atomic<bool> g_ffb_active;
 extern SharedMemoryObjectOut g_localData;
 extern FFBEngine g_engine;
 extern std::recursive_mutex g_engine_mutex;
-extern std::chrono::steady_clock::time_point g_mock_time;
-extern bool g_use_mock_time;
 #endif
 
 // --- FFB Loop (High Priority 1000Hz) ---

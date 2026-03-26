@@ -16,8 +16,6 @@ extern std::atomic<bool> g_ffb_active;
 extern std::recursive_mutex g_engine_mutex;
 extern FFBEngine g_engine;
 extern SharedMemoryObjectOut g_localData;
-extern std::chrono::steady_clock::time_point g_mock_time;
-extern bool g_use_mock_time;
 
 extern int lmuffb_app_main(int argc, char* argv[]);
 extern void FFBThread();

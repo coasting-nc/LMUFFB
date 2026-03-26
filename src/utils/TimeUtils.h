@@ -4,6 +4,7 @@
 #include <chrono>
 
 namespace LMUFFB {
+namespace Utils {
 
 #ifdef LMUFFB_UNIT_TEST
 // These are defined in main_test_runner.cpp
@@ -23,6 +24,15 @@ namespace TimeUtils {
         return std::chrono::steady_clock::now();
     }
 } // namespace TimeUtils
+} // namespace Utils
+
+// Temporary bridge for legacy code
+namespace TimeUtils = Utils::TimeUtils;
+#ifdef LMUFFB_UNIT_TEST
+using Utils::g_mock_time;
+using Utils::g_use_mock_time;
+#endif
+
 } // namespace LMUFFB
 
 #endif // TIMEOUTILS_H

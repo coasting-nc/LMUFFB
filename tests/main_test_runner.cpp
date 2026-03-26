@@ -28,8 +28,10 @@ FFBEngine g_engine;
 SharedMemoryObjectOut g_localData;
 
 // Mock time globals
+namespace Utils {
 std::chrono::steady_clock::time_point g_mock_time;
 bool g_use_mock_time = false;
+}
 }
 
 namespace FFBEngineTests { 

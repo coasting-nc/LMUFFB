@@ -23,6 +23,7 @@
 #include "utils/StringUtils.h"
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 

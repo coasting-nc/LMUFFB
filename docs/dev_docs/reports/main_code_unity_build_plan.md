@@ -202,7 +202,7 @@ This section tracks the progress made towards fully refactoring the main code an
 ### 6.7 Phase 6: Subsystem Namespace Migration (Post-Unity Stability)
 - [x] ~~**IMPORTANT**: Only begin this phase AFTER Phase 1-5 are 100% complete and the Unity Build is stable.~~ ✅ Gate condition met as of v0.7.251.
 - [x] Transition `logging/` files from `namespace LMUFFB` to `namespace LMUFFB::Logging`. (Initial batch: all six files in `src/logging/`).
-- [ ] Transition `utils/` files to `namespace LMUFFB::Utils`.
+- [x] Transition `utils/` files to `namespace LMUFFB::Utils`. (v0.7.256)
 - [ ] Transition `physics/` files to `namespace LMUFFB::Physics`.
 - [ ] Transition `gui/` files to `namespace LMUFFB::GUI`.
 
@@ -224,11 +224,18 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 ### Q: Why are we still using the `LMUFFB` namespace? Shouldn't we start using the more specific ones? When should we start using more specific namespaces?
 **A:** We are temporarily using the root `LMUFFB` namespace for all files to prioritize **"Global Namespace Elimination"** with minimal architectural friction. If we started using granular namespaces (like `LMUFFB::Physics` or `LMUFFB::Logging`) right now, the monolithic, unrefactored classes (like `FFBEngine`) would require hundreds of complex prefix updates (`LMUFFB::Physics::VehicleUtils::...`) which breaks compilation.
 
-**When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` as of v0.7.253. Sub-namespace migration for `src/utils/` (`LMUFFB::Utils`) and `src/physics/` (`LMUFFB::Physics`) is the current objective.
+**When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253) and `src/utils/` to `LMUFFB::Utils` (v0.7.256). Sub-namespace migration for `src/physics/` (`LMUFFB::Physics`) is the next objective.
 
 ---
 
 ## 8. Implementation Notes
+
+### 8.13 Implementation Notes (v0.7.256)
+- **Encountered Issues:**
+  - Encountered conflicts between `extern` declarations of mock time globals (`g_mock_time`, `g_use_mock_time`) in `tests/test_main_harness.cpp` and `main.cpp` vs their new definition in `LMUFFB::Utils`. Resolved by using `using Utils::g_mock_time;` and `using Utils::g_use_mock_time;` in the consumer files and defining them inside `namespace Utils` in `tests/main_test_runner.cpp`.
+  - Discovered that the initial bridge implementation `namespace LMUFFB { using LMUFFB::Utils::PI; ... }` inside `MathUtils.h` was causing "invalid use of qualified-name" errors and member access issues in `Config.h` and other headers because of how the compiler handles nested namespaces and using declarations within the same translation unit. Fixed by using non-qualified `using Utils::PI;` etc. within `namespace LMUFFB` in the headers.
+- **Deviations from the Plan:** None.
+- **Suggestions for the Future:** Continue Phase 6 by transitioning `src/physics/` files (e.g., `VehicleUtils.h`, `SteeringUtils.h`, `GripLoadEstimation.cpp`) to `namespace LMUFFB::Physics`.
 
 ### 8.1 Encountered Issues
 - **Compilation Order Masking:** During the early configuration of the Unity chunking whitelist, running `cmake --build build` immediately followed by `; python scripts/run_all_tests.py` caused PowerShell to mask genuine C++ compilation errors. If the build step failed, the test script still ran using the *previously compiled* binaries, returning exit code 0 and falsely implying success. Future build-validation commands must evaluate the exit status of the compiler before proceeding to testing.
@@ -326,8 +333,7 @@ Phase 5 is now complete. All core project files are encapsulated within the `LMU
 
 ### Your Objectives for the Next PR:
 1. **Continue Phase 6 (Subsystem Namespace Migration):**
-   - Transition `src/utils/` files (e.g., `MathUtils.h`, `TimeUtils.h`, `StringUtils.h`) to `namespace LMUFFB::Utils`.
-   - Transition `src/physics/` files to `namespace LMUFFB::Physics`.
+   - Transition `src/physics/` files (e.g., `VehicleUtils.h`, `SteeringUtils.h`, `GripLoadEstimation.cpp`) to `namespace LMUFFB::Physics`.
    - Update call sites in `FFBEngine.cpp`, `main.cpp`, and GUI layer accordingly.
 
 ### Critical Reminders for Phase 6
