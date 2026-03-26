@@ -111,13 +111,14 @@ For each iteration (Phase/Step):
 
 #### 5.1 Main Layout Dimensions
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:69:34: warning: 500.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~215 occurrences (All float literals in GUI code).
+- **Current Warning Count**: ~215 occurrences (Total float literals in GUI code).
 - **Implementation Steps**:
   1. Audit `GuiLayer_Common.cpp` for window and panel sizes.
   2. Consolidate into a `GuiConstants` namespace.
 
 #### 5.2 Style and Colors
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:76:28: warning: 5.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~150 occurrences (Rounding, padding, and color literal components).
 - **Implementation Steps**:
   1. Define standard rounding values (e.g., `DEFAULT_WINDOW_ROUNDING = 5.0f`).
   2. Move hardcoded `ImVec4` color values to named constants like `COLOR_ACCENT_BLUE`.
