@@ -13,7 +13,6 @@ For each iteration (Phase/Step):
     ```bash
     run-clang-tidy -p build -checks="-*,readability-magic-numbers" "src/<module>/.*"
     ```
-    *Note: If Clang-Tidy crashes on a large file (a known issue with version 18), run it directly on isolated snippets or use `grep` to find the literals.*
 2.  **Define Constants**: Create or update a header file with the necessary `static constexpr` constants.
 3.  **Apply Fixes**: Perform a search-and-replace (or manual edit) to use the new constants.
 4.  **Verify Build**: Build the project to ensure no syntax errors.
@@ -28,14 +27,14 @@ For each iteration (Phase/Step):
 ### 3.1 Universal Physical Constants
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:254:41: warning: 9.81 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~3 occurrences (PI, Gravity).
-- **Steps**:
+- **Implementation Steps**:
   1. Audit `src/physics/GripLoadEstimation.cpp` and `src/ffb/FFBEngine.cpp` for `9.81` or `9.80665`.
   2. Use `FFBEngine::GRAVITY_MS2` and `LMUFFB::PI` from `MathUtils.h`.
 
 ### 3.2 Common Mathematical Factors
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:62:43: warning: 0.5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~35 occurrences.
-- **Steps**:
+- **Implementation Steps**:
   1. Define `static constexpr double HALF = 0.5;` in `MathUtils.h`.
   2. Replace non-obvious scaling factors (e.g., used in smoothing or blending) with named constants.
 
@@ -45,16 +44,16 @@ For each iteration (Phase/Step):
 **Goal**: Eliminate remaining hardcoded indices (0-3) for wheel and axle data.
 
 ### 4.1 Direct Array Indexing
-- **Example Warning**: `src/ffb/UpSampler.cpp:25:34: warning: 2 is a magic number; consider replacing it with a named constant [readability-magic-numbers]` (In `m_history[2]`)
+- **Example Warning**: `src/ffb/UpSampler.cpp:25:34: warning: 2 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~75 occurrences.
-- **Steps**:
+- **Implementation Steps**:
   1. Use `[WHEEL_FL]`, `[WHEEL_FR]`, etc. from `WheelConstants.h`.
   2. For `UpSampler`, define `HISTORY_LATEST = 2`, `HISTORY_PREV = 1`, etc.
 
 ### 4.2 Standardizing Loop Bounds
 - **Example Warning**: `src/ffb/FFBEngine.cpp:23:25: warning: 4 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: Low.
-- **Steps**: Use `NUM_WHEELS` and `NUM_AXLES` from `src/core/WheelConstants.h`.
+- **Implementation Steps**: Use `NUM_WHEELS` and `NUM_AXLES` from `src/core/WheelConstants.h`.
 
 ---
 
@@ -64,12 +63,12 @@ For each iteration (Phase/Step):
 ### 5.1 Update Rates and Intervals
 - **Example Warning**: `src/core/main.cpp:90:35: warning: 1000 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~30 occurrences.
-- **Steps**: Define `TICKS_PER_SECOND = 1000.0` and `SECONDS_PER_TICK = 0.001`.
+- **Implementation Steps**: Define `TICKS_PER_SECOND = 1000.0` and `SECONDS_PER_TICK = 0.001`.
 
 ### 5.2 Upsampling & Filter Tuning
 - **Example Warning**: `src/ffb/FFBEngine.cpp:20:35: warning: 0.95 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~20 occurrences.
-- **Steps**: Define named constants like `DRIVER_INPUT_SMOOTHING = 0.95`.
+- **Implementation Steps**: Define named constants like `DRIVER_INPUT_SMOOTHING = 0.95`.
 
 ### 5.3 Resampling Ratios
 - **Example Warning**: `src/ffb/UpSampler.cpp:46:20: warning: 5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
@@ -84,27 +83,27 @@ For each iteration (Phase/Step):
 ### 6.1 Speed-Based Logic
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:33:17: warning: 2.0 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~15 occurrences.
-- **Steps**: Define `MIN_LEARNING_SPEED = 2.0`, `AERO_TRANSITION_SPEED = 15.0`.
+- **Implementation Steps**: Define `MIN_LEARNING_SPEED = 2.0`, `AERO_TRANSITION_SPEED = 15.0`.
 
 ### 6.2 Force and Load Baselines
 - **Example Warning**: `src/physics/GripLoadEstimation.cpp:35:32: warning: 100.0 is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~10 occurrences.
-- **Steps**: Define `MIN_VALID_LOAD_N = 100.0`, `LEARNED_LOAD_THRESHOLD_N = 1000.0`.
+- **Implementation Steps**: Define `MIN_VALID_LOAD_N = 100.0`, `LEARNED_LOAD_THRESHOLD_N = 1000.0`.
 
 ---
 
-## 7. Phase 5: GUI Theme and Style Constants
+## 7. Phase 5: GUI Theme and Style
 **Goal**: Standardize colors and rounding values.
 
 ### 7.1 Color Definitions (ImVec4)
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:87:44: warning: 0.12f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~60 occurrences.
-- **Steps**: Define `GuiColors` namespace with named `ImVec4` constants.
+- **Implementation Steps**: Define `GuiColors` namespace with named `ImVec4` constants.
 
 ### 7.2 Style Rounding and Padding
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:76:28: warning: 5.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~15 occurrences.
-- **Steps**: Define `STYLE_WINDOW_ROUNDING = 5.0f`, etc.
+- **Implementation Steps**: Define `STYLE_WINDOW_ROUNDING = 5.0f`, etc.
 
 ---
 
@@ -114,22 +113,37 @@ For each iteration (Phase/Step):
 ### 8.1 Window and Panel Dimensions
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:69:34: warning: 500.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~10 occurrences.
-- **Steps**: Define `MAIN_WINDOW_WIDTH`, `CONFIG_PANEL_WIDTH`.
+- **Implementation Steps**: Define `MAIN_WINDOW_WIDTH`, `CONFIG_PANEL_WIDTH`.
 
 ### 8.2 Structural Spacing (SameLine/Spacing)
 - **Example Warning**: `src/gui/GuiLayer_Common.cpp:328:24: warning: 20.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
 - **Current Warning Count**: ~20 occurrences.
-- **Steps**: Define `LAYOUT_INDENT = 20.0f`, `ITEM_SPACING = 10.0f`.
+- **Implementation Steps**: Define `LAYOUT_INDENT = 20.0f`, `ITEM_SPACING = 10.0f`.
 
 ---
 
 ## 9. Phase 7: GUI Widget Parameters
-**Goal**: Standardize slider limits and default values.
+**Goal**: Clean up literal limits and default values passed to UI controls.
 
-### 9.1 Slider and Input Bounds
-- **Example Warning**: `src/gui/GuiLayer_Common.cpp:569:70: warning: 5.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
-- **Current Warning Count**: ~150+ occurrences.
-- **Steps**: Define group-specific `MIN`/`MAX` constants for UI controls.
+### 7.1 General & Advanced Control Bounds
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:552:70: warning: 50.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~30 occurrences.
+- **Steps**: Standardize `MIN`/`MAX` for Gain, Torque, and Soft Lock settings.
+
+### 7.2 Axle & Load Force Bounds
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:600:70: warning: 4.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~30 occurrences.
+- **Steps**: Standardize `MIN`/`MAX` for Understeer, Gamma, and Load Effect settings.
+
+### 7.3 Safety & Grip Detection Bounds
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:665:70: warning: 5000.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~30 occurrences.
+- **Steps**: Standardize `MIN`/`MAX` for Spike Detection and Smoothing parameters.
+
+### 7.4 Braking & Vibration Bounds
+- **Example Warning**: `src/gui/GuiLayer_Common.cpp:620:70: warning: 10.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers]`
+- **Current Warning Count**: ~30 occurrences.
+- **Steps**: Standardize `MIN`/`MAX` for Lockup, ABS, and Texture gain settings.
 
 ---
 
