@@ -237,6 +237,7 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Deviations from the Plan:**
   - Extracted shared physics types and constants from `FFBEngine.h` into a new header `src/physics/GripLoadEstimation.h` to complete the encapsulation of the physics subsystem.
   - Decoupled several physics-only helper functions (`CalculateRawSlipAnglePair`, `CalculateSlipAngle`, etc.) from the `FFBEngine` class and converted them into standalone functions within `namespace LMUFFB::Physics` to improve modularity and satisfy namespace rules.
+  - **Named Constants Preservation:** While some named constants (`MIN_SLIP_ANGLE_VELOCITY`, `SLOPE_HOLD_TIME`) were initially replaced by literals during the refactor, they have been fully restored as `static constexpr` members within `namespace LMUFFB::Physics` in `GripLoadEstimation.h` to maintain codebase consistency and avoid magic numbers.
 - **Suggestions for the Future:** Continue Phase 6 by transitioning `src/gui/` files (e.g., `GuiLayer.h`, `GuiWidgets.h`, `Tooltips.h`) to `namespace LMUFFB::GUI`.
 
 ### 8.13 Implementation Notes (v0.7.256)

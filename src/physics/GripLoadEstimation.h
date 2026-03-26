@@ -30,10 +30,15 @@ struct GripResult {
 
 // Default FFB calculation timestep. Used by FFBCalculationContext (defined before
 // FFBEngine, so cannot reference FFBEngine::DEFAULT_CALC_DT directly).
-// Note: FFBEngine also has a private member of the same name; this file-scope
+// Note: FFBEngine also has a private member of the same name (DEFAULT_DT); this file-scope
 // constant does NOT trigger GCC's -Wchanges-meaning because it is only looked up
 // inside FFBCalculationContext, not inside FFBEngine's own class body.
+// Renamed to PHYSICS_CALC_DT to avoid ambiguity after moving to Physics namespace.
 static constexpr double PHYSICS_CALC_DT = 0.0025; // 400 Hz (1/400 s)
+
+// Shared physics constants
+static constexpr double MIN_SLIP_ANGLE_VELOCITY = 0.5; // m/s
+static constexpr double SLOPE_HOLD_TIME = 0.25;
 
 /**
  * @brief Context structure for FFB calculations in a single frame

@@ -40,8 +40,8 @@ namespace Physics {
 double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w2) {
     double v_long_1 = std::abs(w1.mLongitudinalGroundVel);
     double v_long_2 = std::abs(w2.mLongitudinalGroundVel);
-    if (v_long_1 < 0.5) v_long_1 = 0.5; // MIN_SLIP_ANGLE_VELOCITY
-    if (v_long_2 < 0.5) v_long_2 = 0.5;
+    if (v_long_1 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_1 = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    if (v_long_2 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_2 = Physics::MIN_SLIP_ANGLE_VELOCITY;
     double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);
     double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);
     return (raw_angle_1 + raw_angle_2) / 2.0;
@@ -49,7 +49,7 @@ double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w
 
 double CalculateSlipAngle(const TelemWheelV01& w, double& prev_state, double dt, float slip_angle_smoothing) {
     double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (v_long < 0.5) v_long = 0.5; // MIN_SLIP_ANGLE_VELOCITY
+    if (v_long < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
 
     // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity
     // Positive lateral vel (+X = left) â†’ Positive slip angle
@@ -99,7 +99,7 @@ double CalculateManualSlipRatio(const TelemWheelV01& w, double car_speed_ms) {
 // Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
 double CalculateWheelSlipRatio(const TelemWheelV01& w) {
     double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (std::abs(v_long) < 0.5) v_long = 0.5; // MIN_SLIP_ANGLE_VELOCITY
+    if (std::abs(v_long) < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
     return w.mLongitudinalPatchVel / v_long;
 }
 
@@ -500,7 +500,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     bool shadow_mode = (m_slope_detection.enabled == false);
     (void)shadow_mode; // Retained for documentation; see call site in calculate_axle_grip
     if (std::abs(dAlpha_dt) > (double)m_slope_detection.alpha_threshold) {
-        m_slope_hold_timer = 0.25; // SLOPE_HOLD_TIME
+        m_slope_hold_timer = Physics::SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;
         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;
