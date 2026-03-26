@@ -246,14 +246,16 @@ TEST_CASE(test_async_logger_errors, "Diagnostics") {
 } // namespace FFBEngineTests
 
 #ifndef _WIN32
+namespace LMUFFB {
 extern std::atomic<bool> g_running;
 void handle_sigterm(int sig);
+}
 
 namespace FFBEngineTests {
 TEST_CASE(test_main_signal_handler, "System") {
-    g_running = true;
-    handle_sigterm(SIGTERM);
-    ASSERT_FALSE(g_running);
+    LMUFFB::g_running = true;
+    LMUFFB::handle_sigterm(SIGTERM);
+    ASSERT_FALSE(LMUFFB::g_running);
 }
 }
 #endif

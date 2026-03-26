@@ -29,16 +29,15 @@
 #include <shellapi.h>
 #endif
 
-// External linkage to FFB loop status (Global Scope)
-extern std::atomic<bool> g_running;
-extern std::recursive_mutex g_engine_mutex;
-
 #ifdef LMUFFB_UNIT_TEST
 // Linkage for global test access class defined in test_gui_common.h
 #include "../../tests/test_gui_common.h"
 #endif
 
 namespace LMUFFB {
+
+extern std::atomic<bool> g_running;
+extern std::recursive_mutex g_engine_mutex;
 
 float GuiLayer::m_latest_steering_range = 0.0f;
 float GuiLayer::m_latest_steering_angle = 0.0f;

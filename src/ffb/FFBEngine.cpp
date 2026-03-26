@@ -7,12 +7,11 @@
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
 #include <mutex>
-
-extern std::recursive_mutex g_engine_mutex;
 #include <algorithm>
 #include <cmath>
 
 namespace LMUFFB {
+extern std::recursive_mutex g_engine_mutex;
 
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();

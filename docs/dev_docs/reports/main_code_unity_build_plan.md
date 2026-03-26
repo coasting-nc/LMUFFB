@@ -194,7 +194,7 @@ This section tracks the progress made towards fully refactoring the main code an
 ### 6.6 Phase 5: UI & Final Integration
 - [x] Refactor `gui/Tooltips.h` & `gui/GuiWidgets.h`.
 - [x] Refactor `gui/GuiLayer_*.cpp`. (Fully namespaced and whitelisted).
-- [ ] Finalize `core/main.cpp` (Retaining global `main()` declaration).
+- [x] Finalize `core/main.cpp` (Retaining global `main()` declaration).
 
 ### 6.7 Phase 6: Subsystem Namespace Migration (Post-Unity Stability)
 - [ ] **IMPORTANT**: Only begin this phase AFTER Phase 1-5 are 100% complete and the Unity Build is stable.
@@ -293,14 +293,25 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Deviations from the Plan:** None. The GUI layer was successfully namespaced and whitelisted for Unity builds.
 - **Suggestions for the Future:** Phase 5 is nearly complete. The final step is to clean up `core/main.cpp` by removing temporary `using namespace` directives and fully qualifying remaining calls, and then proceeding to Phase 6 (Subsystem Namespace Migration).
 
-## 9. Next Steps: Phase 5 Completion & Final Integration
-With the UI layer now encapsulated and stable within the Unity Build chunk, the next phase focuses on finalizing the main entry point and starting the transition to granular sub-namespaces.
+### 8.11 Implementation Notes (v0.7.251)
+- **Encountered Issues:**
+  - Moving globals (`g_running`, `g_engine`, etc.) to `namespace LMUFFB` required updating `extern` declarations in multiple files. Failure to wrap these `extern` declarations in `namespace LMUFFB` would result in linker errors due to name mangling mismatches.
+  - Test files that utilized these globals as mocks (e.g., `test_main_harness.cpp`) also required wrapping their declarations and ensuring they match the core's namespacing.
+  - Discovered and fixed typos in `main.cpp` where extended monitors were updating the wrong variables (`mVelX` instead of `mVelY`/`mVelZ`).
+  - Resolved a code review finding regarding naming inconsistencies between namespaced and global entry points.
+- **Deviations from the Plan:**
+  - Extracted `ChannelMonitor` and `ChannelMonitors` into a dedicated header `src/logging/ChannelMonitor.h` to improve modularity and enable robust regression testing of the 28+ telemetry channel updates.
+  - Standardized on `LMUFFB::lmuffb_app_main` as the namespaced entry point to ensure link-time compatibility with existing unit test conventions.
+- **Suggestions for the Future:** With Phase 5 complete and all core files whitelisted for Unity builds, Phase 6 can begin. This will involve moving files from the root `LMUFFB` namespace into more granular sub-namespaces (`LMUFFB::Physics`, `LMUFFB::GUI`, etc.). Start with the leaf modules refactored in Phase 1.
+
+## 9. Next Steps: Phase 6 - Subsystem Namespace Migration
+Phase 5 is now complete. All core project files are encapsulated within the `LMUFFB` namespace and are whitelisted for Unity Builds. The next objective is to improve architectural modularity by migrating modules into granular sub-namespaces.
 
 ### Your Objectives for the Next PR:
-1. **Finalize Phase 5 (UI & Final Integration):**
-   - Perform a final pass on `core/main.cpp`.
-   - Ensure all remaining global symbols (except `main`) are addressed.
-2. **Phase 6 Readiness:** Prepare for transitioning from `namespace LMUFFB` to specific sub-namespaces like `LMUFFB::Physics`, `LMUFFB::GUI`, and `LMUFFB::Logging`.
+1. **Initiate Phase 6 (Subsystem Namespace Migration):**
+   - Begin transitioning leaf utility modules from Phase 1 to their respective sub-namespaces (e.g., `LMUFFB::Logging`, `LMUFFB::Physics`, `LMUFFB::Utils`).
+   - Update `src/logging/PerfStats.h` and `src/logging/RateMonitor.h` to use `namespace LMUFFB::Logging`.
+   - Update call sites in `FFBEngine.cpp` and `main.cpp` accordingly.
 
 ### Critical Reminder for Unity Builds
 *   **The Include Rule:** Continue to enforce strict discipline: all `#include` directives **MUST** be outside namespace blocks.

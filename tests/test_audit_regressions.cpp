@@ -3,7 +3,9 @@
 #include <filesystem>
 
 // Declaration of the helper function from main.cpp
+namespace LMUFFB {
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine);
+}
 
 namespace FFBEngineTests {
 
@@ -189,7 +191,7 @@ TEST_CASE(test_audit_populate_session_info, "AuditRegressions") {
     engine.m_safety.m_config.gain_reduction = 0.222f;
 
     SessionInfo info;
-    PopulateSessionInfo(info, scoring, trackName, engine);
+    LMUFFB::PopulateSessionInfo(info, scoring, trackName, engine);
 
     // Verify all 10 categories correctly populated
     ASSERT_NEAR(info.general.gain, 0.123f, 0.0001);
