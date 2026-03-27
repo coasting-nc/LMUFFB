@@ -67,7 +67,7 @@ FFBEngine::FFBEngine() {
 
 // Signal Conditioning: Applies idle smoothing and notch filters to raw torque
 // Returns the conditioned force value ready for effect processing
-double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     double game_force_proc = raw_torque;
 
     // Idle Smoothing
@@ -449,7 +449,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
     
     // --- 1. INITIALIZE CONTEXT ---
-    FFBCalculationContext ctx;
+    LMUFFB::Physics::FFBCalculationContext ctx;
     ctx.dt = ffb_dt; // Use our constant FFB loop time for all internal physics
 
     // Sanity Check: Delta Time (Keep legacy warning if raw dt is broken)
@@ -666,10 +666,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Grip Estimation (v0.4.5 FIX)
     // Issue #397: Pass upsampled data pointer to ensure slope detection uses smoothed G-force
-    GripResult front_grip_res = calculate_axle_grip(fl, fr, ctx.avg_front_load, m_warned_grip,
-                                                m_prev_slip_angle[WHEEL_FL], m_prev_slip_angle[WHEEL_FR],
-                                                m_prev_load[WHEEL_FL], m_prev_load[WHEEL_FR], // NEW
-                                                ctx.car_speed, ctx.dt, data->mVehicleName, upsampled_data, true /* is_front */);
+    LMUFFB::Physics::GripResult front_grip_res = calculate_axle_grip(fl, fr, ctx.avg_front_load, m_warned_grip,
+                                                                  m_prev_slip_angle[WHEEL_FL], m_prev_slip_angle[WHEEL_FR],
+                                                                  m_prev_load[WHEEL_FL], m_prev_load[WHEEL_FR], // NEW
+                                                                  ctx.car_speed, ctx.dt, data->mVehicleName, upsampled_data, true /* is_front */);
     ctx.avg_front_grip = front_grip_res.value;
     m_grip_diag.front_original = front_grip_res.original;
     m_grip_diag.front_approximated = front_grip_res.approximated;
@@ -711,15 +711,15 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         const double MAX_G_RANGE = 5.0;
         double long_load_norm = std::clamp(long_g, -MAX_G_RANGE, MAX_G_RANGE);
 
-        if (m_load_forces.long_load_transform != (int)LoadTransform::LINEAR) {
+        if (m_load_forces.long_load_transform != (int)LMUFFB::Physics::LoadTransform::LINEAR) {
             // 1. Map the [-5.0, 5.0] range into the [-1.0, 1.0] domain required by the polynomials
             double x = long_load_norm / MAX_G_RANGE;
 
             // 2. Apply the mathematical transformation safely
-            switch (static_cast<LoadTransform>(m_load_forces.long_load_transform)) {
-                case LoadTransform::CUBIC:     x = apply_load_transform_cubic(x); break;
-                case LoadTransform::QUADRATIC: x = apply_load_transform_quadratic(x); break;
-                case LoadTransform::HERMITE:   x = apply_load_transform_hermite(x); break;
+            switch (static_cast<LMUFFB::Physics::LoadTransform>(m_load_forces.long_load_transform)) {
+                case LMUFFB::Physics::LoadTransform::CUBIC:     x = apply_load_transform_cubic(x); break;
+                case LMUFFB::Physics::LoadTransform::QUADRATIC: x = apply_load_transform_quadratic(x); break;
+                case LMUFFB::Physics::LoadTransform::HERMITE:   x = apply_load_transform_hermite(x); break;
                 default: break;
             }
 
@@ -767,7 +767,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     calculate_slide_texture(upsampled_data, ctx);
     calculate_road_texture(upsampled_data, ctx);
     calculate_suspension_bottoming(upsampled_data, ctx);
-    LMUFFB::SteeringUtils::CalculateSoftLock(upsampled_data, ctx, m_advanced, m_general, m_safety, m_steering_velocity_smoothed);
+    LMUFFB::Physics::SteeringUtils::CalculateSoftLock(upsampled_data, ctx, m_advanced, m_general, m_safety, m_steering_velocity_smoothed);
 
     // v0.7.78 FIX: Support stationary/garage soft lock (Issue #184)
     // If not allowed (e.g. in garage or AI driving), mute all forces EXCEPT Soft Lock.
@@ -1163,7 +1163,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 }
 
 // Helper: Calculate Seat-of-the-Pants (SoP) Lateral & Oversteer Boost
-void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     // 1. Raw Lateral G (Chassis-relative X)
     // Clamp to 5G to prevent numeric instability in crashes
     double raw_g = (std::max)(-G_LIMIT_5G * GRAVITY_MS2, (std::min)(G_LIMIT_5G * GRAVITY_MS2, data->mLocalAccel.x));
@@ -1193,17 +1193,17 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     lat_load_norm = std::clamp(lat_load_norm, -1.0, 1.0);
 
     // Apply Transformation (Issue #282)
-    switch (static_cast<LoadTransform>(m_load_forces.lat_load_transform)) {
-        case LoadTransform::CUBIC:
+    switch (static_cast<LMUFFB::Physics::LoadTransform>(m_load_forces.lat_load_transform)) {
+        case LMUFFB::Physics::LoadTransform::CUBIC:
             lat_load_norm = apply_load_transform_cubic(lat_load_norm);
             break;
-        case LoadTransform::QUADRATIC:
+        case LMUFFB::Physics::LoadTransform::QUADRATIC:
             lat_load_norm = apply_load_transform_quadratic(lat_load_norm);
             break;
-        case LoadTransform::HERMITE:
+        case LMUFFB::Physics::LoadTransform::HERMITE:
             lat_load_norm = apply_load_transform_hermite(lat_load_norm);
             break;
-        case LoadTransform::LINEAR:
+        case LMUFFB::Physics::LoadTransform::LINEAR:
         default:
             break;
     }
@@ -1227,10 +1227,10 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
-    GripResult rear_grip_res = calculate_axle_grip(data->mWheel[WHEEL_RL], data->mWheel[WHEEL_RR], ctx.avg_front_load, m_warned_rear_grip,
-                                                m_prev_slip_angle[WHEEL_RL], m_prev_slip_angle[WHEEL_RR],
-                                                m_prev_load[WHEEL_RL], m_prev_load[WHEEL_RR], // NEW
-                                                ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
+    LMUFFB::Physics::GripResult rear_grip_res = calculate_axle_grip(data->mWheel[WHEEL_RL], data->mWheel[WHEEL_RR], ctx.avg_front_load, m_warned_rear_grip,
+                                                                 m_prev_slip_angle[WHEEL_RL], m_prev_slip_angle[WHEEL_RR],
+                                                                 m_prev_load[WHEEL_RL], m_prev_load[WHEEL_RR], // NEW
+                                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
     ctx.avg_rear_grip = rear_grip_res.value;
     m_grip_diag.rear_original = rear_grip_res.original;
     m_grip_diag.rear_approximated = rear_grip_res.approximated;
@@ -1421,7 +1421,7 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 }
 
 // Helper: Calculate Gyroscopic Damping (v0.4.17)
-void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     // 1. Calculate Steering Velocity (rad/s)
     float range = data->mPhysicalSteeringWheelRange;
 
@@ -1455,7 +1455,7 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationC
 }
 
 // Helper: Calculate ABS Pulse (v0.7.53)
-void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     if (!m_braking.abs_pulse_enabled) return;
     
     bool abs_active = false;
@@ -1477,7 +1477,7 @@ void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationCont
 }
 
 // Helper: Calculate Lockup Vibration (v0.4.36 - REWRITTEN as dedicated method)
-void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     if (!m_braking.lockup_enabled) return;
     
     double worst_severity = 0.0;
@@ -1575,7 +1575,7 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
 }
 
 // Helper: Calculate Wheel Spin Vibration (v0.6.36)
-void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     if (m_vibration.spin_enabled && data->mUnfilteredThrottle > SPIN_THROTTLE_THRESHOLD) {
         double slip_rl = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RL]);
         double slip_rr = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RR]);
@@ -1608,7 +1608,7 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
 }
 
 // Helper: Calculate Slide Texture (Friction Vibration)
-void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     if (!m_vibration.slide_enabled) return;
     
     // Use average lateral patch velocity of front wheels
@@ -1645,7 +1645,7 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
 }
 
 // Helper: Calculate Road Texture & Scrub Drag
-void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_road_texture(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     // 1. Scrub Drag (Longitudinal resistive force from lateral sliding)
     if (m_vibration.scrub_drag_gain > 0.0) {
         double avg_lat_vel = (data->mWheel[WHEEL_FL].mLateralPatchVel + data->mWheel[WHEEL_FR].mLateralPatchVel) / DUAL_DIVISOR;
@@ -1755,8 +1755,8 @@ void FFBEngine::ResetNormalization() {
 
     // 2. Vibration Normalization Reset (Stage 3)
     // Always return to the class-default seed load.
-    ParsedVehicleClass vclass = ParseVehicleClass(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
-    m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
+    LMUFFB::Physics::ParsedVehicleClass vclass = LMUFFB::Physics::ParseVehicleClass(m_metadata.GetCurrentClassName(), m_metadata.GetVehicleName());
+    m_auto_peak_front_load = LMUFFB::Physics::GetDefaultLoadForClass(vclass);
 
     // Reset static load reference
     m_static_front_load = m_auto_peak_front_load * 0.5;
@@ -1788,7 +1788,7 @@ void FFBEngine::ResetNormalization() {
 
 // Helper: Calculate Suspension Bottoming (v0.6.22)
 // NOTE: calculate_soft_lock has been moved to SteeringUtils.h/cpp.
-void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     if (!m_vibration.bottoming_enabled) return;
     bool triggered = false;
     double intensity = 0.0;
@@ -1807,7 +1807,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
         // We must multiply by the Motion Ratio to normalize the impulse back to the wheel.
         // Otherwise, prototypes (MR ~0.5) will trigger bottoming 2x as often as GTs (MR ~0.65)
         // for the exact same physical bump.
-        double mr = GetMotionRatioForClass(m_metadata.GetCurrentClass());
+        double mr = LMUFFB::Physics::GetMotionRatioForClass(m_metadata.GetCurrentClass());
 
         double dForceL = ((data->mWheel[WHEEL_FL].mSuspForce - m_prev_susp_force[WHEEL_FL]) * mr) / ctx.dt;
         double dForceR = ((data->mWheel[WHEEL_FR].mSuspForce - m_prev_susp_force[WHEEL_FR]) * mr) / ctx.dt;

@@ -50,7 +50,7 @@ TEST_CASE(test_ffb_engine_dt_and_slip_window_minimums, "Physics") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0; // Force dt <= 1e-6
     ctx.car_speed = 20.0;
     

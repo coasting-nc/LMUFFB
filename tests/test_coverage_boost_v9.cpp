@@ -27,7 +27,7 @@ TEST_CASE(test_ffb_engine_signal_conditioning_combinatorial, "Physics") {
     InitializeEngine(engine);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
 

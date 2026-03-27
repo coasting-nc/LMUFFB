@@ -342,7 +342,7 @@ void FFBEngineTestAccess::test_unit_sop_lateral() {
     std::cout << "\nTest Unit: calculate_sop_lateral" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     ctx.avg_front_load = 4000.0;
@@ -367,7 +367,7 @@ void FFBEngineTestAccess::test_unit_gyro_damping() {
     std::cout << "\nTest Unit: calculate_gyro_damping" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 10.0;
 
@@ -392,7 +392,7 @@ void FFBEngineTestAccess::test_unit_abs_pulse() {
     std::cout << "\nTest Unit: calculate_abs_pulse" << std::endl;
     FFBEngine engine;
     InitializeEngine(engine);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
@@ -438,7 +438,7 @@ TEST_CASE(test_signal_conditioning_helper, "Internal") {
     FFBEngine engine;
     InitializeEngine(engine);
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     double result = engine.apply_signal_conditioning(10.0, &data, ctx);

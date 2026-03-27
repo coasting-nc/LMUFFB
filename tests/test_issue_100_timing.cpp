@@ -51,7 +51,7 @@ TEST_CASE(test_gui_render_return_value, "Timing") {
     FFBEngine engine;
     // v0.7.36 FIX: GuiLayer::Render must always return true while running
     // to prevent focus-based throttling in the main loop.
-    bool result = GuiLayer::Render(engine);
+    bool result = GUI::GuiLayer::Render(engine);
 
     ASSERT_TRUE(result == true);
 }

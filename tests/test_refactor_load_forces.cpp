@@ -9,10 +9,10 @@ TEST_CASE(test_refactor_load_forces_consistency, "RefactorSafety") {
 
     // Set specific Load Forces values (using current loose variables)
     engine.m_load_forces.lat_load_effect = 0.5f;
-    engine.m_load_forces.lat_load_transform = (int)LoadTransform::CUBIC;
+    engine.m_load_forces.lat_load_transform = (int)Physics::LoadTransform::CUBIC;
     engine.m_load_forces.long_load_effect = 2.0f;
     engine.m_load_forces.long_load_smoothing = 0.1f;
-    engine.m_load_forces.long_load_transform = (int)LoadTransform::QUADRATIC;
+    engine.m_load_forces.long_load_transform = (int)Physics::LoadTransform::QUADRATIC;
 
     // Create a telemetry state that triggers load forces logic
     TelemInfoV01 data = CreateBasicTestTelemetry(25.0, 0.05); // 25 m/s, 5% slip

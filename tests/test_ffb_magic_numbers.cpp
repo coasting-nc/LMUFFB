@@ -368,7 +368,7 @@ TEST_CASE(test_mn_spin_detection_torque_drop, "Texture") {
     data.mWheel[WHEEL_FL].mLongitudinalPatchVel  = 20.0;
     data.mWheel[WHEEL_FR].mLongitudinalPatchVel  = 20.0;
 
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     ctx.avg_front_grip = 0.8;
@@ -409,7 +409,7 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
             data.mWheel[i].mLateralPatchVel = 1.0; // < 1.5
         }
 
-        FFBCalculationContext ctx;
+        Physics::FFBCalculationContext ctx;
         ctx.dt = 0.01;
         ctx.car_speed = 20.0;
         ctx.avg_front_grip = 1.0;
@@ -436,7 +436,7 @@ TEST_CASE(test_mn_slide_texture_velocity_threshold, "Texture") {
             data.mWheel[i].mLateralPatchVel = 3.0; // > 1.5
         }
 
-        FFBCalculationContext ctx;
+        Physics::FFBCalculationContext ctx;
         ctx.dt = 0.01;
         ctx.car_speed = 20.0;
         ctx.avg_front_grip = 0.0; // zero grip â†’ maximum slide contribution
@@ -477,7 +477,7 @@ TEST_CASE(test_mn_abs_pulse_magnitude_scaler, "Texture") {
     data.mWheel[WHEEL_FL].mBrakePressure = 0.5f;
     engine.m_prev_brake_pressure[WHEEL_FL] = 1.0;
 
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0125;
     ctx.car_speed = 20.0;
     ctx.speed_gate = 1.0;

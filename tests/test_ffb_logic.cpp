@@ -213,7 +213,7 @@ TEST_CASE(test_gui_style_application, "Logic") {
     ImGui::GetIO().IniFilename = nullptr;
     ASSERT_TRUE(ctx != nullptr);
 
-    LMUFFB::GuiLayer::SetupGUIStyle();
+    LMUFFB::GUI::GuiLayer::SetupGUIStyle();
 
     float bg_r = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].x;
     float bg_g = ImGui::GetStyle().Colors[ImGuiCol_WindowBg].y;

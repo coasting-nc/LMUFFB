@@ -23,6 +23,7 @@
 #include "../src/io/RestApiProvider.h"
 #include "../src/physics/SteeringUtils.h"
 #include "../src/utils/TimeUtils.h"
+#include "../src/gui/GuiLayer.h"
 #include "test_performance_types.h"
 
 namespace LMUFFB {
@@ -45,6 +46,8 @@ public:
 using namespace LMUFFB;
 using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
+using namespace LMUFFB::Physics;
+using namespace LMUFFB::GUI;
 
 namespace FFBEngineTests {
 
@@ -464,16 +467,16 @@ public:
     static double CallCalculateSlopeGrip(FFBEngine& e, double lat_g, double slip, double dt, const TelemInfoV01* data) {
         return e.calculate_slope_grip(lat_g, slip, dt, data);
     }
-    static double CallApplySignalConditioning(FFBEngine& e, double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static double CallApplySignalConditioning(FFBEngine& e, double raw_torque, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         return e.apply_signal_conditioning(raw_torque, data, ctx);
     }
-    static void CallCalculateGyroDamping(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateGyroDamping(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_gyro_damping(data, ctx);
     }
-    static void CallCalculateABSPulse(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateABSPulse(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_abs_pulse(data, ctx);
     }
-    static void CallCalculateLockup_Vibration(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateLockup_Vibration(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_lockup_vibration(data, ctx);
     }
     static void SetFlatspotSuppression(FFBEngine& e, bool val) { e.m_front_axle.flatspot_suppression = val; }
@@ -486,7 +489,7 @@ public:
     
     static void SetWasAllowed(FFBEngine& e, bool val) { e.m_was_allowed = val; }
     static bool GetWasAllowed(const FFBEngine& e) { return e.m_was_allowed; }
-    static void CallCalculateSopLateral(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateSopLateral(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_sop_lateral(data, ctx);
     }
 
@@ -497,7 +500,7 @@ public:
     static void CallInitializeLoadReference(FFBEngine& e, const char* vehicleClass, const char* vehicleName) {
         e.InitializeLoadReference(vehicleClass, vehicleName);
     }
-    static void CallCalculateWheelSpin(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateWheelSpin(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_wheel_spin(data, ctx);
     }
     static void SetTorqueSource(FFBEngine& e, int val) { e.m_front_axle.torque_source = val; }
@@ -506,17 +509,17 @@ public:
     static void SetMinForce(FFBEngine& e, float val) { e.m_general.min_force = val; }
     static void SetSoftLockEnabled(FFBEngine& e, bool val) { e.m_advanced.soft_lock_enabled = val; }
     static void SetLockupEnabled(FFBEngine& e, bool val) { e.m_braking.lockup_enabled = val; }
-    static void CallCalculateSlideTexture(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateSlideTexture(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_slide_texture(data, ctx);
     }
-    static void CallCalculateRoadTexture(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateRoadTexture(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_road_texture(data, ctx);
     }
-    static void CallCalculateSuspensionBottoming(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
+    static void CallCalculateSuspensionBottoming(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
         e.calculate_suspension_bottoming(data, ctx);
     }
-    static void CallCalculateSoftLock(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
-        LMUFFB::SteeringUtils::CalculateSoftLock(data, ctx, e.m_advanced, e.m_general, e.m_safety, e.m_steering_velocity_smoothed);
+    static void CallCalculateSoftLock(FFBEngine& e, const TelemInfoV01* data, Physics::FFBCalculationContext& ctx) {
+        LMUFFB::Physics::SteeringUtils::CalculateSoftLock(data, ctx, e.m_advanced, e.m_general, e.m_safety, e.m_steering_velocity_smoothed);
     }
     static void SetScrubDragGain(FFBEngine& e, float val) { e.m_vibration.scrub_drag_gain = val; }
     static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_vibration.bottoming_enabled = val; }

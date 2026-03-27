@@ -439,19 +439,19 @@ public:
     double calculate_raw_slip_angle_pair(const TelemWheelV01& w1, const TelemWheelV01& w2);
     double calculate_slip_angle(const TelemWheelV01& w, double& prev_state, double dt);
     
-GripResult calculate_axle_grip(const TelemWheelV01& w1,
-                              const TelemWheelV01& w2,
-                              double avg_axle_load,
-                              bool& warned_flag,
-                              double& prev_slip1,
-                              double& prev_slip2,
-                              double& prev_load1, // NEW: State for load smoothing
-                              double& prev_load2, // NEW: State for load smoothing
-                              double car_speed,
-                              double dt,
-                              const char* vehicleName,
-                              const TelemInfoV01* data,
-                              bool is_front);
+    LMUFFB::Physics::GripResult calculate_axle_grip(const TelemWheelV01& w1,
+                                                   const TelemWheelV01& w2,
+                                                   double avg_axle_load,
+                                                   bool& warned_flag,
+                                                   double& prev_slip1,
+                                                   double& prev_slip2,
+                                                   double& prev_load1, // NEW: State for load smoothing
+                                                   double& prev_load2, // NEW: State for load smoothing
+                                                   double car_speed,
+                                                   double dt,
+                                                   const char* vehicleName,
+                                                   const TelemInfoV01* data,
+                                                   bool is_front);
 
     double approximate_load(const TelemWheelV01& w);
     double approximate_rear_load(const TelemWheelV01& w);
@@ -463,19 +463,19 @@ GripResult calculate_axle_grip(const TelemWheelV01& w1,
     double calculate_force(const TelemInfoV01* data, const char* vehicleClass = nullptr, const char* vehicleName = nullptr, float genFFBTorque = 0.0f, bool allowed = true, double override_dt = -1.0, signed char mControl = 0);
 
     void UpdateMetadata(const struct SharedMemoryObjectOut& data);
-    double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, FFBCalculationContext& ctx);
+    double apply_signal_conditioning(double raw_torque, const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
     void ResetNormalization();
     void UpdateUpsamplerModes();
 
 private:
-    void calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    void calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    void calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx);
+    void calculate_sop_lateral(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
+    NOINLINE void calculate_gyro_damping(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
+    NOINLINE void calculate_abs_pulse(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
+    void calculate_lockup_vibration(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
+    void calculate_wheel_spin(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
+    void calculate_slide_texture(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
+    void calculate_road_texture(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
+    void calculate_suspension_bottoming(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
 };
 
 } // namespace LMUFFB

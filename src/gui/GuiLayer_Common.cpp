@@ -118,7 +118,7 @@ void GuiLayer::SetupGUIStyle() {
     colors[ImGuiCol_MenuBarBg]      = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
 }
 
-void GuiLayer::DrawMenuBar(FFBEngine& engine) {
+void GuiLayer::DrawMenuBar(LMUFFB::FFBEngine& engine) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Logs")) {
             if (ImGui::MenuItem("Analyze last log")) {
@@ -219,7 +219,7 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
 
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
-void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
+void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     // Persistent UI State
@@ -851,7 +851,7 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
             if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
 
             ImGui::SameLine();
-            float latency_ms = (static_cast<float>(engine.m_slope_detection.sg_window) / 2.0f) * 2.5f;
+            float latency_ms = (static_cast<float>(engine.m_slope_detection.sg_window) / 2.0f) * (float)Physics::PHYSICS_CALC_DT * 1000.0f;
             ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
             ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
             ImGui::NextColumn(); ImGui::NextColumn();
@@ -1120,7 +1120,7 @@ namespace {
 }
 }
 
-void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
+void GuiLayer::UpdateTelemetry(LMUFFB::FFBEngine& engine) {
     auto snapshots = engine.GetDebugBatch();
     for (const auto& snap : snapshots) {
         m_latest_steering_range = snap.steering_range_deg;
@@ -1177,7 +1177,7 @@ void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
     }
 }
 
-void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
+void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine& engine) {
     if (!Config::show_graphs) return;
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -1353,11 +1353,11 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     ImGui::End();
 }
 #else
-void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
+void GuiLayer::DrawMenuBar(LMUFFB::FFBEngine& engine) {}
 void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {}
-void GuiLayer::UpdateTelemetry(FFBEngine& engine) {}
-void GuiLayer::DrawTuningWindow(FFBEngine& engine) {}
-void GuiLayer::DrawDebugWindow(FFBEngine& engine) {}
+void GuiLayer::UpdateTelemetry(LMUFFB::FFBEngine& engine) {}
+void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {}
+void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine& engine) {}
 void GuiLayer::SetupGUIStyle() {}
 #endif
 

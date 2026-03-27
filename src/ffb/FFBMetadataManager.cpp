@@ -22,7 +22,7 @@ bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
 
         // Issue #368: Log all fields that might contain brand info if a change is detected
         if (vehicleName && m_last_logged_veh != vehicleName) {
-            const char* brand = ParseVehicleBrand(vehicleClass, vehicleName);
+            const char* brand = LMUFFB::Physics::ParseVehicleBrand(vehicleClass, vehicleName);
             Logger::Get().LogFile("[Metadata] Vehicle Change Detected: '%s' (Brand: '%s', Class: '%s', PitGroup: '%s', Filename: '%s')",
                 vehicleName, brand, vehicleClass, veh.mPitGroup, veh.mVehFilename);
             m_last_logged_veh = vehicleName;
@@ -50,7 +50,7 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
     }
 
     if (changed) {
-        m_current_vclass = ParseVehicleClass(m_current_class_name.c_str(), m_vehicle_name);
+        m_current_vclass = LMUFFB::Physics::ParseVehicleClass(m_current_class_name.c_str(), m_vehicle_name);
     }
 
     if (trackName && std::strcmp(trackName, m_track_name) != 0) {

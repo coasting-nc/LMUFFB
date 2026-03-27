@@ -116,12 +116,6 @@ double CalculateWheelSlipRatio(const TelemWheelV01& w);
 double CalculateApproximateLoad(const TelemWheelV01& w, ParsedVehicleClass vclass, bool is_rear);
 
 } // namespace Physics
-
-// Bridge Aliases for backward compatibility during migration
-using LoadTransform = Physics::LoadTransform;
-using GripResult = Physics::GripResult;
-using FFBCalculationContext = Physics::FFBCalculationContext;
-
 } // namespace LMUFFB
 
 #endif // GRIP_LOAD_ESTIMATION_H

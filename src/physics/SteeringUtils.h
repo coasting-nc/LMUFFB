@@ -22,8 +22,4 @@ void CalculateSoftLock(const TelemInfoV01* data,
 
 } // namespace SteeringUtils
 } // namespace Physics
-
-// Bridge Alias for backward compatibility during migration
-namespace SteeringUtils = Physics::SteeringUtils;
-
 } // namespace LMUFFB
