@@ -547,11 +547,4 @@ private:
 
 } // namespace LMUFFB::Logging
 
-// Temporary bridge for legacy code
-namespace LMUFFB {
-    using AsyncLogger = LMUFFB::Logging::AsyncLogger;
-    using LogFrame = LMUFFB::Logging::LogFrame;
-    using SessionInfo = LMUFFB::Logging::SessionInfo;
-}
-
 #endif // ASYNCLOGGER_H

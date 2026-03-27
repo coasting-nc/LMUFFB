@@ -88,10 +88,4 @@ public:
 
 } // namespace LMUFFB::Logging
 
-// Temporary bridge for legacy code
-namespace LMUFFB {
-    using HealthStatus = LMUFFB::Logging::HealthStatus;
-    using HealthMonitor = LMUFFB::Logging::HealthMonitor;
-}
-
 #endif // HEALTHMONITOR_H

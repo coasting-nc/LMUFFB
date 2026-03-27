@@ -221,9 +221,4 @@ private:
 };
 } // namespace LMUFFB::Logging
 
-// Temporary bridge for legacy code
-namespace LMUFFB {
-    using Logger = LMUFFB::Logging::Logger;
-}
-
 #endif // LOGGER_H

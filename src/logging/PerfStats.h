@@ -55,9 +55,4 @@ struct ChannelStats {
 
 } // namespace LMUFFB::Logging
 
-// Temporary bridge for legacy code
-namespace LMUFFB {
-    using ChannelStats = LMUFFB::Logging::ChannelStats;
-}
-
 #endif // PERF_STATS_H

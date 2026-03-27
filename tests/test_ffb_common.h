@@ -42,6 +42,7 @@ public:
 } // namespace LMUFFB
 
 using namespace LMUFFB;
+using namespace LMUFFB::Logging;
 
 namespace FFBEngineTests {
 

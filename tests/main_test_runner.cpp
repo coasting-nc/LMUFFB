@@ -14,6 +14,7 @@
 #include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
 using namespace LMUFFB;
+using namespace LMUFFB::Logging;
 
 #ifdef _WIN32
 #include <windows.h>

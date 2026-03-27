@@ -142,10 +142,12 @@ public:
     }
 };
 
-static Win32GuiPlatform g_platform;
+// Internal helpers exposed for tests
+// Note: These must NOT be in an anonymous namespace as they are needed by tests and GuiLayer_Common.cpp
+Win32GuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
 
-// Compatibility Helpers
+// Compatibility Helpers (Exposed for tests and GuiLayer_Common.cpp)
 void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
 void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
@@ -367,8 +369,17 @@ public:
     bool GetAlwaysOnTopMock() override { return m_always_on_top_mock; }
     bool m_always_on_top_mock = false;
 };
-static Win32GuiPlatform g_platform;
+
+// Internal helpers exposed for tests
+Win32GuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
+
+// Compatibility Helpers (Exposed for tests)
+void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
+void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
+void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
+bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
+bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
 
 bool GuiLayer::Init() {
     return true;
@@ -378,12 +389,6 @@ void GuiLayer::Shutdown(FFBEngine& engine) {
 }
 bool GuiLayer::Render(FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
-
-void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
-void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
-void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
-bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
-bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
 
 #endif
 

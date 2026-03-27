@@ -4,7 +4,7 @@
 namespace FFBEngineTests {
 
 TEST_CASE(test_channel_stats_average, "Performance") {
-    Logging::ChannelStats stats;
+    ChannelStats stats;
     stats.Update(10.0);
     stats.Update(20.0);
     stats.Update(30.0);
@@ -13,7 +13,7 @@ TEST_CASE(test_channel_stats_average, "Performance") {
 }
 
 TEST_CASE(test_channel_stats_resets, "Performance") {
-    Logging::ChannelStats stats;
+    ChannelStats stats;
     
     // Interval 1
     stats.Update(10.0);
@@ -36,7 +36,7 @@ TEST_CASE(test_channel_stats_resets, "Performance") {
 }
 
 TEST_CASE(test_channel_stats_empty_reset, "Performance") {
-    Logging::ChannelStats stats;
+    ChannelStats stats;
     stats.ResetInterval();
     ASSERT_NEAR(stats.l_avg, 0.0, 0.001);
 }
