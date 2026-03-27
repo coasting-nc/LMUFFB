@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-27 11:09:28</td>
+            <td class="headerValue">2026-03-27 12:15:20</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -185,21 +185,21 @@
 <span id="L114"><span class="lineNum">     114</span>                 :             :     TelemInfoV01 m_working_info; // Persistent storage for upsampled telemetry</span>
 <span id="L115"><span class="lineNum">     115</span>                 :             :     double m_last_telemetry_time = -1.0;</span>
 <span id="L116"><span class="lineNum">     116</span>                 :             : </span>
-<span id="L117"><span class="lineNum">     117</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_lat_patch_vel[NUM_WHEELS];</span>
-<span id="L118"><span class="lineNum">     118</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_long_patch_vel[NUM_WHEELS];</span>
-<span id="L119"><span class="lineNum">     119</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_vert_deflection[NUM_WHEELS];</span>
-<span id="L120"><span class="lineNum">     120</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_susp_force[NUM_WHEELS];</span>
-<span id="L121"><span class="lineNum">     121</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_brake_pressure[NUM_WHEELS];</span>
-<span id="L122"><span class="lineNum">     122</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_rotation[NUM_WHEELS];</span>
-<span id="L123"><span class="lineNum">     123</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_steering;</span>
-<span id="L124"><span class="lineNum">     124</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_throttle;</span>
-<span id="L125"><span class="lineNum">     125</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_brake;</span>
-<span id="L126"><span class="lineNum">     126</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_accel_x;</span>
-<span id="L127"><span class="lineNum">     127</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_accel_y;</span>
-<span id="L128"><span class="lineNum">     128</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_accel_z;</span>
-<span id="L129"><span class="lineNum">     129</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_rot_accel_y;</span>
-<span id="L130"><span class="lineNum">     130</span>                 :             :     LMUFFB::HoltWintersFilter m_upsample_local_rot_y;</span>
-<span id="L131"><span class="lineNum">     131</span>                 :             :     LMUFFB::HoltWintersFilter  m_upsample_shaft_torque;</span>
+<span id="L117"><span class="lineNum">     117</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_lat_patch_vel[NUM_WHEELS];</span>
+<span id="L118"><span class="lineNum">     118</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_long_patch_vel[NUM_WHEELS];</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_vert_deflection[NUM_WHEELS];</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_susp_force[NUM_WHEELS];</span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_brake_pressure[NUM_WHEELS];</span>
+<span id="L122"><span class="lineNum">     122</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_rotation[NUM_WHEELS];</span>
+<span id="L123"><span class="lineNum">     123</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_steering;</span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_throttle;</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_brake;</span>
+<span id="L126"><span class="lineNum">     126</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_local_accel_x;</span>
+<span id="L127"><span class="lineNum">     127</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_local_accel_y;</span>
+<span id="L128"><span class="lineNum">     128</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_local_accel_z;</span>
+<span id="L129"><span class="lineNum">     129</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_local_rot_accel_y;</span>
+<span id="L130"><span class="lineNum">     130</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_local_rot_y;</span>
+<span id="L131"><span class="lineNum">     131</span>                 :             :     LMUFFB::Utils::HoltWintersFilter m_upsample_shaft_torque;</span>
 <span id="L132"><span class="lineNum">     132</span>                 :             : </span>
 <span id="L133"><span class="lineNum">     133</span>                 :             :     double m_prev_vert_deflection[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; </span>
 <span id="L134"><span class="lineNum">     134</span>                 :             :     double m_prev_vert_accel = 0.0; </span>
@@ -261,8 +261,8 @@
 <span id="L190"><span class="lineNum">     190</span>                 :             :     double m_sop_load_smoothed = 0.0; // New v0.7.121</span>
 <span id="L191"><span class="lineNum">     191</span>                 :             :     </span>
 <span id="L192"><span class="lineNum">     192</span>                 :             :     // Filter Instances (v0.4.41)</span>
-<span id="L193"><span class="lineNum">     193</span>                 :             :     LMUFFB::BiquadNotch m_notch_filter;</span>
-<span id="L194"><span class="lineNum">     194</span>                 :             :     LMUFFB::BiquadNotch m_static_notch_filter;</span>
+<span id="L193"><span class="lineNum">     193</span>                 :             :     LMUFFB::Utils::BiquadNotch m_notch_filter;</span>
+<span id="L194"><span class="lineNum">     194</span>                 :             :     LMUFFB::Utils::BiquadNotch m_static_notch_filter;</span>
 <span id="L195"><span class="lineNum">     195</span>                 :             : </span>
 <span id="L196"><span class="lineNum">     196</span>                 :             :     // Slope Detection Buffers (Circular) - v0.7.0</span>
 <span id="L197"><span class="lineNum">     197</span>                 :             :     static constexpr int SLOPE_BUFFER_MAX = 41;  </span>
