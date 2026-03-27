@@ -1,6 +1,6 @@
 #include "FFBDebugBuffer.h"
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}
 
@@ -24,4 +24,4 @@ size_t FFBDebugBuffer::Size() const {
     return m_buffer.size();
 }
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB

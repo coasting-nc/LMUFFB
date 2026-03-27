@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.265]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Transitioned leaf files in `src/ffb/` (`FFBSnapshot.h`, `FFBConfig.h`, `FFBDebugBuffer.h`, `FFBDebugBuffer.cpp`, `UpSampler.h`, `UpSampler.cpp`) to `namespace LMUFFB::FFB`.
+  - Added temporary bridge aliases in `namespace LMUFFB` to preserve backward compatibility for existing call sites.
+  - Resolved `uses undefined class` build error in `FFBEngine.h` caused by a shadowing forward declaration.
+  - Verified 100% test pass rate with the new namespaced components.
+  - Updated Unity Build Plan documentation to reflect these architectural changes.
+
 ## [0.7.264]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

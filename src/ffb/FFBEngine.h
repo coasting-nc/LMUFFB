@@ -45,7 +45,6 @@ namespace FFBEngineTests { class FFBEngineTestAccess; }
 namespace LMUFFB {
 
 struct Preset;
-class FFBDebugBuffer;
 
 // FFB Engine Class
 class FFBEngine {

@@ -1,7 +1,7 @@
 #include "UpSampler.h"
 #include <algorithm>
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 PolyphaseResampler::PolyphaseResampler() {
     Reset();
@@ -51,4 +51,4 @@ double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_phy
     return output;
 }
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB

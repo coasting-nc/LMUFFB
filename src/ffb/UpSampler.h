@@ -3,7 +3,7 @@
 
 #include <array>
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 /**
  * @brief Polyphase Resampler for 5/2 ratio (400Hz -> 1000Hz)
@@ -44,6 +44,11 @@ private:
     };
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB
+
+// Temporary bridge alias to keep existing call sites compiling
+namespace LMUFFB {
+    using PolyphaseResampler = LMUFFB::FFB::PolyphaseResampler;
+}
 
 #endif // UPSAMPLER_H

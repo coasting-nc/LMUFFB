@@ -5,7 +5,7 @@
 #include <mutex>
 #include "FFBSnapshot.h"
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 class FFBDebugBuffer {
 public:
@@ -23,6 +23,11 @@ private:
     size_t m_capacity;
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB
+
+// Temporary bridge alias to keep existing call sites compiling
+namespace LMUFFB {
+    using FFBDebugBuffer = LMUFFB::FFB::FFBDebugBuffer;
+}
 
 #endif // FFDBEBUG_BUFFER_H

@@ -209,7 +209,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Utils` subsystem. (v0.7.260)
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io). (v0.7.262)
-- [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`.
+- [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`. (In progress: `FFBSnapshot`, `FFBConfig`, `FFBDebugBuffer`, `UpSampler` migrated in v0.7.265)
 - [x] Transition `io/` files to `namespace LMUFFB::IO`. (v0.7.263)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `IO` subsystem. (v0.7.264)
 
@@ -217,7 +217,12 @@ This section tracks the progress made towards fully refactoring the main code an
 
 ## 7. Implementation Notes
 
-### 7.0 Implementation Notes (v0.7.264)
+### 7.0 Implementation Notes (v0.7.265)
+- **Encountered Issues:** The forward declaration of `class FFBDebugBuffer;` inside `namespace LMUFFB` in `FFBEngine.h` shadowed the new bridge alias to `LMUFFB::FFB::FFBDebugBuffer`. The forward declaration was removed since the header is included directly.
+- **Deviations from the Plan:** N/A. The leaf types (`FFBSnapshot`, `FFBConfig`, `FFBDebugBuffer`, `UpSampler`) were safely migrated first as planned.
+- **Suggestions for the Future:** Continue migrating the remaining `ffb/` files (`FFBSafetyMonitor`, `FFBMetadataManager`, `DirectInputFFB`, `FFBEngine`) to `LMUFFB::FFB`.
+
+### 7.1 Implementation Notes (v0.7.264)
 - **Encountered Issues:** None. The bulk replacement of the prefixed namespace references was handled easily across `src/` and `tests/`. No manual fixes for edge cases were needed. Build succeeded smoothly with no undefined references. A test failure was observed (`test_analyzer_bundling_integrity`), however it is related to Python analyzer files missing from the build output directory and entirely unrelated to the namespace migration.
 - **Deviations from the Plan:** Replaced occurrences `GameConnector` with `LMUFFB::IO::GameConnector` globally inside `src/` and `tests/` explicitly instead of adding a `using namespace LMUFFB::IO;` in the test files, to fulfill the "explicitly" criteria detailed in the objective.
 - **Suggestions for the Future:** Proceed with the last remaining sub-namespace migration: `src/ffb/` to `namespace LMUFFB::FFB`.
@@ -384,8 +389,8 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 Phase 6 `io/` migration to `LMUFFB::IO` is complete (v0.7.263). The only remaining sub-namespace migration is `src/ffb/` → `namespace LMUFFB::FFB`.
 
 ### Your Objectives for the Next PR:
-1. **Transition `src/ffb/` to `namespace LMUFFB::FFB`:**
-   - Migrate all headers and `.cpp` files in `src/ffb/` (`FFBEngine`, `FFBConfig`, `FFBSafetyMonitor`, `FFBMetadataManager`, `FFBDebugBuffer`, `FFBSnapshot`, `DirectInputFFB`, `UpSampler`) to `namespace LMUFFB::FFB`.
+1. **Transition remaining `src/ffb/` files to `namespace LMUFFB::FFB`:**
+   - Migrate remaining files (`FFBEngine`, `FFBSafetyMonitor`, `FFBMetadataManager`, `DirectInputFFB`) to `namespace LMUFFB::FFB`.
    - Add bridge aliases (`using FFBEngine = LMUFFB::FFB::FFBEngine;` etc.) in `namespace LMUFFB` to preserve existing call sites.
    - **Warning:** `FFBEngine` is a monolithic class with ~1900 lines and many internal cross-dependencies. Proceed incrementally — migrate leaf types (`FFBSnapshot`, `FFBDebugBuffer`) first, then work inward toward `FFBEngine`.
    - Maintain the "Include Rule" and "Using Placement Rule" during migration.

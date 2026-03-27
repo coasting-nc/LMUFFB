@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
+namespace LMUFFB::FFB {
+
 struct FFBSnapshot {
     // --- Header A: FFB Components (Outputs) ---
     float total_output;
@@ -83,5 +85,12 @@ struct FFBSnapshot {
     float gen_torque_rate;
     float physics_rate; // New v0.7.117 (Issue #217)
 };
+
+} // namespace LMUFFB::FFB
+
+// Temporary bridge alias to keep existing call sites compiling
+namespace LMUFFB {
+    using FFBSnapshot = LMUFFB::FFB::FFBSnapshot;
+}
 
 #endif // FFBSNAPSHOT_H
