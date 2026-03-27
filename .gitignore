@@ -61,3 +61,7 @@ test_*.log
 test_*.txt
 *.log
 src/core/GeneratedBuiltinPresets.h
+.specstory/statistics.json
+.specstory/history/2025-12-31_22-14-37Z-config-reordering-plan-implementation.md
+.specstory/history/2025-12-31_22-20-18Z-config-reordering-plan.md
+.specstory/history/2025-12-31_22-36-54Z-config-reordering-plan-implementation-review.md
