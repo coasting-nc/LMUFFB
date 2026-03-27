@@ -208,13 +208,21 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files with anonymous namespaces (Batch 1: core/gui). (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Utils` subsystem. (v0.7.260)
-- [ ] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io).
+- [x] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io). (v0.7.262)
 - [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`.
-- [ ] Transition `io/` files to `namespace LMUFFB::IO`.
+- [x] Transition `io/` files to `namespace LMUFFB::IO`. (v0.7.263)
 
 ---
 
 ## 7. Implementation Notes
+
+### 7.0 Implementation Notes (v0.7.263)
+- **Encountered Issues:** None. The migration was clean — bridge aliases ensured zero call site changes were required.
+- **Deviations from the Plan:** None. Both `GameConnector` and `RestApiProvider` were fully transitioned to `namespace LMUFFB::IO` as planned.
+- **Key Decisions:**
+  - Updated `friend class RestApiProviderTestAccess;` → `friend class ::LMUFFB::RestApiProviderTestAccess;` (fully-qualified) because `RestApiProviderTestAccess` lives in `namespace LMUFFB`, but `RestApiProvider` now lives in `namespace LMUFFB::IO`. This mirrors the existing pattern for `GameConnectorTestAccessor`.
+  - `ControlMode` (used unqualified in `GameConnector.cpp`) is defined in the global namespace in `LmuSharedMemoryWrapper.h`, so it is visible from inside `namespace LMUFFB::IO` via normal global-scope lookup — no qualification needed.
+- **Suggestions for the Future:** Transition `src/ffb/` files to `namespace LMUFFB::FFB`. This is the largest remaining migration and will require careful planning due to the monolithic `FFBEngine` class and its cross-cutting internal dependencies.
 
 ### 7.1 Implementation Notes (v0.7.260)
 - **Encountered Issues:**
@@ -367,14 +375,16 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 **When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253), `src/utils/` to `LMUFFB::Utils` (v0.7.256), and `src/physics/` to `LMUFFB::Physics` (v0.7.257). Sub-namespace migration for `src/gui/` (`LMUFFB::GUI`) is the next objective.
 
 ## 9. Next Steps: Post-Migration Cleanup and Hardening
-Phase 6 internal hardening is now complete for all major `.cpp` files. The next focus is alias cleanup and sub-namespace transitions for `ffb/` and `io/`.
+Phase 6 `io/` migration to `LMUFFB::IO` is complete (v0.7.263). The only remaining sub-namespace migration is `src/ffb/` → `namespace LMUFFB::FFB`.
 
 ### Your Objectives for the Next PR:
-1. **Continued Subsystem Migration (FFB & I/O):**
-   - Transition `src/ffb/` and `src/io/` modules to `namespace LMUFFB::FFB` and `namespace LMUFFB::IO` respectively.
+1. **Transition `src/ffb/` to `namespace LMUFFB::FFB`:**
+   - Migrate all headers and `.cpp` files in `src/ffb/` (`FFBEngine`, `FFBConfig`, `FFBSafetyMonitor`, `FFBMetadataManager`, `FFBDebugBuffer`, `FFBSnapshot`, `DirectInputFFB`, `UpSampler`) to `namespace LMUFFB::FFB`.
+   - Add bridge aliases (`using FFBEngine = LMUFFB::FFB::FFBEngine;` etc.) in `namespace LMUFFB` to preserve existing call sites.
+   - **Warning:** `FFBEngine` is a monolithic class with ~1900 lines and many internal cross-dependencies. Proceed incrementally — migrate leaf types (`FFBSnapshot`, `FFBDebugBuffer`) first, then work inward toward `FFBEngine`.
    - Maintain the "Include Rule" and "Using Placement Rule" during migration.
-3. **Extended Internal Linkage Audit (FFB & I/O Subsystems):**
-   - Conduct a systematic review of `.cpp` files in `src/ffb/` and `src/io/` to move internal helper functions and constants into anonymous namespaces.
+2. **Bridge Alias Cleanup for `src/io/`:**
+   - Once all consumer call sites have been updated to use `LMUFFB::IO::GameConnector` and `LMUFFB::IO::RestApiProvider` explicitly, remove the temporary bridge aliases from `GameConnector.h` and `RestApiProvider.h`.
 
 ### Critical Reminders for Phase 6
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.

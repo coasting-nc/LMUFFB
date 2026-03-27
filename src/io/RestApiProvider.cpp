@@ -12,7 +12,7 @@ using namespace LMUFFB::Logging;
 #pragma comment(lib, "wininet.lib")
 #endif
 
-namespace LMUFFB {
+namespace LMUFFB::IO {
 
 RestApiProvider& RestApiProvider::Get() {
     static RestApiProvider instance;
@@ -132,4 +132,4 @@ float RestApiProvider::ParseSteeringLock(const std::string& json) {
     return 0.0f;
 }
 
-} // namespace LMUFFB
+} // namespace LMUFFB::IO

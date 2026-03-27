@@ -7,7 +7,7 @@
 #include <thread>
 #include <optional>
 
-namespace LMUFFB {
+namespace LMUFFB::IO {
 
 class RestApiProvider {
 public:
@@ -34,7 +34,7 @@ private:
     void PerformRequest(int port);
     float ParseSteeringLock(const std::string& json);
 
-    friend class RestApiProviderTestAccess;
+    friend class ::LMUFFB::RestApiProviderTestAccess;
 
     std::atomic<bool> m_isRequesting{false};
     std::atomic<float> m_fallbackRangeDeg{0.0f};
@@ -43,6 +43,11 @@ private:
     std::thread m_requestThread;
 };
 
+} // namespace LMUFFB::IO
+
+// Bridge alias: keeps existing call sites (LMUFFB::RestApiProvider) compiling without changes
+namespace LMUFFB {
+    using RestApiProvider = LMUFFB::IO::RestApiProvider;
 } // namespace LMUFFB
 
 #endif // RESTAPIPROVIDER_H

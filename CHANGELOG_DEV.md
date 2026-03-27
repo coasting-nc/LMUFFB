@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.263]
+### Changed
+- **Unity Build Expansion (Phase 6 — `src/io/` Sub-namespace Migration to `LMUFFB::IO`)**:
+  - Transitioned `GameConnector` and `RestApiProvider` from `namespace LMUFFB` to `namespace LMUFFB::IO` in both their headers (`.h`) and implementations (`.cpp`).
+  - Added bridge aliases (`using GameConnector = LMUFFB::IO::GameConnector;` and `using RestApiProvider = LMUFFB::IO::RestApiProvider;`) inside `namespace LMUFFB` at the bottom of their respective headers, preserving 100% backward compatibility at all existing call sites in `FFBEngine.cpp`, `FFBMetadataManager.cpp`, and all test files.
+  - Updated the `friend` declaration in `RestApiProvider.h` from `friend class RestApiProviderTestAccess;` to `friend class ::LMUFFB::RestApiProviderTestAccess;` to use a fully-qualified name, since the provider now lives in `namespace LMUFFB::IO` while the test accessor lives in `namespace LMUFFB`.
+  - The `friend class ::FFBEngineTests::GameConnectorTestAccessor;` in `GameConnector.h` was already fully-qualified and required no change.
+  - The anonymous namespace inside `GameConnector.cpp` (containing `LEGACY_SHARED_MEMORY_NAME`) is now correctly scoped inside `namespace LMUFFB::IO { namespace {} }`, consistent with project Unity Build policy.
+  - Verified 100% test pass rate (633/633) with no regressions.
+
 ## [0.7.262]
 ### Changed
 - **Unity Build Hardening (Phase 6 — Internal Linkage Audit Batch 2: ffb/io)**:

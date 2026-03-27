@@ -11,7 +11,7 @@
 using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
 
-namespace LMUFFB {
+namespace LMUFFB::IO {
 
 namespace {
     constexpr const char* LEGACY_SHARED_MEMORY_NAME = "$rFactor2SMMP_Telemetry$";
@@ -498,4 +498,4 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     _LogTransitions(current);           // Phase 2: log any changes
 }
 
-} // namespace LMUFFB
+} // namespace LMUFFB::IO
