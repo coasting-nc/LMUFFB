@@ -264,7 +264,7 @@ public:
     Logging::ChannelStats s_lat_g;
     std::chrono::steady_clock::time_point last_log_time;
 
-    LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
+    FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class ::FFBEngineTests::FFBEngineTestAccess;
     friend class ::LMUFFB::Config;
