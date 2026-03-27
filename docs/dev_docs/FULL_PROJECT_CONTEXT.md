@@ -16,16 +16,26 @@ It is generated automatically to provide complete context for LLM queries.
 ```cpp
 #include "Config.h"
 #include "Version.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <string_view>
+#include <optional>
+#include "../gui/resource.h"
+#else
 #include "GeneratedBuiltinPresets.h"
+#endif
 #include "logging/Logger.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
 #include <mutex>
-#include <toml.hpp>
+#include <toml++/toml.hpp>
 #include <filesystem>
 
+using namespace LMUFFB::Logging;
+
+namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;
 
 bool Config::m_always_on_top = true;
@@ -34,6 +44,7 @@ std::string Config::m_last_preset_name = "Default";
 std::string Config::m_config_path = "config.toml";
 bool Config::m_auto_start_logging = false;
 std::string Config::m_log_path = "logs/";
+std::string Config::m_user_presets_path = "user_presets";
 
 // Window Geometry Defaults (v0.5.5)
 int Config::win_pos_x = 100;
@@ -50,8 +61,35 @@ std::atomic<bool> Config::m_needs_save{ false };
 
 std::vector<Preset> Config::presets;
 
+namespace {
+
+#ifdef _WIN32
+// Helper to safely load raw binary/text data from a Windows PE resource
+std::optional<std::string_view> LoadTextResource(int resourceId) {
+    HMODULE hModule = GetModuleHandle(nullptr);
+    
+    // Find the resource by ID and type (RT_RCDATA)
+    HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(resourceId), RT_RCDATA);
+    if (!hResource) return std::nullopt;
+
+    // Load it into memory
+    HGLOBAL hMemory = LoadResource(hModule, hResource);
+    if (!hMemory) return std::nullopt;
+
+    // Get the exact size in bytes
+    DWORD dwSize = SizeofResource(hModule, hResource);
+    
+    // Get the pointer to the first byte
+    void* pData = LockResource(hMemory);
+    if (!pData || dwSize == 0) return std::nullopt;
+
+    // Return a string_view (Pointer + Size). No null-terminator required!
+    return std::string_view(static_cast<const char*>(pData), dwSize);
+}
+#endif
+
 // Helper to compare semantic version strings
-static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
+bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
     if (v1.empty()) return true;
     if (v2.empty()) return false;
 
@@ -65,9 +103,9 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
         if (!has1 && !has2) return true;
 
         int val1 = 0;
-        try { if (has1) val1 = std::stoi(segment1); } catch (...) {}
+        try { if (has1) val1 = std::stoi(segment1); } catch (...) { (void)0; }
         int val2 = 0;
-        try { if (has2) val2 = std::stoi(segment2); } catch (...) {}
+        try { if (has2) val2 = std::stoi(segment2); } catch (...) { (void)0; }
 
         if (val1 < val2) return true;
         if (val1 > val2) return false;
@@ -79,7 +117,7 @@ static bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
 
 // --- TOML Serialization Helpers ---
 
-static toml::table PresetToToml(const Preset& p) {
+toml::table PresetToToml(const Preset& p) {
     toml::table tbl;
 
     tbl.insert("name", p.name);
@@ -231,7 +269,7 @@ static toml::table PresetToToml(const Preset& p) {
     return tbl;
 }
 
-static void TomlToPreset(const toml::table& tbl, Preset& p) {
+void TomlToPreset(const toml::table& tbl, Preset& p) {
     auto baseline = p; // Keep defaults for missing keys
 
     if (auto val = tbl["name"].as_string()) p.name = val->get();
@@ -389,7 +427,7 @@ static void TomlToPreset(const toml::table& tbl, Preset& p) {
     }
 }
 
-static std::string SanitizeFilename(std::string name) {
+std::string SanitizeFilename(std::string name) {
     std::string out = name;
     // Replace spaces with underscores
     std::replace(out.begin(), out.end(), ' ', '_');
@@ -401,9 +439,9 @@ static std::string SanitizeFilename(std::string name) {
     return out;
 }
 
-static void SaveUserPresetFile(const Preset& p) {
-    std::string filename = "user_presets/" + SanitizeFilename(p.name) + ".toml";
-    std::filesystem::create_directories("user_presets");
+void SaveUserPresetFile(const Preset& p) {
+    std::string filename = Config::m_user_presets_path + "/" + SanitizeFilename(p.name) + ".toml";
+    std::filesystem::create_directories(Config::m_user_presets_path);
     std::ofstream file(filename);
     if (file.is_open()) {
         file << PresetToToml(p);
@@ -411,6 +449,32 @@ static void SaveUserPresetFile(const Preset& p) {
 }
 
 // --- End TOML Serialization Helpers ---
+
+void FinalizePreset(Preset& p, const std::string& name, const std::string& version, bool hack, float hack_val) {
+    p.name = name;
+    if (!version.empty()) p.app_version = version;
+
+    if (hack && IsVersionLessEqual(version, "0.7.66")) {
+        p.general.gain *= (15.0f / hack_val);
+    }
+    // Apply Issue #37 reset if necessary
+    if (IsVersionLessEqual(version, "0.7.146")) {
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+    }
+    p.Validate();
+    // Add or Update
+    bool found = false;
+    for (auto& existing : Config::presets) {
+        if (existing.name == name && !existing.is_builtin) {
+            existing = p;
+            found = true;
+            break;
+        }
+    }
+    if (!found) Config::presets.push_back(p);
+}
+
+} // anonymous namespace
 
 // --- Legacy INI Parsing Helpers (Phase 2 Migration Path) ---
 
@@ -810,30 +874,6 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
 
 // --- End Legacy INI Helpers ---
 
-static void FinalizePreset(Preset& p, const std::string& name, const std::string& version, bool hack, float hack_val) {
-    p.name = name;
-    if (!version.empty()) p.app_version = version;
-    
-    if (hack && IsVersionLessEqual(version, "0.7.66")) {
-        p.general.gain *= (15.0f / hack_val);
-    }
-    // Apply Issue #37 reset if necessary
-    if (IsVersionLessEqual(version, "0.7.146")) {
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-    }
-    p.Validate();
-    // Add or Update
-    bool found = false;
-    for (auto& existing : Config::presets) {
-        if (existing.name == name && !existing.is_builtin) {
-            existing = p;
-            found = true;
-            break;
-        }
-    }
-    if (!found) Config::presets.push_back(p);
-}
-
 void Config::Load(FFBEngine& engine, const std::string& filename) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
@@ -898,6 +938,12 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 if (auto val = (*sys)["show_graphs"].value<bool>()) show_graphs = *val;
                 if (auto val = (*sys)["auto_start_logging"].value<bool>()) m_auto_start_logging = *val;
                 if (auto val = (*sys)["invert_force"].value<bool>()) engine.m_invert_force = *val;
+                if (auto val = (*sys)["session_peak_torque"].value<double>()) {
+                    if (std::isfinite(*val) && *val > 0.01) engine.m_session_peak_torque = *val;
+                }
+                if (auto val = (*sys)["auto_peak_front_load"].value<double>()) {
+                    if (std::isfinite(*val) && *val > 10.0) engine.m_auto_peak_front_load = *val;
+                }
             }
 
             Preset p("Temporary", false);
@@ -918,7 +964,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 }
             }
         }
-    } catch (...) {}
+    } catch (...) { (void)0; }
 
     if (!toml_loaded) {
         MigrateFromLegacyIni(engine, final_path);
@@ -963,7 +1009,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         {"show_graphs", show_graphs},
         {"auto_start_logging", m_auto_start_logging},
         {"log_path", m_log_path},
-        {"invert_force", engine.m_invert_force}
+        {"invert_force", engine.m_invert_force},
+        {"session_peak_torque", engine.m_session_peak_torque},
+        {"auto_peak_front_load", engine.m_auto_peak_front_load}
     });
 
     // Merge categories from engine config into the main table
@@ -996,7 +1044,62 @@ void Config::LoadPresets() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
     presets.clear();
 
-    // 1. Load Built-in Presets from embedded BUILTIN_PRESETS map
+#ifdef _WIN32
+    // 1. Load Built-in Presets from Windows Resources
+    static const std::vector<std::pair<int, std::string>> resource_presets = {
+        { IDR_PRESET_DEFAULT, "Default" },
+        { IDR_PRESET_FANATEC_CSL_DD__GT_DD_PRO, "Fanatec CSL DD / GT DD Pro" },
+        { IDR_PRESET_FANATEC_PODIUM_DD1DD2, "Fanatec Podium DD1/DD2" },
+        { IDR_PRESET_GM___YAW_KICK_DD_21_NM__MOZA_R21_ULTRA_, "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)" },
+        { IDR_PRESET_GM_DD_21_NM__MOZA_R21_ULTRA_, "GM DD 21 Nm (Moza R21 Ultra)" },
+        { IDR_PRESET_GT3_DD_15_NM__SIMAGIC_ALPHA_, "GT3 DD 15 Nm (Simagic Alpha)" },
+        { IDR_PRESET_GUIDE_BRAKING_LOCKUP, "Guide: Braking & Lockup" },
+        { IDR_PRESET_GUIDE_GYROSCOPIC_DAMPING, "Guide: Gyroscopic Damping" },
+        { IDR_PRESET_GUIDE_OVERSTEER__REAR_GRIP_, "Guide: Oversteer (Rear Grip)" },
+        { IDR_PRESET_GUIDE_SLIDE_TEXTURE__SCRUB_, "Guide: Slide & Texture (Scrub)" },
+        { IDR_PRESET_GUIDE_SOP_YAW__KICK_, "Guide: SoP & Yaw (Kick)" },
+        { IDR_PRESET_GUIDE_TRACTION_LOSS__SPIN_, "Guide: Traction Loss (Spin)" },
+        { IDR_PRESET_GUIDE_UNDERSTEER__FRONT_GRIP_, "Guide: Understeer (Front Grip)" },
+        { IDR_PRESET_LMPXHY_DD_15_NM__SIMAGIC_ALPHA_, "LMPx/HY DD 15 Nm (Simagic Alpha)" },
+        { IDR_PRESET_LOGITECH_G25G27G29G920, "Logitech G25/G27/G29/G920" },
+        { IDR_PRESET_MOZA_R5R9R16R21, "Moza R5 / R9 / R16 / R21" },
+        { IDR_PRESET_SIMAGIC_ALPHAALPHA_MINIALPHA_U, "Simagic Alpha / Alpha Mini / Alpha U" },
+        { IDR_PRESET_SIMUCUBE_2_SPORTPROULTIMATE, "Simucube 2 Sport / Pro / Ultimate" },
+        { IDR_PRESET_T300_V0_7_164, "Thrustmaster T300 (v0.7.164 Optimized)" },
+        { IDR_PRESET_TEST_GAME_BASE_FFB_ONLY, "Test: Game Base FFB Only" },
+        { IDR_PRESET_TEST_NO_EFFECTS, "Test: No Effects" },
+        { IDR_PRESET_TEST_REAR_ALIGN_TORQUE_ONLY, "Test: Rear Align Torque Only" },
+        { IDR_PRESET_TEST_SLIDE_TEXTURE_ONLY, "Test: Slide & Texture Only" },
+        { IDR_PRESET_TEST_SOP_BASE_ONLY, "Test: SoP Base Only" },
+        { IDR_PRESET_TEST_SOP_ONLY, "Test: SoP Only" },
+        { IDR_PRESET_TEST_TEXTURES_ONLY, "Test: Textures Only" },
+        { IDR_PRESET_TEST_UNDERSTEER_ONLY, "Test: Understeer Only" },
+        { IDR_PRESET_TEST_YAW_KICK_ONLY, "Test: Yaw Kick Only" },
+        { IDR_PRESET_THRUSTMASTER_T_GTT_GT_II, "Thrustmaster T-GT / T-GT II" },
+        { IDR_PRESET_THRUSTMASTER_T300TX, "Thrustmaster T300 / TX" },
+        { IDR_PRESET_THRUSTMASTER_TS_PCTS_XW, "Thrustmaster TS-PC / TS-XW" }
+    };
+
+    for (const auto& [resId, displayName] : resource_presets) {
+        auto content = LoadTextResource(resId);
+        if (content) {
+            try {
+                toml::table tbl = toml::parse(*content);
+                Preset p("Unnamed", true);
+                TomlToPreset(tbl, p);
+                if (p.name == "Unnamed") {
+                    p.name = displayName;
+                }
+                p.is_builtin = true;
+                p.Validate();
+                presets.push_back(p);
+            } catch (const std::exception& e) {
+                Logger::Get().Log("[Config] Error parsing built-in preset resource %d: %s", resId, e.what());
+            }
+        }
+    }
+#else
+    // 1. Load Built-in Presets from embedded BUILTIN_PRESETS map (Linux)
     for (auto const& [name, content] : BUILTIN_PRESETS) {
         try {
             toml::table tbl = toml::parse(content);
@@ -1014,11 +1117,12 @@ void Config::LoadPresets() {
             Logger::Get().Log("[Config] Error parsing embedded built-in preset %s: %s", std::string(name).c_str(), e.what());
         }
     }
+#endif
 
-    // 2. Load User Presets from user_presets/ directory
-    std::filesystem::create_directories("user_presets");
+    // 2. Load User Presets from m_user_presets_path directory
+    std::filesystem::create_directories(m_user_presets_path);
     try {
-        for (const auto& entry : std::filesystem::directory_iterator("user_presets")) {
+        for (const auto& entry : std::filesystem::directory_iterator(m_user_presets_path)) {
             if (entry.is_regular_file() && entry.path().extension() == ".toml") {
                 try {
                     toml::table tbl = toml::parse_file(entry.path().string());
@@ -1047,7 +1151,7 @@ void Config::LoadPresets() {
                 }
             }
         }
-    } catch (...) {}
+    } catch (...) { (void)0; }
 
     // 3. Deterministic Sorting: Built-ins first, then "Default" first within that group, then alphabetical.
     std::sort(presets.begin(), presets.end(), [](const Preset& a, const Preset& b) {
@@ -1086,7 +1190,7 @@ void Config::DeletePreset(int index, const FFBEngine& engine) {
     if (presets[index].is_builtin) return;
 
     std::string name = presets[index].name;
-    std::string filename = "user_presets/" + SanitizeFilename(name) + ".toml";
+    std::string filename = m_user_presets_path + "/" + SanitizeFilename(name) + ".toml";
     if (std::filesystem::exists(filename)) {
         std::filesystem::remove(filename);
     }
@@ -1210,7 +1314,7 @@ void Config::MigrateFromLegacyIni(FFBEngine& engine, const std::string& filename
                 bool dummy_needs_save = false;
                 ParsePresetLine(key + "=" + value, current_preset, config_version, dummy_needs_save, legacy_torque_hack, legacy_torque_val);
             } else if (in_static_loads) {
-                try { SetSavedStaticLoad(key, std::stod(value)); } catch (...) {}
+                try { SetSavedStaticLoad(key, std::stod(value)); } catch (...) { (void)0; }
             } else {
                 if (key == "ini_version") { config_version = value; }
                 bool ns = m_needs_save.load();
@@ -1288,7 +1392,7 @@ bool Config::ImportPreset(const std::string& filename, const FFBEngine& engine) 
             SaveUserPresetFile(p);
             presets.push_back(p);
             return true;
-        } catch (...) {}
+        } catch (...) { (void)0; }
     }
 
     // Fallback to legacy INI import
@@ -1350,6 +1454,8 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
     }
 }
 
+} // namespace LMUFFB
+
 ```
 
 # File: src\core\Config.h
@@ -1365,6 +1471,8 @@ void Config::ApplyPreset(int index, FFBEngine& engine) {
 #include <map>
 #include <atomic>
 #include "Version.h"
+
+namespace LMUFFB {
 
 struct Preset {
     std::string name;
@@ -1678,6 +1786,7 @@ struct Preset {
 class Config {
 public:
     static std::string m_config_path; // Default: "config.toml"
+    static std::string m_user_presets_path; // Default: "user_presets"
     static void Save(const FFBEngine& engine, const std::string& filename = "");
     static void Load(FFBEngine& engine, const std::string& filename = "");
 
@@ -1746,8 +1855,7 @@ private:
     static void WritePresetFields(std::ofstream& file, const Preset& p);
 };
 
-
-
+} // namespace LMUFFB
 
 #endif
 
@@ -1768,83 +1876,14 @@ private:
 inline const std::map<std::string_view, std::string_view> BUILTIN_PRESETS = {
     {"Default", R"PRESET(name = "Default"
 [General]
-# Standard defaults
-)PRESET"},
+# Standard defaults)PRESET"},
     {"Fanatec_CSL_DD__GT_DD_Pro", R"PRESET(name = "Fanatec CSL DD / GT DD Pro"
 [General]
-# Standard defaults
-)PRESET"},
+# Standard defaults)PRESET"},
     {"Fanatec_Podium_DD1DD2", R"PRESET(name = "Fanatec Podium DD1/DD2"
 [General]
-# Standard defaults
-)PRESET"},
-    {"GM_+_Yaw_Kick_DD_21_Nm_(Moza_R21_Ultra)", R"PRESET(name = "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)"
-[General]
-gain = 1.454
-wheelbase_max_nm = 21.0
-target_rim_nm = 12.0
-min_force = 0.0
-[FrontAxle]
-steering_shaft_gain = 1.989
-steering_shaft_smoothing = 0.0
-understeer_effect = 0.638
-flatspot_suppression = true
-notch_q = 0.57
-flatspot_strength = 1.0
-static_notch_enabled = false
-static_notch_freq = 11.0
-static_notch_width = 2.0
-[RearAxle]
-oversteer_boost = 0.0
-sop_effect = 0.0
-rear_align_effect = 0.29
-sop_yaw_gain = 0.333
-yaw_kick_threshold = 0.0
-yaw_accel_smoothing = 0.003
-sop_smoothing_factor = 0.0
-sop_scale = 0.89
-[GripEstimation]
-slip_angle_smoothing = 0.002
-chassis_inertia_smoothing = 0.0
-optimal_slip_angle = 0.1
-optimal_slip_ratio = 0.12
-[Braking]
-lockup_enabled = true
-lockup_gain = 0.977
-brake_load_cap = 81.0
-lockup_freq_scale = 1.0
-lockup_gamma = 1.0
-lockup_start_pct = 1.0
-lockup_full_pct = 7.5
-lockup_prediction_sens = 10.0
-lockup_bump_reject = 0.1
-lockup_rear_boost = 1.0
-abs_pulse_enabled = false
-abs_gain = 2.1
-abs_freq = 25.5
-[Vibration]
-texture_load_cap = 1.5
-slide_enabled = false
-slide_gain = 0.0
-slide_freq = 1.47
-road_enabled = true
-road_gain = 0.0
-spin_enabled = true
-spin_gain = 0.462185
-spin_freq_scale = 1.8
-scrub_drag_gain = 0.333
-bottoming_enabled = true
-bottoming_gain = 1.0
-bottoming_method = 1
-[Advanced]
-gyro_gain = 0.0
-gyro_smoothing = 0.0
-understeer_affects_sop = false
-road_fallback_scale = 0.05
-speed_gate_lower = 1.0
-speed_gate_upper = 5.0
-)PRESET"},
-    {"GM_DD_21_Nm_(Moza_R21_Ultra)", R"PRESET(name = "GM DD 21 Nm (Moza R21 Ultra)"
+# Standard defaults)PRESET"},
+    {"GM_DD_21_Nm__Moza_R21_Ultra_", R"PRESET(name = "GM DD 21 Nm (Moza R21 Ultra)"
 [General]
 gain = 1.454
 wheelbase_max_nm = 21.0
@@ -1908,9 +1947,73 @@ gyro_smoothing = 0.0
 understeer_affects_sop = false
 road_fallback_scale = 0.05
 speed_gate_lower = 1.0
-speed_gate_upper = 5.0
-)PRESET"},
-    {"GT3_DD_15_Nm_(Simagic_Alpha)", R"PRESET(name = "GT3 DD 15 Nm (Simagic Alpha)"
+speed_gate_upper = 5.0)PRESET"},
+    {"GM___Yaw_Kick_DD_21_Nm__Moza_R21_Ultra_", R"PRESET(name = "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)"
+[General]
+gain = 1.454
+wheelbase_max_nm = 21.0
+target_rim_nm = 12.0
+min_force = 0.0
+[FrontAxle]
+steering_shaft_gain = 1.989
+steering_shaft_smoothing = 0.0
+understeer_effect = 0.638
+flatspot_suppression = true
+notch_q = 0.57
+flatspot_strength = 1.0
+static_notch_enabled = false
+static_notch_freq = 11.0
+static_notch_width = 2.0
+[RearAxle]
+oversteer_boost = 0.0
+sop_effect = 0.0
+rear_align_effect = 0.29
+sop_yaw_gain = 0.333
+yaw_kick_threshold = 0.0
+yaw_accel_smoothing = 0.003
+sop_smoothing_factor = 0.0
+sop_scale = 0.89
+[GripEstimation]
+slip_angle_smoothing = 0.002
+chassis_inertia_smoothing = 0.0
+optimal_slip_angle = 0.1
+optimal_slip_ratio = 0.12
+[Braking]
+lockup_enabled = true
+lockup_gain = 0.977
+brake_load_cap = 81.0
+lockup_freq_scale = 1.0
+lockup_gamma = 1.0
+lockup_start_pct = 1.0
+lockup_full_pct = 7.5
+lockup_prediction_sens = 10.0
+lockup_bump_reject = 0.1
+lockup_rear_boost = 1.0
+abs_pulse_enabled = false
+abs_gain = 2.1
+abs_freq = 25.5
+[Vibration]
+texture_load_cap = 1.5
+slide_enabled = false
+slide_gain = 0.0
+slide_freq = 1.47
+road_enabled = true
+road_gain = 0.0
+spin_enabled = true
+spin_gain = 0.462185
+spin_freq_scale = 1.8
+scrub_drag_gain = 0.333
+bottoming_enabled = true
+bottoming_gain = 1.0
+bottoming_method = 1
+[Advanced]
+gyro_gain = 0.0
+gyro_smoothing = 0.0
+understeer_affects_sop = false
+road_fallback_scale = 0.05
+speed_gate_lower = 1.0
+speed_gate_upper = 5.0)PRESET"},
+    {"GT3_DD_15_Nm__Simagic_Alpha_", R"PRESET(name = "GT3 DD 15 Nm (Simagic Alpha)"
 [General]
 gain = 1.0
 wheelbase_max_nm = 15.0
@@ -1974,8 +2077,7 @@ gyro_smoothing = 0.0
 understeer_affects_sop = false
 road_fallback_scale = 0.05
 speed_gate_lower = 1.0
-speed_gate_upper = 5.0
-)PRESET"},
+speed_gate_upper = 5.0)PRESET"},
     {"Guide_Braking_Lockup", R"PRESET(name = "Guide: Braking Lockup"
 [General]
 gain = 1.0
@@ -2001,8 +2103,7 @@ bottoming_enabled = false
 bottoming_gain = 0.0
 bottoming_method = 0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
+slip_angle_smoothing = 0.015)PRESET"},
     {"Guide_Gyroscopic_Damping", R"PRESET(name = "Guide: Gyroscopic Damping"
 [General]
 gain = 1.0
@@ -2031,9 +2132,8 @@ bottoming_enabled = false
 bottoming_gain = 0.0
 bottoming_method = 0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
-    {"Guide_Oversteer_(Rear_Grip)", R"PRESET(name = "Guide: Oversteer (Rear Grip)"
+slip_angle_smoothing = 0.015)PRESET"},
+    {"Guide_Oversteer__Rear_Grip_", R"PRESET(name = "Guide: Oversteer (Rear Grip)"
 [General]
 gain = 1.0
 [FrontAxle]
@@ -2062,9 +2162,8 @@ bottoming_enabled = false
 bottoming_gain = 0.0
 bottoming_method = 0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
-    {"Guide_Slide_Texture_(Scrub)", R"PRESET(name = "Guide: Slide Texture (Scrub)"
+slip_angle_smoothing = 0.015)PRESET"},
+    {"Guide_Slide_Texture__Scrub_", R"PRESET(name = "Guide: Slide Texture (Scrub)"
 [General]
 gain = 1.0
 [FrontAxle]
@@ -2090,9 +2189,8 @@ bottoming_method = 0
 lockup_enabled = false
 lockup_gain = 0.0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
-    {"Guide_SoP_Yaw_(Kick)", R"PRESET(name = "Guide: SoP Yaw (Kick)"
+slip_angle_smoothing = 0.015)PRESET"},
+    {"Guide_SoP_Yaw__Kick_", R"PRESET(name = "Guide: SoP Yaw (Kick)"
 [General]
 gain = 1.0
 [FrontAxle]
@@ -2120,9 +2218,8 @@ bottoming_enabled = false
 bottoming_gain = 0.0
 bottoming_method = 0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
-    {"Guide_Traction_Loss_(Spin)", R"PRESET(name = "Guide: Traction Loss (Spin)"
+slip_angle_smoothing = 0.015)PRESET"},
+    {"Guide_Traction_Loss__Spin_", R"PRESET(name = "Guide: Traction Loss (Spin)"
 [General]
 gain = 1.0
 [FrontAxle]
@@ -2145,9 +2242,8 @@ bottoming_enabled = false
 bottoming_gain = 0.0
 bottoming_method = 0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
-    {"Guide_Understeer_(Front_Grip)", R"PRESET(name = "Guide: Understeer (Front Grip)"
+slip_angle_smoothing = 0.015)PRESET"},
+    {"Guide_Understeer__Front_Grip_", R"PRESET(name = "Guide: Understeer (Front Grip)"
 [General]
 gain = 1.0
 [FrontAxle]
@@ -2175,9 +2271,8 @@ bottoming_enabled = false
 bottoming_gain = 0.0
 bottoming_method = 0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
-    {"LMPxHY_DD_15_Nm_(Simagic_Alpha)", R"PRESET(name = "LMPx/HY DD 15 Nm (Simagic Alpha)"
+slip_angle_smoothing = 0.015)PRESET"},
+    {"LMPxHY_DD_15_Nm__Simagic_Alpha_", R"PRESET(name = "LMPx/HY DD 15 Nm (Simagic Alpha)"
 [General]
 gain = 1.0
 wheelbase_max_nm = 15.0
@@ -2241,25 +2336,20 @@ gyro_smoothing = 0.003
 understeer_affects_sop = false
 road_fallback_scale = 0.05
 speed_gate_lower = 1.0
-speed_gate_upper = 5.0
-)PRESET"},
+speed_gate_upper = 5.0)PRESET"},
     {"Logitech_G25G27G29G920", R"PRESET(name = "Logitech G25/G27/G29/G920"
 [General]
-# Standard defaults for Logitech gear-driven wheels
-)PRESET"},
+# Standard defaults for Logitech gear-driven wheels)PRESET"},
     {"Moza_R5R9R16R21", R"PRESET(name = "Moza R5/R9/R16/R21"
 [General]
-# Standard defaults
-)PRESET"},
+# Standard defaults)PRESET"},
     {"Simagic_AlphaAlpha_MiniAlpha_U", R"PRESET(name = "Simagic Alpha/Alpha Mini/Alpha U"
 [General]
-# Standard defaults
-)PRESET"},
+# Standard defaults)PRESET"},
     {"Simucube_2_SportProUltimate", R"PRESET(name = "Simucube 2 Sport/Pro/Ultimate"
 [General]
-# Standard defaults
-)PRESET"},
-    {"T300_v0.7.164", R"PRESET(name = "T300 v0.7.164"
+# Standard defaults)PRESET"},
+    {"T300_v0_7_164", R"PRESET(name = "T300 v0.7.164"
 app_version = "0.7.165"
 [General]
 gain = 0.559471
@@ -2375,8 +2465,7 @@ spike_detection_threshold = 500.0
 immediate_spike_threshold = 1500.0
 slew_full_scale_time_s = 1.0
 stutter_safety_enabled = false
-stutter_threshold = 1.5
-)PRESET"},
+stutter_threshold = 1.5)PRESET"},
     {"Test_Game_Base_FFB_Only", R"PRESET(name = "Test: Game Base FFB Only"
 [FrontAxle]
 understeer_effect = 0.0
@@ -2392,8 +2481,7 @@ slide_enabled = false
 slide_gain = 0.0
 bottoming_enabled = false
 bottoming_gain = 0.0
-bottoming_method = 0
-)PRESET"},
+bottoming_method = 0)PRESET"},
     {"Test_No_Effects", R"PRESET(name = "Test: No Effects"
 [General]
 gain = 1.0
@@ -2410,8 +2498,7 @@ slide_enabled = false
 slide_gain = 0.0
 bottoming_enabled = false
 bottoming_gain = 0.0
-bottoming_method = 0
-)PRESET"},
+bottoming_method = 0)PRESET"},
     {"Test_Rear_Align_Torque_Only", R"PRESET(name = "Test: Rear Align Torque Only"
 [General]
 gain = 1.0
@@ -2429,8 +2516,7 @@ slide_enabled = false
 slide_gain = 0.0
 bottoming_enabled = false
 bottoming_gain = 0.0
-bottoming_method = 0
-)PRESET"},
+bottoming_method = 0)PRESET"},
     {"Test_Slide_Texture_Only", R"PRESET(name = "Test: Slide Texture Only"
 [General]
 gain = 1.0
@@ -2448,8 +2534,7 @@ slide_gain = 0.39
 slide_freq = 1.0
 bottoming_enabled = false
 bottoming_gain = 0.0
-bottoming_method = 0
-)PRESET"},
+bottoming_method = 0)PRESET"},
     {"Test_SoP_Base_Only", R"PRESET(name = "Test: SoP Base Only"
 [General]
 gain = 1.0
@@ -2467,8 +2552,7 @@ slide_enabled = false
 slide_gain = 0.0
 bottoming_enabled = false
 bottoming_gain = 0.0
-bottoming_method = 0
-)PRESET"},
+bottoming_method = 0)PRESET"},
     {"Test_SoP_Only", R"PRESET(name = "Test: SoP Only"
 [FrontAxle]
 understeer_effect = 0.0
@@ -2485,8 +2569,7 @@ slide_enabled = false
 slide_gain = 0.0
 bottoming_enabled = false
 bottoming_gain = 0.0
-bottoming_method = 0
-)PRESET"},
+bottoming_method = 0)PRESET"},
     {"Test_Textures_Only", R"PRESET(name = "Test: Textures Only"
 [FrontAxle]
 understeer_effect = 0.0
@@ -2509,8 +2592,7 @@ road_enabled = true
 road_gain = 1.0
 bottoming_enabled = true
 bottoming_gain = 1.0
-bottoming_method = 0
-)PRESET"},
+bottoming_method = 0)PRESET"},
     {"Test_Understeer_Only", R"PRESET(name = "Test: Understeer Only"
 [FrontAxle]
 understeer_effect = 0.61
@@ -2544,8 +2626,7 @@ abs_gain = 0.0
 [GripEstimation]
 slip_angle_smoothing = 0.015
 optimal_slip_angle = 0.1
-optimal_slip_ratio = 0.12
-)PRESET"},
+optimal_slip_ratio = 0.12)PRESET"},
     {"Test_Yaw_Kick_Only", R"PRESET(name = "Test: Yaw Kick Only"
 [RearAxle]
 sop_yaw_gain = 0.386555
@@ -2577,22 +2658,18 @@ lockup_gain = 0.0
 abs_pulse_enabled = false
 abs_gain = 0.0
 [GripEstimation]
-slip_angle_smoothing = 0.015
-)PRESET"},
-    {"Thrustmaster_T-GTT-GT_II", R"PRESET(name = "Thrustmaster T-GT/T-GT II"
-[General]
-# Standard defaults
-)PRESET"},
+slip_angle_smoothing = 0.015)PRESET"},
     {"Thrustmaster_T300TX", R"PRESET(name = "Thrustmaster T300/TX"
 [General]
 min_force = 0.08
 [FrontAxle]
-steering_shaft_smoothing = 0.15
-)PRESET"},
-    {"Thrustmaster_TS-PCTS-XW", R"PRESET(name = "Thrustmaster TS-PC/TS-XW"
+steering_shaft_smoothing = 0.15)PRESET"},
+    {"Thrustmaster_TS_PCTS_XW", R"PRESET(name = "Thrustmaster TS-PC/TS-XW"
 [General]
-# Standard defaults
-)PRESET"}
+# Standard defaults)PRESET"},
+    {"Thrustmaster_T_GTT_GT_II", R"PRESET(name = "Thrustmaster T-GT/T-GT II"
+[General]
+# Standard defaults)PRESET"}
 };
 
 ```
@@ -2609,6 +2686,9 @@ steering_shaft_smoothing = 0.15
 #include <algorithm>
 #include <thread>
 #include <chrono>
+#include <optional>
+#include <atomic>
+#include <mutex>
 
 #include "FFBEngine.h"
 #include "GuiLayer.h"
@@ -2619,13 +2699,30 @@ steering_shaft_smoothing = 0.15
 #include "Logger.h"    // Added Logger
 #include "RateMonitor.h"
 #include "HealthMonitor.h"
-#include "UpSampler.h"
-#include "TimeUtils.h"
-#include <optional>
-#include <atomic>
-#include <mutex>
+#include "ffb/UpSampler.h"
+#include "utils/TimeUtils.h"
+#include "logging/ChannelMonitor.h"
 
-// --- Helper for Testability ---
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+using namespace LMUFFB::Physics;
+using namespace LMUFFB::GUI;
+
+namespace LMUFFB {
+
+namespace {
+    // §2.2 Named constants (replaces magic numbers in FFBThread / lmuffb_app_main)
+    constexpr int    kFFBTargetHz          = 1000;   // Target FFB loop frequency (Hz)
+    constexpr int    kPhysicsUpsampleM     = 2;      // Decimation factor  (M in 5/2 polyphase ratio)
+    constexpr int    kPhysicsUpsampleL     = 5;      // Interpolation factor (L in 5/2 polyphase ratio)
+    constexpr double kPhysicsTimestepSec   = 0.0025; // 1 / (kFFBTargetHz * kPhysicsUpsampleM / kPhysicsUpsampleL) = 1/400 Hz
+    constexpr int    kStaleThresholdMs     = 100;    // Shared-memory staleness limit (ms)
+    constexpr int    kMaxVehicleIndex      = 104;    // Game-imposed upper bound on vehicle array index
+    constexpr int    kHealthWarnCooldownS  = 60;     // Minimum seconds between health-rate warnings
+    constexpr int    kGuiPeriodMs          = 16;     // GUI loop sleep period (ms, ≈60 Hz)
+} // anonymous namespace
+
+// --- Helper for Testability --- (Exposed for units tests)
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
     info.app_version = LMUFFB_VERSION;
     info.vehicle_name = scoring.mVehicleName;
@@ -2645,8 +2742,6 @@ void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring
     info.safety = engine.m_safety.m_config;
 }
 
-// Constants
-
 // Threading Globals
 #ifndef LMUFFB_UNIT_TEST
 std::atomic<bool> g_running(true);
@@ -2662,11 +2757,9 @@ extern std::atomic<bool> g_ffb_active;
 extern SharedMemoryObjectOut g_localData;
 extern FFBEngine g_engine;
 extern std::recursive_mutex g_engine_mutex;
-extern std::chrono::steady_clock::time_point g_mock_time;
-extern bool g_use_mock_time;
 #endif
 
-// --- FFB Loop (High Priority 1000Hz) ---
+// --- FFB Loop (High Priority 1000Hz) --- (Exposed for unit tests)
 void FFBThread() {
     Logger::Get().LogFile("[FFB] Loop Started.");
     RateMonitor loopMonitor;
@@ -2684,31 +2777,10 @@ void FFBThread() {
     double lastTorque = -9999.0;
     float lastGenTorque = -9999.0f;
 
-    // Extended monitors for Issue #133
-    struct ChannelMonitor {
-        RateMonitor monitor;
-        double lastValue = -1e18;
-        void Update(double newValue) {
-            if (newValue != lastValue) {
-                monitor.RecordEvent();
-                lastValue = newValue;
-            }
-        }
-    };
+    ChannelMonitors channelMonitors;
 
-    ChannelMonitor mAccX, mAccY, mAccZ;
-    ChannelMonitor mVelX, mVelY, mVelZ;
-    ChannelMonitor mRotX, mRotY, mRotZ;
-    ChannelMonitor mRotAccX, mRotAccY, mRotAccZ;
-    ChannelMonitor mUnfSteer, mFilSteer;
-    ChannelMonitor mRPM;
-    ChannelMonitor mLoadFL, mLoadFR, mLoadRL, mLoadRR;
-    ChannelMonitor mLatFL, mLatFR, mLatRL, mLatRR;
-    ChannelMonitor mPosX, mPosY, mPosZ;
-    ChannelMonitor mDtMon;
-
-    // Precise Timing: Target 1000Hz (1000 microseconds)
-    const std::chrono::microseconds target_period(1000);
+    // Precise Timing: Target 1000Hz (1µs * kFFBTargetHz)
+    const std::chrono::microseconds target_period(kFFBTargetHz);
     auto next_tick = TimeUtils::GetTime();
 
     while (g_running) {
@@ -2716,10 +2788,10 @@ void FFBThread() {
         next_tick += target_period;
 
         // --- 1. Physics Phase Accumulator (5/2 Ratio) ---
-        phase_accumulator += 2; // M = 2
+        phase_accumulator += kPhysicsUpsampleM;
         bool run_physics = false;
 
-        if (phase_accumulator >= 5) { // L = 5
+        if (phase_accumulator >= kPhysicsUpsampleL) {
             phase_accumulator -= 5;
             run_physics = true;
         }
@@ -2737,10 +2809,11 @@ void FFBThread() {
                 in_realtime_phys = GameConnector::Get().IsInRealtime();
                 long current_session = GameConnector::Get().GetSessionType();
 
-                bool is_stale = GameConnector::Get().IsStale(100);
+                bool is_stale = GameConnector::Get().IsStale(kStaleThresholdMs);
 
-                static bool was_driving = false;
-                static long last_session = -1;
+                // §2.3: plain locals — reset on every thread launch (no static bleed in tests)
+                bool was_driving = false;
+                long last_session = -1L;
 
                 // is_driving uses IsPlayerActivelyDriving() which correctly gates on
                 // inRealtime AND playerControl==0 AND gamePhase!=9 (paused).
@@ -2764,7 +2837,7 @@ void FFBThread() {
 
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         uint8_t idx = g_localData.telemetry.playerVehicleIdx;
-                        if (idx < 104) {
+                        if (idx < kMaxVehicleIndex) {
                             auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                             const char* tName = g_localData.scoring.scoringInfo.mTrackName;
 
@@ -2789,14 +2862,15 @@ void FFBThread() {
                     uint8_t idx = g_localData.telemetry.playerVehicleIdx;
 
                     // --- LOST FRAME DETECTION (Issue #303) ---
-                    static double last_telem_et = -1.0;
+                    // §2.3: plain local — avoids stale value if thread restarts
+                    double last_telem_et = -1.0;
                     if (g_engine.m_safety.m_config.stutter_safety_enabled && last_telem_et > 0.0 && (g_localData.telemetry.telemInfo[idx].mElapsedTime - last_telem_et) > (g_localData.telemetry.telemInfo[idx].mDeltaTime * g_engine.m_safety.m_config.stutter_threshold)) {
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         g_engine.m_safety.TriggerSafetyWindow("Lost Frames");
                     }
                     last_telem_et = g_localData.telemetry.telemInfo[idx].mElapsedTime;
 
-                    if (idx < 104) {
+                    if (idx < kMaxVehicleIndex) {
                         auto& scoring = g_localData.scoring.vehScoringInfo[idx];
                         TelemInfoV01* pPlayerTelemetry = &g_localData.telemetry.telemInfo[idx];
 
@@ -2817,38 +2891,12 @@ void FFBThread() {
                         }
 
                         // Extended monitoring (Issue #133)
-                        mAccX.Update(pPlayerTelemetry->mLocalAccel.x);
-                        mAccY.Update(pPlayerTelemetry->mLocalAccel.y);
-                        mAccZ.Update(pPlayerTelemetry->mLocalAccel.z);
-                        mVelX.Update(pPlayerTelemetry->mLocalVel.x);
-                        mVelY.Update(pPlayerTelemetry->mLocalVel.y);
-                        mVelZ.Update(pPlayerTelemetry->mLocalVel.z);
-                        mRotX.Update(pPlayerTelemetry->mLocalRot.x);
-                        mRotY.Update(pPlayerTelemetry->mLocalRot.y);
-                        mRotZ.Update(pPlayerTelemetry->mLocalRot.z);
-                        mRotAccX.Update(pPlayerTelemetry->mLocalRotAccel.x);
-                        mRotAccY.Update(pPlayerTelemetry->mLocalRotAccel.y);
-                        mRotAccZ.Update(pPlayerTelemetry->mLocalRotAccel.z);
-                        mUnfSteer.Update(pPlayerTelemetry->mUnfilteredSteering);
-                        mFilSteer.Update(pPlayerTelemetry->mFilteredSteering);
-                        mRPM.Update(pPlayerTelemetry->mEngineRPM);
-                        mLoadFL.Update(pPlayerTelemetry->mWheel[0].mTireLoad);
-                        mLoadFR.Update(pPlayerTelemetry->mWheel[1].mTireLoad);
-                        mLoadRL.Update(pPlayerTelemetry->mWheel[2].mTireLoad);
-                        mLoadRR.Update(pPlayerTelemetry->mWheel[3].mTireLoad);
-                        mLatFL.Update(pPlayerTelemetry->mWheel[0].mLateralForce);
-                        mLatFR.Update(pPlayerTelemetry->mWheel[1].mLateralForce);
-                        mLatRL.Update(pPlayerTelemetry->mWheel[2].mLateralForce);
-                        mLatRR.Update(pPlayerTelemetry->mWheel[3].mLateralForce);
-                        mPosX.Update(pPlayerTelemetry->mPos.x);
-                        mPosY.Update(pPlayerTelemetry->mPos.y);
-                        mPosZ.Update(pPlayerTelemetry->mPos.z);
-                        mDtMon.Update(pPlayerTelemetry->mDeltaTime);
+                        channelMonitors.UpdateAll(pPlayerTelemetry);
 
                         std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                         bool full_allowed = g_engine.m_safety.IsFFBAllowed(scoring, g_localData.scoring.scoringInfo.mGamePhase) && is_driving;
 
-                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, 0.0025, scoring.mControl);
+                        force_physics = g_engine.calculate_force(pPlayerTelemetry, scoring.mVehicleClass, scoring.mVehicleName, g_localData.generic.FFBTorque, full_allowed, kPhysicsTimestepSec, scoring.mControl);
 
                         // v0.7.153: Explicitly target zero force only when player is not in control (Issue #281).
                         // This allows Soft Lock to remain active in the garage and during pause (ControlMode::PLAYER),
@@ -2858,7 +2906,7 @@ void FFBThread() {
                         // Safety Layer (v0.7.49): Slew Rate Limiting (400Hz)
                         // Applied before up-sampling to prevent reconstruction artifacts on spikes.
                         bool restricted = !full_allowed || (scoring.mFinishStatus != 0);
-                        force_physics = g_engine.m_safety.ApplySafetySlew(force_physics, 0.0025, restricted);
+                        force_physics = g_engine.m_safety.ApplySafetySlew(force_physics, kPhysicsTimestepSec, restricted);
 
                         should_output = true;
                     }
@@ -2867,12 +2915,13 @@ void FFBThread() {
             
             if (!should_output) {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                force_physics = g_engine.m_safety.ApplySafetySlew(0.0, 0.0025, true);
+                force_physics = g_engine.m_safety.ApplySafetySlew(0.0, kPhysicsTimestepSec, true);
             }
             current_physics_force = force_physics;
 
             // Warning for low sample rate (Issue #133)
-            static auto lastWarningTime = TimeUtils::GetTime();
+            // §2.3: plain local — reset each time FFBThread starts
+            auto lastWarningTime = TimeUtils::GetTime();
             HealthStatus health;
             {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
@@ -2883,7 +2932,7 @@ void FFBThread() {
 
             if (in_realtime_phys && !health.is_healthy) {
                  auto now = TimeUtils::GetTime();
-                 if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= 60) {
+                 if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= kHealthWarnCooldownS) {
                      std::string reason = "";
                      if (health.loop_low) reason += "Loop=" + std::to_string((int)health.loop_rate) + "Hz ";
                      if (health.physics_low) reason += "Physics=" + std::to_string((int)health.physics_rate) + "Hz ";
@@ -2933,16 +2982,13 @@ void FFBThread() {
 }
 
 #ifndef _WIN32
+// Exposed for unit tests
 void handle_sigterm(int sig) {
     g_running = false;
 }
 #endif
 
-#ifdef LMUFFB_UNIT_TEST
 int lmuffb_app_main(int argc, char* argv[]) noexcept {
-#else
-int main(int argc, char* argv[]) noexcept {
-#endif
     try {
 #ifdef _WIN32
         timeBeginPeriod(1);
@@ -2951,79 +2997,83 @@ int main(int argc, char* argv[]) noexcept {
         signal(SIGINT, handle_sigterm);
 #endif
 
-    bool headless = false;
-    for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "--headless") headless = true;
-    }
-
-    // Initialize persistent debug logging for crash analysis
-    // First init in current directory or logs folder to catch startup
-    Logger::Get().Init("lmuffb_debug.log", "logs");
-    Logger::Get().Log("Starting lmuFFB (C++ Port)...");
-    Logger::Get().LogFile("Application Started. Version: %s", LMUFFB_VERSION);
-    if (headless) Logger::Get().LogFile("Mode: HEADLESS");
-    else Logger::Get().LogFile("Mode: GUI");
-
-    Preset::ApplyDefaultsToEngine(g_engine);
-    Config::Load(g_engine);
-
-    // Re-initialize logger with user-configured path if it changed
-    if (!Config::m_log_path.empty() && Config::m_log_path != "logs") {
-        Logger::Get().Init("lmuffb_debug.log", Config::m_log_path);
-        Logger::Get().LogFile("Logger re-initialized with user path: %s", Config::m_log_path.c_str());
-    }
-
-    if (!headless) {
-        if (!GuiLayer::Init()) {
-            Logger::Get().Log("Failed to initialize GUI.");
-            Logger::Get().Log("Failed to initialize GUI.");
-        }
-        DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
-    } else {
-        Logger::Get().Log("Running in HEADLESS mode.");
-        Logger::Get().Log("Running in HEADLESS mode.");
-        DirectInputFFB::Get().Initialize(NULL);
-    }
-
-    if (GameConnector::Get().CheckLegacyConflict()) {
-        Logger::Get().LogFile("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
-    }
-
-    if (!GameConnector::Get().TryConnect()) {
-        Logger::Get().LogFile("Game not running or Shared Memory not ready. Waiting...");
-    }
-
-    std::thread ffb_thread(FFBThread);
-    Logger::Get().LogFile("[GUI] Main Loop Started.");
-
-    while (g_running) {
-        GuiLayer::Render(g_engine);
-
-        // Process background save requests from the FFB thread (v0.7.70)
-        if (Config::m_needs_save.exchange(false)) {
-            Config::Save(g_engine);
+        // §2.5 Fix: body correctly indented inside try { }
+        bool headless = false;
+        for (int i = 1; i < argc; ++i) {
+            if (std::string(argv[i]) == "--headless") headless = true;
         }
 
-        // Maintain a consistent 60Hz message loop even when backgrounded
-        // to ensure DirectInput performance and reliability.
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    }
-    
-    Config::Save(g_engine);
-    if (!headless) {
-        Logger::Get().LogFile("Shutting down GUI...");
-        GuiLayer::Shutdown(g_engine);
-    }
-    if (ffb_thread.joinable()) {
-        Logger::Get().LogFile("Stopping FFB Thread...");
-        g_running = false; // Ensure loop breaks
-        ffb_thread.join();
-        Logger::Get().LogFile("FFB Thread Stopped.");
-    }
-    DirectInputFFB::Get().Shutdown();
-    Logger::Get().Log("Main Loop Ended. Clean Exit.");
-    
-    return 0;
+        // Initialize persistent debug logging for crash analysis
+        // First init in current directory or logs folder to catch startup
+        Logger::Get().Init("lmuffb_debug.log", "logs");
+        Logger::Get().Log("Starting lmuFFB (C++ Port)...");
+        Logger::Get().LogFile("Application Started. Version: %s", LMUFFB_VERSION);
+        if (headless) Logger::Get().LogFile("Mode: HEADLESS");
+        else Logger::Get().LogFile("Mode: GUI");
+
+        Preset::ApplyDefaultsToEngine(g_engine);
+        Config::Load(g_engine);
+
+        // Re-initialize logger with user-configured path if it changed
+        if (!Config::m_log_path.empty() && Config::m_log_path != "logs") {
+            Logger::Get().Init("lmuffb_debug.log", Config::m_log_path);
+            Logger::Get().LogFile("Logger re-initialized with user path: %s", Config::m_log_path.c_str());
+        }
+
+        if (!headless) {
+            if (!GuiLayer::Init()) {
+                // §2.1: was logging the same message twice; use LogFile so it survives a crash
+                Logger::Get().LogFile("Failed to initialize GUI.");
+            }
+            DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
+        } else {
+            // §2.1: was logging the same message twice
+            Logger::Get().Log("Running in HEADLESS mode.");
+            DirectInputFFB::Get().Initialize(NULL);
+        }
+
+        if (GameConnector::Get().CheckLegacyConflict()) {
+            Logger::Get().LogFile("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
+        }
+
+        if (!GameConnector::Get().TryConnect()) {
+            Logger::Get().LogFile("Game not running or Shared Memory not ready. Waiting...");
+        }
+
+        std::thread ffb_thread(FFBThread);
+        Logger::Get().LogFile("[GUI] Main Loop Started.");
+
+        while (g_running) {
+            GuiLayer::Render(g_engine);
+
+            // Process background save requests from the FFB thread (v0.7.70)
+            if (Config::m_needs_save.exchange(false)) {
+                Config::Save(g_engine);
+            }
+
+            // Maintain a consistent ~60Hz message loop even when backgrounded
+            // to ensure DirectInput performance and reliability.
+            std::this_thread::sleep_for(std::chrono::milliseconds(kGuiPeriodMs));
+        }
+
+        Config::Save(g_engine);
+        if (!headless) {
+            Logger::Get().LogFile("Shutting down GUI...");
+            GuiLayer::Shutdown(g_engine);
+        }
+        if (ffb_thread.joinable()) {
+            Logger::Get().LogFile("Stopping FFB Thread...");
+            // §2.4: g_running is already false here (GUI loop exits when g_running becomes
+            // false), but we set it explicitly for clarity and safety in case of future
+            // code paths that bypass the main loop.
+            g_running = false;
+            ffb_thread.join();
+            Logger::Get().LogFile("FFB Thread Stopped.");
+        }
+        DirectInputFFB::Get().Shutdown();
+        Logger::Get().Log("Main Loop Ended. Clean Exit.");
+
+        return 0;
     } catch (const std::exception& e) {
         Logger::Get().LogFile("Fatal exception: %s", e.what());
         return 1;
@@ -3033,18 +3083,65 @@ int main(int argc, char* argv[]) noexcept {
     }
 }
 
+} // namespace LMUFFB
+
+#ifndef LMUFFB_UNIT_TEST
+int main(int argc, char* argv[]) noexcept {
+    return LMUFFB::lmuffb_app_main(argc, argv);
+}
+#endif
+
+```
+
+# File: src\core\WheelConstants.h
+```cpp
+#pragma once
+
+namespace LMUFFB {
+
+/**
+ * @brief Standard wheel indices used for rFactor 2 / LMU telemetry arrays.
+ * 
+ * Mapping:
+ * 0: Front Left
+ * 1: Front Right
+ * 2: Rear Left
+ * 3: Rear Right
+ */
+enum WheelIndex : int {
+    WHEEL_FL = 0,
+    WHEEL_FR = 1,
+    WHEEL_RL = 2,
+    WHEEL_RR = 3
+};
+
+/**
+ * @brief Total number of wheels in the simulation.
+ */
+static constexpr int NUM_WHEELS = 4;
+
+/**
+ * @brief Total number of axles in a standard 4-wheel vehicle.
+ */
+static constexpr int NUM_AXLES = 2;
+
+} // namespace LMUFFB
+
 ```
 
 # File: src\ffb\DirectInputFFB.cpp
 ```cpp
 #include "DirectInputFFB.h"
-#include "Logger.h"
-#include "StringUtils.h"
+#include "logging/Logger.h"
+#include "utils/StringUtils.h"
 
 // Standard Library Headers
 #include <algorithm> // For std::max, std::min
 #include <mutex>
 #include <cmath>
+
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 // Platform-Specific Headers
 #ifdef _WIN32
@@ -3059,6 +3156,8 @@ namespace {
     constexpr uint32_t DIAGNOSTIC_LOG_INTERVAL_MS = 1000; // Rate limit diagnostic logging to 1 second
     constexpr uint32_t RECOVERY_COOLDOWN_MS = 2000;       // Wait 2 seconds between recovery attempts
 }
+
+namespace LMUFFB {
 
 // Keep existing implementations
 DirectInputFFB& DirectInputFFB::Get() {
@@ -3113,6 +3212,7 @@ GUID DirectInputFFB::StringToGuid(const std::string& str) {
 
 
 #ifdef _WIN32
+namespace {
 /**
  * @brief Returns the description for a DirectInput return code.
  * 
@@ -3170,6 +3270,7 @@ const char* GetDirectInputErrorString(HRESULT hr) {
     
     return "Unknown DirectInput Error";
 }
+}
 #endif
 
 DirectInputFFB::~DirectInputFFB() {
@@ -3207,6 +3308,7 @@ void DirectInputFFB::Shutdown() {
 }
 
 #ifdef _WIN32
+namespace {
 BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
     auto* devices = (std::vector<DeviceInfo>*)pContext;
     DeviceInfo info;
@@ -3216,6 +3318,7 @@ BOOL CALLBACK EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* 
     info.name = std::string(name);
     devices->push_back(info);
     return DIENUM_CONTINUE;
+}
 }
 #endif
 
@@ -3486,6 +3589,8 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
     return true;
 }
 
+} // namespace LMUFFB
+
 ```
 
 # File: src\ffb\DirectInputFFB.h
@@ -3511,6 +3616,8 @@ typedef void* LPDIRECTINPUT8;
 typedef void* LPDIRECTINPUTDEVICE8;
 typedef void* LPDIRECTINPUTEFFECT;
 #endif
+
+namespace LMUFFB {
 
 struct DeviceInfo {
     GUID guid;
@@ -3567,6 +3674,8 @@ private:
     long m_last_force = -999999; 
 };
 
+} // namespace LMUFFB
+
 #endif // DIRECTINPUTFFB_H
 
 ```
@@ -3578,6 +3687,8 @@ private:
 
 #include <algorithm>
 #include <cmath>
+
+namespace LMUFFB {
 
 struct GeneralConfig {
     float gain = 1.0f;
@@ -3746,7 +3857,7 @@ struct LoadForcesConfig {
     }
 
     void Validate() {
-        lat_load_effect = (std::max)(0.0f, (std::min)(2.0f, lat_load_effect));
+        lat_load_effect = (std::max)(0.0f, (std::min)(10.0f, lat_load_effect));
         lat_load_transform = (std::max)(0, (std::min)(3, lat_load_transform));
         long_load_effect = (std::max)(0.0f, (std::min)(10.0f, long_load_effect));
         long_load_smoothing = (std::max)(0.0f, long_load_smoothing);
@@ -4020,6 +4131,8 @@ struct SafetyConfig {
     }
 };
 
+} // namespace LMUFFB
+
 #endif // FFBCONFIG_H
 
 ```
@@ -4027,6 +4140,8 @@ struct SafetyConfig {
 # File: src\ffb\FFBDebugBuffer.cpp
 ```cpp
 #include "FFBDebugBuffer.h"
+
+namespace LMUFFB {
 
 FFBDebugBuffer::FFBDebugBuffer(size_t capacity) : m_capacity(capacity) {}
 
@@ -4050,6 +4165,8 @@ size_t FFBDebugBuffer::Size() const {
     return m_buffer.size();
 }
 
+} // namespace LMUFFB
+
 ```
 
 # File: src\ffb\FFBDebugBuffer.h
@@ -4060,6 +4177,8 @@ size_t FFBDebugBuffer::Size() const {
 #include <vector>
 #include <mutex>
 #include "FFBSnapshot.h"
+
+namespace LMUFFB {
 
 class FFBDebugBuffer {
 public:
@@ -4077,6 +4196,8 @@ private:
     size_t m_capacity;
 };
 
+} // namespace LMUFFB
+
 #endif // FFDBEBUG_BUFFER_H
 
 ```
@@ -4085,18 +4206,24 @@ private:
 ```cpp
 #include "FFBEngine.h"
 #include "Config.h"
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 #include "RestApiProvider.h"
-#include "Logger.h"
+#include "logging/Logger.h"
+
+#include "../physics/SteeringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <iostream>
-#include <mutex>
 
-extern std::recursive_mutex g_engine_mutex;
+#include <mutex>
 #include <algorithm>
 #include <cmath>
 
-using namespace ffb_math;
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+using namespace LMUFFB::Physics;
+
+namespace LMUFFB {
+extern std::recursive_mutex g_engine_mutex;
 
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
@@ -4105,10 +4232,10 @@ FFBEngine::FFBEngine() {
     m_upsample_steering.Configure(0.95, 0.10);
     m_upsample_throttle.Configure(0.95, 0.10);
     m_upsample_brake.Configure(0.95, 0.10);
-    for (int i = 0; i < 4; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.10);
+    for (int i = 0; i < NUM_WHEELS; i++) m_upsample_brake_pressure[i].Configure(0.95, 0.10);
 
     // Group 2: Texture & Slip (Balanced) - TIED TO UI TOGGLE
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_upsample_vert_deflection[i].Configure(0.80, 0.05);
         m_upsample_lat_patch_vel[i].Configure(0.80, 0.05);
         m_upsample_long_patch_vel[i].Configure(0.80, 0.05);
@@ -4121,9 +4248,9 @@ FFBEngine::FFBEngine() {
     m_upsample_local_accel_z.Configure(0.50, 0.0);
     m_upsample_local_rot_accel_y.Configure(0.50, 0.0);
     m_upsample_local_rot_y.Configure(0.50, 0.0);
-    for (int i = 0; i < 4; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);
+    for (int i = 0; i < NUM_WHEELS; i++) m_upsample_susp_force[i].Configure(0.50, 0.0);
 
-    Preset::ApplyDefaultsToEngine(*this);
+    LMUFFB::Preset::ApplyDefaultsToEngine(*this);
 
     // Initial apply to set m_last_aux_recon_mode and default latencies
     ApplyAuxReconstructionMode();
@@ -4187,7 +4314,7 @@ double FFBEngine::apply_signal_conditioning(double raw_torque, const TelemInfoV0
     }
     m_prev_ac_torque = ac_torque;
 
-    const TelemWheelV01& fl_ref = data->mWheel[0];
+    const TelemWheelV01& fl_ref = data->mWheel[WHEEL_FL];
     double radius = (double)fl_ref.mStaticUndeflectedRadius / UNIT_CM_TO_M;
     if (radius < RADIUS_FALLBACK_MIN_M) radius = RADIUS_FALLBACK_DEFAULT_M;
     double circumference = TWO_PI * radius;
@@ -4246,7 +4373,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_upsample_local_rot_accel_y.Reset();
         m_upsample_local_rot_y.Reset();
         m_slope_buffer_count = 0;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             m_upsample_lat_patch_vel[i].Reset();
             m_upsample_long_patch_vel[i].Reset();
             m_upsample_vert_deflection[i].Reset();
@@ -4331,7 +4458,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // This protects the filters AND seamlessly triggers our existing fallback logic
     // (e.g., approximate_load) if the data is encrypted or missing.
     bool aux_nan_detected = false;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         if (!std::isfinite(m_working_info.mWheel[i].mTireLoad)) { m_working_info.mWheel[i].mTireLoad = 0.0; aux_nan_detected = true; }
         if (!std::isfinite(m_working_info.mWheel[i].mGripFract)) { m_working_info.mWheel[i].mGripFract = 0.0; aux_nan_detected = true; }
         if (!std::isfinite(m_working_info.mWheel[i].mSuspForce)) { m_working_info.mWheel[i].mSuspForce = 0.0; aux_nan_detected = true; }
@@ -4354,7 +4481,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Update wheels in working_info (Channels used for derivatives)
     // Use sanitized m_working_info as input for upsamplers
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_working_info.mWheel[i].mLateralPatchVel = m_upsample_lat_patch_vel[i].Process(m_working_info.mWheel[i].mLateralPatchVel, ffb_dt, is_new_frame);
         m_working_info.mWheel[i].mLongitudinalPatchVel = m_upsample_long_patch_vel[i].Process(m_working_info.mWheel[i].mLongitudinalPatchVel, ffb_dt, is_new_frame);
         m_working_info.mWheel[i].mVerticalTireDeflection = m_upsample_vert_deflection[i].Process(m_working_info.mWheel[i].mVerticalTireDeflection, ffb_dt, is_new_frame);
@@ -4431,7 +4558,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // SEEDING GATE (Issue #379): Prevent teleport spikes from Garage -> Track
     if (!m_derivatives_seeded && allowed) {
         // 1. Update all "prev" states used for derivatives to current values
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < NUM_WHEELS; i++) {
             m_prev_vert_deflection[i] = data->mWheel[i].mVerticalTireDeflection;
             m_prev_rotation[i] = data->mWheel[i].mRotation;
             m_prev_brake_pressure[i] = data->mWheel[i].mBrakePressure;
@@ -4447,15 +4574,15 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         m_sop_lat_g_smoothed = upsampled_data->mLocalAccel.x / GRAVITY_MS2;
 
         // Use approximate loads for SoP seeding if necessary
-        double fl_l = upsampled_data->mWheel[0].mTireLoad;
-        double fr_l = upsampled_data->mWheel[1].mTireLoad;
-        double rl_l = upsampled_data->mWheel[2].mTireLoad;
-        double rr_l = upsampled_data->mWheel[3].mTireLoad;
+        double fl_l = upsampled_data->mWheel[WHEEL_FL].mTireLoad;
+        double fr_l = upsampled_data->mWheel[WHEEL_FR].mTireLoad;
+        double rl_l = upsampled_data->mWheel[WHEEL_RL].mTireLoad;
+        double rr_l = upsampled_data->mWheel[WHEEL_RR].mTireLoad;
         if (fl_l < 1.0) {
-            fl_l = approximate_load(upsampled_data->mWheel[0]);
-            fr_l = approximate_load(upsampled_data->mWheel[1]);
-            rl_l = approximate_rear_load(upsampled_data->mWheel[2]);
-            rr_l = approximate_rear_load(upsampled_data->mWheel[3]);
+            fl_l = approximate_load(upsampled_data->mWheel[WHEEL_FL]);
+            fr_l = approximate_load(upsampled_data->mWheel[WHEEL_FR]);
+            rl_l = approximate_rear_load(upsampled_data->mWheel[WHEEL_RL]);
+            rr_l = approximate_rear_load(upsampled_data->mWheel[WHEEL_RR]);
         }
         double t_load = fl_l + fr_l + rl_l + rr_l;
         m_sop_load_smoothed = (t_load > 1.0) ? (fr_l + rr_l - fl_l - rl_l) / t_load : 0.0;
@@ -4569,8 +4696,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // --- 3. TELEMETRY PROCESSING ---
     // Front Wheels
-    const TelemWheelV01& fl = upsampled_data->mWheel[0];
-    const TelemWheelV01& fr = upsampled_data->mWheel[1];
+    const TelemWheelV01& fl = upsampled_data->mWheel[WHEEL_FL];
+    const TelemWheelV01& fr = upsampled_data->mWheel[WHEEL_FR];
 
     // Raw Inputs
     double raw_torque = raw_torque_input;
@@ -4647,7 +4774,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
 
     // 4. Rear Lateral Force (mLateralForce)
-    double avg_lat_force_rear = (std::abs(data->mWheel[2].mLateralForce) + std::abs(data->mWheel[3].mLateralForce)) / DUAL_DIVISOR;
+    double avg_lat_force_rear = (std::abs(data->mWheel[WHEEL_RL].mLateralForce) + std::abs(data->mWheel[WHEEL_RR].mLateralForce)) / DUAL_DIVISOR;
     if (avg_lat_force_rear < MIN_VALID_LAT_FORCE_N && std::abs(data->mLocalAccel.x) > G_FORCE_THRESHOLD) {
         m_missing_lat_force_rear_frames++;
     } else {
@@ -4671,11 +4798,11 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     }
     
     // Calculate Rear Load early for learning (v0.7.164)
-    double calc_load_rl = upsampled_data->mWheel[2].mTireLoad;
-    double calc_load_rr = upsampled_data->mWheel[3].mTireLoad;
+    double calc_load_rl = upsampled_data->mWheel[WHEEL_RL].mTireLoad;
+    double calc_load_rr = upsampled_data->mWheel[WHEEL_RR].mTireLoad;
     if (ctx.frame_warn_load) {
-        calc_load_rl = approximate_rear_load(upsampled_data->mWheel[2]);
-        calc_load_rr = approximate_rear_load(upsampled_data->mWheel[3]);
+        calc_load_rl = approximate_rear_load(upsampled_data->mWheel[WHEEL_RL]);
+        calc_load_rr = approximate_rear_load(upsampled_data->mWheel[WHEEL_RR]);
     }
     ctx.avg_rear_load = (calc_load_rl + calc_load_rr) / DUAL_DIVISOR;
 
@@ -4746,8 +4873,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Grip Estimation (v0.4.5 FIX)
     // Issue #397: Pass upsampled data pointer to ensure slope detection uses smoothed G-force
     GripResult front_grip_res = calculate_axle_grip(fl, fr, ctx.avg_front_load, m_warned_grip,
-                                                m_prev_slip_angle[0], m_prev_slip_angle[1],
-                                                m_prev_load[0], m_prev_load[1], // NEW
+                                                m_prev_slip_angle[WHEEL_FL], m_prev_slip_angle[WHEEL_FR],
+                                                m_prev_load[WHEEL_FL], m_prev_load[WHEEL_FR], // NEW
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, upsampled_data, true /* is_front */);
     ctx.avg_front_grip = front_grip_res.value;
     m_grip_diag.front_original = front_grip_res.original;
@@ -4846,7 +4973,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     calculate_slide_texture(upsampled_data, ctx);
     calculate_road_texture(upsampled_data, ctx);
     calculate_suspension_bottoming(upsampled_data, ctx);
-    calculate_soft_lock(upsampled_data, ctx);
+    LMUFFB::SteeringUtils::CalculateSoftLock(upsampled_data, ctx, m_advanced, m_general, m_safety, m_steering_velocity_smoothed);
 
     // v0.7.78 FIX: Support stationary/garage soft lock (Issue #184)
     // If not allowed (e.g. in garage or AI driving), mute all forces EXCEPT Soft Lock.
@@ -4927,15 +5054,15 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // stale state issues when effects are toggled on/off.
     // v0.7.116: Use upsampled_data to ensure derivatives (current - prev) / dt
     // are calculated correctly over the 400Hz 2.5ms interval.
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_prev_vert_deflection[i] = upsampled_data->mWheel[i].mVerticalTireDeflection;
         m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
         m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
     }
     // FIX (Issue #355): Update m_prev_susp_force at the END of the calculate_force loop
     // to ensure correct dForce calculation for Method 1 next frame.
-    m_prev_susp_force[0] = upsampled_data->mWheel[0].mSuspForce;
-    m_prev_susp_force[1] = upsampled_data->mWheel[1].mSuspForce;
+    m_prev_susp_force[WHEEL_FL] = upsampled_data->mWheel[WHEEL_FL].mSuspForce;
+    m_prev_susp_force[WHEEL_FR] = upsampled_data->mWheel[WHEEL_FR].mSuspForce;
     
     // v0.6.36 FIX: Move m_prev_vert_accel to unconditional section
     // Previously only updated inside calculate_road_texture when enabled.
@@ -4999,7 +5126,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.calc_rear_slip_angle_smoothed = (float)m_grip_diag.rear_slip_angle;
 
             snap.raw_front_slip_angle = (float)calculate_raw_slip_angle_pair(fl, fr);
-            snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[2], data->mWheel[3]);
+            snap.raw_rear_slip_angle = (float)calculate_raw_slip_angle_pair(data->mWheel[WHEEL_RL], data->mWheel[WHEEL_RR]);
 
             // Telemetry
             snap.steer_force = (float)raw_torque;
@@ -5008,10 +5135,10 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_input_steering = (float)data->mUnfilteredSteering;
             snap.raw_front_tire_load = (float)raw_front_load;
             snap.raw_front_grip_fract = (float)raw_front_grip;
-            snap.raw_rear_grip = (float)((data->mWheel[2].mGripFract + data->mWheel[3].mGripFract) / DUAL_DIVISOR);
+            snap.raw_rear_grip = (float)((data->mWheel[WHEEL_RL].mGripFract + data->mWheel[WHEEL_RR].mGripFract) / DUAL_DIVISOR);
             snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / DUAL_DIVISOR);
             snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
-            snap.raw_rear_lat_force = (float)((data->mWheel[2].mLateralForce + data->mWheel[3].mLateralForce) / DUAL_DIVISOR);
+            snap.raw_rear_lat_force = (float)((data->mWheel[WHEEL_RL].mLateralForce + data->mWheel[WHEEL_RR].mLateralForce) / DUAL_DIVISOR);
             snap.raw_car_speed = (float)ctx.car_speed_long;
             snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
             snap.raw_input_brake = (float)data->mUnfilteredBrake;
@@ -5019,8 +5146,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_front_lat_patch_vel = (float)((std::abs(fl.mLateralPatchVel) + std::abs(fr.mLateralPatchVel)) / DUAL_DIVISOR);
             snap.raw_front_deflection = (float)((fl.mVerticalTireDeflection + fr.mVerticalTireDeflection) / DUAL_DIVISOR);
             snap.raw_front_long_patch_vel = (float)((fl.mLongitudinalPatchVel + fr.mLongitudinalPatchVel) / DUAL_DIVISOR);
-            snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[2].mLateralPatchVel) + std::abs(data->mWheel[3].mLateralPatchVel)) / DUAL_DIVISOR);
-            snap.raw_rear_long_patch_vel = (float)((data->mWheel[2].mLongitudinalPatchVel + data->mWheel[3].mLongitudinalPatchVel) / DUAL_DIVISOR);
+            snap.raw_rear_lat_patch_vel = (float)((std::abs(data->mWheel[WHEEL_RL].mLateralPatchVel) + std::abs(data->mWheel[WHEEL_RR].mLateralPatchVel)) / DUAL_DIVISOR);
+            snap.raw_rear_long_patch_vel = (float)((data->mWheel[WHEEL_RL].mLongitudinalPatchVel + data->mWheel[WHEEL_RR].mLongitudinalPatchVel) / DUAL_DIVISOR);
 
             snap.steering_range_deg = range_deg;
             snap.steering_angle_deg = steering_angle_deg;
@@ -5069,76 +5196,76 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
         frame.raw_game_shaft_torque = (float)data->mSteeringShaftTorque;
         frame.raw_game_gen_torque = (float)genFFBTorque;
 
-        frame.raw_load_fl = (float)data->mWheel[0].mTireLoad;
-        frame.raw_load_fr = (float)data->mWheel[1].mTireLoad;
-        frame.raw_load_rl = (float)data->mWheel[2].mTireLoad;
-        frame.raw_load_rr = (float)data->mWheel[3].mTireLoad;
+        frame.raw_load_fl = (float)data->mWheel[WHEEL_FL].mTireLoad;
+        frame.raw_load_fr = (float)data->mWheel[WHEEL_FR].mTireLoad;
+        frame.raw_load_rl = (float)data->mWheel[WHEEL_RL].mTireLoad;
+        frame.raw_load_rr = (float)data->mWheel[WHEEL_RR].mTireLoad;
 
-        frame.raw_slip_vel_lat_fl = (float)data->mWheel[0].mLateralPatchVel;
-        frame.raw_slip_vel_lat_fr = (float)data->mWheel[1].mLateralPatchVel;
-        frame.raw_slip_vel_lat_rl = (float)data->mWheel[2].mLateralPatchVel;
-        frame.raw_slip_vel_lat_rr = (float)data->mWheel[3].mLateralPatchVel;
+        frame.raw_slip_vel_lat_fl = (float)data->mWheel[WHEEL_FL].mLateralPatchVel;
+        frame.raw_slip_vel_lat_fr = (float)data->mWheel[WHEEL_FR].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rl = (float)data->mWheel[WHEEL_RL].mLateralPatchVel;
+        frame.raw_slip_vel_lat_rr = (float)data->mWheel[WHEEL_RR].mLateralPatchVel;
 
-        frame.raw_slip_vel_long_fl = (float)data->mWheel[0].mLongitudinalPatchVel;
-        frame.raw_slip_vel_long_fr = (float)data->mWheel[1].mLongitudinalPatchVel;
-        frame.raw_slip_vel_long_rl = (float)data->mWheel[2].mLongitudinalPatchVel;
-        frame.raw_slip_vel_long_rr = (float)data->mWheel[3].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_fl = (float)data->mWheel[WHEEL_FL].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_fr = (float)data->mWheel[WHEEL_FR].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rl = (float)data->mWheel[WHEEL_RL].mLongitudinalPatchVel;
+        frame.raw_slip_vel_long_rr = (float)data->mWheel[WHEEL_RR].mLongitudinalPatchVel;
 
-        frame.raw_ride_height_fl = (float)data->mWheel[0].mRideHeight;
-        frame.raw_ride_height_fr = (float)data->mWheel[1].mRideHeight;
-        frame.raw_ride_height_rl = (float)data->mWheel[2].mRideHeight;
-        frame.raw_ride_height_rr = (float)data->mWheel[3].mRideHeight;
+        frame.raw_ride_height_fl = (float)data->mWheel[WHEEL_FL].mRideHeight;
+        frame.raw_ride_height_fr = (float)data->mWheel[WHEEL_FR].mRideHeight;
+        frame.raw_ride_height_rl = (float)data->mWheel[WHEEL_RL].mRideHeight;
+        frame.raw_ride_height_rr = (float)data->mWheel[WHEEL_RR].mRideHeight;
 
-        frame.raw_susp_deflection_fl = (float)data->mWheel[0].mSuspensionDeflection;
-        frame.raw_susp_deflection_fr = (float)data->mWheel[1].mSuspensionDeflection;
-        frame.raw_susp_deflection_rl = (float)data->mWheel[2].mSuspensionDeflection;
-        frame.raw_susp_deflection_rr = (float)data->mWheel[3].mSuspensionDeflection;
+        frame.raw_susp_deflection_fl = (float)data->mWheel[WHEEL_FL].mSuspensionDeflection;
+        frame.raw_susp_deflection_fr = (float)data->mWheel[WHEEL_FR].mSuspensionDeflection;
+        frame.raw_susp_deflection_rl = (float)data->mWheel[WHEEL_RL].mSuspensionDeflection;
+        frame.raw_susp_deflection_rr = (float)data->mWheel[WHEEL_RR].mSuspensionDeflection;
 
-        frame.raw_susp_force_fl = (float)data->mWheel[0].mSuspForce;
-        frame.raw_susp_force_fr = (float)data->mWheel[1].mSuspForce;
-        frame.raw_susp_force_rl = (float)data->mWheel[2].mSuspForce;
-        frame.raw_susp_force_rr = (float)data->mWheel[3].mSuspForce;
+        frame.raw_susp_force_fl = (float)data->mWheel[WHEEL_FL].mSuspForce;
+        frame.raw_susp_force_fr = (float)data->mWheel[WHEEL_FR].mSuspForce;
+        frame.raw_susp_force_rl = (float)data->mWheel[WHEEL_RL].mSuspForce;
+        frame.raw_susp_force_rr = (float)data->mWheel[WHEEL_RR].mSuspForce;
 
-        frame.raw_brake_pressure_fl = (float)data->mWheel[0].mBrakePressure;
-        frame.raw_brake_pressure_fr = (float)data->mWheel[1].mBrakePressure;
-        frame.raw_brake_pressure_rl = (float)data->mWheel[2].mBrakePressure;
-        frame.raw_brake_pressure_rr = (float)data->mWheel[3].mBrakePressure;
+        frame.raw_brake_pressure_fl = (float)data->mWheel[WHEEL_FL].mBrakePressure;
+        frame.raw_brake_pressure_fr = (float)data->mWheel[WHEEL_FR].mBrakePressure;
+        frame.raw_brake_pressure_rl = (float)data->mWheel[WHEEL_RL].mBrakePressure;
+        frame.raw_brake_pressure_rr = (float)data->mWheel[WHEEL_RR].mBrakePressure;
 
-        frame.raw_rotation_fl = (float)data->mWheel[0].mRotation;
-        frame.raw_rotation_fr = (float)data->mWheel[1].mRotation;
-        frame.raw_rotation_rl = (float)data->mWheel[2].mRotation;
-        frame.raw_rotation_rr = (float)data->mWheel[3].mRotation;
+        frame.raw_rotation_fl = (float)data->mWheel[WHEEL_FL].mRotation;
+        frame.raw_rotation_fr = (float)data->mWheel[WHEEL_FR].mRotation;
+        frame.raw_rotation_rl = (float)data->mWheel[WHEEL_RL].mRotation;
+        frame.raw_rotation_rr = (float)data->mWheel[WHEEL_RR].mRotation;
 
         // --- ALGORITHM STATE (400Hz) ---
         frame.slip_angle_fl = (float)fl.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
         frame.slip_angle_fr = (float)fr.mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
-        frame.slip_angle_rl = (float)upsampled_data->mWheel[2].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
-        frame.slip_angle_rr = (float)upsampled_data->mWheel[3].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rl = (float)upsampled_data->mWheel[WHEEL_RL].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
+        frame.slip_angle_rr = (float)upsampled_data->mWheel[WHEEL_RR].mLateralPatchVel / (float)(std::max)(1.0, ctx.car_speed);
 
         frame.slip_ratio_fl = (float)calculate_wheel_slip_ratio(fl);
         frame.slip_ratio_fr = (float)calculate_wheel_slip_ratio(fr);
-        frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[2]);
-        frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[3]);
+        frame.slip_ratio_rl = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[WHEEL_RL]);
+        frame.slip_ratio_rr = (float)calculate_wheel_slip_ratio(upsampled_data->mWheel[WHEEL_RR]);
 
         frame.grip_fl = (float)fl.mGripFract;
         frame.grip_fr = (float)fr.mGripFract;
-        frame.grip_rl = (float)upsampled_data->mWheel[2].mGripFract;
-        frame.grip_rr = (float)upsampled_data->mWheel[3].mGripFract;
+        frame.grip_rl = (float)upsampled_data->mWheel[WHEEL_RL].mGripFract;
+        frame.grip_rr = (float)upsampled_data->mWheel[WHEEL_RR].mGripFract;
 
         frame.load_fl = (float)fl.mTireLoad;
         frame.load_fr = (float)fr.mTireLoad;
-        frame.load_rl = (float)upsampled_data->mWheel[2].mTireLoad;
-        frame.load_rr = (float)upsampled_data->mWheel[3].mTireLoad;
+        frame.load_rl = (float)upsampled_data->mWheel[WHEEL_RL].mTireLoad;
+        frame.load_rr = (float)upsampled_data->mWheel[WHEEL_RR].mTireLoad;
 
         frame.ride_height_fl = (float)fl.mRideHeight;
         frame.ride_height_fr = (float)fr.mRideHeight;
-        frame.ride_height_rl = (float)upsampled_data->mWheel[2].mRideHeight;
-        frame.ride_height_rr = (float)upsampled_data->mWheel[3].mRideHeight;
+        frame.ride_height_rl = (float)upsampled_data->mWheel[WHEEL_RL].mRideHeight;
+        frame.ride_height_rr = (float)upsampled_data->mWheel[WHEEL_RR].mRideHeight;
 
         frame.susp_deflection_fl = (float)fl.mSuspensionDeflection;
         frame.susp_deflection_fr = (float)fr.mSuspensionDeflection;
-        frame.susp_deflection_rl = (float)upsampled_data->mWheel[2].mSuspensionDeflection;
-        frame.susp_deflection_rr = (float)upsampled_data->mWheel[3].mSuspensionDeflection;
+        frame.susp_deflection_rl = (float)upsampled_data->mWheel[WHEEL_RL].mSuspensionDeflection;
+        frame.susp_deflection_rr = (float)upsampled_data->mWheel[WHEEL_RR].mSuspensionDeflection;
         
         frame.calc_slip_angle_front = (float)m_grip_diag.front_slip_angle;
         frame.calc_slip_angle_rear = (float)m_grip_diag.rear_slip_angle;
@@ -5214,8 +5341,8 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
         frame.approx_load_fl = (float)approximate_load(fl);
         frame.approx_load_fr = (float)approximate_load(fr);
-        frame.approx_load_rl = (float)approximate_rear_load(upsampled_data->mWheel[2]);
-        frame.approx_load_rr = (float)approximate_rear_load(upsampled_data->mWheel[3]);
+        frame.approx_load_rl = (float)approximate_rear_load(upsampled_data->mWheel[WHEEL_RL]);
+        frame.approx_load_rr = (float)approximate_rear_load(upsampled_data->mWheel[WHEEL_RR]);
 
         // --- SYSTEM (400Hz) ---
         frame.physics_rate = (float)m_physics_rate;
@@ -5249,16 +5376,16 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
     // 2. Global Normalized Lateral Load Transfer (Chassis Roll) - Issue #306
-    double fl_load = data->mWheel[0].mTireLoad;
-    double fr_load = data->mWheel[1].mTireLoad;
-    double rl_load = data->mWheel[2].mTireLoad;
-    double rr_load = data->mWheel[3].mTireLoad;
+    double fl_load = data->mWheel[WHEEL_FL].mTireLoad;
+    double fr_load = data->mWheel[WHEEL_FR].mTireLoad;
+    double rl_load = data->mWheel[WHEEL_RL].mTireLoad;
+    double rr_load = data->mWheel[WHEEL_RR].mTireLoad;
 
     if (ctx.frame_warn_load) {
-        fl_load = approximate_load(data->mWheel[0]);
-        fr_load = approximate_load(data->mWheel[1]);
-        rl_load = approximate_rear_load(data->mWheel[2]);
-        rr_load = approximate_rear_load(data->mWheel[3]);
+        fl_load = approximate_load(data->mWheel[WHEEL_FL]);
+        fr_load = approximate_load(data->mWheel[WHEEL_FR]);
+        rl_load = approximate_rear_load(data->mWheel[WHEEL_RL]);
+        rr_load = approximate_rear_load(data->mWheel[WHEEL_RR]);
     }
 
     double left_load = fl_load + rl_load;
@@ -5306,9 +5433,9 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     
     // 2. Oversteer Boost (Grip Differential)
     // Calculate Rear Grip
-    GripResult rear_grip_res = calculate_axle_grip(data->mWheel[2], data->mWheel[3], ctx.avg_front_load, m_warned_rear_grip,
-                                                m_prev_slip_angle[2], m_prev_slip_angle[3],
-                                                m_prev_load[2], m_prev_load[3], // NEW
+    GripResult rear_grip_res = calculate_axle_grip(data->mWheel[WHEEL_RL], data->mWheel[WHEEL_RR], ctx.avg_front_load, m_warned_rear_grip,
+                                                m_prev_slip_angle[WHEEL_RL], m_prev_slip_angle[WHEEL_RR],
+                                                m_prev_load[WHEEL_RL], m_prev_load[WHEEL_RR], // NEW
                                                 ctx.car_speed, ctx.dt, data->mVehicleName, data, false /* is_front */);
     ctx.avg_rear_grip = rear_grip_res.value;
     m_grip_diag.rear_original = rear_grip_res.original;
@@ -5346,13 +5473,13 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
 
     if (m_rear_axle.kerb_strike_rejection > 0.0) {
         // A. Surface Type Detection (Works on ALL cars)
-        bool on_kerb = (data->mWheel[2].mSurfaceType == 5) || (data->mWheel[3].mSurfaceType == 5);
+        bool on_kerb = (data->mWheel[WHEEL_RL].mSurfaceType == 5) || (data->mWheel[WHEEL_RR].mSurfaceType == 5);
 
         // B. Suspension Velocity Detection (Works on unencrypted cars)
         bool violent_bump = false;
         if (m_missing_vert_deflection_frames <= MISSING_TELEMETRY_WARN_THRESHOLD) {
-            double susp_vel_rl = std::abs(data->mWheel[2].mVerticalTireDeflection - m_prev_vert_deflection[2]) / ctx.dt;
-            double susp_vel_rr = std::abs(data->mWheel[3].mVerticalTireDeflection - m_prev_vert_deflection[3]) / ctx.dt;
+            double susp_vel_rl = std::abs(data->mWheel[WHEEL_RL].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_RL]) / ctx.dt;
+            double susp_vel_rr = std::abs(data->mWheel[WHEEL_RR].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_RR]) / ctx.dt;
             violent_bump = std::max(susp_vel_rl, susp_vel_rr) > KERB_DETECTION_THRESHOLD_M_S;
         }
 
@@ -5454,8 +5581,8 @@ void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, FFBCalculationCo
     // --- C. Power Yaw Kick (Acceleration / Traction Loss) ---
     double power_yaw_force = 0.0;
     if (ctx.car_speed >= MIN_YAW_KICK_SPEED_MS && m_rear_axle.power_yaw_gain > 0.001f) {
-        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[2]);
-        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[3]);
+        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RL]);
+        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RR]);
         double max_rear_spin = (std::max)({ 0.0, slip_rl, slip_rr });
 
         double slip_start = (double)m_rear_axle.power_slip_threshold * 0.5;
@@ -5538,7 +5665,7 @@ void FFBEngine::calculate_abs_pulse(const TelemInfoV01* data, FFBCalculationCont
     if (!m_braking.abs_pulse_enabled) return;
     
     bool abs_active = false;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         // Detection: Sudden pressure oscillation + high brake pedal
         double pressure_delta = (data->mWheel[i].mBrakePressure - m_prev_brake_pressure[i]) / ctx.dt;
         if (data->mUnfilteredBrake > ABS_PEDAL_THRESHOLD && std::abs(pressure_delta) > ABS_PRESSURE_RATE_THRESHOLD) {
@@ -5564,11 +5691,11 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
     double chosen_pressure_factor = 0.0;
     
     // Calculate reference slip for front wheels (v0.4.38)
-    double slip_fl = calculate_wheel_slip_ratio(data->mWheel[0]);
-    double slip_fr = calculate_wheel_slip_ratio(data->mWheel[1]);
+    double slip_fl = calculate_wheel_slip_ratio(data->mWheel[WHEEL_FL]);
+    double slip_fr = calculate_wheel_slip_ratio(data->mWheel[WHEEL_FR]);
     double worst_front = (std::min)(slip_fl, slip_fr);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         const auto& w = data->mWheel[i];
         double slip = calculate_wheel_slip_ratio(w);
         double slip_abs = std::abs(slip);
@@ -5617,7 +5744,7 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
             
             // Frequency calculation
             double freq_mult = 1.0;
-            if (i >= 2) {
+            if (i >= NUM_AXLES) {
                 // v0.4.38: Rear wheels use a different frequency to distinguish front/rear lockup
                 if (slip < (worst_front - AXLE_DIFF_HYSTERESIS)) {
                     freq_mult = LOCKUP_FREQ_MULTIPLIER_REAR;
@@ -5656,8 +5783,8 @@ void FFBEngine::calculate_lockup_vibration(const TelemInfoV01* data, FFBCalculat
 // Helper: Calculate Wheel Spin Vibration (v0.6.36)
 void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     if (m_vibration.spin_enabled && data->mUnfilteredThrottle > SPIN_THROTTLE_THRESHOLD) {
-        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[2]);
-        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[3]);
+        double slip_rl = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RL]);
+        double slip_rr = calculate_wheel_slip_ratio(data->mWheel[WHEEL_RR]);
         double max_slip = (std::max)(slip_rl, slip_rr);
         
         if (max_slip > SPIN_SLIP_THRESHOLD) {
@@ -5677,7 +5804,7 @@ void FFBEngine::calculate_wheel_spin(const TelemInfoV01* data, FFBCalculationCon
             m_spin_phase = std::fmod(m_spin_phase, TWO_PI);
             
             // Issue #306: Scale vibration amplitude by rear load factor
-            double current_rear_load = (data->mWheel[2].mTireLoad + data->mWheel[3].mTireLoad) / DUAL_DIVISOR;
+            double current_rear_load = (data->mWheel[WHEEL_RL].mTireLoad + data->mWheel[WHEEL_RR].mTireLoad) / DUAL_DIVISOR;
             double rear_load_factor = std::clamp(current_rear_load / (m_static_front_load + 1.0), 0.2, 2.0);
 
             double amp = severity * m_vibration.spin_gain * (double)BASE_NM_SPIN_VIBRATION * rear_load_factor;
@@ -5691,13 +5818,13 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
     if (!m_vibration.slide_enabled) return;
     
     // Use average lateral patch velocity of front wheels
-    double lat_vel_fl = std::abs(data->mWheel[0].mLateralPatchVel);
-    double lat_vel_fr = std::abs(data->mWheel[1].mLateralPatchVel);
+    double lat_vel_fl = std::abs(data->mWheel[WHEEL_FL].mLateralPatchVel);
+    double lat_vel_fr = std::abs(data->mWheel[WHEEL_FR].mLateralPatchVel);
     double front_slip_avg = (lat_vel_fl + lat_vel_fr) / DUAL_DIVISOR;
 
     // Use average lateral patch velocity of rear wheels
-    double lat_vel_rl = std::abs(data->mWheel[2].mLateralPatchVel);
-    double lat_vel_rr = std::abs(data->mWheel[3].mLateralPatchVel);
+    double lat_vel_rl = std::abs(data->mWheel[WHEEL_RL].mLateralPatchVel);
+    double lat_vel_rr = std::abs(data->mWheel[WHEEL_RR].mLateralPatchVel);
     double rear_slip_avg = (lat_vel_rl + lat_vel_rr) / DUAL_DIVISOR;
 
     // Use the max slide velocity between axles
@@ -5727,7 +5854,7 @@ void FFBEngine::calculate_slide_texture(const TelemInfoV01* data, FFBCalculation
 void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     // 1. Scrub Drag (Longitudinal resistive force from lateral sliding)
     if (m_vibration.scrub_drag_gain > 0.0) {
-        double avg_lat_vel = (data->mWheel[0].mLateralPatchVel + data->mWheel[1].mLateralPatchVel) / DUAL_DIVISOR;
+        double avg_lat_vel = (data->mWheel[WHEEL_FL].mLateralPatchVel + data->mWheel[WHEEL_FR].mLateralPatchVel) / DUAL_DIVISOR;
         double abs_lat_vel = std::abs(avg_lat_vel);
         
         if (abs_lat_vel > SCRUB_VEL_THRESHOLD) {
@@ -5743,8 +5870,8 @@ void FFBEngine::calculate_road_texture(const TelemInfoV01* data, FFBCalculationC
     // 2. Road Texture (Deflection Velocity Method)
     // Convert position delta to velocity (m/s) to ensure Time-Domain Independence
     // v0.7.200 (Issue #402): Fixed bug where effect was 4x weaker at 400Hz than 100Hz.
-    double vel_l = (data->mWheel[0].mVerticalTireDeflection - m_prev_vert_deflection[0]) / ctx.dt;
-    double vel_r = (data->mWheel[1].mVerticalTireDeflection - m_prev_vert_deflection[1]) / ctx.dt;
+    double vel_l = (data->mWheel[WHEEL_FL].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_FL]) / ctx.dt;
+    double vel_r = (data->mWheel[WHEEL_FR].mVerticalTireDeflection - m_prev_vert_deflection[WHEEL_FR]) / ctx.dt;
     
     // Safety: Sanitize derivatives against NaN/Inf (v0.7.200 Review feedback)
     if (!std::isfinite(vel_l)) vel_l = 0.0;
@@ -5789,7 +5916,7 @@ void FFBEngine::ApplyAuxReconstructionMode() {
     m_upsample_throttle.SetZeroLatency(true);
     m_upsample_brake.Configure(0.95, 0.10);
     m_upsample_brake.SetZeroLatency(true);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_upsample_brake_pressure[i].Configure(0.95, 0.10);
         m_upsample_brake_pressure[i].SetZeroLatency(true);
     }
@@ -5797,7 +5924,7 @@ void FFBEngine::ApplyAuxReconstructionMode() {
     // Group 2: User Selectable (High-Frequency Texture)
     // Dynamic Beta Forcing: Force Beta=0.0 to prevent Nyquist ringing in Zero Latency mode
     double group2_beta = user_wants_raw ? 0.00 : 0.05;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         m_upsample_vert_deflection[i].Configure(0.80, group2_beta);
         m_upsample_vert_deflection[i].SetZeroLatency(user_wants_raw);
         m_upsample_lat_patch_vel[i].Configure(0.80, group2_beta);
@@ -5814,7 +5941,7 @@ void FFBEngine::ApplyAuxReconstructionMode() {
     m_upsample_local_accel_z.SetZeroLatency(false);
     m_upsample_local_rot_accel_y.SetZeroLatency(false);
     m_upsample_local_rot_y.SetZeroLatency(false);
-    for (int i = 0; i < 4; i++) m_upsample_susp_force[i].SetZeroLatency(false);
+    for (int i = 0; i < NUM_WHEELS; i++) m_upsample_susp_force[i].SetZeroLatency(false);
 
     m_last_aux_recon_mode = m_advanced.aux_telemetry_reconstruction;
 }
@@ -5866,7 +5993,7 @@ void FFBEngine::ResetNormalization() {
 }
 
 // Helper: Calculate Suspension Bottoming (v0.6.22)
-// NOTE: calculate_soft_lock has been moved to SteeringUtils.cpp.
+// NOTE: calculate_soft_lock has been moved to SteeringUtils.h/cpp.
 void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx) {
     if (!m_vibration.bottoming_enabled) return;
     bool triggered = false;
@@ -5874,7 +6001,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
     
     // Method 0: Direct Ride Height Monitoring
     if (m_vibration.bottoming_method == 0) {
-        double min_rh = (std::min)(data->mWheel[0].mRideHeight, data->mWheel[1].mRideHeight);
+        double min_rh = (std::min)(data->mWheel[WHEEL_FL].mRideHeight, data->mWheel[WHEEL_FR].mRideHeight);
         if (min_rh < BOTTOMING_RH_THRESHOLD_M && min_rh > -1.0) { // < 2mm
             triggered = true;
             intensity = (BOTTOMING_RH_THRESHOLD_M - min_rh) / BOTTOMING_RH_THRESHOLD_M; // Map 2mm->0mm to 0.0->1.0
@@ -5888,8 +6015,8 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
         // for the exact same physical bump.
         double mr = GetMotionRatioForClass(m_metadata.GetCurrentClass());
 
-        double dForceL = ((data->mWheel[0].mSuspForce - m_prev_susp_force[0]) * mr) / ctx.dt;
-        double dForceR = ((data->mWheel[1].mSuspForce - m_prev_susp_force[1]) * mr) / ctx.dt;
+        double dForceL = ((data->mWheel[WHEEL_FL].mSuspForce - m_prev_susp_force[WHEEL_FL]) * mr) / ctx.dt;
+        double dForceR = ((data->mWheel[WHEEL_FR].mSuspForce - m_prev_susp_force[WHEEL_FR]) * mr) / ctx.dt;
         double max_dForce = (std::max)(dForceL, dForceR);
         
         if (max_dForce > BOTTOMING_IMPULSE_THRESHOLD_N_S) { // 100kN/s impulse at the WHEEL
@@ -5901,8 +6028,8 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalc
     // Safety Trigger: Raw Load Peak (Catches Method 0/1 failures)
     if (!triggered) {
         // FIX (Issue #355): Support encrypted cars by using the approximation fallback
-        double load_l = ctx.frame_warn_load ? approximate_load(data->mWheel[0]) : data->mWheel[0].mTireLoad;
-        double load_r = ctx.frame_warn_load ? approximate_load(data->mWheel[1]) : data->mWheel[1].mTireLoad;
+        double load_l = ctx.frame_warn_load ? approximate_load(data->mWheel[WHEEL_FL]) : data->mWheel[WHEEL_FL].mTireLoad;
+        double load_r = ctx.frame_warn_load ? approximate_load(data->mWheel[WHEEL_FR]) : data->mWheel[WHEEL_FR].mTireLoad;
         double max_load = (std::max)(load_l, load_r);
 
         double bottoming_threshold = m_static_front_load * BOTTOMING_LOAD_MULT;
@@ -5936,6 +6063,8 @@ void FFBEngine::UpdateUpsamplerModes() {
     ApplyAuxReconstructionMode();
 }
 
+} // namespace LMUFFB
+
 ```
 
 # File: src\ffb\FFBEngine.h
@@ -5953,10 +6082,11 @@ void FFBEngine::UpdateUpsamplerModes() {
 #include <array>
 #include <cstring>
 #include "io/lmu_sm_interface/InternalsPluginWrapper.h"
+#include "core/WheelConstants.h"
 #include "AsyncLogger.h"
 #include "MathUtils.h"
 #include "PerfStats.h"
-#include "VehicleUtils.h"
+#include "physics/GripLoadEstimation.h"
 
 #ifdef _WIN32
 #define NOINLINE __declspec(noinline)
@@ -5964,24 +6094,11 @@ void FFBEngine::UpdateUpsamplerModes() {
 #define NOINLINE __attribute__((noinline))
 #endif
 
-// Bring common math into scope
-using namespace ffb_math;
-// Default FFB calculation timestep. Used by FFBCalculationContext (defined before
-// FFBEngine, so cannot reference FFBEngine::DEFAULT_CALC_DT directly).
-// Note: FFBEngine also has a private member of the same name; this file-scope
-// constant does NOT trigger GCC's -Wchanges-meaning because it is only looked up
-// inside FFBCalculationContext, not inside FFBEngine's own class body.
-static constexpr double DEFAULT_CALC_DT = 0.0025; // 400 Hz (1/400 s)
+// Bring common math into scope (Removed for Unity Build support)
+// using namespace LMUFFB;
 
 
 // ChannelStats moved to PerfStats.h
-
-enum class LoadTransform {
-    LINEAR = 0,
-    CUBIC = 1,
-    QUADRATIC = 2,
-    HERMITE = 3
-};
 
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 #include "FFBSnapshot.h"
@@ -5994,78 +6111,31 @@ enum class LoadTransform {
 
 // BiquadNotch moved to MathUtils.h
 
-// Helper Result Struct for calculate_axle_grip
-struct GripResult {
-    double value;           // Final grip value
-    bool approximated;      // Was approximation used?
-    double original;        // Original telemetry value
-    double slip_angle;      // Calculated slip angle (if approximated)
-};
-
-struct Preset;
-
 namespace FFBEngineTests { class FFBEngineTestAccess; }
 
-struct FFBCalculationContext {
-    double dt = DEFAULT_CALC_DT;
-    double car_speed = 0.0;       // Absolute m/s
-    double car_speed_long = 0.0;  // Longitudinal m/s (Raw)
-    double speed_gate = 1.0;
-    double texture_load_factor = 1.0;
-    double brake_load_factor = 1.0;
-    double avg_front_load = 0.0;
-    double avg_front_grip = 0.0;
+namespace LMUFFB {
 
-    // Diagnostics
-    bool frame_warn_load = false;
-    bool frame_warn_grip = false;
-    bool frame_warn_rear_grip = false;
-    bool frame_warn_dt = false;
+struct Preset;
+class FFBDebugBuffer;
 
-    // Intermediate results
-    double grip_factor = 1.0;     // 1.0 = full grip, 0.0 = no grip
-    double sop_base_force = 0.0;
-    double sop_unboosted_force = 0.0; // For snapshot compatibility
-    double lat_load_force = 0.0;  // New v0.7.154 (Issue #282)
-    double rear_torque = 0.0;
-    double yaw_force = 0.0;
-    double scrub_drag_force = 0.0;
-    double gyro_force = 0.0;
-    double stationary_damping_force = 0.0; // New v0.7.206 (Issue #418)
-    double avg_rear_grip = 0.0;
-    double calc_rear_lat_force = 0.0;
-    double avg_rear_load = 0.0;
-    double long_load_force = 0.0; // New #301
-
-    // Effect outputs
-    double road_noise = 0.0;
-    double slide_noise = 0.0;
-    double lockup_rumble = 0.0;
-    double spin_rumble = 0.0;
-    double bottoming_crunch = 0.0;
-    double abs_pulse_force = 0.0;
-    double soft_lock_force = 0.0;
-    double gain_reduction_factor = 1.0;
-};
-    
 // FFB Engine Class
 class FFBEngine {
 public:
-    using ParsedVehicleClass = ::ParsedVehicleClass;
+    using ParsedVehicleClass = LMUFFB::Physics::ParsedVehicleClass;
 
     // Buffer size constants (declared first so they can be used as array bounds below)
     static constexpr int STR_BUF_64 = 64;
 
     // Settings (GUI Sliders)
-    GeneralConfig m_general;
-    FrontAxleConfig m_front_axle;
-    RearAxleConfig m_rear_axle;
-    LoadForcesConfig m_load_forces;
-    GripEstimationConfig m_grip_estimation;
-    SlopeDetectionConfig m_slope_detection;
-    BrakingConfig m_braking;
-    VibrationConfig m_vibration;
-    AdvancedConfig m_advanced;
+    LMUFFB::GeneralConfig m_general;
+    LMUFFB::FrontAxleConfig m_front_axle;
+    LMUFFB::RearAxleConfig m_rear_axle;
+    LMUFFB::LoadForcesConfig m_load_forces;
+    LMUFFB::GripEstimationConfig m_grip_estimation;
+    LMUFFB::SlopeDetectionConfig m_slope_detection;
+    LMUFFB::BrakingConfig m_braking;
+    LMUFFB::VibrationConfig m_vibration;
+    LMUFFB::AdvancedConfig m_advanced;
 
     // Configurable Smoothing & Caps (v0.3.9)
     bool m_invert_force = true;
@@ -6115,28 +6185,28 @@ public:
     TelemInfoV01 m_working_info; // Persistent storage for upsampled telemetry
     double m_last_telemetry_time = -1.0;
 
-    ffb_math::HoltWintersFilter m_upsample_lat_patch_vel[4];
-    ffb_math::HoltWintersFilter m_upsample_long_patch_vel[4];
-    ffb_math::HoltWintersFilter m_upsample_vert_deflection[4];
-    ffb_math::HoltWintersFilter m_upsample_susp_force[4];
-    ffb_math::HoltWintersFilter m_upsample_brake_pressure[4];
-    ffb_math::HoltWintersFilter m_upsample_rotation[4];
-    ffb_math::HoltWintersFilter m_upsample_steering;
-    ffb_math::HoltWintersFilter m_upsample_throttle;
-    ffb_math::HoltWintersFilter m_upsample_brake;
-    ffb_math::HoltWintersFilter m_upsample_local_accel_x;
-    ffb_math::HoltWintersFilter m_upsample_local_accel_y;
-    ffb_math::HoltWintersFilter m_upsample_local_accel_z;
-    ffb_math::HoltWintersFilter m_upsample_local_rot_accel_y;
-    ffb_math::HoltWintersFilter m_upsample_local_rot_y;
-    ffb_math::HoltWintersFilter  m_upsample_shaft_torque;
+    LMUFFB::HoltWintersFilter m_upsample_lat_patch_vel[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_long_patch_vel[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_vert_deflection[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_susp_force[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_brake_pressure[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_rotation[NUM_WHEELS];
+    LMUFFB::HoltWintersFilter m_upsample_steering;
+    LMUFFB::HoltWintersFilter m_upsample_throttle;
+    LMUFFB::HoltWintersFilter m_upsample_brake;
+    LMUFFB::HoltWintersFilter m_upsample_local_accel_x;
+    LMUFFB::HoltWintersFilter m_upsample_local_accel_y;
+    LMUFFB::HoltWintersFilter m_upsample_local_accel_z;
+    LMUFFB::HoltWintersFilter m_upsample_local_rot_accel_y;
+    LMUFFB::HoltWintersFilter m_upsample_local_rot_y;
+    LMUFFB::HoltWintersFilter  m_upsample_shaft_torque;
 
-    double m_prev_vert_deflection[4] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_vert_deflection[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
     double m_prev_vert_accel = 0.0; 
-    double m_prev_slip_angle[4] = {0.0, 0.0, 0.0, 0.0}; 
-    double m_prev_load[4] = {0.0, 0.0, 0.0, 0.0}; // NEW: Smoothed load state
-    double m_prev_rotation[4] = {0.0, 0.0, 0.0, 0.0};    
-    double m_prev_brake_pressure[4] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_slip_angle[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_load[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; // NEW: Smoothed load state
+    double m_prev_rotation[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0};    
+    double m_prev_brake_pressure[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
     
     // Gyro State (v0.4.17)
     double m_prev_steering_angle = 0.0;
@@ -6181,7 +6251,7 @@ public:
     double m_bottoming_phase = 0.0;
     
     // Internal state for Bottoming (Method B)
-    double m_prev_susp_force[4] = {0.0, 0.0, 0.0, 0.0};
+    double m_prev_susp_force[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0};
 
     // Seeding state (Issue #379)
     bool m_derivatives_seeded = false;
@@ -6191,8 +6261,8 @@ public:
     double m_sop_load_smoothed = 0.0; // New v0.7.121
     
     // Filter Instances (v0.4.41)
-    BiquadNotch m_notch_filter;
-    BiquadNotch m_static_notch_filter;
+    LMUFFB::BiquadNotch m_notch_filter;
+    LMUFFB::BiquadNotch m_static_notch_filter;
 
     // Slope Detection Buffers (Circular) - v0.7.0
     static constexpr int SLOPE_BUFFER_MAX = 41;  
@@ -6257,17 +6327,17 @@ public:
     FFBSafetyMonitor m_safety;
 
     // Telemetry Stats
-    ChannelStats s_torque;
-    ChannelStats s_front_load;
-    ChannelStats s_front_grip;
-    ChannelStats s_lat_g;
+    Logging::ChannelStats s_torque;
+    Logging::ChannelStats s_front_load;
+    Logging::ChannelStats s_front_grip;
+    Logging::ChannelStats s_lat_g;
     std::chrono::steady_clock::time_point last_log_time;
 
-    // Thread-Safe Buffer (Producer-Consumer)
-    FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
+    LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class FFBEngineTests::FFBEngineTestAccess;
-    friend struct Preset;
+    friend class Config;
+    friend struct LMUFFB::Preset;
 
     FFBEngine();
 
@@ -6305,8 +6375,6 @@ private:
     static constexpr double ABS_PRESSURE_RATE_THRESHOLD = 2.0;  
     static constexpr double PREDICTION_BRAKE_THRESHOLD = 0.02;  
     static constexpr double PREDICTION_LOAD_THRESHOLD = 50.0;
-
-    double m_auto_peak_front_load = 4500.0; // DEFAULT_AUTO_PEAK_LOAD
 
     static constexpr double HPF_TIME_CONSTANT_S = 0.1;
     static constexpr double ZERO_CROSSING_EPSILON = 0.05;
@@ -6420,7 +6488,8 @@ private:
     static constexpr double ACCEL_ROAD_TEXTURE_SCALE = 0.05;
     static constexpr double DEBUG_FREQ_SMOOTHING = 0.9;
     static constexpr double GAIN_REDUCTION_MAX = 50.0;
-    double m_session_peak_torque = 25.0; // DEFAULT_SESSION_PEAK_TORQUE
+    double m_session_peak_torque = 25.0; // Normalization State (Persisted in config.toml)
+    double m_auto_peak_front_load = 4500.0; // Normalization State (Persisted in config.toml)
     double m_smoothed_structural_mult = 1.0 / 25.0; 
     double m_rolling_average_torque = 0.0; 
     double m_last_raw_torque = 0.0; 
@@ -6478,8 +6547,9 @@ private:
     void calculate_slide_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_road_texture(const TelemInfoV01* data, FFBCalculationContext& ctx);
     void calculate_suspension_bottoming(const TelemInfoV01* data, FFBCalculationContext& ctx);
-    void calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext& ctx);
 };
+
+} // namespace LMUFFB
 
 #endif // FFBENGINE_H
 
@@ -6491,6 +6561,12 @@ private:
 #include "logging/Logger.h"
 #include "io/RestApiProvider.h"
 #include "physics/VehicleUtils.h"
+
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+using namespace LMUFFB::Physics;
+
+namespace LMUFFB {
 
 bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
     const char* trackName = data.scoring.scoringInfo.mTrackName;
@@ -6543,6 +6619,8 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
     return changed;
 }
 
+} // namespace LMUFFB
+
 ```
 
 # File: src\ffb\FFBMetadataManager.h
@@ -6557,6 +6635,8 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
 #include "VehicleUtils.h"
 #include "utils/StringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+
+namespace LMUFFB {
 
 class FFBMetadataManager {
 public:
@@ -6578,7 +6658,7 @@ public:
     const char* GetVehicleName() const { return m_vehicle_name; }
     const char* GetTrackName() const { return m_track_name; }
     const char* GetCurrentClassName() const { return m_current_class_name.c_str(); }
-    ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }
+    LMUFFB::ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }
     bool HasWarnedInvalidRange() const { return m_warned_invalid_range; }
     void SetWarnedInvalidRange(bool val) { m_warned_invalid_range = val; }
 
@@ -6586,7 +6666,7 @@ public:
     char m_vehicle_name[STR_BUF_64] = "Unknown";
     char m_track_name[STR_BUF_64] = "Unknown";
     std::string m_current_class_name = "";
-    ParsedVehicleClass m_current_vclass = ParsedVehicleClass::UNKNOWN;
+    LMUFFB::ParsedVehicleClass m_current_vclass = LMUFFB::ParsedVehicleClass::UNKNOWN;
     std::atomic<bool> m_warned_invalid_range{false};
     std::string m_last_handled_vehicle_name = "";
     std::string m_last_logged_veh = "";
@@ -6595,6 +6675,8 @@ private:
     std::mutex m_mutex;
 };
 
+} // namespace LMUFFB
+
 #endif // FFBMETADATA_MANAGER_H
 
 ```
@@ -6602,6 +6684,11 @@ private:
 # File: src\ffb\FFBSafetyMonitor.cpp
 ```cpp
 #include "FFBSafetyMonitor.h"
+
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
+namespace LMUFFB {
 
 bool FFBSafetyMonitor::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const {
     // 1. Mute if not player vehicle
@@ -6757,6 +6844,7 @@ double FFBSafetyMonitor::ApplySafetySlew(double target_force, double dt, bool re
     return safety_smoothed_force;
 }
 
+} // namespace LMUFFB
 
 ```
 
@@ -6773,6 +6861,8 @@ double FFBSafetyMonitor::ApplySafetySlew(double target_force, double dt, bool re
 #include "utils/StringUtils.h"
 #include "FFBConfig.h"
 
+namespace LMUFFB {
+
 class FFBSafetyMonitor {
 public:
     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;
@@ -6781,7 +6871,7 @@ public:
     FFBSafetyMonitor() = default;
 
     // FFB Safety Settings
-    SafetyConfig m_config;
+    LMUFFB::SafetyConfig m_config;
 
     // API methods for FFBEngine
     double GetSafetyTimer() const { return safety_timer; }
@@ -6826,6 +6916,8 @@ public:
     bool was_soft_locked = false;
     bool soft_lock_significant = false;
 };
+
+} // namespace LMUFFB
 
 #endif // FFBSAFETYMONITOR_H
 
@@ -6928,7 +7020,7 @@ struct FFBSnapshot {
 #include "UpSampler.h"
 #include <algorithm>
 
-namespace ffb_math {
+namespace LMUFFB {
 
 PolyphaseResampler::PolyphaseResampler() {
     Reset();
@@ -6978,7 +7070,7 @@ double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_phy
     return output;
 }
 
-} // namespace ffb_math
+} // namespace LMUFFB
 
 ```
 
@@ -6989,7 +7081,7 @@ double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_phy
 
 #include <array>
 
-namespace ffb_math {
+namespace LMUFFB {
 
 /**
  * @brief Polyphase Resampler for 5/2 ratio (400Hz -> 1000Hz)
@@ -7030,7 +7122,7 @@ private:
     };
 };
 
-} // namespace ffb_math
+} // namespace LMUFFB
 
 #endif // UPSAMPLER_H
 
@@ -7046,21 +7138,25 @@ private:
 #include "DXGIUtils.h"
 #include <cstring>
 
-void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd) {
-    memset(&sd, 0, sizeof(sd));
-    sd.Width = 0;                               // Use window size
-    sd.Height = 0;
-    sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    sd.Stereo = FALSE;
-    sd.SampleDesc.Count = 1;                    // Flip model requires SampleDesc.Count = 1
-    sd.SampleDesc.Quality = 0;
-    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.BufferCount = 2;                         // Flip model requires at least 2
-    sd.Scaling = DXGI_SCALING_STRETCH;
-    sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // Modern flip model
-    sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-    sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-}
+namespace LMUFFB {
+namespace GUI {
+    void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd) {
+        memset(&sd, 0, sizeof(sd));
+        sd.Width = 0;                               // Use window size
+        sd.Height = 0;
+        sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        sd.Stereo = FALSE;
+        sd.SampleDesc.Count = 1;                    // Flip model requires SampleDesc.Count = 1
+        sd.SampleDesc.Quality = 0;
+        sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        sd.BufferCount = 2;                         // Flip model requires at least 2
+        sd.Scaling = DXGI_SCALING_STRETCH;
+        sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // Modern flip model
+        sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+        sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+    }
+} // namespace GUI
+} // namespace LMUFFB
 
 ```
 
@@ -7075,8 +7171,16 @@ void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd) {
 #include <dxgi1_2.h>
 #endif
 
-// Helper to configure the modern DXGI Flip Model swap chain descriptor
-void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd);
+namespace LMUFFB {
+namespace GUI {
+    // Helper to configure the modern DXGI Flip Model swap chain descriptor
+    void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd);
+}
+}
+
+namespace LMUFFB {
+    using GUI::SetupFlipModelSwapChainDesc;
+}
 
 #endif // DXGIUTILS_H
 
@@ -7090,20 +7194,25 @@ void SetupFlipModelSwapChainDesc(DXGI_SWAP_CHAIN_DESC1& sd);
 #include "FFBEngine.h"
 #include <string>
 
+class GuiLayerTestAccess;
+
+namespace LMUFFB {
+namespace GUI {
+
 class GuiLayer {
 public:
-    friend class GuiLayerTestAccess;
+    friend class ::GuiLayerTestAccess;
     static bool Init();
-    static void Shutdown(FFBEngine& engine);
+    static void Shutdown(LMUFFB::FFBEngine& engine);
     
     static void* GetWindowHandle(); // Returns HWND on Windows, GLFWwindow* on Linux
     static void SetupGUIStyle();   // Setup professional theme
 
     // Returns true if the GUI is active/focused (affects lazy rendering)
-    static bool Render(FFBEngine& engine);
+    static bool Render(LMUFFB::FFBEngine& engine);
 
     // Pulls latest snapshots from the engine and updates GUI state
-    static void UpdateTelemetry(FFBEngine& engine);
+    static void UpdateTelemetry(LMUFFB::FFBEngine& engine);
 
     // Snapshot state for thread-safe UI display
     static float GetLatestSteeringRange() { return m_latest_steering_range; }
@@ -7113,17 +7222,41 @@ private:
     static float m_latest_steering_range;
     static float m_latest_steering_angle;
 
-    static void DrawMenuBar(FFBEngine& engine);
-    static void DrawTuningWindow(FFBEngine& engine);
-    static void DrawDebugWindow(FFBEngine& engine);
+#ifdef LMUFFB_UNIT_TEST
+public:
+    static std::wstring m_last_shell_execute_args;
+    static std::string m_last_system_cmd;
+private:
+#endif
+
+    static void DrawMenuBar(LMUFFB::FFBEngine& engine);
+    static void LaunchLogAnalyzer(const std::string& log_file);
+    static void DrawTuningWindow(LMUFFB::FFBEngine& engine);
+    static void DrawDebugWindow(LMUFFB::FFBEngine& engine);
 };
 
+} // namespace GUI
+} // namespace LMUFFB
+
 // Platform helper functions (implemented in GuiLayer_Win32.cpp and GuiLayer_Linux.cpp)
+namespace LMUFFB {
+namespace GUI {
 void ResizeWindowPlatform(int x, int y, int w, int h);
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode);
 void SetWindowAlwaysOnTopPlatform(bool enabled);
 bool OpenPresetFileDialogPlatform(std::string& outPath);
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName);
+}
+}
+
+namespace LMUFFB {
+    using GUI::GuiLayer;
+    using GUI::ResizeWindowPlatform;
+    using GUI::SaveCurrentWindowGeometryPlatform;
+    using GUI::SetWindowAlwaysOnTopPlatform;
+    using GUI::OpenPresetFileDialogPlatform;
+    using GUI::SavePresetFileDialogPlatform;
+}
 
 #endif // GUILAYER_H
 
@@ -7135,13 +7268,15 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 #include "Version.h"
 #include "Config.h"
 #include "Tooltips.h"
-#include "StringUtils.h" // Added StringUtils.h
+#include "utils/StringUtils.h"
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
 #include "GuiWidgets.h"
 #include "AsyncLogger.h"
 #include "VehicleUtils.h"
 #include "HealthMonitor.h"
+
+#include <string>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -7153,40 +7288,61 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
+#endif
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #endif
 
-static void DisplayRate(const char* label, double rate, double target) {
-    ImGui::Text("%s", label);
-    
-    // Status colors for performance metrics
-    static const ImVec4 COLOR_RED(1.0F, 0.4F, 0.4F, 1.0F);
-    static const ImVec4 COLOR_GREEN(0.4F, 1.0F, 0.4F, 1.0F);
-    static const ImVec4 COLOR_YELLOW(1.0F, 1.0F, 0.4F, 1.0F);
+#ifdef LMUFFB_UNIT_TEST
+// Linkage for global test access class defined in test_gui_common.h
+#include "../../tests/test_gui_common.h"
+#endif
 
-    ImVec4 color = COLOR_RED;
-    if (rate >= target * 0.95) {
-        color = COLOR_GREEN;
-    } else if (rate >= target * 0.75) {
-        color = COLOR_YELLOW;
-    }
-    
-    ImGui::TextColored(color, "%.1f Hz", rate);
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
+namespace LMUFFB {
+    extern std::atomic<bool> g_running;
+    extern std::recursive_mutex g_engine_mutex;
 }
 
-
-// External linkage to FFB loop status
-extern std::atomic<bool> g_running;
-extern std::recursive_mutex g_engine_mutex;
+namespace LMUFFB {
+namespace GUI {
 
 float GuiLayer::m_latest_steering_range = 0.0f;
 float GuiLayer::m_latest_steering_angle = 0.0f;
 
-static const float CONFIG_PANEL_WIDTH = 500.0f;
-static const int LATENCY_WARNING_THRESHOLD_MS = 15;
+#ifdef LMUFFB_UNIT_TEST
+std::wstring GuiLayer::m_last_shell_execute_args;
+std::string GuiLayer::m_last_system_cmd;
+#endif
+
+#ifdef ENABLE_IMGUI
+namespace {
+    void DisplayRate(const char* label, double rate, double target) {
+        ImGui::Text("%s", label);
+
+        // Status colors for performance metrics
+        static const ImVec4 COLOR_RED(1.0F, 0.4F, 0.4F, 1.0F);
+        static const ImVec4 COLOR_GREEN(0.4F, 1.0F, 0.4F, 1.0F);
+        static const ImVec4 COLOR_YELLOW(1.0F, 1.0F, 0.4F, 1.0F);
+
+        ImVec4 color = COLOR_RED;
+        if (rate >= target * 0.95) {
+            color = COLOR_GREEN;
+        } else if (rate >= target * 0.75) {
+            color = COLOR_YELLOW;
+        }
+
+        ImGui::TextColored(color, "%.1f Hz", rate);
+    }
+
+    constexpr float CONFIG_PANEL_WIDTH = 500.0f;
+    constexpr int LATENCY_WARNING_THRESHOLD_MS = 15;
+}
 
 // Professional "Flat Dark" Theme
 void GuiLayer::SetupGUIStyle() {
@@ -7264,28 +7420,7 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
                 }
 
                 if (found) {
-                    std::string log_file = latest_path.string();
-                    
-                    // Get executable directory to find tools/ relative to the binary
-                    fs::path exe_dir = fs::current_path();
-#ifdef _WIN32
-                    char buffer[MAX_PATH];
-                    if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) {
-                        exe_dir = fs::path(buffer).parent_path();
-                    }
-#endif
-                    
-                    // Robust PYTHONPATH lookup
-                    std::string python_path = (exe_dir / "tools").string();
-                    if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) {
-                        // Dev environment fallbacks from CWD
-                        if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools";
-                        else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools";
-                        else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
-                    }
-
-                    std::string cmd = "start cmd /c \"set PYTHONPATH=" + python_path + " && python -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\" & pause\"";
-                    system(cmd.c_str());
+                    LaunchLogAnalyzer(latest_path.string());
                 }
             }
             ImGui::EndMenu();
@@ -7294,11 +7429,79 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {
     }
 }
 
+void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
+    namespace fs = std::filesystem;
+
+    // Get executable directory to find tools/ relative to the binary
+    fs::path exe_dir = fs::current_path();
+#ifdef _WIN32
+    char buffer[MAX_PATH];
+    if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) {
+        exe_dir = fs::path(buffer).parent_path();
+    }
+#endif
+
+    // Robust PYTHONPATH lookup
+    std::string python_path = (exe_dir / "tools").string();
+    if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) {
+        // Dev environment fallbacks from CWD
+        if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools";
+        else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools";
+        else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
+    }
+
+    // Windows Defender false positive mitigation :
+    // See docs\dev_docs\reports\av_detection_investigation_v0.7.222(pt.2).md
+#ifdef _WIN32
+    // 1. Set the environment variable natively in the C++ process.
+    // cmd.exe and python.exe will automatically inherit this.
+    std::wstring wPythonPath = fs::path(python_path).wstring();
+    SetEnvironmentVariableW(L"PYTHONPATH", wPythonPath.c_str());
+
+    // 2. Build a clean, unchained command. 
+    // /k tells cmd.exe to run the command and KEEP the window open (replacing the need for '& pause')
+    std::wstring wLogFile = fs::path(log_file).wstring();
+    std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
+
+#ifdef LMUFFB_UNIT_TEST
+    m_last_shell_execute_args = wArgs;
+#endif
+
+#ifndef LMUFFB_UNIT_TEST
+    // 3. Execute
+    ShellExecuteW(NULL, L"open", L"cmd.exe", wArgs.c_str(), NULL, SW_SHOWNORMAL);
+#endif
+#else
+    std::string cmd = "PYTHONPATH=" + python_path + " python3 -m lmuffb_log_analyzer.cli analyze-full \"" + log_file + "\"";
+#ifdef LMUFFB_UNIT_TEST
+    m_last_system_cmd = cmd;
+#endif
+
+#ifndef LMUFFB_UNIT_TEST
+    system(cmd.c_str());
+#endif
+#endif
+}
 
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
 void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    // Persistent UI State
+    static int selected_preset = 0;
+    static bool first_run = true;
+
+    // Initialization: Match selected_preset index to Config::m_last_preset_name on first frame
+    if (first_run && !Config::presets.empty()) {
+        for (int i = 0; i < (int)Config::presets.size(); i++) {
+            if (Config::presets[i].name == Config::m_last_preset_name) {
+                selected_preset = i;
+                break;
+            }
+        }
+        first_run = false;
+    }
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->WorkSize.x;
@@ -7311,11 +7514,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     static std::chrono::steady_clock::time_point last_check_time = std::chrono::steady_clock::now();
 
-    if (!GameConnector::Get().IsConnected()) {
+    if (!LMUFFB::GameConnector::Get().IsConnected()) {
       ImGui::TextColored(ImVec4(1, 1, 0, 1), "Connecting to LMU...");
       if (std::chrono::steady_clock::now() - last_check_time > CONNECT_ATTEMPT_INTERVAL) {
         last_check_time = std::chrono::steady_clock::now();
-        GameConnector::Get().TryConnect();
+        LMUFFB::GameConnector::Get().TryConnect();
       }
     } else {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
@@ -7389,10 +7592,10 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::ALWAYS_ON_TOP);
     ImGui::SameLine();
 
-    bool toggled = Config::show_graphs;
-    if (ImGui::Checkbox("Graphs", &toggled)) {
+    bool graphs_toggled = Config::show_graphs;
+    if (ImGui::Checkbox("Graphs", &graphs_toggled)) {
         SaveCurrentWindowGeometryPlatform(Config::show_graphs);
-        Config::show_graphs = toggled;
+        Config::show_graphs = graphs_toggled;
         int target_w = Config::show_graphs ? Config::win_w_large : Config::win_w_small;
         int target_h = Config::show_graphs ? Config::win_h_large : Config::win_h_small;
         ResizeWindowPlatform(Config::win_pos_x, Config::win_pos_y, target_w, target_h);
@@ -7445,8 +7648,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
 
     ImGui::Separator();
 
-    static int selected_preset = 0;
-
     auto FormatDecoupled = [&](float val, float base_nm) {
         float estimated_nm = val * base_nm;
         static char buf[64];
@@ -7478,23 +7679,11 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         GuiWidgets::Result res = GuiWidgets::Combo(label, v, items, items_count, tooltip);
         if (res.changed) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-            // v is already updated by ImGui, but we lock to ensure visibility and consistency
             Config::Save(engine);
         }
     };
 
     if (ImGui::TreeNodeEx("Presets and Configuration", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
-        static bool first_run = true;
-        if (first_run && !Config::presets.empty()) {
-            for (int i = 0; i < (int)Config::presets.size(); i++) {
-                if (Config::presets[i].name == Config::m_last_preset_name) {
-                    selected_preset = i;
-                    break;
-                }
-            }
-            first_run = false;
-        }
-
         static std::string preview_buf;
         const char* preview_value = "Custom";
         if (selected_preset >= 0 && selected_preset < (int)Config::presets.size()) {
@@ -7726,7 +7915,6 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     } else {
         ImGui::NextColumn(); ImGui::NextColumn();
     }
-
     if (ImGui::TreeNodeEx("FFB Safety Features", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) {
         ImGui::NextColumn(); ImGui::NextColumn();
 
@@ -8108,15 +8296,17 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
         }
         ImGui::Unindent();
     }
-
     ImGui::Columns(1);
     ImGui::End();
 }
 
+namespace {
 const float PLOT_HISTORY_SEC = 10.0f;
 const int PHYSICS_RATE_HZ = 400;
 const int PLOT_BUFFER_SIZE = (int)(PLOT_HISTORY_SEC * PHYSICS_RATE_HZ);
+}
 
+namespace {
 struct RollingBuffer {
     std::vector<float> data;
     int offset = 0;
@@ -8147,10 +8337,11 @@ struct RollingBuffer {
     }
 };
 
-inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
-                          float scale_min, float scale_max,
-                          const ImVec2& size = ImVec2(0, 40),
-                          const char* tooltip = nullptr) {
+namespace {
+    void PlotWithStats(const char* label, const RollingBuffer& buffer,
+                              float scale_min, float scale_max,
+                              const ImVec2& size = ImVec2(0, 40),
+                              const char* tooltip = nullptr) {
     ImGui::Text("%s", label);
     char hidden_label[256];
     StringUtils::SafeFormat(hidden_label, sizeof(hidden_label), "##%s", label);
@@ -8186,12 +8377,14 @@ inline void PlotWithStats(const char* label, const RollingBuffer& buffer,
     draw_list->AddText(font, font_size, p_min, IM_COL32(255, 255, 255, 255), stats_overlay);
 }
 
-// Global Buffers
-static RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
-static RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
-static RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
+    // Global Buffers
+    RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
+    RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
+    RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
-static bool g_warn_dt = false;
+    bool g_warn_dt = false;
+}
+}
 
 void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
     auto snapshots = engine.GetDebugBatch();
@@ -8263,7 +8456,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
     if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
         HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_front_axle.torque_source, engine.m_physics_rate,
-                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
+                                              LMUFFB::GameConnector::Get().IsConnected(), LMUFFB::GameConnector::Get().IsSessionActive(), LMUFFB::GameConnector::Get().GetSessionType(), LMUFFB::GameConnector::Get().IsInRealtime(), LMUFFB::GameConnector::Get().GetPlayerControl());
 
         ImGui::Columns(6, "RateCols", false);
         DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);
@@ -8319,7 +8512,7 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
             ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
         }
 
-        if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && GameConnector::Get().IsConnected()) {
+        if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && LMUFFB::GameConnector::Get().IsConnected()) {
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings.");
         }
         ImGui::Separator();
@@ -8425,10 +8618,23 @@ void GuiLayer::DrawDebugWindow(FFBEngine& engine) {
 
     ImGui::End();
 }
+#else
+void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
+void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {}
+void GuiLayer::UpdateTelemetry(FFBEngine& engine) {}
+void GuiLayer::DrawTuningWindow(FFBEngine& engine) {}
+void GuiLayer::DrawDebugWindow(FFBEngine& engine) {}
+void GuiLayer::SetupGUIStyle() {}
 #endif
 
-#ifndef ENABLE_IMGUI
-void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
+} // namespace GUI
+} // namespace LMUFFB
+
+#ifdef LMUFFB_UNIT_TEST
+void GuiLayerTestAccess::GetLastLaunchArgs(std::wstring& wArgs, std::string& cmd) {
+    wArgs = LMUFFB::GUI::GuiLayer::m_last_shell_execute_args;
+    cmd = LMUFFB::GUI::GuiLayer::m_last_system_cmd;
+}
 #endif
 
 ```
@@ -8440,12 +8646,13 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
 #include "Version.h"
 #include "Config.h"
 #include "Logger.h"
-#include "Logger.h"
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
 #include <chrono>
+#include <atomic>
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
@@ -8457,11 +8664,22 @@ void GuiLayer::DrawMenuBar(FFBEngine& engine) {}
 #else
 #include <GL/gl.h>
 #endif
-
-static GLFWwindow* g_window = nullptr;
 #endif
 
-extern std::atomic<bool> g_running;
+using namespace LMUFFB::Logging;
+
+namespace LMUFFB {
+    extern std::atomic<bool> g_running;
+}
+
+namespace LMUFFB {
+namespace GUI {
+
+namespace {
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+    GLFWwindow* g_window = nullptr;
+#endif
+}
 
 class LinuxGuiPlatform : public IGuiPlatform {
 public:
@@ -8526,10 +8744,12 @@ public:
     bool m_always_on_top_mock = false;
 };
 
-static LinuxGuiPlatform g_platform;
+// Internal helpers exposed for tests
+// Note: These must NOT be in an anonymous namespace as they are needed by tests and GuiLayer_Common.cpp
+LinuxGuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
 
-// Compatibility Helpers
+// Compatibility Helpers (Exposed for tests and GuiLayer_Common.cpp)
 void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
 void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
@@ -8538,8 +8758,10 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 
-static void glfw_error_callback(int error, const char* description) {
-    Logger::Get().LogFile("Glfw Error %d: %s", error, description);
+namespace {
+    void glfw_error_callback(int error, const char* description) {
+        Logger::Get().LogFile("Glfw Error %d: %s", error, description);
+    }
 }
 
 bool GuiLayer::Init() {
@@ -8636,6 +8858,9 @@ void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 #endif
 
+} // namespace GUI
+} // namespace LMUFFB
+
 ```
 
 # File: src\gui\GuiLayer_Win32.cpp
@@ -8647,49 +8872,65 @@ void* GuiLayer::GetWindowHandle() { return nullptr; }
 #include "Logger.h"
 #include "Config.h"
 #include "StringUtils.h"
-#include <windows.h>
-#include <commdlg.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <mutex>
 #include <chrono>
+#include <atomic>
 
-#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <commdlg.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <tchar.h>
+#include "resource.h"
+#endif
 
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
 
-// Global DirectX variables
-static ID3D11Device*            g_pd3dDevice = NULL;
-static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
-static IDXGISwapChain*          g_pSwapChain = NULL;
-static ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
-static HWND                     g_hwnd = NULL;
+using namespace LMUFFB::Logging;
 
-static const int MIN_WINDOW_WIDTH = 400;
-static const int MIN_WINDOW_HEIGHT = 600;
+namespace LMUFFB {
+    extern std::atomic<bool> g_running;
+}
+
+namespace LMUFFB {
+namespace GUI {
+
+#if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
+
+namespace {
+    // Forward declarations
+    bool CreateDeviceD3D(HWND hWnd);
+    void CleanupDeviceD3D();
+    void CreateRenderTarget();
+    void CleanupRenderTarget();
+    LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    // Global DirectX variables
+    ID3D11Device*            g_pd3dDevice = NULL;
+    ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
+    IDXGISwapChain*          g_pSwapChain = NULL;
+    ID3D11RenderTargetView*  g_mainRenderTargetView = NULL;
+    HWND                     g_hwnd = NULL;
+
+    const int MIN_WINDOW_WIDTH = 400;
+    const int MIN_WINDOW_HEIGHT = 600;
+}
 
 #ifndef PW_RENDERFULLCONTENT
 #define PW_RENDERFULLCONTENT 0x00000002
 #endif
-
-#include "resource.h"
-
-// Forward declarations
-bool CreateDeviceD3D(HWND hWnd);
-void CleanupDeviceD3D();
-void CreateRenderTarget();
-void CleanupRenderTarget();
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-extern std::atomic<bool> g_running;
 
 class Win32GuiPlatform : public IGuiPlatform {
 public:
@@ -8768,10 +9009,12 @@ public:
     }
 };
 
-static Win32GuiPlatform g_platform;
+// Internal helpers exposed for tests
+// Note: These must NOT be in an anonymous namespace as they are needed by tests and GuiLayer_Common.cpp
+Win32GuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
 
-// Compatibility Helpers
+// Compatibility Helpers (Exposed for tests and GuiLayer_Common.cpp)
 void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
 void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
@@ -8870,7 +9113,8 @@ bool GuiLayer::Render(FFBEngine& engine) {
     return true; // Always return true to keep the main loop running at full speed
 }
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+namespace {
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam)) return true;
     switch (msg) {
@@ -8977,6 +9221,8 @@ void CleanupRenderTarget() {
     if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = NULL; }
 }
 
+} // anonymous namespace
+
 #else
 // Stub Implementation for Headless Builds
 class Win32GuiPlatform : public IGuiPlatform {
@@ -8990,8 +9236,17 @@ public:
     bool GetAlwaysOnTopMock() override { return m_always_on_top_mock; }
     bool m_always_on_top_mock = false;
 };
-static Win32GuiPlatform g_platform;
+
+// Internal helpers exposed for tests
+Win32GuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
+
+// Compatibility Helpers (Exposed for tests)
+void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
+void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
+void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
+bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
+bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
 
 bool GuiLayer::Init() {
     return true;
@@ -9002,13 +9257,10 @@ void GuiLayer::Shutdown(FFBEngine& engine) {
 bool GuiLayer::Render(FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
-void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
-void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
-void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
-bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
-bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
-
 #endif
+
+} // namespace GUI
+} // namespace LMUFFB
 
 ```
 
@@ -9016,6 +9268,9 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 ```cpp
 #pragma once
 #include <string>
+
+namespace LMUFFB {
+namespace GUI {
 
 class IGuiPlatform {
 public:
@@ -9037,6 +9292,15 @@ IGuiPlatform& GetGuiPlatform();
 // Global helper for simple access (compatibility)
 void SetWindowAlwaysOnTopPlatform(bool enabled);
 
+} // namespace GUI
+} // namespace LMUFFB
+
+namespace LMUFFB {
+    using GUI::IGuiPlatform;
+    using GUI::GetGuiPlatform;
+    using GUI::SetWindowAlwaysOnTopPlatform;
+}
+
 ```
 
 # File: src\gui\GuiWidgets.h
@@ -9052,6 +9316,8 @@ void SetWindowAlwaysOnTopPlatform(bool enabled);
 #include <functional>
 #include <cstring>
 
+namespace LMUFFB {
+namespace GUI {
 namespace GuiWidgets {
 
     /**
@@ -9114,7 +9380,7 @@ namespace GuiWidgets {
                     ImGui::Text("%s", tooltip);
                     ImGui::Separator();
                 }
-                ImGui::Text("%s", Tooltips::FINE_TUNE);
+                ImGui::Text("%s", LMUFFB::Tooltips::FINE_TUNE);
                 ImGui::EndTooltip();
             }
         }
@@ -9170,6 +9436,12 @@ namespace GuiWidgets {
         return res;
     }
 }
+}
+}
+
+namespace LMUFFB {
+    namespace GuiWidgets = GUI::GuiWidgets;
+}
 
 #endif // ENABLE_IMGUI
 
@@ -9184,6 +9456,41 @@ namespace GuiWidgets {
 // Used by res.rc
 //
 #define IDI_ICON1                       1
+
+#define IDR_PRESET_DEFAULT 200
+#define IDR_PRESET_FANATEC_CSL_DD__GT_DD_PRO 201
+#define IDR_PRESET_FANATEC_PODIUM_DD1DD2 202
+#define IDR_PRESET_GM___YAW_KICK_DD_21_NM__MOZA_R21_ULTRA_ 203
+#define IDR_PRESET_GM_DD_21_NM__MOZA_R21_ULTRA_ 204
+#define IDR_PRESET_GT3_DD_15_NM__SIMAGIC_ALPHA_ 205
+#define IDR_PRESET_GUIDE_BRAKING_LOCKUP 206
+#define IDR_PRESET_GUIDE_GYROSCOPIC_DAMPING 207
+#define IDR_PRESET_GUIDE_OVERSTEER__REAR_GRIP_ 208
+#define IDR_PRESET_GUIDE_SLIDE_TEXTURE__SCRUB_ 209
+#define IDR_PRESET_GUIDE_SOP_YAW__KICK_ 210
+#define IDR_PRESET_GUIDE_TRACTION_LOSS__SPIN_ 211
+#define IDR_PRESET_GUIDE_UNDERSTEER__FRONT_GRIP_ 212
+#define IDR_PRESET_LMPXHY_DD_15_NM__SIMAGIC_ALPHA_ 213
+#define IDR_PRESET_LOGITECH_G25G27G29G920 214
+#define IDR_PRESET_MOZA_R5R9R16R21 215
+#define IDR_PRESET_SIMAGIC_ALPHAALPHA_MINIALPHA_U 216
+#define IDR_PRESET_SIMUCUBE_2_SPORTPROULTIMATE 217
+#define IDR_PRESET_T300_V0_7_164 218
+#define IDR_PRESET_TEST_GAME_BASE_FFB_ONLY 219
+#define IDR_PRESET_TEST_NO_EFFECTS 220
+#define IDR_PRESET_TEST_REAR_ALIGN_TORQUE_ONLY 221
+#define IDR_PRESET_TEST_SLIDE_TEXTURE_ONLY 222
+#define IDR_PRESET_TEST_SOP_BASE_ONLY 223
+#define IDR_PRESET_TEST_SOP_ONLY 224
+#define IDR_PRESET_TEST_TEXTURES_ONLY 225
+#define IDR_PRESET_TEST_UNDERSTEER_ONLY 226
+#define IDR_PRESET_TEST_YAW_KICK_ONLY 227
+#define IDR_PRESET_THRUSTMASTER_T_GTT_GT_II 228
+#define IDR_PRESET_THRUSTMASTER_T300TX 229
+#define IDR_PRESET_THRUSTMASTER_TS_PCTS_XW 230
+
+#define IDR_PRESET_FIRST IDR_PRESET_DEFAULT
+#define IDR_PRESET_LAST  IDR_PRESET_THRUSTMASTER_TS_PCTS_XW
 
 // Next default values for new objects
 // 
@@ -9206,6 +9513,8 @@ namespace GuiWidgets {
 #include <vector>
 #include <string>
 
+namespace LMUFFB {
+namespace GUI {
 namespace Tooltips {
 
     // General FFB
@@ -9407,6 +9716,12 @@ namespace Tooltips {
         FINE_TUNE
     };
 }
+}
+}
+
+namespace LMUFFB {
+    namespace Tooltips = GUI::Tooltips;
+}
 
 #endif // TOOLTIPS_H
 
@@ -9422,9 +9737,16 @@ namespace Tooltips {
 #include "io/lmu_sm_interface/SafeSharedMemoryLock.h"
 #include <iostream>
 #include <cstring>
-#include "StringUtils.h"
+#include "utils/StringUtils.h"
 
-#define LEGACY_SHARED_MEMORY_NAME "$rFactor2SMMP_Telemetry$"
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
+namespace LMUFFB {
+
+namespace {
+    constexpr const char* LEGACY_SHARED_MEMORY_NAME = "$rFactor2SMMP_Telemetry$";
+}
 
 GameConnector& GameConnector::Get() {
     static GameConnector instance;
@@ -9457,11 +9779,19 @@ void GameConnector::_DisconnectLocked() {
     m_smLock.reset();
     m_connected = false;
     m_processId = 0;
+    
+    // Reset robust state machine flags (#267)
+    m_sessionActive = false;
+    m_inRealtime = false;
+    m_currentSessionType = -1;
+    m_currentGamePhase = 255;
+    m_playerControl = -2;
+    m_pendingMenuCheck = false;
 }
 
 bool GameConnector::TryConnect() {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    if (m_connected) return true;
+    if (IsConnected()) return true;
 
     // Ensure we don't leak handles from a previous partial/failed attempt
     _DisconnectLocked();
@@ -9784,6 +10114,7 @@ void GameConnector::_LogTransitions(const SharedMemoryObjectOut& current) {
             case 1: locStr = "Track Loading"; break;
             case 2: locStr = "Monitor (Garage)"; break;
             case 3: locStr = "On Track"; break;
+            default: break;
         }
         Logger::Get().LogFile("[Transition] OptionsLocation: %d -> %d (%s)",
             m_prevState.optionsLocation, generic.appInfo.mOptionsLocation, locStr);
@@ -9898,6 +10229,8 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
     _LogTransitions(current);           // Phase 2: log any changes
 }
 
+} // namespace LMUFFB
+
 ```
 
 # File: src\io\GameConnector.h
@@ -9918,6 +10251,8 @@ void GameConnector::CheckTransitions(const SharedMemoryObjectOut& current) {
 #include <cstring>
 
 namespace FFBEngineTests { class GameConnectorTestAccessor; }
+
+namespace LMUFFB {
 
 class GameConnector {
 public:
@@ -9990,7 +10325,7 @@ private:
     static const char* ControlModeName(signed char control);
     static const char* PitStateName(unsigned char pitState);
 
-    friend class FFBEngineTests::GameConnectorTestAccessor;
+    friend class ::FFBEngineTests::GameConnectorTestAccessor;
 
     GameConnector();
     ~GameConnector();
@@ -10024,6 +10359,9 @@ private:
 
     void _DisconnectLocked();
 };
+
+} // namespace LMUFFB
+
 #endif // GAMECONNECTOR_H
 
 ```
@@ -10033,13 +10371,18 @@ private:
 #include "RestApiProvider.h"
 #include "Logger.h"
 #include <iostream>
+
 #include <regex>
+
+using namespace LMUFFB::Logging;
 
 #ifdef _WIN32
 #include <windows.h>
 #include <wininet.h>
 #pragma comment(lib, "wininet.lib")
 #endif
+
+namespace LMUFFB {
 
 RestApiProvider& RestApiProvider::Get() {
     static RestApiProvider instance;
@@ -10159,6 +10502,8 @@ float RestApiProvider::ParseSteeringLock(const std::string& json) {
     return 0.0f;
 }
 
+} // namespace LMUFFB
+
 ```
 
 # File: src\io\RestApiProvider.h
@@ -10171,6 +10516,8 @@ float RestApiProvider::ParseSteeringLock(const std::string& json) {
 #include <mutex>
 #include <thread>
 #include <optional>
+
+namespace LMUFFB {
 
 class RestApiProvider {
 public:
@@ -10205,6 +10552,8 @@ private:
     mutable std::mutex m_threadMutex;
     std::thread m_requestThread;
 };
+
+} // namespace LMUFFB
 
 #endif // RESTAPIPROVIDER_H
 
@@ -11402,6 +11751,12 @@ namespace MockSM {
         static DWORD res = 0; // WAIT_OBJECT_0
         return res;
     }
+    inline void ResetAll() {
+        GetMaps().clear();
+        LastError() = 0;
+        FailNext() = false;
+        WaitResult() = 0;
+    }
 }
 
 // Interlocked functions for Linux mocking
@@ -11504,7 +11859,7 @@ inline BOOL DestroyWindow(HWND hWnd) { return TRUE; }
 inline HMODULE GetModuleHandle(const char* lpModuleName) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
 inline HICON LoadIcon(HMODULE hInstance, const char* lpIconName) { return reinterpret_cast<HICON>(static_cast<intptr_t>(1)); }
 inline DWORD GetModuleFileNameA(HMODULE hModule, char* lpFilename, DWORD nSize) {
-    StringUtils::SafeCopy(lpFilename, nSize, "LMUFFB.exe");
+    LMUFFB::Utils::StringUtils::SafeCopy(lpFilename, nSize, "LMUFFB.exe");
     return (DWORD)strlen(lpFilename);
 }
 inline HMODULE LoadLibraryExA(const char* lpLibFileName, HANDLE hFile, DWORD dwFlags) { return reinterpret_cast<HMODULE>(static_cast<intptr_t>(1)); }
@@ -12202,9 +12557,14 @@ struct rF2Telemetry {
 #include <lz4.h>     // For LZ4 compression
 #include "ffb/FFBConfig.h"
 
-// Forward declaration
-struct TelemInfoV01;
+namespace LMUFFB {
 class FFBEngine;
+}
+
+namespace LMUFFB::Logging {
+
+// Forward declaration
+using FFBEngine = LMUFFB::FFBEngine;
 
 // Log frame structure - captures one physics tick
 #pragma pack(push, 1)
@@ -12725,7 +13085,80 @@ private:
     static const int FLUSH_INTERVAL_SECONDS = 5; // Flush every 5 seconds
 };
 
+} // namespace LMUFFB::Logging
+
 #endif // ASYNCLOGGER_H
+
+```
+
+# File: src\logging\ChannelMonitor.h
+```cpp
+#ifndef CHANNELMONITOR_H
+#define CHANNELMONITOR_H
+
+#include "RateMonitor.h"
+#include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+
+namespace LMUFFB::Logging {
+
+// Extended monitors for Issue #133
+struct ChannelMonitor {
+    RateMonitor monitor;
+    double lastValue = -1e18;
+    void Update(double newValue) {
+        if (newValue != lastValue) {
+            monitor.RecordEvent();
+            lastValue = newValue;
+        }
+    }
+};
+
+struct ChannelMonitors {
+    ChannelMonitor mAccX, mAccY, mAccZ;
+    ChannelMonitor mVelX, mVelY, mVelZ;
+    ChannelMonitor mRotX, mRotY, mRotZ;
+    ChannelMonitor mRotAccX, mRotAccY, mRotAccZ;
+    ChannelMonitor mUnfSteer, mFilSteer;
+    ChannelMonitor mRPM;
+    ChannelMonitor mLoadFL, mLoadFR, mLoadRL, mLoadRR;
+    ChannelMonitor mLatFL, mLatFR, mLatRL, mLatRR;
+    ChannelMonitor mPosX, mPosY, mPosZ;
+    ChannelMonitor mDtMon;
+
+    void UpdateAll(const TelemInfoV01* pPlayerTelemetry) {
+        mAccX.Update(pPlayerTelemetry->mLocalAccel.x);
+        mAccY.Update(pPlayerTelemetry->mLocalAccel.y);
+        mAccZ.Update(pPlayerTelemetry->mLocalAccel.z);
+        mVelX.Update(pPlayerTelemetry->mLocalVel.x);
+        mVelY.Update(pPlayerTelemetry->mLocalVel.y);
+        mVelZ.Update(pPlayerTelemetry->mLocalVel.z);
+        mRotX.Update(pPlayerTelemetry->mLocalRot.x);
+        mRotY.Update(pPlayerTelemetry->mLocalRot.y);
+        mRotZ.Update(pPlayerTelemetry->mLocalRot.z);
+        mRotAccX.Update(pPlayerTelemetry->mLocalRotAccel.x);
+        mRotAccY.Update(pPlayerTelemetry->mLocalRotAccel.y);
+        mRotAccZ.Update(pPlayerTelemetry->mLocalRotAccel.z);
+        mUnfSteer.Update(pPlayerTelemetry->mUnfilteredSteering);
+        mFilSteer.Update(pPlayerTelemetry->mFilteredSteering);
+        mRPM.Update(pPlayerTelemetry->mEngineRPM);
+        mLoadFL.Update(pPlayerTelemetry->mWheel[WHEEL_FL].mTireLoad);
+        mLoadFR.Update(pPlayerTelemetry->mWheel[WHEEL_FR].mTireLoad);
+        mLoadRL.Update(pPlayerTelemetry->mWheel[WHEEL_RL].mTireLoad);
+        mLoadRR.Update(pPlayerTelemetry->mWheel[WHEEL_RR].mTireLoad);
+        mLatFL.Update(pPlayerTelemetry->mWheel[WHEEL_FL].mLateralForce);
+        mLatFR.Update(pPlayerTelemetry->mWheel[WHEEL_FR].mLateralForce);
+        mLatRL.Update(pPlayerTelemetry->mWheel[WHEEL_RL].mLateralForce);
+        mLatRR.Update(pPlayerTelemetry->mWheel[WHEEL_RR].mLateralForce);
+        mPosX.Update(pPlayerTelemetry->mPos.x);
+        mPosY.Update(pPlayerTelemetry->mPos.y);
+        mPosZ.Update(pPlayerTelemetry->mPos.z);
+        mDtMon.Update(pPlayerTelemetry->mDeltaTime);
+    }
+};
+
+} // namespace LMUFFB::Logging
+
+#endif // CHANNELMONITOR_H
 
 ```
 
@@ -12733,6 +13166,8 @@ private:
 ```cpp
 #ifndef HEALTHMONITOR_H
 #define HEALTHMONITOR_H
+
+namespace LMUFFB::Logging {
 
 /**
  * @brief Logic for determining if system sample rates are healthy.
@@ -12817,6 +13252,8 @@ public:
     }
 };
 
+} // namespace LMUFFB::Logging
+
 #endif // HEALTHMONITOR_H
 
 ```
@@ -12838,8 +13275,9 @@ public:
 #include <cstdarg>
 #include <algorithm> // For std::max, std::min
 #include <filesystem>
-#include "StringUtils.h" // Include StringUtils.h
+#include "utils/StringUtils.h" // Include StringUtils.h
 
+namespace LMUFFB::Logging {
 // Simple synchronous logger that flushes every line for crash debugging
 class Logger {
 public:
@@ -12942,7 +13380,7 @@ public:
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
+        LMUFFB::Utils::StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);
@@ -12956,7 +13394,7 @@ public:
         char buffer[2048];
         va_list args;
         va_start(args, fmt);
-        StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
+        LMUFFB::Utils::StringUtils::vSafeFormat(buffer, sizeof(buffer), fmt, args);
         va_end(args);
 
         std::string message(buffer);
@@ -13043,6 +13481,7 @@ private:
     bool m_initialized = false;
     std::ostream* m_testStream = nullptr;
 };
+} // namespace LMUFFB::Logging
 
 #endif // LOGGER_H
 
@@ -13055,6 +13494,8 @@ private:
 
 #include <cmath>
 #include <limits>
+
+namespace LMUFFB::Logging {
 
 // Stats helper
 struct ChannelStats {
@@ -13103,6 +13544,8 @@ struct ChannelStats {
     void Reset() { ResetInterval(); }
 };
 
+} // namespace LMUFFB::Logging
+
 #endif // PERF_STATS_H
 
 ```
@@ -13116,6 +13559,7 @@ struct ChannelStats {
 #include <atomic>
 #include "../utils/TimeUtils.h"
 
+namespace LMUFFB::Logging {
 /**
  * @brief Simple utility to monitor event frequency (Hz) over a 1-second sliding window.
  */
@@ -13160,6 +13604,7 @@ private:
     std::chrono::steady_clock::time_point m_startTime;
     std::atomic<long> m_lastRateScaled; // Rate multiplied by 100 for atomic storage
 };
+} // namespace LMUFFB::Logging
 
 #endif // RATEMONITOR_H
 
@@ -13182,18 +13627,121 @@ private:
 // See docs/dev_docs/reports/FFBEngine_refactoring_analysis.md for full details.
 // ---------------------------------------------------------------------------
 
-#include "FFBEngine.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Logger.h"
+#include "physics/GripLoadEstimation.h"
+#include "ffb/FFBEngine.h"
+#include "core/Config.h"
+#include "logging/Logger.h"
 #include <iostream>
+
 #include <mutex>
+#include <cmath>
+#include "utils/StringUtils.h"
+
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
+namespace LMUFFB {
 
 extern std::recursive_mutex g_engine_mutex;
-#include <cmath>
-#include "StringUtils.h"
 
-using namespace ffb_math;
+namespace Physics {
+
+// --- Physics Logic Implementation (Decoupled) ---
+
+// Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
+// Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)
+// v0.4.19: Removed abs() from lateral velocity to preserve sign for debug visualization
+double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w2) {
+    double v_long_1 = std::abs(w1.mLongitudinalGroundVel);
+    double v_long_2 = std::abs(w2.mLongitudinalGroundVel);
+    if (v_long_1 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_1 = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    if (v_long_2 < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long_2 = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);
+    double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);
+    return (raw_angle_1 + raw_angle_2) / 2.0;
+}
+
+double CalculateSlipAngle(const TelemWheelV01& w, double& prev_state, double dt, float slip_angle_smoothing) {
+    double v_long = std::abs(w.mLongitudinalGroundVel);
+    if (v_long < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
+
+    // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity
+    // Positive lateral vel (+X = left) â†’ Positive slip angle
+    // Negative lateral vel (-X = right) â†’ Negative slip angle
+    // This sign is critical for directional counter-steering
+    double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED
+
+    // LPF: Time Corrected Alpha (v0.4.37)
+    // Target: Alpha 0.1 at 400Hz (dt = 0.0025)
+    // Formula: alpha = dt / (tau + dt) -> 0.1 = 0.0025 / (tau + 0.0025) -> tau approx 0.0225s
+    // v0.4.40: Using configurable m_slip_angle_smoothing
+    double tau = (double)slip_angle_smoothing;
+    if (tau < 0.0001) tau = 0.0001; // Safety clamp
+
+    double alpha = dt / (tau + dt);
+
+    // Safety clamp
+    alpha = (std::min)(1.0, (std::max)(0.001, alpha));
+    prev_state = prev_state + alpha * (raw_angle - prev_state);
+    return prev_state;
+}
+
+// Helper: Calculate Manual Slip Ratio (v0.4.6)
+double CalculateManualSlipRatio(const TelemWheelV01& w, double car_speed_ms) {
+    // Safety Trap: Force 0 slip at very low speeds (v0.4.6)
+    if (std::abs(car_speed_ms) < 2.0) return 0.0;
+
+    // Radius in meters (stored as cm unsigned char)
+    // Explicit cast to double before division (v0.4.6)
+    double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;
+    if (radius_m < 0.1) radius_m = 0.33; // Fallback if 0 or invalid
+
+    double wheel_vel = w.mRotation * radius_m;
+
+    // Avoid div-by-zero at standstill
+    double denom = std::abs(car_speed_ms);
+    if (denom < 1.0) denom = 1.0;
+
+    // Ratio = (V_wheel - V_car) / V_car
+    // Lockup: V_wheel < V_car -> Ratio < 0
+    // Spin: V_wheel > V_car -> Ratio > 0
+    return (wheel_vel - car_speed_ms) / denom;
+}
+
+// Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)
+// Unified slip ratio calculation for lockup and spin detection.
+// Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
+double CalculateWheelSlipRatio(const TelemWheelV01& w) {
+    double v_long = std::abs(w.mLongitudinalGroundVel);
+    if (std::abs(v_long) < Physics::MIN_SLIP_ANGLE_VELOCITY) v_long = Physics::MIN_SLIP_ANGLE_VELOCITY;
+    return w.mLongitudinalPatchVel / v_long;
+}
+
+// ========================================================================================
+// CRITICAL VEHICLE DYNAMICS NOTE: mSuspForce vs Wheel Load
+// ========================================================================================
+// The LMU telemetry channel `mSuspForce` represents the load on the internal PUSHROD,
+// NOT the load at the tire contact patch.
+// Because race cars use bellcranks, the pushrod has a mechanical advantage (Motion Ratio).
+// For example, a Hypercar with a Motion Ratio of 0.5 means the pushrod moves half as far
+// as the wheel, and therefore carries TWICE the force of the wheel.
+// To approximate the actual Tire Load, we MUST multiply mSuspForce by the Motion Ratio,
+// and then add the unsprung mass (the weight of the wheel, tire, and brakes).
+// ========================================================================================
+
+// Helper: Approximate Load (v0.4.5 / Improved v0.7.171 / Refactored v0.7.175)
+// Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
+// and adds an estimate for unsprung mass.
+double CalculateApproximateLoad(const TelemWheelV01& w, ParsedVehicleClass vclass, bool is_rear) {
+    double motion_ratio = GetMotionRatioForClass(vclass);
+    double unsprung_weight = GetUnsprungWeightForClass(vclass, is_rear);
+
+    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
+}
+
+} // namespace Physics
+
+// --- FFBEngine member implementations ---
 
 // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)
 void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {
@@ -13280,10 +13828,10 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     m_slope_smoothed_output = 1.0;
     // -----------------------------------------------------------------------
 
-    ParsedVehicleClass vclass = ParseVehicleClass(className, vehicleName);
+    ParsedVehicleClass vclass = Physics::ParseVehicleClass(className, vehicleName);
 
     // Stage 3 Reset: Ensure peak load starts at class baseline
-    m_auto_peak_front_load = GetDefaultLoadForClass(vclass);
+    m_auto_peak_front_load = Physics::GetDefaultLoadForClass(vclass);
 
     std::string vName = vehicleName ? vehicleName : "Unknown";
 
@@ -13320,52 +13868,22 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
 
     // Issue #368: Log strings with quotes to reveal hidden spaces if detection fails
     Logger::Get().LogFile("[FFB] Vehicle Identification -> Detected Class: %s | Seed Load: %.2fN (Raw -> Class: '%s', Name: '%s')",
-        VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
+        Physics::VehicleClassToString(vclass), m_auto_peak_front_load, (className ? className : "Unknown"), vName.c_str());
 }
 
-// Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
-// Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)
-// v0.4.19: Removed abs() from lateral velocity to preserve sign for debug visualization
 double FFBEngine::calculate_raw_slip_angle_pair(const TelemWheelV01& w1, const TelemWheelV01& w2) {
-    double v_long_1 = std::abs(w1.mLongitudinalGroundVel);
-    double v_long_2 = std::abs(w2.mLongitudinalGroundVel);
-    if (v_long_1 < MIN_SLIP_ANGLE_VELOCITY) v_long_1 = MIN_SLIP_ANGLE_VELOCITY;
-    if (v_long_2 < MIN_SLIP_ANGLE_VELOCITY) v_long_2 = MIN_SLIP_ANGLE_VELOCITY;
-    double raw_angle_1 = std::atan2(w1.mLateralPatchVel, v_long_1);
-    double raw_angle_2 = std::atan2(w2.mLateralPatchVel, v_long_2);
-    return (raw_angle_1 + raw_angle_2) / 2.0;
+    return Physics::CalculateRawSlipAnglePair(w1, w2);
 }
 
 double FFBEngine::calculate_slip_angle(const TelemWheelV01& w, double& prev_state, double dt) {
-    double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-    
-    // v0.4.19: PRESERVE SIGN - Do NOT use abs() on lateral velocity
-    // Positive lateral vel (+X = left) â†’ Positive slip angle
-    // Negative lateral vel (-X = right) â†’ Negative slip angle
-    // This sign is critical for directional counter-steering
-    double raw_angle = std::atan2(w.mLateralPatchVel, v_long);  // SIGN PRESERVED
-    
-    // LPF: Time Corrected Alpha (v0.4.37)
-    // Target: Alpha 0.1 at 400Hz (dt = 0.0025)
-    // Formula: alpha = dt / (tau + dt) -> 0.1 = 0.0025 / (tau + 0.0025) -> tau approx 0.0225s
-    // v0.4.40: Using configurable m_slip_angle_smoothing
-    double tau = (double)m_grip_estimation.slip_angle_smoothing;
-    if (tau < 0.0001) tau = 0.0001; // Safety clamp 
-    
-    double alpha = dt / (tau + dt);
-    
-    // Safety clamp
-    alpha = (std::min)(1.0, (std::max)(0.001, alpha));
-    prev_state = prev_state + alpha * (raw_angle - prev_state);
-    return prev_state;
+    return Physics::CalculateSlipAngle(w, prev_state, dt, m_grip_estimation.slip_angle_smoothing);
 }
 
 // Helper: Calculate Axle Grip with Fallback (v0.4.6 Hardening)
 // This function calculates the average grip for a pair of wheels (axle).
 // If the primary telemetry grip is missing, it reconstructs it from slip angle and ratio.
 // The avg_axle_load parameter is used as a threshold for triggering the reconstruction fallback.
-GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
+Physics::GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                           const TelemWheelV01& w2,
                           double avg_axle_load,
                           bool& warned_flag,
@@ -13381,7 +13899,7 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // Note on mGripFract: The LMU InternalsPlugin.hpp comments state this is the
     // "fraction of the contact patch that is sliding". This is poorly phrased.
     // In actual telemetry output, 1.0 = Full Adhesion (Gripping) and 0.0 = Fully Sliding.
-    GripResult result;
+    Physics::GripResult result;
     double total_load = w1.mTireLoad + w2.mTireLoad;
     if (total_load > 1.0) {
         result.original = (w1.mGripFract * w1.mTireLoad + w2.mGripFract * w2.mTireLoad) / total_load;
@@ -13397,17 +13915,17 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // ==================================================================================
     // CRITICAL LOGIC FIX (v0.4.14) - DO NOT MOVE INSIDE CONDITIONAL BLOCK
     // ==================================================================================
-    // We MUST calculate slip angle every single frame, regardless of whether the 
+    // We MUST calculate slip angle every single frame, regardless of whether the
     // grip fallback is triggered or not.
     //
-    // Reason 1 (Physics State): The Low Pass Filter (LPF) inside calculate_slip_angle 
-    //           relies on continuous execution. If we skip frames (because telemetry 
-    //           is good), the 'prev_slip' state becomes stale. When telemetry eventually 
+    // Reason 1 (Physics State): The Low Pass Filter (LPF) inside calculate_slip_angle
+    //           relies on continuous execution. If we skip frames (because telemetry
+    //           is good), the 'prev_slip' state becomes stale. When telemetry eventually
     //           fails, the LPF will smooth against ancient history, causing a math spike.
     //
-    // Reason 2 (Dependency): The 'Rear Aligning Torque' effect (calculated later) 
-    //           reads 'result.slip_angle'. If we only calculate this when grip is 
-    //           missing, the Rear Torque effect will toggle ON/OFF randomly based on 
+    // Reason 2 (Dependency): The 'Rear Aligning Torque' effect (calculated later)
+    //           reads 'result.slip_angle'. If we only calculate this when grip is
+    //           missing, the Rear Torque effect will toggle ON/OFF randomly based on
     //           telemetry health, causing violent kicks and "reverse FFB" sensations.
     // ==================================================================================
     double slip1 = calculate_slip_angle(w1, prev_slip1, dt);
@@ -13431,31 +13949,31 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     // Fallback condition: Grip is essentially zero BUT car has significant load
     if (result.value < 0.0001 && avg_axle_load > 100.0) {
         result.approximated = true;
-        
+
         if (car_speed < 5.0) {
             // Note: We still keep the calculated slip_angle in result.slip_angle
-            // for visualization/rear torque, even if we force grip to 1.0 here.        
+            // for visualization/rear torque, even if we force grip to 1.0 here.
             result.value = 1.0; 
         } else {
             if (m_slope_detection.enabled && is_front && data) {
                 result.value = slope_grip_estimate;
             } else {
                 // --- REFINED: Load-Sensitive Continuous Friction Circle ---
-                
+
                 auto calc_wheel_grip = [&](const TelemWheelV01& w, double slip_angle, double& prev_load) {
                     // 1. Dynamic Load Sensitivity with Slew/Smoothing
                     double raw_load = warned_flag ? approximate_load(w) : w.mTireLoad;
-                    
+
                     // Smooth the load to prevent curb strikes from causing threshold jitter (50ms tau)
                     double load_alpha = dt / (0.050 + dt);
                     prev_load += load_alpha * (raw_load - prev_load);
                     double current_load = prev_load;
-                    
+
                     // Calculate how loaded the tire is compared to the car's static weight
                     double static_ref = is_front ? m_static_front_load : m_static_rear_load;
                     double load_ratio = current_load / (static_ref + 1.0);
                     load_ratio = std::clamp(load_ratio, 0.25, 4.0); // Safety bounds
-                    
+
                     // Tire physics: Optimal slip angle increases with load (Hertzian cube root)
                     // Note: Future thermal/pressure multipliers would be applied here
                     double dynamic_slip_angle = m_grip_estimation.optimal_slip_angle;
@@ -13476,9 +13994,9 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                     // 5. Continuous Falloff Curve with Sliding Friction Asymptote
                     double cs2 = combined_slip * combined_slip;
                     double cs4 = cs2 * cs2;
-                    
-                    const double MIN_SLIDING_GRIP = 0.05; 
-                    return MIN_SLIDING_GRIP + ((1.0 - MIN_SLIDING_GRIP) / (1.0 + cs4)); 
+
+                    const double MIN_SLIDING_GRIP = 0.05;
+                    return MIN_SLIDING_GRIP + ((1.0 - MIN_SLIDING_GRIP) / (1.0 + cs4));
                 };
 
                 // Calculate grip for each wheel independently, passing the state reference
@@ -13489,10 +14007,10 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
                 result.value = (grip1 + grip2) / 2.0;
             }
         }
-        
+
         // Clamp to standard 0.0 - 1.0 bounds
         result.value = std::clamp(result.value, 0.0, 1.0);
-        
+
         if (!warned_flag) {
             Logger::Get().LogFile("Warning: Data for mGripFract from the game seems to be missing for this car (%s). (Likely Encrypted/DLC Content). A fallback estimation will be used.", vehicleName);
             warned_flag = true;
@@ -13510,59 +14028,16 @@ GripResult FFBEngine::calculate_axle_grip(const TelemWheelV01& w1,
     return result;
 }
 
-// ========================================================================================
-// CRITICAL VEHICLE DYNAMICS NOTE: mSuspForce vs Wheel Load
-// ========================================================================================
-// The LMU telemetry channel `mSuspForce` represents the load on the internal PUSHROD,
-// NOT the load at the tire contact patch.
-// Because race cars use bellcranks, the pushrod has a mechanical advantage (Motion Ratio).
-// For example, a Hypercar with a Motion Ratio of 0.5 means the pushrod moves half as far
-// as the wheel, and therefore carries TWICE the force of the wheel.
-// To approximate the actual Tire Load, we MUST multiply mSuspForce by the Motion Ratio,
-// and then add the unsprung mass (the weight of the wheel, tire, and brakes).
-// ========================================================================================
-
-// Helper: Approximate Load (v0.4.5 / Improved v0.7.171 / Refactored v0.7.175)
-// Uses class-specific motion ratios to convert pushrod force (mSuspForce) to wheel load,
-// and adds an estimate for front unsprung mass.
 double FFBEngine::approximate_load(const TelemWheelV01& w) {
-    ParsedVehicleClass vclass = m_metadata.GetCurrentClass();
-    double motion_ratio = GetMotionRatioForClass(vclass);
-    double unsprung_weight = GetUnsprungWeightForClass(vclass, false /* is_rear */);
-
-    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
+    return Physics::CalculateApproximateLoad(w, m_metadata.GetCurrentClass(), false);
 }
 
-// Helper: Approximate Rear Load (v0.4.10 / Improved v0.7.171 / Refactored v0.7.175)
-// Similar to approximate_load, but uses rear-specific unsprung mass estimates.
 double FFBEngine::approximate_rear_load(const TelemWheelV01& w) {
-    ParsedVehicleClass vclass = m_metadata.GetCurrentClass();
-    double motion_ratio = GetMotionRatioForClass(vclass);
-    double unsprung_weight = GetUnsprungWeightForClass(vclass, true /* is_rear */);
-
-    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
+    return Physics::CalculateApproximateLoad(w, m_metadata.GetCurrentClass(), true);
 }
 
-// Helper: Calculate Manual Slip Ratio (v0.4.6)
 double FFBEngine::calculate_manual_slip_ratio(const TelemWheelV01& w, double car_speed_ms) {
-    // Safety Trap: Force 0 slip at very low speeds (v0.4.6)
-    if (std::abs(car_speed_ms) < 2.0) return 0.0;
-
-    // Radius in meters (stored as cm unsigned char)
-    // Explicit cast to double before division (v0.4.6)
-    double radius_m = (double)w.mStaticUndeflectedRadius / 100.0;
-    if (radius_m < 0.1) radius_m = 0.33; // Fallback if 0 or invalid
-    
-    double wheel_vel = w.mRotation * radius_m;
-    
-    // Avoid div-by-zero at standstill
-    double denom = std::abs(car_speed_ms);
-    if (denom < 1.0) denom = 1.0;
-    
-    // Ratio = (V_wheel - V_car) / V_car
-    // Lockup: V_wheel < V_car -> Ratio < 0
-    // Spin: V_wheel > V_car -> Ratio > 0
-    return (wheel_vel - car_speed_ms) / denom;
+    return Physics::CalculateManualSlipRatio(w, car_speed_ms);
 }
 
 // Helper: Calculate Grip Factor from Slope - v0.7.40 REWRITE
@@ -13585,7 +14060,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     // to maintain correctness in tests and variable-rate scenarios.
     // However, we use a fixed 400Hz 'internal_dt' for Savitzky-Golay derivatives
     // because the internal buffers are populated at the 400Hz engine tick rate.
-    const double internal_dt = DEFAULT_CALC_DT;
+    const double internal_dt = Physics::PHYSICS_CALC_DT;
 
     double lat_g_slew = apply_slew_limiter(std::abs(lateral_g), m_slope_lat_g_prev, (double)m_slope_detection.g_slew_limit, dt);
     // v0.7.198 FIX: Must update m_slope_lat_g_prev immediately after computing lat_g_slew
@@ -13639,7 +14114,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
     bool shadow_mode = (m_slope_detection.enabled == false);
     (void)shadow_mode; // Retained for documentation; see call site in calculate_axle_grip
     if (std::abs(dAlpha_dt) > (double)m_slope_detection.alpha_threshold) {
-        m_slope_hold_timer = SLOPE_HOLD_TIME;
+        m_slope_hold_timer = Physics::SLOPE_HOLD_TIME;
         m_debug_slope_num = dG_dt * dAlpha_dt;
         m_debug_slope_den = (dAlpha_dt * dAlpha_dt) + 0.000001;
         m_debug_slope_raw = m_debug_slope_num / m_debug_slope_den;
@@ -13689,7 +14164,7 @@ double FFBEngine::calculate_slope_grip(double lateral_g, double slip_angle, doub
 
     // 3. Fusion Logic (Max of both estimators)
     double loss_percent = (std::max)(loss_percent_g, loss_percent_torque);
-    
+
     // Scale loss by confidence and apply floor (0.2)
     // 0% loss (loss_percent=0) -> 1.0 factor
     // 100% loss (loss_percent=1) -> 0.2 factor
@@ -13716,44 +14191,185 @@ double FFBEngine::calculate_slope_confidence(double dAlpha_dt) {
     return smoothstep((double)m_slope_detection.alpha_threshold, (double)m_slope_detection.confidence_max_rate, std::abs(dAlpha_dt));
 }
 
-// Helper: Calculate Slip Ratio from wheel (v0.6.36 - Extracted from lambdas)
-// Unified slip ratio calculation for lockup and spin detection.
-// Returns the ratio of longitudinal slip: (PatchVel - GroundVel) / GroundVel
 double FFBEngine::calculate_wheel_slip_ratio(const TelemWheelV01& w) {
-    double v_long = std::abs(w.mLongitudinalGroundVel);
-    if (v_long < MIN_SLIP_ANGLE_VELOCITY) v_long = MIN_SLIP_ANGLE_VELOCITY;
-    return w.mLongitudinalPatchVel / v_long;
+    return Physics::CalculateWheelSlipRatio(w);
 }
+
+} // namespace LMUFFB
+
+```
+
+# File: src\physics\GripLoadEstimation.h
+```cpp
+#ifndef GRIP_LOAD_ESTIMATION_H
+#define GRIP_LOAD_ESTIMATION_H
+
+#include "VehicleUtils.h"
+#include "../io/lmu_sm_interface/InternalsPluginWrapper.h"
+#include <string>
+
+namespace LMUFFB {
+namespace Physics {
+
+/**
+ * @brief Load transformation modes for non-linear FFB scaling
+ */
+enum class LoadTransform {
+    LINEAR = 0,
+    CUBIC = 1,
+    QUADRATIC = 2,
+    HERMITE = 3
+};
+
+/**
+ * @brief Helper Result Struct for calculate_axle_grip
+ */
+struct GripResult {
+    double value;           // Final grip value
+    bool approximated;      // Was approximation used?
+    double original;        // Original telemetry value
+    double slip_angle;      // Calculated slip angle (if approximated)
+};
+
+// Default FFB calculation timestep. Used by FFBCalculationContext (defined before
+// FFBEngine, so cannot reference FFBEngine::DEFAULT_CALC_DT directly).
+// Note: FFBEngine also has a private member of the same name (DEFAULT_DT); this file-scope
+// constant does NOT trigger GCC's -Wchanges-meaning because it is only looked up
+// inside FFBCalculationContext, not inside FFBEngine's own class body.
+// Renamed to PHYSICS_CALC_DT to avoid ambiguity after moving to Physics namespace.
+static constexpr double PHYSICS_CALC_DT = 0.0025; // 400 Hz (1/400 s)
+
+// Shared physics constants
+static constexpr double MIN_SLIP_ANGLE_VELOCITY = 0.5; // m/s
+static constexpr double SLOPE_HOLD_TIME = 0.25;
+
+/**
+ * @brief Context structure for FFB calculations in a single frame
+ */
+struct FFBCalculationContext {
+    double dt = PHYSICS_CALC_DT;
+    double car_speed = 0.0;       // Absolute m/s
+    double car_speed_long = 0.0;  // Longitudinal m/s (Raw)
+    double speed_gate = 1.0;
+    double texture_load_factor = 1.0;
+    double brake_load_factor = 1.0;
+    double avg_front_load = 0.0;
+    double avg_front_grip = 0.0;
+
+    // Diagnostics
+    bool frame_warn_load = false;
+    bool frame_warn_grip = false;
+    bool frame_warn_rear_grip = false;
+    bool frame_warn_dt = false;
+
+    // Intermediate results
+    double grip_factor = 1.0;     // 1.0 = full grip, 0.0 = no grip
+    double sop_base_force = 0.0;
+    double sop_unboosted_force = 0.0; // For snapshot compatibility
+    double lat_load_force = 0.0;  // New v0.7.154 (Issue #282)
+    double rear_torque = 0.0;
+    double yaw_force = 0.0;
+    double scrub_drag_force = 0.0;
+    double gyro_force = 0.0;
+    double stationary_damping_force = 0.0; // New v0.7.206 (Issue #418)
+    double avg_rear_grip = 0.0;
+    double calc_rear_lat_force = 0.0;
+    double avg_rear_load = 0.0;
+    double long_load_force = 0.0; // New #301
+
+    // Effect outputs
+    double road_noise = 0.0;
+    double slide_noise = 0.0;
+    double lockup_rumble = 0.0;
+    double spin_rumble = 0.0;
+    double bottoming_crunch = 0.0;
+    double abs_pulse_force = 0.0;
+    double soft_lock_force = 0.0;
+    double gain_reduction_factor = 1.0;
+};
+
+// --- Physics Logic Functions (Decoupled from FFBEngine) ---
+
+/**
+ * @brief Helper: Calculate Raw Slip Angle for a pair of wheels (v0.4.9 Refactor)
+ * Returns the average slip angle of two wheels using atan2(lateral_vel, longitudinal_vel)
+ */
+double CalculateRawSlipAnglePair(const TelemWheelV01& w1, const TelemWheelV01& w2);
+
+/**
+ * @brief Helper: Calculate Slip Angle with LPF (v0.4.19/v0.4.37)
+ * Preserve sign for directional counter-steering.
+ */
+double CalculateSlipAngle(const TelemWheelV01& w, double& prev_state, double dt, float slip_angle_smoothing);
+
+/**
+ * @brief Helper: Calculate Manual Slip Ratio (v0.4.6)
+ */
+double CalculateManualSlipRatio(const TelemWheelV01& w, double car_speed_ms);
+
+/**
+ * @brief Helper: Calculate Slip Ratio from wheel (v0.6.36)
+ */
+double CalculateWheelSlipRatio(const TelemWheelV01& w);
+
+/**
+ * @brief Helper: Approximate Tire Load from suspension force (v0.4.5/v0.7.175)
+ * Corrects pushrod force to wheel load using Motion Ratio.
+ */
+double CalculateApproximateLoad(const TelemWheelV01& w, ParsedVehicleClass vclass, bool is_rear);
+
+} // namespace Physics
+
+// Bridge Aliases for backward compatibility during migration
+using LoadTransform = Physics::LoadTransform;
+using GripResult = Physics::GripResult;
+using FFBCalculationContext = Physics::FFBCalculationContext;
+
+} // namespace LMUFFB
+
+#endif // GRIP_LOAD_ESTIMATION_H
 
 ```
 
 # File: src\physics\SteeringUtils.cpp
 ```cpp
-#include "FFBEngine.h"
-#include "Logger.h"
+#include "SteeringUtils.h"
+#include "logging/Logger.h"
 #include <cmath>
 #include <algorithm>
 
+using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
+
+namespace LMUFFB {
+namespace Physics {
+namespace SteeringUtils {
+
 // ---------------------------------------------------------------------------
-// Steering & Wheel Mechanics methods have been moved from FFBEngine.cpp.
+// Steering & Wheel Mechanics methods
 // This includes the Soft Lock logic which prevents the wheel from rotating
 // beyond the car's physical steering rack limits.
 // ---------------------------------------------------------------------------
 
 // Helper: Calculate Soft Lock (v0.7.61 - Issue #117)
 // Provides a progressive spring-damping force when the wheel exceeds 100% lock.
-void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationContext& ctx) {
+void CalculateSoftLock(const TelemInfoV01* data, 
+                       FFBCalculationContext& ctx, 
+                       const AdvancedConfig& advanced_cfg, 
+                       const GeneralConfig& general_cfg, 
+                       FFBSafetyMonitor& safety, 
+                       double steering_velocity_smoothed) {
     ctx.soft_lock_force = 0.0;
-    if (!m_advanced.soft_lock_enabled) return;
+    if (!advanced_cfg.soft_lock_enabled) return;
 
     double steer = data->mUnfilteredSteering;
     if (!std::isfinite(steer)) return;
 
     double abs_steer = std::abs(steer);
     if (abs_steer > 1.0) {
-        if (!m_safety.was_soft_locked) {
+        if (!safety.was_soft_locked) {
             Logger::Get().LogFile("[Safety] Soft Lock Engaged: Steering %.1f%%", steer * 100.0);
-            m_safety.was_soft_locked = true;
+            safety.was_soft_locked = true;
         }
 
         double excess = abs_steer - 1.0;
@@ -13764,32 +14380,70 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
         // under pressure, even at zero velocity.
         // At stiffness 20 (default), reaches 100% force at 0.25% excess.
         // At stiffness 100 (max), reaches 100% force at 0.05% excess.
-        double stiffness = (double)(std::max)(1.0f, m_advanced.soft_lock_stiffness);
+        double stiffness = (double)(std::max)(1.0f, advanced_cfg.soft_lock_stiffness);
         double excess_for_max = 5.0 / (stiffness * 100.0);
-        double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)m_general.wheelbase_max_nm * 2.0;
+        double spring_nm = (std::min)(1.0, excess / excess_for_max) * (double)general_cfg.wheelbase_max_nm * 2.0;
 
         // Damping Force: opposes movement to prevent bouncing.
         // Scaled by hardware torque to remain relevant across all wheelbases.
-        double damping_nm = m_steering_velocity_smoothed * m_advanced.soft_lock_damping * (double)m_general.wheelbase_max_nm * 0.1;
-        damping_nm = std::clamp(damping_nm, -(double)m_general.wheelbase_max_nm * 0.5, (double)m_general.wheelbase_max_nm * 0.5);
+        double damping_nm = steering_velocity_smoothed * advanced_cfg.soft_lock_damping * (double)general_cfg.wheelbase_max_nm * 0.1;
+        damping_nm = std::clamp(damping_nm, -(double)general_cfg.wheelbase_max_nm * 0.5, (double)general_cfg.wheelbase_max_nm * 0.5);
 
         // Total Soft Lock force (opposing the steering direction)
         ctx.soft_lock_force = -(spring_nm * sign + damping_nm);
 
-        if (std::abs(ctx.soft_lock_force) > 5.0 && !m_safety.soft_lock_significant) {
+        if (std::abs(ctx.soft_lock_force) > 5.0 && !safety.soft_lock_significant) {
             Logger::Get().LogFile("[Safety] Soft Lock Significant Influence: %.1f Nm", ctx.soft_lock_force);
-            m_safety.soft_lock_significant = true;
+            safety.soft_lock_significant = true;
         } else if (std::abs(ctx.soft_lock_force) < 4.0) {
-            m_safety.soft_lock_significant = false;
+            safety.soft_lock_significant = false;
         }
     } else {
-        if (m_safety.was_soft_locked) {
+        if (safety.was_soft_locked) {
             Logger::Get().LogFile("[Safety] Soft Lock Disengaged");
-            m_safety.was_soft_locked = false;
+            safety.was_soft_locked = false;
         }
-        m_safety.soft_lock_significant = false;
+        safety.soft_lock_significant = false;
     }
 }
+
+} // namespace SteeringUtils
+} // namespace Physics
+} // namespace LMUFFB
+
+```
+
+# File: src\physics\SteeringUtils.h
+```cpp
+#pragma once
+
+#include "../ffb/FFBSnapshot.h"
+#include "../ffb/FFBSafetyMonitor.h"
+#include "../core/Config.h"
+#include "../io/lmu_sm_interface/InternalsPlugin.hpp"
+
+namespace LMUFFB {
+namespace Physics {
+namespace SteeringUtils {
+
+/**
+ * @brief Calculate Soft Lock force
+ * Provides a progressive spring-damping force when the wheel exceeds 100% lock.
+ */
+void CalculateSoftLock(const TelemInfoV01* data, 
+                       FFBCalculationContext& ctx, 
+                       const AdvancedConfig& advanced_cfg, 
+                       const GeneralConfig& general_cfg, 
+                       FFBSafetyMonitor& safety, 
+                       double steering_velocity_smoothed);
+
+} // namespace SteeringUtils
+} // namespace Physics
+
+// Bridge Alias for backward compatibility during migration
+namespace SteeringUtils = Physics::SteeringUtils;
+
+} // namespace LMUFFB
 
 ```
 
@@ -13800,13 +14454,18 @@ void FFBEngine::calculate_soft_lock(const TelemInfoV01* data, FFBCalculationCont
 #include <string>
 #include <cctype>
 
+namespace LMUFFB {
+namespace Physics {
+
+namespace {
 // Helper: Trim whitespace from a string
-static std::string Trim(const std::string& s) {
+std::string Trim(const std::string& s) {
     auto start = s.find_first_not_of(" \t\n\r");
     if (start == std::string::npos) return "";
     auto end = s.find_last_not_of(" \t\n\r");
     return s.substr(start, end - start + 1);
 }
+} // namespace
 
 // Helper: Parse car class from strings (v0.7.44 Refactor)
 // Returns a ParsedVehicleClass enum for internal logic and categorization
@@ -14016,6 +14675,9 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
     }
 }
 
+} // namespace Physics
+} // namespace LMUFFB
+
 ```
 
 # File: src\physics\VehicleUtils.h
@@ -14024,6 +14686,9 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear) {
 #define VEHICLE_UTILS_H
 
 #include <string>
+
+namespace LMUFFB {
+namespace Physics {
 
 enum class ParsedVehicleClass {
     UNKNOWN = 0,
@@ -14054,6 +14719,19 @@ double GetMotionRatioForClass(ParsedVehicleClass vclass);
 // Lookup table: Map ParsedVehicleClass to Unsprung Weight (Newtons)
 double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear);
 
+} // namespace Physics
+
+// Bridge Aliases for backward compatibility during migration
+using ParsedVehicleClass = Physics::ParsedVehicleClass;
+using Physics::ParseVehicleClass;
+using Physics::GetDefaultLoadForClass;
+using Physics::VehicleClassToString;
+using Physics::ParseVehicleBrand;
+using Physics::GetMotionRatioForClass;
+using Physics::GetUnsprungWeightForClass;
+
+} // namespace LMUFFB
+
 #endif // VEHICLE_UTILS_H
 
 ```
@@ -14067,7 +14745,8 @@ double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear);
 #include <algorithm>
 #include <array>
 
-namespace ffb_math {
+namespace LMUFFB {
+namespace Utils {
 
 // Mathematical Constants
 static constexpr double PI = 3.14159265358979323846;
@@ -14409,7 +15088,24 @@ public:
     }
 };
 
-} // namespace ffb_math
+} // namespace Utils
+
+// Temporary bridge for legacy code
+using Utils::PI;
+using Utils::TWO_PI;
+using Utils::BiquadNotch;
+using Utils::inverse_lerp;
+using Utils::smoothstep;
+using Utils::apply_slew_limiter;
+using Utils::apply_adaptive_smoothing;
+using Utils::apply_load_transform_cubic;
+using Utils::apply_load_transform_quadratic;
+using Utils::apply_load_transform_hermite;
+using Utils::calculate_sg_derivative;
+using Utils::LinearExtrapolator;
+using Utils::HoltWintersFilter;
+
+} // namespace LMUFFB
 
 #endif // MATH_UTILS_H
 
@@ -14424,6 +15120,8 @@ public:
 #include <cstdio>
 #include <cstdarg>
 
+namespace LMUFFB {
+namespace Utils {
 namespace StringUtils {
 
 // Safe string copy method compatible with Windows and Linux.
@@ -14478,6 +15176,12 @@ inline int SafeScan(const char* src, const char* format, ...) {
 }
 
 } // namespace StringUtils
+} // namespace Utils
+
+// Temporary bridge for legacy code
+namespace StringUtils = Utils::StringUtils;
+
+} // namespace LMUFFB
 
 #endif // STRINGUTILS_H
 
@@ -14489,6 +15193,9 @@ inline int SafeScan(const char* src, const char* format, ...) {
 #define TIMEOUTILS_H
 
 #include <chrono>
+
+namespace LMUFFB {
+namespace Utils {
 
 #ifdef LMUFFB_UNIT_TEST
 // These are defined in main_test_runner.cpp
@@ -14507,7 +15214,17 @@ namespace TimeUtils {
 #endif
         return std::chrono::steady_clock::now();
     }
-}
+} // namespace TimeUtils
+} // namespace Utils
+
+// Temporary bridge for legacy code
+namespace TimeUtils = Utils::TimeUtils;
+#ifdef LMUFFB_UNIT_TEST
+using Utils::g_mock_time;
+using Utils::g_use_mock_time;
+#endif
+
+} // namespace LMUFFB
 
 #endif // TIMEOUTILS_H
 
@@ -14530,10 +15247,14 @@ namespace TimeUtils {
 #include "src/logging/Logger.h"
 #include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
+using namespace LMUFFB;
+using namespace LMUFFB::Logging;
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
+namespace LMUFFB {
 // Shared globals required by GuiLayer and main.cpp
 std::atomic<bool> g_running(true);
 std::atomic<bool> g_ffb_active(true);
@@ -14542,8 +15263,11 @@ FFBEngine g_engine;
 SharedMemoryObjectOut g_localData;
 
 // Mock time globals
+namespace Utils {
 std::chrono::steady_clock::time_point g_mock_time;
 bool g_use_mock_time = false;
+}
+}
 
 namespace FFBEngineTests { 
     extern int g_tests_passed; 
@@ -14657,7 +15381,7 @@ int main(int argc, char* argv[]) noexcept {
                     if (dirname.find("test_logs") == 0) {
                         try {
                             std::filesystem::remove_all(entry.path());
-                        } catch (...) {}
+                        } catch (...) { (void)0; }
                     }
                 }
             }
@@ -14712,6 +15436,8 @@ int main(int argc, char* argv[]) noexcept {
 ```cpp
 #include "test_ffb_common.h"
 #include "../src/io/GameConnector.h"
+
+using namespace LMUFFB;
 
 namespace FFBEngineTests {
 
@@ -14816,7 +15542,7 @@ TelemInfoV01 CreateBasicTestTelemetry(double speed, double slip_angle) {
     data.mElapsedTime = 1.0f;
     
     // Wheel setup (all 4 wheels)
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_WHEELS; i++) {
         data.mWheel[i].mGripFract = 0.0; // Trigger approximation mode
         data.mWheel[i].mTireLoad = 4000.0; // Realistic load
         data.mWheel[i].mStaticUndeflectedRadius = 30; // 0.3m radius
@@ -14939,7 +15665,7 @@ void PumpEngineSteadyState(FFBEngine& engine, TelemInfoV01& data) {
 }
 
 // --- Friend Access for Testing ---
-void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
+void GameConnectorTestAccessor::Reset(LMUFFB::GameConnector& gc) {
     std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
     gc._DisconnectLocked();
     gc.m_sessionActive.store(false);
@@ -14948,7 +15674,11 @@ void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
     gc.m_currentGamePhase.store(255);
     gc.m_playerControl.store(-2);
     gc.m_pendingMenuCheck = false;
-    memset(&gc.m_prevState, 0, sizeof(gc.m_prevState));
+    memset(&gc.m_prevState, 0, offsetof(LMUFFB::GameConnector::TransitionState, lastEventLogTime));
+    for (int i = 0; i < SME_MAX; ++i) {
+        gc.m_prevState.lastEventLogTime[i] = std::chrono::steady_clock::time_point();
+        gc.m_prevState.eventState[i] = 0;
+    }
     gc.m_prevState.optionsLocation = 255;
     gc.m_prevState.gamePhase = 255;
     gc.m_prevState.session = -1;
@@ -14958,19 +15688,19 @@ void GameConnectorTestAccessor::Reset(::GameConnector& gc) {
     gc.m_prevState.numVehicles = -1;
 }
 
-void GameConnectorTestAccessor::SetSharedMem(::GameConnector& gc, SharedMemoryLayout* layout) {
+void GameConnectorTestAccessor::SetSharedMem(LMUFFB::GameConnector& gc, SharedMemoryLayout* layout) {
     std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
     gc.m_pSharedMemLayout = layout;
     gc.m_connected = true;
 }
 
-void GameConnectorTestAccessor::SetSessionActive(::GameConnector& gc, bool val) { gc.m_sessionActive.store(val); }
-void GameConnectorTestAccessor::SetInRealtime(::GameConnector& gc, bool val) { gc.m_inRealtime.store(val); }
-void GameConnectorTestAccessor::SetSessionType(::GameConnector& gc, long val) { gc.m_currentSessionType.store(val); }
-void GameConnectorTestAccessor::SetGamePhase(::GameConnector& gc, unsigned char val) { gc.m_currentGamePhase.store(val); }
-void GameConnectorTestAccessor::SetPlayerControl(::GameConnector& gc, signed char val) { gc.m_playerControl.store(val); }
+void GameConnectorTestAccessor::SetSessionActive(LMUFFB::GameConnector& gc, bool val) { gc.m_sessionActive.store(val); }
+void GameConnectorTestAccessor::SetInRealtime(LMUFFB::GameConnector& gc, bool val) { gc.m_inRealtime.store(val); }
+void GameConnectorTestAccessor::SetSessionType(LMUFFB::GameConnector& gc, long val) { gc.m_currentSessionType.store(val); }
+void GameConnectorTestAccessor::SetGamePhase(LMUFFB::GameConnector& gc, unsigned char val) { gc.m_currentGamePhase.store(val); }
+void GameConnectorTestAccessor::SetPlayerControl(LMUFFB::GameConnector& gc, signed char val) { gc.m_playerControl.store(val); }
 
-void GameConnectorTestAccessor::InjectTransitions(::GameConnector& gc, const SharedMemoryObjectOut& data) {
+void GameConnectorTestAccessor::InjectTransitions(LMUFFB::GameConnector& gc, const SharedMemoryObjectOut& data) {
     gc.CheckTransitions(data);
 }
 
@@ -14979,8 +15709,8 @@ void VerifyOrientation(FFBEngine& engine, const OrientationScenario& scenario, f
     std::cout << "  [Matrix] Testing Orientation: " << scenario.description << std::endl;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = scenario.lat_accel_x;
-    data.mWheel[0].mTireLoad = scenario.fl_load;
-    data.mWheel[1].mTireLoad = scenario.fr_load;
+    data.mWheel[WHEEL_FL].mTireLoad = scenario.fl_load;
+    data.mWheel[WHEEL_FR].mTireLoad = scenario.fr_load;
     for (int i = 0; i < 60; i++) engine.calculate_force(&data);
     auto snapshots = engine.GetDebugBatch();
     if (snapshots.empty()) { FAIL_TEST("No snapshots available in VerifyOrientation"); return; }
@@ -15168,6 +15898,7 @@ void Run() {
 #include <random>
 #include <sstream>
 #include <functional>
+#include <filesystem>
 
 #include "../src/ffb/FFBEngine.h"
 #include "../src/io/lmu_sm_interface/InternalsPlugin.hpp"
@@ -15177,7 +15908,10 @@ void Run() {
 #include "../src/io/GameConnector.h"
 #include "../src/utils/StringUtils.h"
 #include "../src/io/RestApiProvider.h"
+#include "../src/physics/SteeringUtils.h"
 #include "test_performance_types.h"
+
+namespace LMUFFB {
 
 class RestApiProviderTestAccess {
 public:
@@ -15192,7 +15926,48 @@ public:
     }
 };
 
+} // namespace LMUFFB
+
+using namespace LMUFFB;
+using namespace LMUFFB::Logging;
+
 namespace FFBEngineTests {
+
+/**
+ * Scoped helper to create and automatically cleanup a test directory.
+ */
+class TestDirectoryGuard {
+    std::string m_path;
+public:
+    explicit TestDirectoryGuard(const std::string& path) : m_path(path) {
+        if (std::filesystem::exists(m_path)) std::filesystem::remove_all(m_path);
+        std::filesystem::create_directories(m_path);
+    }
+    ~TestDirectoryGuard() {
+        try {
+            if (std::filesystem::exists(m_path)) std::filesystem::remove_all(m_path);
+        } catch (...) {}
+    }
+    std::string path() const { return m_path; }
+};
+
+/**
+ * Scoped helper to save and automatically restore Config paths.
+ * Robust against test failures (ASSERT_*).
+ */
+class ScopedConfigPathGuard {
+    std::string m_old_config_path;
+    std::string m_old_user_presets_path;
+public:
+    ScopedConfigPathGuard() {
+        m_old_config_path = Config::m_config_path;
+        m_old_user_presets_path = Config::m_user_presets_path;
+    }
+    ~ScopedConfigPathGuard() {
+        Config::m_config_path = m_old_config_path;
+        Config::m_user_presets_path = m_old_user_presets_path;
+    }
+};
 
 // --- Test Counters (defined in test_ffb_common.cpp) ---
 extern int g_tests_passed;
@@ -15224,6 +15999,20 @@ do { \
         } else { \
             std::stringstream ss_fail; \
             ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #condition << " is false" \
+                      << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
+
+#define ASSERT_TRUE_MSG(condition, msg) \
+do { \
+        if (condition) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #condition << " is false. " << msg \
                       << " (" << __FILE__ << ":" << __LINE__ << ")"; \
             std::cout << ss_fail.str() << std::endl; \
             FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
@@ -15350,6 +16139,20 @@ do { \
         } \
 } while(0)
 
+#define ASSERT_EQ_WSTR(a, b) \
+do { \
+        if (std::wstring(a) == std::wstring(b)) { \
+            FFBEngineTests::g_tests_passed++; \
+        } else { \
+            std::stringstream ss_fail; \
+            ss_fail << "[FAIL] " << FFBEngineTests::g_current_test_name << ": " << #a << " != " \
+                      << #b << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+            std::cout << ss_fail.str() << std::endl; \
+            FFBEngineTests::g_failure_log.push_back(ss_fail.str()); \
+            FFBEngineTests::g_tests_failed_DO_NOT_USE_DIRECTLY_USE_FAIL_TEST_MACRO++; \
+        } \
+} while(0)
+
 #define ASSERT_NE(a, b) \
 do { \
         if ((a) != (b)) { \
@@ -15455,7 +16258,7 @@ void InitializeEngine(FFBEngine& engine);
 //       every 10ms to simulate 100Hz telemetry correctly.
 //     - Use this for most tests: interpolator ramp-up (>= 0.015s), settling a
 //       specific effect, or advancing time to check timer/decay values.
-//     - AVOID the inline pattern: for(int i=0;i<4;i++) calculate_force(dt=0.0025)
+//     - AVOID the inline pattern: for (int i = 0; i < NUM_WHEELS; i++) calculate_force(dt=0.0025)
 //       unless you specifically need to capture transients *within* a single
 //       100Hz game frame (i.e., the test cares about sub-frame behaviour).
 //
@@ -15489,14 +16292,14 @@ void Run(); // Main runner
 // --- Friend Access for Testing ---
 class GameConnectorTestAccessor {
 public:
-    static void Reset(::GameConnector& gc);
-    static void SetSharedMem(::GameConnector& gc, struct SharedMemoryLayout* layout);
-    static void SetSessionActive(::GameConnector& gc, bool val);
-    static void SetInRealtime(::GameConnector& gc, bool val);
-    static void SetSessionType(::GameConnector& gc, long val);
-    static void SetGamePhase(::GameConnector& gc, unsigned char val);
-    static void SetPlayerControl(::GameConnector& gc, signed char val);
-    static void InjectTransitions(::GameConnector& gc, const struct SharedMemoryObjectOut& data);
+    static void Reset(LMUFFB::GameConnector& gc);
+    static void SetSharedMem(LMUFFB::GameConnector& gc, struct SharedMemoryLayout* layout);
+    static void SetSessionActive(LMUFFB::GameConnector& gc, bool val);
+    static void SetInRealtime(LMUFFB::GameConnector& gc, bool val);
+    static void SetSessionType(LMUFFB::GameConnector& gc, long val);
+    static void SetGamePhase(LMUFFB::GameConnector& gc, unsigned char val);
+    static void SetPlayerControl(LMUFFB::GameConnector& gc, signed char val);
+    static void InjectTransitions(LMUFFB::GameConnector& gc, const struct SharedMemoryObjectOut& data);
 };
 
 class FFBEngineTestAccess {
@@ -15562,7 +16365,7 @@ public:
     static void SetFlatspotStrength(FFBEngine& e, float val) { e.m_front_axle.flatspot_strength = val; }
     static void SetABSPulseEnabled(FFBEngine& e, bool val) { e.m_braking.abs_pulse_enabled = val; }
     static void SetLastLogTime(FFBEngine& e, std::chrono::steady_clock::time_point t) { e.last_log_time = t; }
-    static ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
+    static Logging::ChannelStats& GetTorqueStats(FFBEngine& e) { return e.s_torque; }
     static void SetRestApiEnabled(FFBEngine& e, bool val) { e.m_advanced.rest_api_enabled = val; }
     static void SetRestApiPort(FFBEngine& e, int val) { e.m_advanced.rest_api_port = val; }
     
@@ -15598,7 +16401,7 @@ public:
         e.calculate_suspension_bottoming(data, ctx);
     }
     static void CallCalculateSoftLock(FFBEngine& e, const TelemInfoV01* data, FFBCalculationContext& ctx) {
-        e.calculate_soft_lock(data, ctx);
+        LMUFFB::SteeringUtils::CalculateSoftLock(data, ctx, e.m_advanced, e.m_general, e.m_safety, e.m_steering_velocity_smoothed);
     }
     static void SetScrubDragGain(FFBEngine& e, float val) { e.m_vibration.scrub_drag_gain = val; }
     static void SetBottomingEnabled(FFBEngine& e, bool val) { e.m_vibration.bottoming_enabled = val; }
