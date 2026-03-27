@@ -57,6 +57,11 @@ TEST_CASE(test_gyro_lat_g_gate, "Issue511") {
     engine.m_rear_axle.sop_yaw_gain = 0.0f;
 
     // 1. Straight Line (0.0G): Full damping
+    engine.m_advanced.gyro_lat_g_gate_lower = 0.1f;
+    engine.m_advanced.gyro_lat_g_gate_upper = 0.4f;
+    engine.m_advanced.gyro_max_nm = 50.0f;
+    engine.m_advanced.gyro_vel_deadzone = 0.0f;
+
     double gyro_0g = MeasureGyroForce(engine, data, 0.0, 1.0);
     std::cout << "  Damping at 0.0G: " << gyro_0g << " Nm" << std::endl;
     ASSERT_GT(gyro_0g, 0.1);
@@ -88,8 +93,10 @@ TEST_CASE(test_gyro_velocity_deadzone, "Issue511") {
 
     engine.m_advanced.gyro_gain = 1.0f;
     engine.m_advanced.gyro_smoothing = 0.015f;
+    engine.m_advanced.gyro_vel_deadzone = 0.5f;
+    engine.m_advanced.gyro_lat_g_gate_lower = 10.0f; // Disable gating
 
-    // 1. Velocity within deadzone: 0.4 rad/s (Deadzone is hardcoded to 0.5 rad/s)
+    // 1. Velocity within deadzone: 0.4 rad/s (Deadzone is 0.5 rad/s)
     double gyro_in_dz = MeasureGyroForce(engine, data, 0.0, 0.4);
     std::cout << "  Peak damping at 0.4 rad/s (deadzone 0.5): " << gyro_in_dz << " Nm" << std::endl;
     ASSERT_NEAR(gyro_in_dz, 0.0, 0.001);
@@ -110,6 +117,9 @@ TEST_CASE(test_gyro_force_cap, "Issue511") {
 
     engine.m_advanced.gyro_gain = 10.0f; // Massive gain to force the cap
     engine.m_advanced.gyro_smoothing = 0.015f;
+    engine.m_advanced.gyro_max_nm = 2.0f;
+    engine.m_advanced.gyro_vel_deadzone = 0.0f;
+    engine.m_advanced.gyro_lat_g_gate_lower = 10.0f; // Disable gating
 
     // Fast steering movement: 5.0 rad/s
     double gyro_capped = MeasureGyroForce(engine, data, 0.0, 5.0);
