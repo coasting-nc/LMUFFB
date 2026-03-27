@@ -536,7 +536,7 @@ TEST_CASE(test_game_connector_branches_v6, "System") {
 
 TEST_CASE(test_rate_monitor_v6, "System") {
     std::cout << "\nTest: RateMonitor Branches (Coverage Boost V6)" << std::endl;
-    Logging::RateMonitor rm;
+    RateMonitor rm;
     auto now = std::chrono::steady_clock::now();
     rm.RecordEventAt(now);
     // Trigger duration_ms >= 1000 branch

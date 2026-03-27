@@ -6,7 +6,7 @@
 using namespace FFBEngineTests;
 
 TEST_CASE(test_rate_monitor_calculation, "Diagnostics") {
-    Logging::RateMonitor monitor;
+    RateMonitor monitor;
     auto start = std::chrono::steady_clock::now();
 
     // Initial rate should be 0
@@ -37,7 +37,7 @@ TEST_CASE(test_rate_monitor_calculation, "Diagnostics") {
 }
 
 TEST_CASE(test_rate_monitor_realtime, "Diagnostics") {
-    Logging::RateMonitor monitor;
+    RateMonitor monitor;
 
     // Record events as fast as possible for a while
     auto start = std::chrono::steady_clock::now();
@@ -59,7 +59,7 @@ TEST_CASE(test_rate_monitor_realtime, "Diagnostics") {
 
 TEST_CASE(test_channel_monitor_logic, "Diagnostics") {
     struct ChannelMonitor {
-        Logging::RateMonitor monitor;
+        RateMonitor monitor;
         double lastValue = -1e18;
         void Update(double newValue, std::chrono::steady_clock::time_point now) {
             if (newValue != lastValue) {

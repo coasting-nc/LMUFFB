@@ -78,12 +78,12 @@ public:
     }
 
     bool OpenPresetFileDialog(std::string& outPath) override {
-        Logging::Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
+        Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
         return false;
     }
 
     bool SavePresetFileDialog(std::string& outPath, const std::string& defaultName) override {
-        Logging::Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
+        Logger::Get().LogFile("[GUI] File Dialog not implemented on Linux yet.");
         return false;
     }
 
@@ -117,7 +117,7 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 
 namespace {
     void glfw_error_callback(int error, const char* description) {
-        Logging::Logger::Get().LogFile("Glfw Error %d: %s", error, description);
+        Logger::Get().LogFile("Glfw Error %d: %s", error, description);
     }
 }
 
@@ -204,7 +204,7 @@ bool GuiLayer::Render(FFBEngine& engine) {
 #else
 // Stub Implementation for Headless Builds (or if IMGUI disabled)
 bool GuiLayer::Init() {
-    Logging::Logger::Get().LogFile("[GUI] Disabled (Headless Mode)");
+    Logger::Get().LogFile("[GUI] Disabled (Headless Mode)");
     return true;
 }
 void GuiLayer::Shutdown(FFBEngine& engine) {
