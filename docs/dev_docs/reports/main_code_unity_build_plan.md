@@ -209,7 +209,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Utils` subsystem. (v0.7.260)
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io). (v0.7.262)
-- [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`. (In progress: `FFBSnapshot`, `FFBConfig`, `FFBDebugBuffer`, `UpSampler` migrated in v0.7.265)
+- [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`. (In progress: `FFBSnapshot`, `FFBConfig`, `FFBDebugBuffer`, `UpSampler` migrated in v0.7.265. `FFBSafetyMonitor`, `FFBMetadataManager`, `DirectInputFFB` migrated in v0.7.266)
 - [x] Transition `io/` files to `namespace LMUFFB::IO`. (v0.7.263)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `IO` subsystem. (v0.7.264)
 
@@ -217,7 +217,12 @@ This section tracks the progress made towards fully refactoring the main code an
 
 ## 7. Implementation Notes
 
-### 7.0 Implementation Notes (v0.7.265)
+### 7.0 Implementation Notes (v0.7.266)
+- **Encountered Issues:** None. The files `FFBSafetyMonitor`, `FFBMetadataManager`, and `DirectInputFFB` were cleanly encapsulated and migrated alongside their bridge aliases without hitting ODR or cyclic dependencies.
+- **Deviations from the Plan:** None. They were successfully moved into `LMUFFB::FFB`.
+- **Suggestions for the Future:** Now that all peripheral modules in `src/ffb/` are completed, proceed to migrate the monolithic `FFBEngine` class to complete the Phase 6 `src/ffb/` transition.
+
+### 7.1 Implementation Notes (v0.7.265)
 - **Encountered Issues:** The forward declaration of `class FFBDebugBuffer;` inside `namespace LMUFFB` in `FFBEngine.h` shadowed the new bridge alias to `LMUFFB::FFB::FFBDebugBuffer`. The forward declaration was removed since the header is included directly.
 - **Deviations from the Plan:** N/A. The leaf types (`FFBSnapshot`, `FFBConfig`, `FFBDebugBuffer`, `UpSampler`) were safely migrated first as planned.
 - **Suggestions for the Future:** Continue migrating the remaining `ffb/` files (`FFBSafetyMonitor`, `FFBMetadataManager`, `DirectInputFFB`, `FFBEngine`) to `LMUFFB::FFB`.

@@ -9,7 +9,7 @@
 #include "utils/StringUtils.h"
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 class FFBMetadataManager {
 public:
@@ -48,6 +48,11 @@ private:
     std::mutex m_mutex;
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB
+
+// Temporary bridge aliases to keep existing call sites compiling
+namespace LMUFFB {
+    using FFBMetadataManager = LMUFFB::FFB::FFBMetadataManager;
+}
 
 #endif // FFBMETADATA_MANAGER_H

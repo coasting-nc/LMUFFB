@@ -18,7 +18,7 @@ using namespace LMUFFB::Utils;
 #include <string>
 #endif
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 namespace {
     // Constants: internal linkage within LMUFFB, safe for Unity Build bundling
@@ -456,4 +456,4 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
     return true;
 }
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB

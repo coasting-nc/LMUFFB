@@ -20,7 +20,7 @@ typedef void* LPDIRECTINPUTDEVICE8;
 typedef void* LPDIRECTINPUTEFFECT;
 #endif
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 struct DeviceInfo {
     GUID guid;
@@ -77,6 +77,12 @@ private:
     long m_last_force = -999999; 
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB
+
+// Temporary bridge aliases to keep existing call sites compiling
+namespace LMUFFB {
+    using DeviceInfo = LMUFFB::FFB::DeviceInfo;
+    using DirectInputFFB = LMUFFB::FFB::DirectInputFFB;
+}
 
 #endif // DIRECTINPUTFFB_H

@@ -9,7 +9,7 @@
 #include "utils/StringUtils.h"
 #include "FFBConfig.h"
 
-namespace LMUFFB {
+namespace LMUFFB::FFB {
 
 class FFBSafetyMonitor {
 public:
@@ -65,6 +65,11 @@ public:
     bool soft_lock_significant = false;
 };
 
-} // namespace LMUFFB
+} // namespace LMUFFB::FFB
+
+// Temporary bridge aliases to keep existing call sites compiling
+namespace LMUFFB {
+    using FFBSafetyMonitor = LMUFFB::FFB::FFBSafetyMonitor;
+}
 
 #endif // FFBSAFETYMONITOR_H

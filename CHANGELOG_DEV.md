@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.266]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Transitioned `FFBSafetyMonitor`, `FFBMetadataManager`, and `DirectInputFFB` to `namespace LMUFFB::FFB`.
+  - Added temporary bridge aliases in `namespace LMUFFB` to maintain backward compatibility for existing call sites.
+  - Verified 100% test pass rate with the new namespaced components.
+  - Updated Unity Build Plan documentation adding implementation notes and marking these files as complete.
+
 ## [0.7.265]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:
