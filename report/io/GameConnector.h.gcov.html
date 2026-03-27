@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-27 18:12:30</td>
+            <td class="headerValue">2026-03-27 18:26:54</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -112,19 +112,19 @@
 <span id="L41"><span class="lineNum">      41</span>                 :             :     bool IsStale(long timeoutMs = 100) const;</span>
 <span id="L42"><span class="lineNum">      42</span>                 :             : </span>
 <span id="L43"><span class="lineNum">      43</span>                 :             :     // Robust State Accessors (#267)</span>
-<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC tlaBgGNC">        4837 :     bool IsSessionActive() const { return m_sessionActive.load(std::memory_order_relaxed); }</span></span>
-<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">        9596 :     bool IsInRealtime() const { return m_inRealtime.load(std::memory_order_relaxed); }</span></span>
-<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">       19176 :     long GetSessionType() const { return m_currentSessionType.load(std::memory_order_relaxed); }</span></span>
+<span id="L44"><span class="lineNum">      44</span>                 :<span class="tlaGNC tlaBgGNC">        4778 :     bool IsSessionActive() const { return m_sessionActive.load(std::memory_order_relaxed); }</span></span>
+<span id="L45"><span class="lineNum">      45</span>                 :<span class="tlaGNC">        9478 :     bool IsInRealtime() const { return m_inRealtime.load(std::memory_order_relaxed); }</span></span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC">       18940 :     long GetSessionType() const { return m_currentSessionType.load(std::memory_order_relaxed); }</span></span>
 <span id="L47"><span class="lineNum">      47</span>                 :<span class="tlaGNC">          10 :     unsigned char GetGamePhase() const { return m_currentGamePhase.load(std::memory_order_relaxed); }</span></span>
-<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        9660 :     signed char GetPlayerControl() const { return m_playerControl.load(std::memory_order_relaxed); }</span></span>
+<span id="L48"><span class="lineNum">      48</span>                 :<span class="tlaGNC">        9542 :     signed char GetPlayerControl() const { return m_playerControl.load(std::memory_order_relaxed); }</span></span>
 <span id="L49"><span class="lineNum">      49</span>                 :             : </span>
 <span id="L50"><span class="lineNum">      50</span>                 :             :     // Composite predicate: true only when the player is physically behind the wheel</span>
 <span id="L51"><span class="lineNum">      51</span>                 :             :     // and actively in control (not paused, not in garage UI, not AI-controlled).</span>
 <span id="L52"><span class="lineNum">      52</span>                 :             :     // Addresses the ESC-menu-while-on-track edge case (session transition.md).</span>
-<span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">        4766 :     bool IsPlayerActivelyDriving() const {</span></span>
-<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">        4766 :         return m_inRealtime.load(std::memory_order_relaxed)</span></span>
+<span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">        4707 :     bool IsPlayerActivelyDriving() const {</span></span>
+<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">        4707 :         return m_inRealtime.load(std::memory_order_relaxed)</span></span>
 <span id="L55"><span class="lineNum">      55</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">           8 :             &amp;&amp; m_playerControl.load(std::memory_order_relaxed) == 0  // Player (not AI/replay/nobody)</span></span>
-<span id="L56"><span class="lineNum">      56</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4762 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">        4773 :             &amp;&amp; m_currentGamePhase.load(std::memory_order_relaxed) != 9; // 9 == Paused</span></span>
+<span id="L56"><span class="lineNum">      56</span>   [<span class="tlaGBC" title="Branch 0 was taken 4 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4703 times"> + </span><span class="tlaGBC" title="Branch 2 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 1 time"> + </span>]:<span class="tlaGNC">        4714 :             &amp;&amp; m_currentGamePhase.load(std::memory_order_relaxed) != 9; // 9 == Paused</span></span>
 <span id="L57"><span class="lineNum">      57</span>                 :             :     }</span>
 <span id="L58"><span class="lineNum">      58</span>                 :             : </span>
 <span id="L59"><span class="lineNum">      59</span>                 :             : private:</span>
@@ -196,12 +196,7 @@
 <span id="L125"><span class="lineNum">     125</span>                 :             : </span>
 <span id="L126"><span class="lineNum">     126</span>                 :             : } // namespace LMUFFB::IO</span>
 <span id="L127"><span class="lineNum">     127</span>                 :             : </span>
-<span id="L128"><span class="lineNum">     128</span>                 :             : // Bridge alias: keeps existing call sites (LMUFFB::GameConnector) compiling without changes</span>
-<span id="L129"><span class="lineNum">     129</span>                 :             : namespace LMUFFB {</span>
-<span id="L130"><span class="lineNum">     130</span>                 :             :     using GameConnector = LMUFFB::IO::GameConnector;</span>
-<span id="L131"><span class="lineNum">     131</span>                 :             : } // namespace LMUFFB</span>
-<span id="L132"><span class="lineNum">     132</span>                 :             : </span>
-<span id="L133"><span class="lineNum">     133</span>                 :             : #endif // GAMECONNECTOR_H</span>
+<span id="L128"><span class="lineNum">     128</span>                 :             : #endif // GAMECONNECTOR_H</span>
         </pre>
               </td>
             </tr>
