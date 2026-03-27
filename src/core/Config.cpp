@@ -238,7 +238,11 @@ toml::table PresetToToml(const Preset& p) {
         {"rest_api_port", p.advanced.rest_api_port},
         {"road_fallback_scale", p.advanced.road_fallback_scale},
         {"understeer_affects_sop", p.advanced.understeer_affects_sop},
-        {"aux_telemetry_reconstruction", p.advanced.aux_telemetry_reconstruction}
+        {"aux_telemetry_reconstruction", p.advanced.aux_telemetry_reconstruction},
+        {"gyro_lat_g_gate_lower", p.advanced.gyro_lat_g_gate_lower},
+        {"gyro_lat_g_gate_upper", p.advanced.gyro_lat_g_gate_upper},
+        {"gyro_max_nm", p.advanced.gyro_max_nm},
+        {"gyro_vel_deadzone", p.advanced.gyro_vel_deadzone}
     });
 
     tbl.insert("Safety", toml::table{
@@ -399,6 +403,10 @@ void TomlToPreset(const toml::table& tbl, Preset& p) {
         p.advanced.road_fallback_scale = (float)(*ad)["road_fallback_scale"].value_or((double)baseline.advanced.road_fallback_scale);
         p.advanced.understeer_affects_sop = (*ad)["understeer_affects_sop"].value_or(baseline.advanced.understeer_affects_sop);
         p.advanced.aux_telemetry_reconstruction = (int)(*ad)["aux_telemetry_reconstruction"].value_or((int64_t)baseline.advanced.aux_telemetry_reconstruction);
+        p.advanced.gyro_lat_g_gate_lower = (float)(*ad)["gyro_lat_g_gate_lower"].value_or((double)baseline.advanced.gyro_lat_g_gate_lower);
+        p.advanced.gyro_lat_g_gate_upper = (float)(*ad)["gyro_lat_g_gate_upper"].value_or((double)baseline.advanced.gyro_lat_g_gate_upper);
+        p.advanced.gyro_max_nm = (float)(*ad)["gyro_max_nm"].value_or((double)baseline.advanced.gyro_max_nm);
+        p.advanced.gyro_vel_deadzone = (float)(*ad)["gyro_vel_deadzone"].value_or((double)baseline.advanced.gyro_vel_deadzone);
     }
 
     if (auto sa = tbl["Safety"].as_table()) {
@@ -566,6 +574,10 @@ bool Config::ParsePhysicsLine(const std::string& key, const std::string& value, 
     if (key == "slip_angle_smoothing") { current_preset.grip_estimation.slip_angle_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { current_preset.grip_estimation.chassis_inertia_smoothing = std::stof(value); return true; }
     if (key == "load_sensitivity_enabled") { current_preset.grip_estimation.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "gyro_lat_g_gate_lower") { current_preset.advanced.gyro_lat_g_gate_lower = std::stof(value); return true; }
+    if (key == "gyro_lat_g_gate_upper") { current_preset.advanced.gyro_lat_g_gate_upper = std::stof(value); return true; }
+    if (key == "gyro_max_nm") { current_preset.advanced.gyro_max_nm = std::stof(value); return true; }
+    if (key == "gyro_vel_deadzone") { current_preset.advanced.gyro_vel_deadzone = std::stof(value); return true; }
     return false;
 }
 
@@ -765,6 +777,10 @@ bool Config::SyncPhysicsLine(const std::string& key, const std::string& value, F
     if (key == "slip_angle_smoothing") { engine.m_grip_estimation.slip_angle_smoothing = std::stof(value); return true; }
     if (key == "chassis_inertia_smoothing") { engine.m_grip_estimation.chassis_inertia_smoothing = std::stof(value); return true; }
     if (key == "load_sensitivity_enabled") { engine.m_grip_estimation.load_sensitivity_enabled = (value == "1" || value == "true"); return true; }
+    if (key == "gyro_lat_g_gate_lower") { engine.m_advanced.gyro_lat_g_gate_lower = std::stof(value); return true; }
+    if (key == "gyro_lat_g_gate_upper") { engine.m_advanced.gyro_lat_g_gate_upper = std::stof(value); return true; }
+    if (key == "gyro_max_nm") { engine.m_advanced.gyro_max_nm = std::stof(value); return true; }
+    if (key == "gyro_vel_deadzone") { engine.m_advanced.gyro_vel_deadzone = std::stof(value); return true; }
     if (key == "speed_gate_lower") { engine.m_advanced.speed_gate_lower = std::stof(value); return true; }
     if (key == "speed_gate_upper") { engine.m_advanced.speed_gate_upper = std::stof(value); return true; }
     if (key == "road_fallback_scale") { engine.m_advanced.road_fallback_scale = std::stof(value); return true; }

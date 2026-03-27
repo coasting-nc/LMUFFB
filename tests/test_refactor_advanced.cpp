@@ -24,7 +24,7 @@ TEST_CASE(test_refactor_advanced_consistency, "RefactorSafety") {
     // Create a telemetry state
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0, 0.05); // 10m/s
     data.mUnfilteredSteering = 0.2;
-    data.mLocalAccel.x = 4.0;
+    data.mLocalAccel.x = 0.0; // Issue #511: Change from 4.0 (0.4G) to 0.0G to bypass gating
     data.mSteeringShaftTorque = 2.0;
 
     // Pump engine

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.271]
+### Added
+- **Smart Gyroscopic Damping (Issue #511)**:
+  - Implemented a "Smart Damper" system featuring a Lateral G gate, steering velocity deadzone, and force cap.
+  - **Lateral G Gate**: Smoothly fades out damping during cornering (0.1G to 0.4G transition) to ensure the wheel remains free and responsive.
+  - **Velocity Deadzone**: Ignores micro-vibrations below 0.5 rad/s, allowing fine road textures to shine through on straights while still catching wobbles.
+  - **Force Cap**: Limits total damping resistance to 2.0 Nm, preventing the damper from overpowering the driver during evasive maneuvers.
+  - Expanded `AdvancedConfig` and the `Preset` API to support configuration of these parameters.
+  - Introduced high-fidelity regression tests in `tests/repro_issue_511.cpp` using smooth continuous input modeling.
+
 ## [0.7.270]
 ### Changed
 - **Unity Build Expansion (Phase 7, Step 7.3 — Core Bridge Alias Cleanup)**:

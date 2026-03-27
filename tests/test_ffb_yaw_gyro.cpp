@@ -71,6 +71,9 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     // Setup
     engine.m_advanced.gyro_gain = 1.0f;
     engine.m_advanced.gyro_smoothing = 0.1f;
+    engine.m_advanced.gyro_max_nm = 50.0f; // Disable cap for legacy test
+    engine.m_advanced.gyro_vel_deadzone = 0.0f; // Disable deadzone
+    engine.m_advanced.gyro_lat_g_gate_lower = 10.0f; // Disable gating
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Reference torque for normalization
     engine.m_general.gain = 1.0f;
     

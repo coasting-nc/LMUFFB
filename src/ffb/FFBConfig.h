@@ -383,6 +383,12 @@ struct AdvancedConfig {
     bool understeer_affects_sop = false;
     int aux_telemetry_reconstruction = 0; // 0: Zero Latency, 1: Smooth
 
+    // Gyro Gating (Issue #511)
+    float gyro_lat_g_gate_lower = 0.1f;
+    float gyro_lat_g_gate_upper = 0.4f;
+    float gyro_max_nm = 2.0f;
+    float gyro_vel_deadzone = 0.5f;
+
     bool Equals(const AdvancedConfig& o, float eps = 0.0001f) const {
         auto is_near = [eps](float a, float b) { return std::abs(a - b) < eps; };
         return is_near(gyro_gain, o.gyro_gain) &&
@@ -397,7 +403,11 @@ struct AdvancedConfig {
                rest_api_port == o.rest_api_port &&
                is_near(road_fallback_scale, o.road_fallback_scale) &&
                understeer_affects_sop == o.understeer_affects_sop &&
-               aux_telemetry_reconstruction == o.aux_telemetry_reconstruction;
+               aux_telemetry_reconstruction == o.aux_telemetry_reconstruction &&
+               is_near(gyro_lat_g_gate_lower, o.gyro_lat_g_gate_lower) &&
+               is_near(gyro_lat_g_gate_upper, o.gyro_lat_g_gate_upper) &&
+               is_near(gyro_max_nm, o.gyro_max_nm) &&
+               is_near(gyro_vel_deadzone, o.gyro_vel_deadzone);
     }
 
     void Validate() {
@@ -411,6 +421,12 @@ struct AdvancedConfig {
         rest_api_port = (std::max)(1, rest_api_port);
         road_fallback_scale = (std::max)(0.0f, road_fallback_scale);
         aux_telemetry_reconstruction = (std::max)(0, (std::min)(1, aux_telemetry_reconstruction));
+
+        // Gyro Gating (Issue #511)
+        gyro_lat_g_gate_lower = std::clamp(gyro_lat_g_gate_lower, 0.0f, 9.9f);
+        gyro_lat_g_gate_upper = std::clamp(gyro_lat_g_gate_upper, gyro_lat_g_gate_lower + 0.1f, 10.0f);
+        gyro_max_nm = std::clamp(gyro_max_nm, 0.0f, 50.0f);
+        gyro_vel_deadzone = std::clamp(gyro_vel_deadzone, 0.0f, 10.0f);
     }
 };
 

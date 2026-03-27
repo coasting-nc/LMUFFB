@@ -1447,8 +1447,26 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, LMUFFB::Physics
     m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
     
     // 3. DRIVING GYRO (Scales UP with speed. If m_gyro_gain is 0, this is 0.0)
-    double driving_gyro = m_advanced.gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
-    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * driving_gyro;
+    // SMART GATING (Issue #511): Fades out damping in corners based on Lateral G
+    double lat_g = std::abs(data->mLocalAccel.x / GRAVITY_MS2);
+    double straight_line_gate = 1.0 - smoothstep((double)m_advanced.gyro_lat_g_gate_lower, (double)m_advanced.gyro_lat_g_gate_upper, lat_g);
+
+    double driving_gyro = m_advanced.gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * straight_line_gate;
+
+    // VELOCITY DEADZONE (Issue #511): Ignores micro-vibrations for road texture clarity
+    double processed_vel = m_steering_velocity_smoothed;
+    double deadzone = (double)m_advanced.gyro_vel_deadzone;
+    if (std::abs(processed_vel) < deadzone) {
+        processed_vel = 0.0;
+    } else {
+        processed_vel -= std::copysign(deadzone, processed_vel);
+    }
+
+    double raw_gyro_force = -1.0 * processed_vel * driving_gyro;
+
+    // FORCE CAPPING (Issue #511): Prevent damping from overpowering the driver
+    double max_gyro_nm = (double)m_advanced.gyro_max_nm;
+    ctx.gyro_force = std::clamp(raw_gyro_force, -max_gyro_nm, max_gyro_nm);
 
     // 4. STATIONARY DAMPING (Scales DOWN with speed. If m_stationary_damping is 0, this is 0.0)
     // ctx.speed_gate is 0.0 at 0km/h, and 1.0 at the upper threshold (e.g., 18km/h)

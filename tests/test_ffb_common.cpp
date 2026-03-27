@@ -137,6 +137,13 @@ void InitializeEngine(FFBEngine& engine) {
     engine.m_rear_axle.sop_smoothing_factor = 0.0f; // 0.0 = Instant/No smoothing (v0.7.147)
     engine.m_rear_axle.yaw_accel_smoothing = 0.0f;
     engine.m_advanced.gyro_smoothing = 0.0f;
+
+    // v0.7.271 (Issue #511): Set neutral defaults for legacy tests
+    engine.m_advanced.gyro_lat_g_gate_lower = 10.0f;
+    engine.m_advanced.gyro_lat_g_gate_upper = 11.0f;
+    engine.m_advanced.gyro_max_nm = 50.0f;
+    engine.m_advanced.gyro_vel_deadzone = 0.0f;
+
     engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f;
     engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_grip_estimation.grip_smoothing_steady = 0.0f;
