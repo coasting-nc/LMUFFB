@@ -43,12 +43,7 @@ namespace Tooltips {
     inline constexpr const char* WHEELBASE_MAX_TORQUE = "The absolute maximum physical torque your wheelbase can produce\n(e.g., 15.0 for Simagic Alpha, 4.0 for T300).";
     inline constexpr const char* TARGET_RIM_TORQUE = "The maximum force you want to feel in your hands during heavy cornering.";
     inline constexpr const char* MIN_FORCE = "Boosts small forces to overcome mechanical friction/deadzone.";
-    inline constexpr const char* STATIONARY_DAMPING =
-        "Intensity of the friction/damping applied ONLY when the car is stationary.\n"
-        "Resists fast wheel movements to prevent violent pit-box oscillations.\n"
-        "Fades out completely to 0% as you accelerate to prevent masking FFB details.\n\n"
-        "Note: This is a velocity multiplier. 100% = 1.0 Nm of resistance\n"
-        "per rad/s of wheel speed.";
+    inline constexpr const char* STATIONARY_DAMPING = "Intensity of the friction/damping applied ONLY when the car is stationary.\nResists fast wheel movements to prevent violent pit-box oscillations.\nFades out completely as you accelerate to prevent masking FFB details.\nRecommended: 25% - 50% (Higher values may feel artificially heavy or grainy).";
     inline constexpr const char* REST_API_ENABLE = "Enables fallback to the game's REST API for steering range.\nUseful if Shared Memory returns 0 (Soft Lock/UI fix).";
     inline constexpr const char* REST_API_PORT = "Port for the game's REST API.\nDefault: 6397 (LMU), 5397 (rF2).";
 
@@ -101,8 +96,8 @@ namespace Tooltips {
     inline constexpr const char* POWER_YAW_GAMMA = "Gamma curve for early onset amplification.\n< 1.0 = Boosts small slides.\n1.0 = Linear.";
     inline constexpr const char* POWER_YAW_PUNCH = "Injects Yaw Jerk to overcome wheelbase inertia/stiction.\nCreates a sharp tactile 'snap' at the start of a slide.";
 
-    inline constexpr const char* GYRO_DAMPING = "Simulates the gyroscopic solidity of the spinning wheels.\nResists rapid steering movements.\nPrevents oscillation and 'Tank Slappers'.\nActs like a steering damper.";
-    inline constexpr const char* GYRO_SMOOTH = "Filters the steering velocity signal used for damping.\nReduces noise in the damping effect.\nLow = Crisper damping, High = Smoother.";
+    inline constexpr const char* GYRO_DAMPING = "Acts as 'hands-off protection' to prevent violent wheel oscillations \n(speed wobbles) on straights.\nSmartly gated: Fades out completely during cornering (Lateral G) and ignores\n micro-movements, ensuring zero loss of fine FFB details or responsiveness.\n\nRecommended: 10% - 20%.";
+    inline constexpr const char* GYRO_SMOOTH = "Filters the steering velocity signal used for damping.\nPrevents a 'metallic' or grainy feel by smoothing out the raw telemetry steps.\nNOTE: This latency ONLY affects the damping resistance. It does NOT delay\nprimary FFB details like road textures, grip loss, or impacts.\nRecommended: 0.015 s (15ms).";
     inline constexpr const char* SOP_SMOOTHING = "Filters the Lateral G signal.\nReduces jerkiness in the SoP effect.";
     inline constexpr const char* GRIP_SMOOTHING = "Filters the final estimated grip value.\nUses an adaptive non-linear filter: smooths steady-state noise\nbut maintains zero-latency during rapid grip loss events.\nRecommended: 0.030s - 0.060s.";
     inline constexpr const char* SOP_SCALE = "Multiplies the raw G-force signal before limiting.\nAdjusts the dynamic range of the SoP effect.";

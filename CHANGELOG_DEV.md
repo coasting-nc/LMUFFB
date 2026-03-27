@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.271]
+### Changed
+- Update Tooltips for GYRO_DAMPING, GYRO_SMOOTH, STATIONARY_DAMPING.
+- Updated test for long tooltip lines.
+ 
 ## [0.7.270]
 ### Changed
 - **Unity Build Expansion (Phase 7, Step 7.3 — Core Bridge Alias Cleanup)**:
