@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-27 18:54:49</td>
+            <td class="headerValue">2026-03-27 19:40:44</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -91,9 +91,9 @@
 <span id="L20"><span class="lineNum">      20</span>                 :             : // Provides a progressive spring-damping force when the wheel exceeds 100% lock.</span>
 <span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaGNC tlaBgGNC">       69655 : void CalculateSoftLock(const TelemInfoV01* data, </span></span>
 <span id="L22"><span class="lineNum">      22</span>                 :             :                        FFBCalculationContext&amp; ctx, </span>
-<span id="L23"><span class="lineNum">      23</span>                 :             :                        const AdvancedConfig&amp; advanced_cfg, </span>
-<span id="L24"><span class="lineNum">      24</span>                 :             :                        const GeneralConfig&amp; general_cfg, </span>
-<span id="L25"><span class="lineNum">      25</span>                 :             :                        FFBSafetyMonitor&amp; safety, </span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :                        const LMUFFB::FFB::AdvancedConfig&amp; advanced_cfg, </span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :                        const LMUFFB::FFB::GeneralConfig&amp; general_cfg, </span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :                        LMUFFB::FFB::FFBSafetyMonitor&amp; safety, </span>
 <span id="L26"><span class="lineNum">      26</span>                 :             :                        double steering_velocity_smoothed) {</span>
 <span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">       69655 :     ctx.soft_lock_force = 0.0;</span></span>
 <span id="L28"><span class="lineNum">      28</span>         [<span class="tlaGBC" title="Branch 0 was taken 28 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 69627 times"> + </span>]:<span class="tlaGNC">       69655 :     if (!advanced_cfg.soft_lock_enabled) return;</span></span>
