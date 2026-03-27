@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-27 12:15:20</td>
+            <td class="headerValue">2026-03-27 14:21:40</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -103,7 +103,7 @@
 <span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">         622 :     const char* GetVehicleName() const { return m_vehicle_name; }</span></span>
 <span id="L32"><span class="lineNum">      32</span>                 :             :     const char* GetTrackName() const { return m_track_name; }</span>
 <span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">         276 :     const char* GetCurrentClassName() const { return m_current_class_name.c_str(); }</span></span>
-<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">      269264 :     LMUFFB::ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :<span class="tlaGNC">      269264 :     LMUFFB::Physics::ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }</span></span>
 <span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC">       66025 :     bool HasWarnedInvalidRange() const { return m_warned_invalid_range; }</span></span>
 <span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">         543 :     void SetWarnedInvalidRange(bool val) { m_warned_invalid_range = val; }</span></span>
 <span id="L37"><span class="lineNum">      37</span>                 :             : </span>
@@ -111,7 +111,7 @@
 <span id="L39"><span class="lineNum">      39</span>                 :             :     char m_vehicle_name[STR_BUF_64] = &quot;Unknown&quot;;</span>
 <span id="L40"><span class="lineNum">      40</span>                 :             :     char m_track_name[STR_BUF_64] = &quot;Unknown&quot;;</span>
 <span id="L41"><span class="lineNum">      41</span>                 :             :     std::string m_current_class_name = &quot;&quot;;</span>
-<span id="L42"><span class="lineNum">      42</span>                 :             :     LMUFFB::ParsedVehicleClass m_current_vclass = LMUFFB::ParsedVehicleClass::UNKNOWN;</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :     LMUFFB::Physics::ParsedVehicleClass m_current_vclass = LMUFFB::Physics::ParsedVehicleClass::UNKNOWN;</span>
 <span id="L43"><span class="lineNum">      43</span>                 :             :     std::atomic&lt;bool&gt; m_warned_invalid_range{false};</span>
 <span id="L44"><span class="lineNum">      44</span>                 :             :     std::string m_last_handled_vehicle_name = &quot;&quot;;</span>
 <span id="L45"><span class="lineNum">      45</span>                 :             :     std::string m_last_logged_veh = &quot;&quot;;</span>

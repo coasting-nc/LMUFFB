@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-27 12:15:20</td>
+            <td class="headerValue">2026-03-27 14:21:40</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">90.6&nbsp;%</td>
@@ -189,7 +189,7 @@
 <span id="L118"><span class="lineNum">     118</span>                 :<span class="tlaGNC">           1 :     colors[ImGuiCol_MenuBarBg]      = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);</span></span>
 <span id="L119"><span class="lineNum">     119</span>                 :<span class="tlaGNC">           1 : }</span></span>
 <span id="L120"><span class="lineNum">     120</span>                 :             : </span>
-<span id="L121"><span class="lineNum">     121</span>                 :<span class="tlaGNC">           1 : void GuiLayer::DrawMenuBar(FFBEngine&amp; engine) {</span></span>
+<span id="L121"><span class="lineNum">     121</span>                 :<span class="tlaGNC">           1 : void GuiLayer::DrawMenuBar(LMUFFB::FFBEngine&amp; engine) {</span></span>
 <span id="L122"><span class="lineNum">     122</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">           1 :     if (ImGui::BeginMainMenuBar()) {</span></span>
 <span id="L123"><span class="lineNum">     123</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span>]:<span class="tlaGNC">           1 :         if (ImGui::BeginMenu(&quot;Logs&quot;)) {</span></span>
 <span id="L124"><span class="lineNum">     124</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC tlaBgUNC">           0 :             if (ImGui::MenuItem(&quot;Analyze last log&quot;)) {</span></span>
@@ -305,7 +305,7 @@
 <span id="L219"><span class="lineNum">     219</span>                 :             : </span>
 <span id="L220"><span class="lineNum">     220</span>                 :             : static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);</span>
 <span id="L221"><span class="lineNum">     221</span>                 :             : </span>
-<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">         377 : void GuiLayer::DrawTuningWindow(FFBEngine&amp; engine) {</span></span>
+<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">         377 : void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine&amp; engine) {</span></span>
 <span id="L223"><span class="lineNum">     223</span>         [<span class="tlaGBC" title="Branch 0 was taken 377 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         377 :     std::lock_guard&lt;std::recursive_mutex&gt; lock(g_engine_mutex);</span></span>
 <span id="L224"><span class="lineNum">     224</span>                 :             : </span>
 <span id="L225"><span class="lineNum">     225</span>                 :             :     // Persistent UI State</span>
@@ -968,7 +968,7 @@
 <span class="lineNum">        </span>    <span class="tlaUNC" title="Branch 4 was not taken"> - </span><span class="tlaUNC" title="Branch 5 was not taken"> - </span><span class="tlaUNC" title="Branch 6 was not taken"> - </span><span class="tlaUNC" title="Branch 7 was not taken"> - </span>]
 <span id="L852"><span class="lineNum">     852</span>                 :             : </span>
 <span id="L853"><span class="lineNum">     853</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::SameLine();</span></span>
-<span id="L854"><span class="lineNum">     854</span>                 :<span class="tlaGNC">         363 :             float latency_ms = (static_cast&lt;float&gt;(engine.m_slope_detection.sg_window) / 2.0f) * 2.5f;</span></span>
+<span id="L854"><span class="lineNum">     854</span>                 :<span class="tlaGNC">         363 :             float latency_ms = (static_cast&lt;float&gt;(engine.m_slope_detection.sg_window) / 2.0f) * (float)Physics::PHYSICS_CALC_DT * 1000.0f;</span></span>
 <span id="L855"><span class="lineNum">     855</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImVec4 color = (latency_ms &lt; 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);</span></span>
 <span id="L856"><span class="lineNum">     856</span>         [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::TextColored(color, &quot;~%.0f ms latency&quot;, latency_ms);</span></span>
 <span id="L857"><span class="lineNum">     857</span>   [<span class="tlaGBC" title="Branch 0 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 363 times"> + </span><span class="tlaUNC" title="Branch 3 was not taken"> - </span>]:<span class="tlaGNC">         363 :             ImGui::NextColumn(); ImGui::NextColumn();</span></span>
@@ -1247,7 +1247,7 @@
 <span id="L1120"><span class="lineNum">    1120</span>                 :             : }</span>
 <span id="L1121"><span class="lineNum">    1121</span>                 :             : }</span>
 <span id="L1122"><span class="lineNum">    1122</span>                 :             : </span>
-<span id="L1123"><span class="lineNum">    1123</span>                 :<span class="tlaUNC tlaBgUNC">           0 : void GuiLayer::UpdateTelemetry(FFBEngine&amp; engine) {</span></span>
+<span id="L1123"><span class="lineNum">    1123</span>                 :<span class="tlaUNC tlaBgUNC">           0 : void GuiLayer::UpdateTelemetry(LMUFFB::FFBEngine&amp; engine) {</span></span>
 <span id="L1124"><span class="lineNum">    1124</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :     auto snapshots = engine.GetDebugBatch();</span></span>
 <span id="L1125"><span class="lineNum">    1125</span>         [<span class="tlaUNC" title="Branch 0 was not executed"> # </span><span class="tlaUNC" title="Branch 1 was not executed"> # </span>]:<span class="tlaUNC">           0 :     for (const auto&amp; snap : snapshots) {</span></span>
 <span id="L1126"><span class="lineNum">    1126</span>                 :<span class="tlaUNC">           0 :         m_latest_steering_range = snap.steering_range_deg;</span></span>
@@ -1304,7 +1304,7 @@
 <span id="L1177"><span class="lineNum">    1177</span>                 :             :     }</span>
 <span id="L1178"><span class="lineNum">    1178</span>                 :<span class="tlaUNC">           0 : }</span></span>
 <span id="L1179"><span class="lineNum">    1179</span>                 :             : </span>
-<span id="L1180"><span class="lineNum">    1180</span>                 :<span class="tlaGNC tlaBgGNC">          63 : void GuiLayer::DrawDebugWindow(FFBEngine&amp; engine) {</span></span>
+<span id="L1180"><span class="lineNum">    1180</span>                 :<span class="tlaGNC tlaBgGNC">          63 : void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine&amp; engine) {</span></span>
 <span id="L1181"><span class="lineNum">    1181</span>         [<span class="tlaGBC" title="Branch 0 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 1 was taken 62 times"> + </span>]:<span class="tlaGNC">          63 :     if (!Config::show_graphs) return;</span></span>
 <span id="L1182"><span class="lineNum">    1182</span>                 :             : </span>
 <span id="L1183"><span class="lineNum">    1183</span>                 :<span class="tlaGNC">          62 :     ImGuiViewport* viewport = ImGui::GetMainViewport();</span></span>
@@ -1487,11 +1487,11 @@
 <span id="L1353"><span class="lineNum">    1353</span>                 :<span class="tlaGNC tlaBgGNC">          62 :     ImGui::End();</span></span>
 <span id="L1354"><span class="lineNum">    1354</span>                 :             : }</span>
 <span id="L1355"><span class="lineNum">    1355</span>                 :             : #else</span>
-<span id="L1356"><span class="lineNum">    1356</span>                 :             : void GuiLayer::DrawMenuBar(FFBEngine&amp; engine) {}</span>
+<span id="L1356"><span class="lineNum">    1356</span>                 :             : void GuiLayer::DrawMenuBar(LMUFFB::FFBEngine&amp; engine) {}</span>
 <span id="L1357"><span class="lineNum">    1357</span>                 :             : void GuiLayer::LaunchLogAnalyzer(const std::string&amp; log_file) {}</span>
-<span id="L1358"><span class="lineNum">    1358</span>                 :             : void GuiLayer::UpdateTelemetry(FFBEngine&amp; engine) {}</span>
-<span id="L1359"><span class="lineNum">    1359</span>                 :             : void GuiLayer::DrawTuningWindow(FFBEngine&amp; engine) {}</span>
-<span id="L1360"><span class="lineNum">    1360</span>                 :             : void GuiLayer::DrawDebugWindow(FFBEngine&amp; engine) {}</span>
+<span id="L1358"><span class="lineNum">    1358</span>                 :             : void GuiLayer::UpdateTelemetry(LMUFFB::FFBEngine&amp; engine) {}</span>
+<span id="L1359"><span class="lineNum">    1359</span>                 :             : void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine&amp; engine) {}</span>
+<span id="L1360"><span class="lineNum">    1360</span>                 :             : void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine&amp; engine) {}</span>
 <span id="L1361"><span class="lineNum">    1361</span>                 :             : void GuiLayer::SetupGUIStyle() {}</span>
 <span id="L1362"><span class="lineNum">    1362</span>                 :             : #endif</span>
 <span id="L1363"><span class="lineNum">    1363</span>                 :             : </span>
