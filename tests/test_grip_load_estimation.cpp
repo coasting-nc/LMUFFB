@@ -31,7 +31,7 @@ TEST_CASE(test_grip_estimation_raw_passthrough, "SlipGrip") {
     double prev_slip1 = 0.0, prev_slip2 = 0.0;
     double prev_load1 = 4000.0, prev_load2 = 4000.0;
     
-    GripResult res = engine.calculate_axle_grip(w1, w2, 4000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
+    Physics::GripResult res = engine.calculate_axle_grip(w1, w2, 4000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
     
     ASSERT_FALSE(res.approximated);
     ASSERT_NEAR(res.value, 0.80, 0.001); // Average of 0.85 and 0.75
@@ -79,7 +79,7 @@ TEST_CASE(test_grip_estimation_load_sensitivity, "SlipGrip") {
     double prev_slip1 = 0.10, prev_slip2 = 0.10;
     double prev_load1 = 8000.0, prev_load2 = 8000.0; // Pre-warm load EMA to simulate sustained aero
     
-    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
+    Physics::GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
     
     // Math check:
     // load_ratio = 8000 / 4001 = 1.9995
@@ -108,7 +108,7 @@ TEST_CASE(test_grip_estimation_load_smoothing, "SlipGrip") {
     // Load EMA is currently at static weight (4000 N)
     double prev_load1 = 4000.0, prev_load2 = 4000.0; 
     
-    GripResult res = engine.calculate_axle_grip(w1, w2, 12000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
+    Physics::GripResult res = engine.calculate_axle_grip(w1, w2, 12000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
     
     // Math check:
     // alpha = 0.0025 / (0.050 + 0.0025) = 0.047619
@@ -141,7 +141,7 @@ TEST_CASE(test_grip_estimation_sliding_asymptote, "SlipGrip") {
     double prev_slip1 = 1.0, prev_slip2 = 1.0;
     double prev_load1 = 4000.0, prev_load2 = 4000.0;
     
-    GripResult res = engine.calculate_axle_grip(w1, w2, 4000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
+    Physics::GripResult res = engine.calculate_axle_grip(w1, w2, 4000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", nullptr, true);
     
     // Should asymptote to MIN_SLIDING_GRIP (0.05), not 0.0
     ASSERT_NEAR(res.value, 0.05, 0.001);

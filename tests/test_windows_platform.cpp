@@ -225,14 +225,14 @@ TEST_CASE(test_window_always_on_top_interface, "GUI") {
     std::cout << "\nTest: Window Always on Top Interface" << std::endl;
 
     // Test the platform-agnostic function calls the platform implementation
-    LMUFFB::SetWindowAlwaysOnTopPlatform(true);
+    LMUFFB::GUI::SetWindowAlwaysOnTopPlatform(true);
 
 #ifndef _WIN32
     // On Linux we can verify the mock state
-    ASSERT_TRUE(LMUFFB::GetGuiPlatform().GetAlwaysOnTopMock() == true);
+    ASSERT_TRUE(LMUFFB::GUI::GetGuiPlatform().GetAlwaysOnTopMock() == true);
 
-    LMUFFB::SetWindowAlwaysOnTopPlatform(false);
-    ASSERT_TRUE(LMUFFB::GetGuiPlatform().GetAlwaysOnTopMock() == false);
+    LMUFFB::GUI::SetWindowAlwaysOnTopPlatform(false);
+    ASSERT_TRUE(LMUFFB::GUI::GetGuiPlatform().GetAlwaysOnTopMock() == false);
 
     std::cout << "  [PASS] Interface called successfully (Headless Mock verified)" << std::endl;
 #else

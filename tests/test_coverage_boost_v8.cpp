@@ -174,7 +174,7 @@ TEST_CASE(test_ffb_engine_soft_knee_compression_branches, "Physics") {
     // upper_bound = 1.5 + 0.25 = 1.75
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     
     // 1. Above upper bound (x = 2.0)
@@ -205,15 +205,15 @@ TEST_CASE(test_ffb_engine_long_load_transform_branches, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     
     // QUADRATIC
-    engine.m_load_forces.long_load_transform = (int)LoadTransform::QUADRATIC;
+    engine.m_load_forces.long_load_transform = (int)Physics::LoadTransform::QUADRATIC;
     engine.calculate_force(&data);
     
     // CUBIC
-    engine.m_load_forces.long_load_transform = (int)LoadTransform::CUBIC;
+    engine.m_load_forces.long_load_transform = (int)Physics::LoadTransform::CUBIC;
     engine.calculate_force(&data);
     
     // HERMITE
-    engine.m_load_forces.long_load_transform = (int)LoadTransform::HERMITE;
+    engine.m_load_forces.long_load_transform = (int)Physics::LoadTransform::HERMITE;
     engine.calculate_force(&data);
 }
 
@@ -292,7 +292,7 @@ TEST_CASE(test_ffb_engine_signal_conditioning_notch_low_freq, "Physics") {
     FFBEngineTestAccess::SetFlatspotSuppression(engine, true);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(0.1, 0.0); // Very low speed -> low wheel_freq
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 0.1;
     

@@ -201,7 +201,7 @@ TEST_CASE(test_engine_extra_branches, "Physics") {
     ASSERT_EQ((int)batch.size(), 100);
 
     // 2. Frequency crossing branch in apply_signal_conditioning
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 10.0;
 

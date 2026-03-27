@@ -16,7 +16,7 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mLocalAccel.x = 0.0;
 
-    auto get_lat_load_force = [&](LoadTransform transform, double fl_load, double fr_load) {
+    auto get_lat_load_force = [&](Physics::LoadTransform transform, double fl_load, double fr_load) {
         engine.m_load_forces.lat_load_transform = static_cast<int>(transform);
         data.mWheel[WHEEL_FL].mTireLoad = fl_load;
         data.mWheel[WHEEL_FR].mTireLoad = fr_load;
@@ -34,30 +34,30 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
     double x = 0.25;
 
     // Linear: f(x) = x = 0.25
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::LINEAR, fl, fr), -0.25f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::LINEAR, fl, fr), -0.25f, 0.01f);
 
     // Cubic: f(x) = 1.5x - 0.5x^3 = 1.5(0.25) - 0.5(0.25^3) = 0.375 - 0.5(0.015625) = 0.375 - 0.0078125 = 0.3671875
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::CUBIC, fl, fr), -0.3672f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::CUBIC, fl, fr), -0.3672f, 0.01f);
 
     // Quadratic: f(x) = 2x - x|x| = 2(0.25) - 0.25(0.25) = 0.5 - 0.0625 = 0.4375
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::QUADRATIC, fl, fr), -0.4375f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::QUADRATIC, fl, fr), -0.4375f, 0.01f);
 
     // Hermite: f(x) = x * (1 + |x| - x^2) = 0.25 * (1 + 0.25 - 0.0625) = 0.25 * (1.1875) = 0.296875
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::HERMITE, fl, fr), -0.2969f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::HERMITE, fl, fr), -0.2969f, 0.01f);
 
     // Verify symmetry (Negative x)
     // total = 16000. left = 2000+4000=6000. right = 6000+4000=10000.
     // x = (10000 - 6000) / 16000 = 0.25
     fl = 2000.0;
     fr = 6000.0;
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::LINEAR, fl, fr), 0.25f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::CUBIC, fl, fr), 0.3672f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::QUADRATIC, fl, fr), 0.4375f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force(LoadTransform::HERMITE, fl, fr), 0.2969f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::LINEAR, fl, fr), 0.25f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::CUBIC, fl, fr), 0.3672f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::QUADRATIC, fl, fr), 0.4375f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force(Physics::LoadTransform::HERMITE, fl, fr), 0.2969f, 0.01f);
 
     // Verify limit (x = 1.0)
     // left = 8000+8000=16000. right=0. total=16000. x=1.0.
-    auto get_lat_load_force_extreme = [&](LoadTransform transform) {
+    auto get_lat_load_force_extreme = [&](Physics::LoadTransform transform) {
         engine.m_load_forces.lat_load_transform = static_cast<int>(transform);
         data.mWheel[WHEEL_FL].mTireLoad = 8000.0;
         data.mWheel[WHEEL_FR].mTireLoad = 0.0;
@@ -66,10 +66,10 @@ TEST_CASE_TAGGED(test_issue_282_transformations, "CorePhysics", (std::vector<std
         engine.calculate_force(&data);
         return engine.GetDebugBatch().back().lat_load_force;
     };
-    ASSERT_NEAR(get_lat_load_force_extreme(LoadTransform::LINEAR), -1.0f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force_extreme(LoadTransform::CUBIC), -1.0f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force_extreme(LoadTransform::QUADRATIC), -1.0f, 0.01f);
-    ASSERT_NEAR(get_lat_load_force_extreme(LoadTransform::HERMITE), -1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force_extreme(Physics::LoadTransform::LINEAR), -1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force_extreme(Physics::LoadTransform::CUBIC), -1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force_extreme(Physics::LoadTransform::QUADRATIC), -1.0f, 0.01f);
+    ASSERT_NEAR(get_lat_load_force_extreme(Physics::LoadTransform::HERMITE), -1.0f, 0.01f);
 }
 
 TEST_CASE_TAGGED(test_issue_282_sign_inversion, "CorePhysics", (std::vector<std::string>{"Physics", "Issue282"})) {

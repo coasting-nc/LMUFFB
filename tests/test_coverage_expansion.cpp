@@ -47,12 +47,12 @@ TEST_CASE(test_logger_expansion, "Diagnostics") {
 
 TEST_CASE(test_vehicle_utils_expansion, "Physics") {
     // Missing Line 46 in VehicleUtils.cpp: ORECA in name but no LMP2 in class
-    ParsedVehicleClass pvc = ParseVehicleClass("", "ORECA 07");
-    ASSERT_EQ((int)pvc, (int)ParsedVehicleClass::LMP2_UNSPECIFIED);
+    Physics::ParsedVehicleClass pvc = Physics::ParseVehicleClass("", "ORECA 07");
+    ASSERT_EQ((int)pvc, (int)Physics::ParsedVehicleClass::LMP2_UNSPECIFIED);
 
     // Other missing branches
-    ASSERT_EQ_STR(VehicleClassToString(ParsedVehicleClass::UNKNOWN), "Unknown");
-    ASSERT_NEAR(GetDefaultLoadForClass(ParsedVehicleClass::UNKNOWN), 4500.0, 0.1);
+    ASSERT_EQ_STR(Physics::VehicleClassToString(Physics::ParsedVehicleClass::UNKNOWN), "Unknown");
+    ASSERT_NEAR(Physics::GetDefaultLoadForClass(Physics::ParsedVehicleClass::UNKNOWN), 4500.0, 0.1);
 }
 
 TEST_CASE(test_shared_memory_lock_expansion, "System") {
@@ -282,29 +282,29 @@ TEST_CASE(test_sm_interface_expansion, "System") {
 
 TEST_CASE(test_gui_platform_expansion, "GUI") {
 #ifndef _WIN32
-    LMUFFB::SetWindowAlwaysOnTopPlatform(true);
-    ASSERT_TRUE(LMUFFB::GetGuiPlatform().GetAlwaysOnTopMock());
-    LMUFFB::SetWindowAlwaysOnTopPlatform(false);
-    ASSERT_FALSE(LMUFFB::GetGuiPlatform().GetAlwaysOnTopMock());
+    LMUFFB::GUI::SetWindowAlwaysOnTopPlatform(true);
+    ASSERT_TRUE(LMUFFB::GUI::GetGuiPlatform().GetAlwaysOnTopMock());
+    LMUFFB::GUI::SetWindowAlwaysOnTopPlatform(false);
+    ASSERT_FALSE(LMUFFB::GUI::GetGuiPlatform().GetAlwaysOnTopMock());
 #else
-    LMUFFB::SetWindowAlwaysOnTopPlatform(true);
-    LMUFFB::SetWindowAlwaysOnTopPlatform(false);
+    LMUFFB::GUI::SetWindowAlwaysOnTopPlatform(true);
+    LMUFFB::GUI::SetWindowAlwaysOnTopPlatform(false);
     std::cout << "  [INFO] Skipping GUI AlwaysOnTop mock check on Windows." << std::endl;
 #endif
 
-    LMUFFB::ResizeWindowPlatform(100, 100, 800, 600);
-    LMUFFB::SaveCurrentWindowGeometryPlatform(true);
-    LMUFFB::SaveCurrentWindowGeometryPlatform(false);
+    LMUFFB::GUI::ResizeWindowPlatform(100, 100, 800, 600);
+    LMUFFB::GUI::SaveCurrentWindowGeometryPlatform(true);
+    LMUFFB::GUI::SaveCurrentWindowGeometryPlatform(false);
 
 #ifndef _WIN32
     std::string path;
-    LMUFFB::SavePresetFileDialogPlatform(path, "test.ini");
-    LMUFFB::OpenPresetFileDialogPlatform(path);
+    LMUFFB::GUI::SavePresetFileDialogPlatform(path, "test.ini");
+    LMUFFB::GUI::OpenPresetFileDialogPlatform(path);
 #else
     std::cout << "  [INFO] Skipping blocking GUI file dialogs on Windows tests." << std::endl;
 #endif
 
-    ASSERT_TRUE(LMUFFB::GetGuiPlatform().GetWindowHandle() == nullptr);
+    ASSERT_TRUE(LMUFFB::GUI::GetGuiPlatform().GetWindowHandle() == nullptr);
 
     // Mock branches
     #ifndef _WIN32

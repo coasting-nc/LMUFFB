@@ -15,7 +15,7 @@ TEST_CASE(test_longitudinal_g_braking, "Physics") {
     engine.m_load_forces.long_load_smoothing = 0.0f; // Instant
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_load_forces.long_load_transform = (int)LoadTransform::LINEAR;
+    engine.m_load_forces.long_load_transform = (int)Physics::LoadTransform::LINEAR;
     engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 1G Braking (+Z is rearward/deceleration)
@@ -95,7 +95,7 @@ TEST_CASE(test_longitudinal_g_domain_scaling_cubic, "Physics") {
     engine.m_load_forces.long_load_smoothing = 0.0f;
     engine.m_front_axle.steering_shaft_gain = 1.0f;
     engine.m_front_axle.understeer_effect = 0.0f;
-    engine.m_load_forces.long_load_transform = (int)LoadTransform::CUBIC;
+    engine.m_load_forces.long_load_transform = (int)Physics::LoadTransform::CUBIC;
     engine.m_grip_estimation.chassis_inertia_smoothing = 0.0f; // Reduce LPF latency
 
     // Scenario: 0.5G Braking (4.905 m/s2)

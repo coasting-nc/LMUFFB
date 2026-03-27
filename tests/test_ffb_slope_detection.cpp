@@ -182,7 +182,7 @@ TEST_CASE(test_slope_latency_characteristics, "SlopeDetection") {
     ASSERT_GE(engine.m_slope_buffer_count, window);
     
     // Latency is (window-1)/2 * dt (group delay of a symmetric FIR/SG filter)
-    float latency_ms = (static_cast<float>(window - 1) / 2.0f) * 2.5f;
+    float latency_ms = (static_cast<float>(window - 1) / 2.0f) * (float)Physics::PHYSICS_CALC_DT * 1000.0f;
     std::cout << "  Calculated Latency for Window " << window << " at 400Hz: " << latency_ms << " ms" << std::endl;
     ASSERT_NEAR(latency_ms, 17.5, 0.5);
 }
@@ -245,7 +245,7 @@ TEST_CASE(test_slope_buffer_reset_on_toggle, "SlopeDetection") {
     bool prev_enabled = engine.m_slope_detection.enabled;
     engine.m_slope_detection.enabled = true;
     
-    //  Simulate the reset logic from GuiLayer.cpp
+    //  Simulate the reset logic from GuiLayer_Common.cpp
     if (!prev_enabled && engine.m_slope_detection.enabled) {
         engine.m_slope_buffer_count = 0;
         engine.m_slope_buffer_index = 0;

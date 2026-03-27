@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.261]
+## [0.7.262]
 ### Changed
 - **Unity Build Hardening (Phase 6 — Internal Linkage Audit Batch 2: ffb/io)**:
   - Conducted a systematic internal linkage audit across all `.cpp` files in `src/ffb/` and `src/io/`.
@@ -11,6 +11,15 @@ All notable changes to this project will be documented in this file.
   - Confirmed all other `ffb/` and `io/` `.cpp` files already compliant: helper constants and callbacks in `DirectInputFFB.cpp` (`GetDirectInputErrorString`, `EnumJoysticksCallback`) were already inside `namespace LMUFFB`; all other files had no bare file-local helpers.
   - Added a **Critical Plan Review** section to `main_code_unity_build_plan.md` documenting architectural risks for the upcoming `ffb/io` sub-namespace transition phase.
   - Verified 100% test pass rate (633/633) with no regressions.
+
+## [0.7.261]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Implemented **Namespace Hygiene** for the `Physics` and `GUI` subsystems by removing temporary bridge aliases in `GripLoadEstimation.h`, `VehicleUtils.h`, `SteeringUtils.h`, and `GuiLayer.h`.
+  - Migrated over 150 call sites and header types project-wide to use explicit `LMUFFB::Physics::` and `LMUFFB::GUI::` qualifications.
+  - Resolved ODR and visibility issues in the Unity test runner by ensuring proper header inclusion and namespace scoping.
+  - Verified 100% test pass rate (633/633) under the fully decoupled and encapsulated namespaced architecture.
+  - Updated the Unity Build Plan documentation with implementation notes and refined next steps for the `FFB` and `IO` subsystems.
 
 ## [0.7.260]
 ### Changed
