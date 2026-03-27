@@ -12,14 +12,14 @@ namespace LMUFFB::Logging {
 class RateMonitor {
 public:
     RateMonitor() : m_count(0), m_lastRateScaled(0) {
-        m_startTime = TimeUtils::GetTime();
+        m_startTime = Utils::TimeUtils::GetTime();
     }
 
     /**
      * @brief Record a single event occurrence.
      */
     void RecordEvent() {
-        RecordEventAt(TimeUtils::GetTime());
+        RecordEventAt(Utils::TimeUtils::GetTime());
     }
 
     /**

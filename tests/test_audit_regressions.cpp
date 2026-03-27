@@ -2,6 +2,8 @@
 #include <fstream>
 #include <filesystem>
 
+using namespace LMUFFB::Utils;
+
 // Declaration of the helper function from main.cpp
 namespace LMUFFB {
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine);

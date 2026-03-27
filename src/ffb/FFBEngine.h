@@ -114,21 +114,21 @@ public:
     TelemInfoV01 m_working_info; // Persistent storage for upsampled telemetry
     double m_last_telemetry_time = -1.0;
 
-    LMUFFB::HoltWintersFilter m_upsample_lat_patch_vel[NUM_WHEELS];
-    LMUFFB::HoltWintersFilter m_upsample_long_patch_vel[NUM_WHEELS];
-    LMUFFB::HoltWintersFilter m_upsample_vert_deflection[NUM_WHEELS];
-    LMUFFB::HoltWintersFilter m_upsample_susp_force[NUM_WHEELS];
-    LMUFFB::HoltWintersFilter m_upsample_brake_pressure[NUM_WHEELS];
-    LMUFFB::HoltWintersFilter m_upsample_rotation[NUM_WHEELS];
-    LMUFFB::HoltWintersFilter m_upsample_steering;
-    LMUFFB::HoltWintersFilter m_upsample_throttle;
-    LMUFFB::HoltWintersFilter m_upsample_brake;
-    LMUFFB::HoltWintersFilter m_upsample_local_accel_x;
-    LMUFFB::HoltWintersFilter m_upsample_local_accel_y;
-    LMUFFB::HoltWintersFilter m_upsample_local_accel_z;
-    LMUFFB::HoltWintersFilter m_upsample_local_rot_accel_y;
-    LMUFFB::HoltWintersFilter m_upsample_local_rot_y;
-    LMUFFB::HoltWintersFilter  m_upsample_shaft_torque;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_lat_patch_vel[NUM_WHEELS];
+    LMUFFB::Utils::HoltWintersFilter m_upsample_long_patch_vel[NUM_WHEELS];
+    LMUFFB::Utils::HoltWintersFilter m_upsample_vert_deflection[NUM_WHEELS];
+    LMUFFB::Utils::HoltWintersFilter m_upsample_susp_force[NUM_WHEELS];
+    LMUFFB::Utils::HoltWintersFilter m_upsample_brake_pressure[NUM_WHEELS];
+    LMUFFB::Utils::HoltWintersFilter m_upsample_rotation[NUM_WHEELS];
+    LMUFFB::Utils::HoltWintersFilter m_upsample_steering;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_throttle;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_brake;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_local_accel_x;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_local_accel_y;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_local_accel_z;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_local_rot_accel_y;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_local_rot_y;
+    LMUFFB::Utils::HoltWintersFilter m_upsample_shaft_torque;
 
     double m_prev_vert_deflection[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
     double m_prev_vert_accel = 0.0; 
@@ -190,8 +190,8 @@ public:
     double m_sop_load_smoothed = 0.0; // New v0.7.121
     
     // Filter Instances (v0.4.41)
-    LMUFFB::BiquadNotch m_notch_filter;
-    LMUFFB::BiquadNotch m_static_notch_filter;
+    LMUFFB::Utils::BiquadNotch m_notch_filter;
+    LMUFFB::Utils::BiquadNotch m_static_notch_filter;
 
     // Slope Detection Buffers (Circular) - v0.7.0
     static constexpr int SLOPE_BUFFER_MAX = 41;  

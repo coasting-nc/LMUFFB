@@ -1,5 +1,7 @@
 #include "test_ffb_common.h"
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 // [Regression][Texture] Road texture toggle spike fix

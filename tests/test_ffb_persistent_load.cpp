@@ -4,6 +4,7 @@
 #include <fstream>
 
 using namespace FFBEngineTests;
+using namespace LMUFFB::Utils;
 
 TEST_CASE(Config_StaticLoadParsing, "PersistentLoad") {
     // 1. Create a mock config file with [StaticLoads] section

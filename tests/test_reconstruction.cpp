@@ -3,12 +3,14 @@
 #include <filesystem>
 #include <iostream>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 // --- Issue #461: Standard Holt-Winters Math Verification ---
 
 TEST_CASE(test_holtwinters_prediction_accuracy, "Math") {
-    LMUFFB::HoltWintersFilter filter;
+    HoltWintersFilter filter;
     filter.Configure(0.8, 0.2, 0.01); // Standard settings, 100Hz game tick
     filter.SetZeroLatency(true);
 
@@ -35,7 +37,7 @@ TEST_CASE(test_holtwinters_prediction_accuracy, "Math") {
 }
 
 TEST_CASE(test_holtwinters_interpolation_smooth, "Math") {
-    LMUFFB::HoltWintersFilter filter;
+    HoltWintersFilter filter;
     filter.Configure(0.8, 0.2, 0.01);
     filter.SetZeroLatency(false); // Smooth mode
 

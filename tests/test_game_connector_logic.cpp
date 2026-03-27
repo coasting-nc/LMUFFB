@@ -48,7 +48,7 @@ TEST_CASE(test_game_connector_robust_logic, "System") {
     layout->data.generic.appInfo.mAppWindow = GetConsoleWindow();
     layout->data.scoring.scoringInfo.mInRealtime = true;
     layout->data.scoring.scoringInfo.mNumVehicles = 1; // Required for scoring copy
-    LMUFFB::StringUtils::SafeCopy(layout->data.scoring.scoringInfo.mTrackName, 64, "Nordschleife");
+    LMUFFB::Utils::StringUtils::SafeCopy(layout->data.scoring.scoringInfo.mTrackName, 64, "Nordschleife");
     
     // Re-call TryConnect. Should now succeed and update state because we fixed IsConnected() check.
     bool try_res = GameConnector::Get().TryConnect();

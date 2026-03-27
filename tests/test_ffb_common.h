@@ -22,6 +22,7 @@
 #include "../src/utils/StringUtils.h"
 #include "../src/io/RestApiProvider.h"
 #include "../src/physics/SteeringUtils.h"
+#include "../src/utils/TimeUtils.h"
 #include "test_performance_types.h"
 
 namespace LMUFFB {
@@ -43,6 +44,7 @@ public:
 
 using namespace LMUFFB;
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace FFBEngineTests {
 
