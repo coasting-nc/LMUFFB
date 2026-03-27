@@ -68,8 +68,8 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
     
-    // Setup
-    engine.m_advanced.gyro_gain = 1.0f;
+    // Setup: Low gain to avoid force cap and see scaling
+    engine.m_advanced.gyro_gain = 0.01f;
     engine.m_advanced.gyro_smoothing = 0.1f;
     engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f; // Reference torque for normalization
     engine.m_general.gain = 1.0f;
@@ -119,22 +119,22 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     data.mUnfilteredSteering = 0.0f;
     PumpEngineSteadyState(engine, data);
     
-    // Frame 2: Steering moves to 0.1
-    double gyro_force = get_peak_gyro(0.1, 50.0);
+    // Frame 2: Steering moves to 0.05
+    double gyro_force = get_peak_gyro(0.05, 50.0);
     
-    if (gyro_force < -0.01) {
+    if (gyro_force < -0.001) {
         std::cout << "[PASS] Gyro force opposes steering movement (negative: " << gyro_force << ")" << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("Gyro force should be negative. Got: " << gyro_force);
+        FAIL_TEST("Gyro force should be negative and pass deadzone. Got: " << gyro_force);
     }
     
     // Test opposite direction
-    data.mUnfilteredSteering = 0.1f;
+    data.mUnfilteredSteering = 0.05f;
     PumpEngineSteadyState(engine, data);
     double gyro_force_reverse = get_peak_gyro(0.0, 50.0);
     
-    if (gyro_force_reverse > 0.01) {
+    if (gyro_force_reverse > 0.001) {
         std::cout << "[PASS] Gyro force reverses with steering direction (positive: " << gyro_force_reverse << ")" << std::endl;
         g_tests_passed++;
     } else {
@@ -144,7 +144,7 @@ TEST_CASE(test_gyro_damping, "YawGyro") {
     // Test speed scaling
     data.mUnfilteredSteering = 0.0f;
     PumpEngineSteadyState(engine, data);
-    double gyro_force_slow = get_peak_gyro(0.1, 5.0);
+    double gyro_force_slow = get_peak_gyro(0.05, 5.0);
     
     if (std::abs(gyro_force_slow) < std::abs(gyro_force) * 0.6) {
         std::cout << "[PASS] Gyro force scales with speed (slow: " << gyro_force_slow << " vs fast: " << gyro_force << ")" << std::endl;
@@ -190,7 +190,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine.calculate_force(&data);
     
     // Spike: rate moves to 10.0 * dt
-    data.mLocalRot.y = 10.0 * 0.01;
+    data.mLocalRot.y = 10.0 * 0.0025;
     
     // Issue #397: Use PumpEngineTime
     PumpEngineTime(engine, data, 0.0125);
@@ -199,11 +199,11 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     // v0.4.20 UPDATE: With force inversion, values are negative
     // Without smoothing, this would be -10.0 * 1.0 * 5.0 / 20.0 = -2.5 (clamped to -1.0)
     // With smoothing (alpha=0.1), first frame = -0.25
-    if (force_frame1 < -0.1) {
-        std::cout << "[PASS] First frame smoothed correctly (" << force_frame1 << " < -0.1)." << std::endl;
+    if (force_frame1 < -0.05) {
+        std::cout << "[PASS] First frame smoothed correctly (" << force_frame1 << " < -0.05)." << std::endl;
         g_tests_passed++;
     } else {
-        FAIL_TEST("First frame smoothing incorrect. Got " << force_frame1 << " Expected ~-0.25.");
+        FAIL_TEST("First frame smoothing incorrect. Got " << force_frame1 << " Expected ~-0.09");
     }
     
     // v0.4.20 UPDATE: With force inversion, values are negative
@@ -253,6 +253,7 @@ TEST_CASE(test_yaw_accel_smoothing, "YawGyro") {
     engine2.calculate_force(&data2); // Seed
     
     for (int i = 0; i < 20; i++) {
+        // Simulate noise that would come from vibrations
         double accel = (i % 2 == 0) ? 5.0 : -5.0;
         data2.mLocalRot.y += accel * 0.0025;
         data2.mElapsedTime += 0.0025;
@@ -766,7 +767,7 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     data.mDeltaTime = 0.0025; // 400Hz
     
     // Chassis tau = 0.035s, alpha = dt / (tau + dt)
-    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) Ã¢â€°Ë† 0.0667
+    // At 400Hz: alpha = 0.0025 / (0.035 + 0.0025) ≈ 0.0667
     // After 50 frames (~125ms), should be near steady-state
     
     for (int i = 0; i < 50; i++) {
@@ -782,7 +783,7 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     
     // Should be close to input (9.81) after 50 frames
     // Exponential decay: y(t) = target * (1 - e^(-t/tau))
-    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) Ã¢â€°Ë† 9.81 * 0.972 Ã¢â€°Ë† 9.53
+    // At t = 125ms, tau = 35ms: y = 9.81 * (1 - e^(-3.57)) ≈ 9.81 * 0.972 ≈ 9.53
     double expected = 9.81 * 0.95; // Allow 5% error
     
     if (smoothed_x > expected && smoothed_z > expected) {
@@ -813,6 +814,80 @@ TEST_CASE(test_chassis_inertia_smoothing_convergence, "YawGyro") {
     }
 }
 
+namespace {
+static double MeasureGyroForceYawGyroV3(FFBEngine& engine, TelemInfoV01& data, double target_lat_g, double steer_vel_rad_s) {
+    data.mLocalAccel.x = (float)(target_lat_g * 9.81);
+    for (int i = 0; i < 200; i++) {
+        data.mElapsedTime += 0.0025;
+        engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+    }
+    double dt_game = 0.01;
+    double range_rad = data.mPhysicalSteeringWheelRange;
+    if (range_rad <= 0.0) range_rad = 9.4247;
+    double peak_gyro = 0.0;
+    for (int i = 0; i < 50; i++) {
+        double delta_norm = (steer_vel_rad_s * dt_game) / (range_rad / 2.0);
+        data.mUnfilteredSteering += (float)delta_norm;
+        data.mElapsedTime += dt_game;
+        for (int j = 0; j < 4; j++) {
+            engine.calculate_force(&data, nullptr, nullptr, 0.0f, true, 0.0025);
+            auto batch = engine.GetDebugBatch();
+            if (!batch.empty()) {
+                double current_gyro = std::abs(batch.back().ffb_gyro_damping);
+                if (current_gyro > peak_gyro) peak_gyro = current_gyro;
+            }
+        }
+    }
+    return peak_gyro;
+}
+} // namespace
 
+TEST_CASE(test_smart_gyro_damping, "YawGyro") {
+    std::cout << "\nTest: Smart Gyro Damping (Issue #511)" << std::endl;
+    FFBEngine engine;
+    InitializeEngine(engine);
+    TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
+    data.mPhysicalSteeringWheelRange = 9.4247f;
+    engine.m_advanced.gyro_gain = 1.0f;
+    engine.m_advanced.gyro_smoothing = 0.015f;
+    engine.m_general.wheelbase_max_nm = 20.0f; engine.m_general.target_rim_nm = 20.0f;
+    engine.m_general.gain = 1.0f;
+    engine.m_invert_force = false;
+
+    // Disable other effects
+    engine.m_front_axle.understeer_effect = 0.0f;
+    engine.m_rear_axle.sop_effect = 0.0f;
+    engine.m_rear_axle.rear_align_effect = 0.0f;
+    engine.m_rear_axle.sop_yaw_gain = 0.0f;
+
+    std::cout << "  - Testing Velocity Deadzone (0.5 rad/s)..." << std::endl;
+    double gyro_in_dz = MeasureGyroForceYawGyroV3(engine, data, 0.0, 0.4);
+    if (gyro_in_dz < 0.001) {
+        std::cout << "    [PASS] Small movement ignored." << std::endl;
+        g_tests_passed++;
+    } else {
+        FAIL_TEST("Velocity deadzone failed. Got force: " << gyro_in_dz);
+    }
+
+    std::cout << "  - Testing Lateral G Gate (0.1G - 0.4G)..." << std::endl;
+    double gyro_0g = MeasureGyroForceYawGyroV3(engine, data, 0.0, 1.0);
+    double gyro_05g = MeasureGyroForceYawGyroV3(engine, data, 0.5, 1.0);
+    if (gyro_05g < 0.001 && gyro_0g > 0.1) {
+        std::cout << "    [PASS] Damping disabled at 0.5G." << std::endl;
+        g_tests_passed++;
+    } else {
+        FAIL_TEST("Lateral G gate failed. 0G: " << gyro_0g << " 0.5G: " << gyro_05g);
+    }
+
+    std::cout << "  - Testing Force Capping (2.0 Nm)..." << std::endl;
+    engine.m_advanced.gyro_gain = 10.0f;
+    double gyro_capped = MeasureGyroForceYawGyroV3(engine, data, 0.0, 5.0);
+    if (std::abs(gyro_capped - 2.0) < 0.1) {
+        std::cout << "    [PASS] Force capped at 2.0 Nm." << std::endl;
+        g_tests_passed++;
+    } else {
+        FAIL_TEST("Force capping failed. Got: " << gyro_capped);
+    }
+}
 
 } // namespace FFBEngineTests

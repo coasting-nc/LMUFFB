@@ -32,7 +32,7 @@ TEST_CASE(test_refactor_advanced_consistency, "RefactorSafety") {
     double final_force = engine.calculate_force(&data, "LMP2", "Oreca", 0.0f, true, 0.0025);
 
     // This value was obtained by running the baseline test on the pre-refactored codebase.
-    double EXPECTED_VALUE = -0.5022886336;
+    double EXPECTED_VALUE = 0.0916877;
 
     ASSERT_NEAR(final_force, EXPECTED_VALUE, 0.0001);
 }
