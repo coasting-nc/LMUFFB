@@ -45,7 +45,7 @@ namespace {
 } // anonymous namespace
 
 // --- Helper for Testability --- (Exposed for units tests)
-void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
+void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFB::FFBEngine& engine) {
     info.app_version = LMUFFB_VERSION;
     info.vehicle_name = scoring.mVehicleName;
     info.vehicle_class = Physics::VehicleClassToString(Physics::ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
@@ -71,13 +71,13 @@ std::atomic<bool> g_ffb_active(true);
 
 SharedMemoryObjectOut g_localData; // Local copy of shared memory
 
-FFBEngine g_engine;
+FFB::FFBEngine g_engine;
 std::recursive_mutex g_engine_mutex; // Protects settings access if GUI changes them
 #else
 extern std::atomic<bool> g_running;
 extern std::atomic<bool> g_ffb_active;
 extern SharedMemoryObjectOut g_localData;
-extern FFBEngine g_engine;
+extern FFB::FFBEngine g_engine;
 extern std::recursive_mutex g_engine_mutex;
 #endif
 
@@ -283,7 +283,7 @@ void FFBThread() {
             g_engine.m_gen_torque_rate = genTorqueMonitor.GetRate();
         }
 
-        if (DirectInputFFB::Get().UpdateForce(force)) {
+        if (FFB::DirectInputFFB::Get().UpdateForce(force)) {
             hwMonitor.RecordEvent();
         }
 
@@ -347,11 +347,11 @@ int lmuffb_app_main(int argc, char* argv[]) noexcept {
                 // §2.1: was logging the same message twice; use LogFile so it survives a crash
                 Logger::Get().LogFile("Failed to initialize GUI.");
             }
-            DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GUI::GuiLayer::GetWindowHandle()));
+            FFB::DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GUI::GuiLayer::GetWindowHandle()));
         } else {
             // §2.1: was logging the same message twice
             Logger::Get().Log("Running in HEADLESS mode.");
-            DirectInputFFB::Get().Initialize(NULL);
+            FFB::DirectInputFFB::Get().Initialize(NULL);
         }
 
         if (LMUFFB::IO::GameConnector::Get().CheckLegacyConflict()) {
@@ -392,7 +392,7 @@ int lmuffb_app_main(int argc, char* argv[]) noexcept {
             ffb_thread.join();
             Logger::Get().LogFile("FFB Thread Stopped.");
         }
-        DirectInputFFB::Get().Shutdown();
+        FFB::DirectInputFFB::Get().Shutdown();
         Logger::Get().Log("Main Loop Ended. Clean Exit.");
 
         return 0;

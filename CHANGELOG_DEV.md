@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.270]
+### Changed
+- **Unity Build Expansion (Phase 7, Step 7.3 — Core Bridge Alias Cleanup)**:
+  - Removed the final high-impact bridge aliases (`FFBEngine`, `DeviceInfo`, and `DirectInputFFB`) from `LMUFFB` namespace.
+  - Successfully propagated explicitly qualified `LMUFFB::FFB::` usage into `src/core/main.cpp` and `src/gui/` boundaries.
+  - Hardened the `GuiLayer` module definitions to maintain ODR compliance in the Unity Chunk while interacting cleanly with the completely decoupled `src/ffb/` subsystem.
+  - Verified 100% test pass rate (632 cases) after concluding all Phase 7 alias cleanups.
+  - Updated the Unity Build Plan to mark Phase 7 as fully complete, pivoting the architectural priorities towards final hardening and verification.
+
 ## [0.7.269]
 ### Changed
 - **Unity Build Expansion (Phase 7, Step 7.2 — Helper Class Bridge Cleanup)**:

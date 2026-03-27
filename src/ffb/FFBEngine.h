@@ -480,7 +480,6 @@ private:
     void calculate_suspension_bottoming(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
 };
 } // namespace FFB
-using FFBEngine = FFB::FFBEngine;
 } // namespace LMUFFB
 
 #endif // FFBENGINE_H

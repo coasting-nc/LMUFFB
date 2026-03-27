@@ -231,16 +231,26 @@ This phase removes the temporary bridge aliases planted across all `src/ffb/` he
 - [x] Update `src/core/main.cpp`: `PolyphaseResampler resampler;` → `FFB::PolyphaseResampler resampler;` (inside `namespace LMUFFB`).
 
 **Step 7.3 — `FFBEngine` and `DirectInputFFB` bridges (broadest callsite impact):**
-- [ ] Remove `using FFBEngine = FFB::FFBEngine;` bridge from `src/ffb/FFBEngine.h`.
-- [ ] Remove `DeviceInfo` and `DirectInputFFB` bridges from `src/ffb/DirectInputFFB.h`.
-- [ ] Update `src/gui/GuiLayer.h` method signatures: `LMUFFB::FFBEngine&` → `LMUFFB::FFB::FFBEngine&`.
-- [ ] Update `src/gui/GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, `GuiLayer_Linux.cpp` method definitions accordingly.
-- [ ] Update `src/core/main.cpp`: `FFBEngine g_engine;` → `FFB::FFBEngine g_engine;`, `DirectInputFFB::Get()` → `FFB::DirectInputFFB::Get()`.
-- [ ] Update `tests/main_test_runner.cpp`: `FFBEngine g_engine;` → `LMUFFB::FFB::FFBEngine g_engine;`.
+- [x] Remove `using FFBEngine = FFB::FFBEngine;` bridge from `src/ffb/FFBEngine.h`.
+- [x] Remove `DeviceInfo` and `DirectInputFFB` bridges from `src/ffb/DirectInputFFB.h`.
+- [x] Update `src/gui/GuiLayer.h` method signatures: `LMUFFB::FFBEngine&` → `LMUFFB::FFB::FFBEngine&`.
+- [x] Update `src/gui/GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, `GuiLayer_Linux.cpp` method definitions accordingly.
+- [x] Update `src/core/main.cpp`: `FFBEngine g_engine;` → `FFB::FFBEngine g_engine;`, `DirectInputFFB::Get()` → `FFB::DirectInputFFB::Get()`.
+- [x] Update `tests/main_test_runner.cpp`: `FFBEngine g_engine;` → `LMUFFB::FFB::FFBEngine g_engine;`.
+
+### 6.9 Phase 8: Final Architectural Hardening & Verification
+- [ ] Review and identify any lingering global symbols or macros within recently refactored files (e.g. magic constants not enclosed in subnamespaces, or `using namespace` directives incorrectly placed in headers).
+- [ ] Verify that all newly namespaced components execute with equal performance locally and in the Unity compilation chunk.
+- [ ] Keep the suite healthy across standard, fast, and multi-core builds.
 
 ---
 
 ## 7. Implementation Notes
+
+### 7.3 Implementation Notes (v0.7.270)
+- **Encountered Issues:** `FFBDebugBuffer` and `m_debug_buffer` faced namespace qualification challenges during the transition step 7.2 because it was incompletely qualified. `GuiLayer_Common.cpp` missed `DirectInputFFB` transition, causing linker/compiler errors, rectified by changing `DirectInputFFB` to `FFB::DirectInputFFB`.
+- **Deviations from the Plan:** N/A. The leaf types and the highest-impact elements like `g_engine` and `DirectInputFFB` were moved smoothly across `src/core/` and `src/gui/`. 
+- **Suggestions for the Future:** Phase 7 concludes the `src/ffb/` bridge alias removal. No further code restructuring is currently planned, unless another subsystem needs migration. The application core components are now fully insulated from the global namespace.
 
 ### 7.2 Implementation Notes (v0.7.269)
 - **Encountered Issues:** None. The bulk replacement of the prefixed namespace references was easily addressed via a single file-level using statement in the test framework.
@@ -426,18 +436,14 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 **When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253), `src/utils/` to `LMUFFB::Utils` (v0.7.256), and `src/physics/` to `LMUFFB::Physics` (v0.7.257). Sub-namespace migration for `src/gui/` (`LMUFFB::GUI`) is the next objective.
 
 ## 9. Next Steps: Post-Migration Cleanup and Hardening
-Phase 6 `ffb/` migration to `LMUFFB::FFB` is structurally complete (v0.7.267). Phase 7 (bridge alias cleanup) is nearing completion.
+Phase 7 `ffb/` bridge alias cleanup is fully complete (v0.7.270).
 
-### Your Objectives for the Next PR (Step 7.3):
-1. **Remove `FFBEngine` and `DirectInputFFB` bridges (broadest callsite impact):**
-   - Remove `using FFBEngine = FFB::FFBEngine;` bridge from `src/ffb/FFBEngine.h`.
-   - Remove `DeviceInfo` and `DirectInputFFB` bridges from `src/ffb/DirectInputFFB.h`.
-   - Update `src/gui/GuiLayer.h` method signatures: `LMUFFB::FFBEngine&` → `LMUFFB::FFB::FFBEngine&`.
-   - Update `src/gui/GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, `GuiLayer_Linux.cpp` method definitions accordingly.
-   - Update `src/core/main.cpp`: `FFBEngine g_engine;` → `FFB::FFBEngine g_engine;`, `DirectInputFFB::Get()` → `FFB::DirectInputFFB::Get()`.
-   - Update `tests/main_test_runner.cpp`: `FFBEngine g_engine;` → `LMUFFB::FFB::FFBEngine g_engine;`.
+### Your Objectives for the Next PR:
+1. **Architectural Hardening:**
+   - [ ] Review and identify any lingering global symbols or macros within recently refactored files (e.g. magic constants not enclosed in subnamespaces, or `using namespace` directives incorrectly placed in headers).
+   - [ ] Verify that all newly namespaced components execute with equal performance locally and in the Unity compilation chunk.
 2. **Final Verification:**
-   - Execute the test suite after the sweeps to guarantee complete code health.
+   - [ ] Keep the suite healthy across standard, fast, and multi-core builds.
 
 ### Critical Reminders for Phase 7
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.

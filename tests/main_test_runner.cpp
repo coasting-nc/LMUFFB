@@ -25,7 +25,7 @@ namespace LMUFFB {
 std::atomic<bool> g_running(true);
 std::atomic<bool> g_ffb_active(true);
 std::recursive_mutex g_engine_mutex;
-FFBEngine g_engine;
+FFB::FFBEngine g_engine;
 SharedMemoryObjectOut g_localData;
 
 // Mock time globals

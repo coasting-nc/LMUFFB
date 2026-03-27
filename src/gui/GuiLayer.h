@@ -13,16 +13,16 @@ class GuiLayer {
 public:
     friend class ::GuiLayerTestAccess;
     static bool Init();
-    static void Shutdown(LMUFFB::FFBEngine& engine);
+    static void Shutdown(LMUFFB::FFB::FFBEngine& engine);
     
     static void* GetWindowHandle(); // Returns HWND on Windows, GLFWwindow* on Linux
     static void SetupGUIStyle();   // Setup professional theme
 
     // Returns true if the GUI is active/focused (affects lazy rendering)
-    static bool Render(LMUFFB::FFBEngine& engine);
+    static bool Render(LMUFFB::FFB::FFBEngine& engine);
 
     // Pulls latest snapshots from the engine and updates GUI state
-    static void UpdateTelemetry(LMUFFB::FFBEngine& engine);
+    static void UpdateTelemetry(LMUFFB::FFB::FFBEngine& engine);
 
     // Snapshot state for thread-safe UI display
     static float GetLatestSteeringRange() { return m_latest_steering_range; }
@@ -39,10 +39,10 @@ public:
 private:
 #endif
 
-    static void DrawMenuBar(LMUFFB::FFBEngine& engine);
+    static void DrawMenuBar(LMUFFB::FFB::FFBEngine& engine);
     static void LaunchLogAnalyzer(const std::string& log_file);
-    static void DrawTuningWindow(LMUFFB::FFBEngine& engine);
-    static void DrawDebugWindow(LMUFFB::FFBEngine& engine);
+    static void DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine);
+    static void DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine);
 };
 
 } // namespace GUI

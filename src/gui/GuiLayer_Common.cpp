@@ -118,7 +118,7 @@ void GuiLayer::SetupGUIStyle() {
     colors[ImGuiCol_MenuBarBg]      = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
 }
 
-void GuiLayer::DrawMenuBar(LMUFFB::FFBEngine& engine) {
+void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Logs")) {
             if (ImGui::MenuItem("Analyze last log")) {
@@ -219,7 +219,7 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
 
 static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
-void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {
+void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
     // Persistent UI State
@@ -258,17 +258,17 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
     }
 
-    static std::vector<DeviceInfo> devices;
+    static std::vector<FFB::DeviceInfo> devices;
     static int selected_device_idx = -1;
 
     if (devices.empty()) {
-        devices = DirectInputFFB::Get().EnumerateDevices();
+        devices = FFB::DirectInputFFB::Get().EnumerateDevices();
         if (selected_device_idx == -1 && !Config::m_last_device_guid.empty()) {
-            GUID target = DirectInputFFB::StringToGuid(Config::m_last_device_guid);
+            GUID target = FFB::DirectInputFFB::StringToGuid(Config::m_last_device_guid);
             for (int i = 0; i < (int)devices.size(); i++) {
                 if (memcmp(&devices[i].guid, &target, sizeof(GUID)) == 0) {
                     selected_device_idx = i;
-                    DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                    FFB::DirectInputFFB::Get().SelectDevice(devices[i].guid);
                     break;
                 }
             }
@@ -282,8 +282,8 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {
             ImGui::PushID(i);
             if (ImGui::Selectable(devices[i].name.c_str(), is_selected)) {
                 selected_device_idx = i;
-                DirectInputFFB::Get().SelectDevice(devices[i].guid);
-                Config::m_last_device_guid = DirectInputFFB::GuidToString(devices[i].guid);
+                FFB::DirectInputFFB::Get().SelectDevice(devices[i].guid);
+                Config::m_last_device_guid = FFB::DirectInputFFB::GuidToString(devices[i].guid);
                 Config::Save(engine);
             }
             if (is_selected) ImGui::SetItemDefaultFocus();
@@ -295,19 +295,19 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {
 
     ImGui::SameLine();
     if (ImGui::Button("Rescan")) {
-        devices = DirectInputFFB::Get().EnumerateDevices();
+        devices = FFB::DirectInputFFB::Get().EnumerateDevices();
         selected_device_idx = -1;
     }
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::DEVICE_RESCAN);
     ImGui::SameLine();
     if (ImGui::Button("Unbind")) {
-        DirectInputFFB::Get().ReleaseDevice();
+        FFB::DirectInputFFB::Get().ReleaseDevice();
         selected_device_idx = -1;
     }
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::DEVICE_UNBIND);
 
-    if (DirectInputFFB::Get().IsActive()) {
-        if (DirectInputFFB::Get().IsExclusive()) {
+    if (FFB::DirectInputFFB::Get().IsActive()) {
+        if (FFB::DirectInputFFB::Get().IsExclusive()) {
             ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Mode: EXCLUSIVE (Game FFB Blocked)");
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::MODE_EXCLUSIVE);
         } else {
@@ -1120,7 +1120,7 @@ namespace {
 }
 }
 
-void GuiLayer::UpdateTelemetry(LMUFFB::FFBEngine& engine) {
+void GuiLayer::UpdateTelemetry(LMUFFB::FFB::FFBEngine& engine) {
     auto snapshots = engine.GetDebugBatch();
     for (const auto& snap : snapshots) {
         m_latest_steering_range = snap.steering_range_deg;
@@ -1177,7 +1177,7 @@ void GuiLayer::UpdateTelemetry(LMUFFB::FFBEngine& engine) {
     }
 }
 
-void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine& engine) {
+void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
     if (!Config::show_graphs) return;
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -1353,11 +1353,11 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine& engine) {
     ImGui::End();
 }
 #else
-void GuiLayer::DrawMenuBar(LMUFFB::FFBEngine& engine) {}
+void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {}
 void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {}
-void GuiLayer::UpdateTelemetry(LMUFFB::FFBEngine& engine) {}
-void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {}
-void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine& engine) {}
+void GuiLayer::UpdateTelemetry(LMUFFB::FFB::FFBEngine& engine) {}
+void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {}
+void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {}
 void GuiLayer::SetupGUIStyle() {}
 #endif
 

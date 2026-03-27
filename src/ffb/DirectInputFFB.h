@@ -79,10 +79,4 @@ private:
 
 } // namespace LMUFFB::FFB
 
-// Temporary bridge aliases to keep existing call sites compiling
-namespace LMUFFB {
-    using DeviceInfo = LMUFFB::FFB::DeviceInfo;
-    using DirectInputFFB = LMUFFB::FFB::DirectInputFFB;
-}
-
 #endif // DIRECTINPUTFFB_H
