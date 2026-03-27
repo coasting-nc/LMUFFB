@@ -207,10 +207,27 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Transition `gui/` files to `namespace LMUFFB::GUI`. (v0.7.258)
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files with anonymous namespaces. (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
+- [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`.
+- [ ] Transition `io/` files to `namespace LMUFFB::IO`.
 
 ---
 
-## 7. Questions & Answers
+## 7. Implementation Notes
+
+### 7.1 Implementation Notes (v0.7.259)
+- **Encountered Issues:**
+  - Encountered linker errors when moving GUI platform helpers (e.g., `GetGuiPlatform`, `ResizeWindowPlatform`) into anonymous namespaces. These functions require external linkage because they are accessed by `GuiLayer_Common.cpp` (in Unity builds) and the unit test suite across different translation units. Resolved by moving them out of anonymous namespaces while keeping them protected within `namespace LMUFFB::GUI`.
+  - Discovered that several unit tests relied on `LMUFFB::FFBThread` and `LMUFFB::PopulateSessionInfo` being visible globally. Moving these to anonymous namespaces in `main.cpp` broke the test runner. Fixed by restoring external linkage for these specific test-required symbols.
+  - Encountered several "Invalid merge diff" errors during refactoring of `Config.cpp` and `FFBEngine.cpp` due to minor snippet mismatches. Resolved by re-reading the files and ensuring search blocks exactly matched the disk state.
+- **Deviations from the Plan:**
+  - Decided to focus the removal of bridge aliases specifically on the `Logging` subsystem for this iteration to maintain a strictly incremental approach. Other subsystems (`Utils`, `Physics`, `GUI`) will be handled in subsequent steps.
+- **Suggestions for the Future:**
+  - Continue the Namespace Hygiene rollout by incrementally removing bridge aliases for the `Utils` and `Physics` subsystems.
+  - Conduct a targeted Internal Linkage sweep for the `src/ffb/` and `src/io/` directories, ensuring file-local helpers are correctly encapsulated in anonymous namespaces.
+
+---
+
+## 8. Questions & Answers
 
 ### Q: Why wasn't the Makefile (CMakeLists) updated during the first refactoring? I thought we could enable a Unity build for `src/logging/PerfStats.h` immediately.
 **A:** CMake's Unity builds exclusively process **Translation Units** (source files like `.cpp` or `.c`). Header files (`.h` and `.hpp`) are never compiled directly on their own; they are textually inserted by the preprocessor when a `.cpp` file includes them. Because `PerfStats.h` is a header-only structure with no corresponding `.cpp` source, there is no discrete file to attach a `UNITY_BUILD_INCLUSION` property to. The header automatically begins reaping the benefits of the Unity batch build the moment a `.cpp` file that uses it (e.g., `VehicleUtils.cpp` or `FFBEngine.cpp`) is moved into the `UNITY_READY_MAIN` source whitelist.
@@ -229,15 +246,6 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 **When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253), `src/utils/` to `LMUFFB::Utils` (v0.7.256), and `src/physics/` to `LMUFFB::Physics` (v0.7.257). Sub-namespace migration for `src/gui/` (`LMUFFB::GUI`) is the next objective.
 
 ---
-
-## 8. Implementation Notes
-
-### 8.16 Implementation Notes (v0.7.259)
-- **Encountered Issues:**
-  - Encountered multiple "diff did not apply" errors during the refactoring of `Config.cpp`, `main.cpp`, and `FFBEngine.cpp` due to minor formatting mismatches or slightly different code snippets than expected in the search blocks. Resolved by reading the files again to ensure exact search strings were used.
-- **Deviations from the Plan:**
-  - Decided to focus the removal of bridge aliases specifically on the `Logging` subsystem for this iteration to maintain a strictly incremental approach as requested. Other subsystems will be handled in subsequent PRs.
-- **Suggestions for the Future:** Continue the removal of bridge aliases for remaining subsystems (`Utils`, `Physics`, `GUI`) in future increments to fully clean up the root `LMUFFB` namespace.
 
 ### 8.15 Implementation Notes (v0.7.258)
 - **Encountered Issues:**
@@ -354,13 +362,17 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 - **Suggestions for the Future:** Continue Phase 6 by transitioning `src/utils/` files (e.g., `MathUtils.h`, `TimeUtils.h`, `StringUtils.h`) to `namespace LMUFFB::Utils`.
 
 ## 9. Next Steps: Post-Migration Cleanup and Hardening
-Phase 6 and initial hardening are now well underway. All major subsystems are namespaced, and internal linkage hardening has progressed significantly.
+Phase 6 and internal hardening are now well underway. All major subsystems are namespaced, and internal linkage hardening has progressed significantly.
 
 ### Your Objectives for the Next PR:
-1. **Continued Namespace Hygiene:**
-   - Incremental removal of temporary bridge aliases for the `Utils` subsystem in root `namespace LMUFFB` and updating all call sites.
-2. **Extended Internal Linkage Audit:**
-   - Continue the systematic review of remaining subsystems (I/O, FFB) to ensure internal linkage is strictly enforced via anonymous namespaces in `.cpp` files.
+1. **Namespace Hygiene (Utils Subsystem):**
+   - Systematically remove temporary bridge aliases in `src/utils/MathUtils.h`, `src/utils/StringUtils.h`, and `src/utils/TimeUtils.h`.
+   - Update all call sites project-wide (including tests) to use fully qualified names (`Utils::...`) or file-scope `using namespace LMUFFB::Utils;`.
+2. **Continued Subsystem Migration (FFB & I/O):**
+   - Transition `src/ffb/` and `src/io/` modules to `namespace LMUFFB::FFB` and `namespace LMUFFB::IO` respectively.
+   - Maintain the "Include Rule" and "Using Placement Rule" during migration.
+3. **Extended Internal Linkage Audit (FFB & I/O Subsystems):**
+   - Conduct a systematic review of `.cpp` files in `src/ffb/` and `src/io/` to move internal helper functions and constants into anonymous namespaces.
 
 ### Critical Reminders for Phase 6
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.

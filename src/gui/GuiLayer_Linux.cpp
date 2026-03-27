@@ -101,18 +101,17 @@ public:
     bool m_always_on_top_mock = false;
 };
 
-namespace {
 // Internal helpers exposed for tests
+// Note: These must NOT be in an anonymous namespace as they are needed by tests and GuiLayer_Common.cpp
 LinuxGuiPlatform g_platform;
 IGuiPlatform& GetGuiPlatform() { return g_platform; }
 
-// Compatibility Helpers (Exposed for tests)
+// Compatibility Helpers (Exposed for tests and GuiLayer_Common.cpp)
 void ResizeWindowPlatform(int x, int y, int w, int h) { GetGuiPlatform().ResizeWindow(x, y, w, h); }
 void SaveCurrentWindowGeometryPlatform(bool is_graph_mode) { GetGuiPlatform().SaveWindowGeometry(is_graph_mode); }
 void SetWindowAlwaysOnTopPlatform(bool enabled) { GetGuiPlatform().SetAlwaysOnTop(enabled); }
 bool OpenPresetFileDialogPlatform(std::string& outPath) { return GetGuiPlatform().OpenPresetFileDialog(outPath); }
 bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defaultName) { return GetGuiPlatform().SavePresetFileDialog(outPath, defaultName); }
-} // anonymous namespace
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 

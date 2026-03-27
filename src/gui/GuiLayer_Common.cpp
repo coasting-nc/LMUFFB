@@ -1034,10 +1034,13 @@ void GuiLayer::DrawTuningWindow(FFBEngine& engine) {
     ImGui::End();
 }
 
+namespace {
 const float PLOT_HISTORY_SEC = 10.0f;
 const int PHYSICS_RATE_HZ = 400;
 const int PLOT_BUFFER_SIZE = (int)(PLOT_HISTORY_SEC * PHYSICS_RATE_HZ);
+}
 
+namespace {
 struct RollingBuffer {
     std::vector<float> data;
     int offset = 0;
@@ -1114,6 +1117,7 @@ namespace {
     RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
     bool g_warn_dt = false;
+}
 }
 
 void GuiLayer::UpdateTelemetry(FFBEngine& engine) {
