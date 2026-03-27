@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - coverage_filtered.info - ffb/FFBSafetyMonitor.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">ffb</a> - FFBSafetyMonitor.h<span style="font-size: 80%;"> (source / <a href="FFBSafetyMonitor.h.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">coverage_filtered.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">7</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2026-03-27 12:12:33</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">7</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : #ifndef FFBSAFETYMONITOR_H</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : #define FFBSAFETYMONITOR_H</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : #include &lt;cmath&gt;</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : #include &lt;algorithm&gt;</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : #include &lt;cstring&gt;</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : #include &quot;io/lmu_sm_interface/InternalsPluginWrapper.h&quot;</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : #include &quot;logging/Logger.h&quot;</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : #include &quot;utils/StringUtils.h&quot;</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : #include &quot;FFBConfig.h&quot;</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : namespace LMUFFB {</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : </span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : class FFBSafetyMonitor {</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : public:</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             :     static constexpr float SAFETY_SLEW_NORMAL = 1000.0f;</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             :     static constexpr float SAFETY_SLEW_RESTRICTED = 2.0f;</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : </span>
+<span id="L19"><span class="lineNum">      19</span>                 :<span class="tlaGNC tlaBgGNC">         541 :     FFBSafetyMonitor() = default;</span></span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : </span>
+<span id="L21"><span class="lineNum">      21</span>                 :             :     // FFB Safety Settings</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :     LMUFFB::SafetyConfig m_config;</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             : </span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :     // API methods for FFBEngine</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :     double GetSafetyTimer() const { return safety_timer; }</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :     void ClearSafetySmoothedForce() { safety_smoothed_force = 0.0; }</span>
+<span id="L27"><span class="lineNum">      27</span>                 :<span class="tlaGNC">          17 :     void SetSafetySmoothedForce(double f) { safety_smoothed_force = f; }</span></span>
+<span id="L28"><span class="lineNum">      28</span>                 :<span class="tlaGNC">         541 :     void SetTimePtr(const double* ptr) { m_time_ptr = ptr; }</span></span>
+<span id="L29"><span class="lineNum">      29</span>                 :             : </span>
+<span id="L30"><span class="lineNum">      30</span>                 :<span class="tlaGNC">      139286 :     bool GetLastAllowed() const { return last_allowed; }</span></span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">       69655 :     void SetLastAllowed(bool val) { last_allowed = val; }</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">       70088 :     signed char GetLastControl() const { return last_mControl; }</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">         440 :     void SetLastControl(signed char val) { last_mControl = val; }</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :             : </span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :     bool IsFFBAllowed(const VehicleScoringInfoV01&amp; scoring, unsigned char gamePhase) const;</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :     </span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :     void TriggerSafetyWindow(const char* reason, double now = -1.0);</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :     double ApplySafetySlew(double target_force, double current_output_force, double dt, bool restricted, double now = -1.0);</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :     </span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :     double ProcessSafetyMitigation(double norm_force, double dt);</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :     void UpdateTockDetection(double steering, double norm_force, double dt);</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             : </span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :     // Legacy 3-arg version for tests (stateful)</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             :     // Primarily for standalone testing where a real time source is not available.</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :     [[nodiscard]] double ApplySafetySlew(double target_force, double dt, bool restricted);</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             : </span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :     // Internal state (Kept public for legacy test compatibility as per Approach A)</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :     signed char last_mControl = -2;</span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :     double safety_timer = 0.0;</span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :     double safety_smoothed_force = 0.0;</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :     bool safety_is_seeded = false;</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :     int spike_counter = 0;</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :     double tock_timer = 0.0;</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :     double last_tock_log_time = -999.0;</span>
+<span id="L55"><span class="lineNum">      55</span>                 :             :     double last_reset_log_time = -999.0;</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             :     char last_reset_reason[64] = &quot;&quot;;</span>
+<span id="L57"><span class="lineNum">      57</span>                 :             :     double last_massive_spike_log_time = -999.0;</span>
+<span id="L58"><span class="lineNum">      58</span>                 :             :     double last_high_spike_log_time = -999.0;</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             :     bool last_allowed = true;</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             :     double m_last_now = 0.0; </span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :     const double* m_time_ptr = nullptr; </span>
+<span id="L62"><span class="lineNum">      62</span>                 :             : </span>
+<span id="L63"><span class="lineNum">      63</span>                 :             :     // Soft Lock State</span>
+<span id="L64"><span class="lineNum">      64</span>                 :             :     bool was_soft_locked = false;</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             :     bool soft_lock_significant = false;</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             : };</span>
+<span id="L67"><span class="lineNum">      67</span>                 :             : </span>
+<span id="L68"><span class="lineNum">      68</span>                 :             : } // namespace LMUFFB</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             : </span>
+<span id="L70"><span class="lineNum">      70</span>                 :             : #endif // FFBSAFETYMONITOR_H</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
