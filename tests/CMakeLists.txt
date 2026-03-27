@@ -123,6 +123,7 @@ set(TEST_SOURCES
     repro_issue_290.cpp
     repro_issue_475.cpp
     repro_issue_481.cpp
+    repro_issue_511.cpp
     test_issue_282_lateral_load_fix.cpp
     test_issue_306_lateral_load.cpp
     test_issue_303_safety.cpp

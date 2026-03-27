@@ -1437,21 +1437,39 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, LMUFFB::Physics
 
     if (range <= 0.0f) range = (float)DEFAULT_STEERING_RANGE_RAD;
     double steer_angle = data->mUnfilteredSteering * (range / DUAL_DIVISOR);
-    double steer_vel = (steer_angle - m_prev_steering_angle) / ctx.dt;
+    double steer_vel_raw = (steer_angle - m_prev_steering_angle) / ctx.dt;
     m_prev_steering_angle = steer_angle;
     
     // 2. Alpha Smoothing
     double tau_gyro = (double)m_advanced.gyro_smoothing;
     if (tau_gyro < MIN_TAU_S) tau_gyro = MIN_TAU_S;
     double alpha_gyro = ctx.dt / (tau_gyro + ctx.dt);
-    m_steering_velocity_smoothed += alpha_gyro * (steer_vel - m_steering_velocity_smoothed);
+    m_steering_velocity_smoothed += alpha_gyro * (steer_vel_raw - m_steering_velocity_smoothed);
     
+    // --- SMART DAMPER MITIGATIONS (Issue #511) ---
+
+    // A. Velocity Deadzone: Ignore micro-movements to preserve road textures
+    double steer_vel = m_steering_velocity_smoothed;
+    if (std::abs(steer_vel) < GYRO_VEL_DEADZONE) {
+        steer_vel = 0.0;
+    } else {
+        steer_vel -= std::copysign(GYRO_VEL_DEADZONE, steer_vel);
+    }
+
+    // B. Lateral G Gate: Fade out damping during cornering
+    double lat_g = std::abs(data->mLocalAccel.x / (double)GRAVITY_MS2);
+    double straight_line_gate = 1.0 - LMUFFB::Utils::smoothstep(GYRO_G_GATE_MIN, GYRO_G_GATE_MAX, lat_g);
+
     // 3. DRIVING GYRO (Scales UP with speed. If m_gyro_gain is 0, this is 0.0)
-    double driving_gyro = m_advanced.gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE);
-    ctx.gyro_force = -1.0 * m_steering_velocity_smoothed * driving_gyro;
+    double driving_gyro = m_advanced.gyro_gain * (ctx.car_speed / GYRO_SPEED_SCALE) * straight_line_gate;
+    ctx.gyro_force = -1.0 * steer_vel * driving_gyro;
+
+    // C. Force Capping: Limit resistance to 2.0 Nm to avoid overpowering the driver
+    ctx.gyro_force = std::clamp(ctx.gyro_force, -GYRO_MAX_NM, GYRO_MAX_NM);
 
     // 4. STATIONARY DAMPING (Scales DOWN with speed. If m_stationary_damping is 0, this is 0.0)
-    // ctx.speed_gate is 0.0 at 0km/h, and 1.0 at the upper threshold (e.g., 18km/h)
+    // Note: We use raw smoothed velocity for stationary damping to ensure pit-box stability,
+    // as textures/cornering are not relevant here.
     double stationary_blend = 1.0 - ctx.speed_gate;
     ctx.stationary_damping_force = -1.0 * m_steering_velocity_smoothed * m_advanced.stationary_damping * stationary_blend;
 }

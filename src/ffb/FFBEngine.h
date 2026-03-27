@@ -297,6 +297,10 @@ private:
     static constexpr double KERB_HOLD_TIME_S = 0.1;
     static constexpr double DEFAULT_STEERING_RANGE_RAD = 9.4247; 
     static constexpr double GYRO_SPEED_SCALE = 10.0;
+    static constexpr double GYRO_G_GATE_MIN = 0.1;
+    static constexpr double GYRO_G_GATE_MAX = 0.4;
+    static constexpr double GYRO_MAX_NM = 2.0;
+    static constexpr double GYRO_VEL_DEADZONE = 0.5;
     static constexpr double WEIGHT_TRANSFER_SCALE = 2000.0; // N per G
     static constexpr double MIN_VALID_SUSP_FORCE = 10.0; // N 
     static constexpr double LOCKUP_FREQ_MULTIPLIER_REAR = 0.3;  

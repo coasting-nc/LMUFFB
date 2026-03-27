@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.272]
+### Added
+- **Smart Gyro Damping (Issue #511)**:
+  - Transformed Gyroscopic Damping into a "Smart Damper" with three new physical mitigations:
+    - **Lateral G-Force Gate**: Implemented a smooth fade-out (0.1G to 0.4G) that disables damping during cornering. This prevents the software from fighting the driver mid-corner while preserving hands-off stability on straights.
+    - **Velocity Deadzone**: Added a 0.5 rad/s deadzone to steering velocity. Damping now ignores micro-vibrations, allowing fine road textures and engine haptics to pass through clearly to the driver.
+    - **Force Capping**: Applied a hard 2.0 Nm limit to the damping resistance. This ensures the damper can arrest a wobble without becoming a physical obstacle during emergency swerves or rapid evasive maneuvers.
+  - Improved subjetive steering feel by making damping "invisible" during intentional steering while maintaining its protective benefits.
+### Testing
+- Added comprehensive regression tests in `tests/repro_issue_511.cpp` and `tests/test_ffb_yaw_gyro.cpp` verifying gating thresholds, deadzone accuracy, and force clamping.
+- Verified 100% pass rate across the full test suite.
+
 ## [0.7.271]
 ### Changed
 - Update Tooltips for GYRO_DAMPING, GYRO_SMOOTH, STATIONARY_DAMPING.

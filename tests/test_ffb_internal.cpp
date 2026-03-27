@@ -380,7 +380,7 @@ void FFBEngineTestAccess::test_unit_gyro_damping() {
 
     engine.calculate_gyro_damping(&data, ctx);
 
-    if (ctx.gyro_force < -40.0) {
+    if (ctx.gyro_force == -2.0) {
         std::cout << "[PASS] calculate_gyro_damping logic." << std::endl;
         g_tests_passed++;
     } else {
