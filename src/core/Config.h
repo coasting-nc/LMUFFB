@@ -115,6 +115,13 @@ struct Preset {
     Preset& SetSoPYaw(float v) { rear_axle.sop_yaw_gain = v; return *this; }
     Preset& SetGyro(float v) { advanced.gyro_gain = v; return *this; }
     Preset& SetStationaryDamping(float v) { advanced.stationary_damping = v; return *this; }
+    Preset& SetGyroGating(float lower, float upper, float max_nm, float deadzone) {
+        advanced.gyro_lat_g_gate_lower = lower;
+        advanced.gyro_lat_g_gate_upper = upper;
+        advanced.gyro_max_nm = max_nm;
+        advanced.gyro_vel_deadzone = deadzone;
+        return *this;
+    }
     
     Preset& SetShaftGain(float v) { front_axle.steering_shaft_gain = v; return *this; }
     Preset& SetInGameGain(float v) { front_axle.ingame_ffb_gain = v; return *this; }
