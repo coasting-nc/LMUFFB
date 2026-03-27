@@ -4,6 +4,7 @@
 #include <string>
 
 using namespace FFBEngineTests;
+using namespace LMUFFB::Utils;
 
 TEST_CASE_TAGGED(test_issue_238_repro_spam, "BugFix", (std::vector<std::string>{"Issue238", "Regression"})) {
     FFBEngine engine;

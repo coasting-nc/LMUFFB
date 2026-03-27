@@ -13,8 +13,8 @@
 #include <cmath>
 
 using namespace LMUFFB::Logging;
-using namespace LMUFFB::Utils;
 using namespace LMUFFB::Physics;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;

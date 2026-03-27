@@ -3,6 +3,7 @@
 #include <cmath>
 
 using namespace FFBEngineTests;
+using namespace LMUFFB::Utils;
 
 TEST_CASE(test_coverage_load_reference, "Coverage") {
     FFBEngine engine;

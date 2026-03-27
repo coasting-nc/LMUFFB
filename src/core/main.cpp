@@ -103,7 +103,7 @@ void FFBThread() {
 
     // Precise Timing: Target 1000Hz (1µs * kFFBTargetHz)
     const std::chrono::microseconds target_period(kFFBTargetHz);
-    auto next_tick = TimeUtils::GetTime();
+    auto next_tick = Utils::TimeUtils::GetTime();
 
     while (g_running) {
         loopMonitor.RecordEvent();
@@ -243,7 +243,7 @@ void FFBThread() {
 
             // Warning for low sample rate (Issue #133)
             // §2.3: plain local — reset each time FFBThread starts
-            auto lastWarningTime = TimeUtils::GetTime();
+            auto lastWarningTime = Utils::TimeUtils::GetTime();
             HealthStatus health;
             {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
@@ -253,7 +253,7 @@ void FFBThread() {
             }
 
             if (in_realtime_phys && !health.is_healthy) {
-                 auto now = TimeUtils::GetTime();
+                 auto now = Utils::TimeUtils::GetTime();
                  if (std::chrono::duration_cast<std::chrono::seconds>(now - lastWarningTime).count() >= kHealthWarnCooldownS) {
                      std::string reason = "";
                      if (health.loop_low) reason += "Loop=" + std::to_string((int)health.loop_rate) + "Hz ";

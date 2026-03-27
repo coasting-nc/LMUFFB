@@ -12,6 +12,8 @@
 #include "../src/Version.h"
 #include "test_ffb_common.h"
 
+using namespace LMUFFB::Utils;
+
 // Use common macros from test_ffb_common.h
 
 

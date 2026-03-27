@@ -1,6 +1,8 @@
 #include "test_ffb_common.h"
 #include <random>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_slope_detection_buffer_init, "SlopeDetection") {

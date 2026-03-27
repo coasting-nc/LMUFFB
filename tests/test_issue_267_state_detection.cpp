@@ -5,6 +5,8 @@
 #include <chrono>
 #include <thread>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_issue_267_initial_connection_menu, "Functional", (std::vector<std::string>{"state_machine"})) {

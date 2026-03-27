@@ -349,22 +349,6 @@ public:
 };
 
 } // namespace Utils
-
-// Temporary bridge for legacy code
-using Utils::PI;
-using Utils::TWO_PI;
-using Utils::BiquadNotch;
-using Utils::inverse_lerp;
-using Utils::smoothstep;
-using Utils::apply_slew_limiter;
-using Utils::apply_adaptive_smoothing;
-using Utils::apply_load_transform_cubic;
-using Utils::apply_load_transform_quadratic;
-using Utils::apply_load_transform_hermite;
-using Utils::calculate_sg_derivative;
-using Utils::LinearExtrapolator;
-using Utils::HoltWintersFilter;
-
 } // namespace LMUFFB
 
 #endif // MATH_UTILS_H

@@ -9,6 +9,8 @@
 #include <csignal>
 #endif
 
+using namespace LMUFFB::Utils;
+
 namespace LMUFFB {
 // Shared globals already defined in main_test_runner.cpp or needed by main.cpp
 extern std::atomic<bool> g_running;
@@ -59,8 +61,8 @@ TEST_CASE(test_main_app_logic, "System") {
     // Run FFBThread for a few iterations with changing telemetry
     // We run long enough to trigger the 5-second health warning logic
     LMUFFB::g_running = true;
-    LMUFFB::g_use_mock_time = true;
-    LMUFFB::g_mock_time = std::chrono::steady_clock::now();
+    Utils::g_use_mock_time = true;
+    Utils::g_mock_time = std::chrono::steady_clock::now();
 
     // Start thread
     std::thread t(LMUFFB::FFBThread);
@@ -73,7 +75,7 @@ TEST_CASE(test_main_app_logic, "System") {
         #endif
 
         // Advance mock time by 10ms each step
-        LMUFFB::g_mock_time += std::chrono::milliseconds(10);
+        Utils::g_mock_time += std::chrono::milliseconds(10);
 
         // v0.7.186 Optimization: On Windows, high-frequency sleeps carry massive scheduling penalties.
         // Yield instead of sleep to allow FFBThread to process if needed, or sleep very briefly every N iterations.
@@ -86,7 +88,7 @@ TEST_CASE(test_main_app_logic, "System") {
     LMUFFB::g_running = false;
     report_phase("FFBThread Exercise");
     if (t.joinable()) t.join();
-    LMUFFB::g_use_mock_time = false;
+    Utils::g_use_mock_time = false;
 
     std::cout << "[PASS] FFBThread exercised with telemetry" << std::endl;
     g_tests_passed++;
@@ -135,8 +137,8 @@ TEST_CASE(test_main_app_logic, "System") {
     // Test health monitor warnings (simulated low rate)
     {
         LMUFFB::g_running = true;
-        LMUFFB::g_use_mock_time = true;
-        LMUFFB::g_mock_time = std::chrono::steady_clock::now();
+        Utils::g_use_mock_time = true;
+        Utils::g_mock_time = std::chrono::steady_clock::now();
 
         Config::m_auto_start_logging = true;
         #ifndef _WIN32
@@ -149,7 +151,7 @@ TEST_CASE(test_main_app_logic, "System") {
         // We need to advance time past the 5-second interval in main.cpp for the health warning
         // We do this in smaller steps to ensure the loop processes the events.
         for(int j=0; j<520; ++j) {
-            LMUFFB::g_mock_time += std::chrono::milliseconds(10);
+            Utils::g_mock_time += std::chrono::milliseconds(10);
 
             // v0.7.186 Optimization: Replace high-frequency sleep with yield for Windows performance
             if (j % 10 == 0) {
@@ -161,7 +163,7 @@ TEST_CASE(test_main_app_logic, "System") {
 
         LMUFFB::g_running = false;
         if (t.joinable()) t.join();
-        LMUFFB::g_use_mock_time = false;
+        Utils::g_use_mock_time = false;
         report_phase("Health Monitor Simulation");
         std::cout << "[PASS] Health monitor branch exercised (optimized)" << std::endl;
         g_tests_passed++;

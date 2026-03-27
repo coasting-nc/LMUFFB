@@ -1,5 +1,7 @@
 #include "test_ffb_common.h"
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 // [Texture][Physics] Progressive lockup effect with frequency-based vibration

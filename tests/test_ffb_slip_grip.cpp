@@ -1,6 +1,8 @@
 #include "test_ffb_common.h"
 #include "StringUtils.h"
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_approximate_load_fallback, "SlipGrip") {

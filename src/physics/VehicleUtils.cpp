@@ -1,7 +1,10 @@
 #include "VehicleUtils.h"
+#include "utils/StringUtils.h"
 #include <algorithm>
 #include <string>
 #include <cctype>
+
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 namespace Physics {

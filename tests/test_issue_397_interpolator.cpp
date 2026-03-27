@@ -1,11 +1,13 @@
 #include "test_ffb_common.h"
 #include "../src/utils/MathUtils.h"
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_interpolator_continuity, "Math") {
     std::cout << "\nTest: LinearExtrapolator (Interpolator) Continuity" << std::endl;
-    LMUFFB::LinearExtrapolator interp;
+    LinearExtrapolator interp;
     interp.Configure(0.01); // 100Hz game tick
 
     double dt = 0.0025; // 400Hz FFB loop
@@ -43,7 +45,7 @@ TEST_CASE(test_interpolator_continuity, "Math") {
 
 TEST_CASE(test_interpolator_no_overshoot, "Math") {
     std::cout << "\nTest: LinearExtrapolator (Interpolator) No Overshoot" << std::endl;
-    LMUFFB::LinearExtrapolator interp;
+    LinearExtrapolator interp;
     interp.Configure(0.01);
 
     double dt = 0.0025;
