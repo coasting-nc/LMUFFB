@@ -48,6 +48,7 @@ using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
 using namespace LMUFFB::Physics;
 using namespace LMUFFB::GUI;
+using namespace LMUFFB::FFB;
 
 namespace FFBEngineTests {
 

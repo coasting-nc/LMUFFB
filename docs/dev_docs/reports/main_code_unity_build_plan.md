@@ -218,17 +218,17 @@ This section tracks the progress made towards fully refactoring the main code an
 This phase removes the temporary bridge aliases planted across all `src/ffb/` headers during the `LMUFFB::FFB` migration, updating all consumer call sites to use explicit `LMUFFB::FFB::` qualification. Due to the breadth of callsites across `src/`, `tests/`, and multiple headers, this work is divided into three lower-risk incremental steps.
 
 **Step 7.1 — `FFBConfig` struct bridges (leaf types, no test changes required):**
-- [ ] Remove 10 bridge aliases from `src/ffb/FFBConfig.h` (`GeneralConfig`, `FrontAxleConfig`, `RearAxleConfig`, `LoadForcesConfig`, `GripEstimationConfig`, `SlopeDetectionConfig`, `BrakingConfig`, `VibrationConfig`, `AdvancedConfig`, `SafetyConfig`).
-- [ ] Fix `FFBSafetyMonitor.h` internal reference: `LMUFFB::SafetyConfig` → `SafetyConfig` (same namespace).
-- [ ] Fix `FFBEngine.h` internal member declarations: `LMUFFB::GeneralConfig` → `GeneralConfig` etc. (already in `LMUFFB::FFB`); `LMUFFB::FFBDebugBuffer` → `FFBDebugBuffer`.
-- [ ] Update `src/core/Config.h` (`Preset` struct field types and `Config` method signatures): unqualified FFBConfig types → `FFB::*` (inside `namespace LMUFFB`).
-- [ ] Update `src/logging/AsyncLogger.h` (`SessionInfo` struct fields): unqualified FFBConfig types → `LMUFFB::FFB::*` (inside `namespace LMUFFB::Logging`).
-- [ ] Update `src/physics/SteeringUtils.h` and `SteeringUtils.cpp`: `AdvancedConfig`, `GeneralConfig`, `FFBSafetyMonitor` parameters → `LMUFFB::FFB::*` (inside `namespace LMUFFB::Physics`).
+- [x] Remove 10 bridge aliases from `src/ffb/FFBConfig.h` (`GeneralConfig`, `FrontAxleConfig`, `RearAxleConfig`, `LoadForcesConfig`, `GripEstimationConfig`, `SlopeDetectionConfig`, `BrakingConfig`, `VibrationConfig`, `AdvancedConfig`, `SafetyConfig`).
+- [x] Fix `FFBSafetyMonitor.h` internal reference: `LMUFFB::SafetyConfig` → `SafetyConfig` (same namespace).
+- [x] Fix `FFBEngine.h` internal member declarations: `LMUFFB::GeneralConfig` → `GeneralConfig` etc. (already in `LMUFFB::FFB`); `LMUFFB::FFBDebugBuffer` → `FFBDebugBuffer`.
+- [x] Update `src/core/Config.h` (`Preset` struct field types and `Config` method signatures): unqualified FFBConfig types → `FFB::*` (inside `namespace LMUFFB`).
+- [x] Update `src/logging/AsyncLogger.h` (`SessionInfo` struct fields): unqualified FFBConfig types → `LMUFFB::FFB::*` (inside `namespace LMUFFB::Logging`).
+- [x] Update `src/physics/SteeringUtils.h` and `SteeringUtils.cpp`: `AdvancedConfig`, `GeneralConfig`, `FFBSafetyMonitor` parameters → `LMUFFB::FFB::*` (inside `namespace LMUFFB::Physics`).
 
 **Step 7.2 — Helper class bridges (`FFBSnapshot`, `FFBDebugBuffer`, `FFBMetadataManager`, `FFBSafetyMonitor`, `PolyphaseResampler`):**
-- [ ] Remove bridge aliases from `FFBSnapshot.h`, `FFBDebugBuffer.h`, `FFBMetadataManager.h`, `FFBSafetyMonitor.h`, `UpSampler.h`.
-- [ ] Add `using namespace LMUFFB::FFB;` at file scope in `tests/test_ffb_common.h` (replaces all individual unqualified test references in one line).
-- [ ] Update `src/core/main.cpp`: `PolyphaseResampler resampler;` → `FFB::PolyphaseResampler resampler;` (inside `namespace LMUFFB`).
+- [x] Remove bridge aliases from `FFBSnapshot.h`, `FFBDebugBuffer.h`, `FFBMetadataManager.h`, `FFBSafetyMonitor.h`, `UpSampler.h`.
+- [x] Add `using namespace LMUFFB::FFB;` at file scope in `tests/test_ffb_common.h` (replaces all individual unqualified test references in one line).
+- [x] Update `src/core/main.cpp`: `PolyphaseResampler resampler;` → `FFB::PolyphaseResampler resampler;` (inside `namespace LMUFFB`).
 
 **Step 7.3 — `FFBEngine` and `DirectInputFFB` bridges (broadest callsite impact):**
 - [ ] Remove `using FFBEngine = FFB::FFBEngine;` bridge from `src/ffb/FFBEngine.h`.
@@ -241,6 +241,11 @@ This phase removes the temporary bridge aliases planted across all `src/ffb/` he
 ---
 
 ## 7. Implementation Notes
+
+### 7.2 Implementation Notes (v0.7.269)
+- **Encountered Issues:** None. The bulk replacement of the prefixed namespace references was easily addressed via a single file-level using statement in the test framework.
+- **Deviations from the Plan:** None.
+- **Suggestions for the Future:** Only one step (7.3) remains to complete Phase 7, which will require replacing `g_engine` globally and decoupling `DirectInputFFB`. This will conclude the overarching FFB engine transition.
 
 ### 7.0 Implementation Notes (v0.7.267)
 - **Encountered Issues:** Upon wrapping `FFBEngine` in `namespace LMUFFB::FFB`, the `friend class Config;` declaration incorrectly shadowed the global `LMUFFB::Config` class, causing sweeping C2027 (undefined type) compiler errors in `GripLoadEstimation.cpp` and `Config.cpp`.
@@ -421,13 +426,16 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 **When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253), `src/utils/` to `LMUFFB::Utils` (v0.7.256), and `src/physics/` to `LMUFFB::Physics` (v0.7.257). Sub-namespace migration for `src/gui/` (`LMUFFB::GUI`) is the next objective.
 
 ## 9. Next Steps: Post-Migration Cleanup and Hardening
-Phase 6 `ffb/` migration to `LMUFFB::FFB` is structurally complete (v0.7.267). Phase 7 (bridge alias cleanup) is now active.
+Phase 6 `ffb/` migration to `LMUFFB::FFB` is structurally complete (v0.7.267). Phase 7 (bridge alias cleanup) is nearing completion.
 
-### Your Objectives for the Next PR (Step 7.2):
-1. **Remove bridges for `FFBSnapshot`, `FFBDebugBuffer`, `FFBMetadataManager`, `FFBSafetyMonitor`, `PolyphaseResampler`:**
-   - Remove bridge alias blocks from `FFBSnapshot.h`, `FFBDebugBuffer.h`, `FFBMetadataManager.h`, `FFBSafetyMonitor.h`, and `UpSampler.h`.
-   - Add `using namespace LMUFFB::FFB;` at file scope in `tests/test_ffb_common.h` (a single line that resolves all unqualified FFB type references in the entire test suite).
-   - Update `src/core/main.cpp`: `PolyphaseResampler resampler;` → `FFB::PolyphaseResampler resampler;`.
+### Your Objectives for the Next PR (Step 7.3):
+1. **Remove `FFBEngine` and `DirectInputFFB` bridges (broadest callsite impact):**
+   - Remove `using FFBEngine = FFB::FFBEngine;` bridge from `src/ffb/FFBEngine.h`.
+   - Remove `DeviceInfo` and `DirectInputFFB` bridges from `src/ffb/DirectInputFFB.h`.
+   - Update `src/gui/GuiLayer.h` method signatures: `LMUFFB::FFBEngine&` → `LMUFFB::FFB::FFBEngine&`.
+   - Update `src/gui/GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, `GuiLayer_Linux.cpp` method definitions accordingly.
+   - Update `src/core/main.cpp`: `FFBEngine g_engine;` → `FFB::FFBEngine g_engine;`, `DirectInputFFB::Get()` → `FFB::DirectInputFFB::Get()`.
+   - Update `tests/main_test_runner.cpp`: `FFBEngine g_engine;` → `LMUFFB::FFB::FFBEngine g_engine;`.
 2. **Final Verification:**
    - Execute the test suite after the sweeps to guarantee complete code health.
 

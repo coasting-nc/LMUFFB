@@ -67,9 +67,5 @@ public:
 
 } // namespace LMUFFB::FFB
 
-// Temporary bridge aliases to keep existing call sites compiling
-namespace LMUFFB {
-    using FFBSafetyMonitor = LMUFFB::FFB::FFBSafetyMonitor;
-}
-
+// Aliases removed
 #endif // FFBSAFETYMONITOR_H

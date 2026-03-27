@@ -88,9 +88,5 @@ struct FFBSnapshot {
 
 } // namespace LMUFFB::FFB
 
-// Temporary bridge alias to keep existing call sites compiling
-namespace LMUFFB {
-    using FFBSnapshot = LMUFFB::FFB::FFBSnapshot;
-}
-
+// Snapshot aliases have been removed
 #endif // FFBSNAPSHOT_H

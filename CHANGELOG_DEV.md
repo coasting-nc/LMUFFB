@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.269]
+### Changed
+- **Unity Build Expansion (Phase 7, Step 7.2 — Helper Class Bridge Cleanup)**:
+  - Removed temporary bridge aliases for `FFBSnapshot`, `FFBDebugBuffer`, `FFBMetadataManager`, `FFBSafetyMonitor`, and `PolyphaseResampler` from their respective headers.
+  - Added a file-scoped `using namespace LMUFFB::FFB;` directive to `tests/test_ffb_common.h` to seamlessly replace all unqualified FFB type references across the entire test suite.
+  - Updated `src/core/main.cpp` to use the explicitly qualified `FFB::PolyphaseResampler`.
+  - Maintained 100% test pass rate (632 cases) after completing the second step of the Phase 7 bridge alias cleanup.
+  - Updated the Unity Build Plan documentation to mark Step 7.2 as completed and set objectives for the final Step 7.3.
+
 ## [0.7.268]
 ### Changed
 - **Unity Build Expansion (Phase 7, Step 7.1 — FFBConfig Bridge Cleanup)**:

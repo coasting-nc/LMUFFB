@@ -50,9 +50,5 @@ private:
 
 } // namespace LMUFFB::FFB
 
-// Temporary bridge aliases to keep existing call sites compiling
-namespace LMUFFB {
-    using FFBMetadataManager = LMUFFB::FFB::FFBMetadataManager;
-}
-
+// Aliases removed
 #endif // FFBMETADATA_MANAGER_H

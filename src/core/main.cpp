@@ -91,7 +91,7 @@ void FFBThread() {
     RateMonitor genTorqueMonitor;
     RateMonitor physicsMonitor; // New v0.7.117 (Issue #217)
 
-    PolyphaseResampler resampler;
+    FFB::PolyphaseResampler resampler;
     int phase_accumulator = 0;
     double current_physics_force = 0.0;
 

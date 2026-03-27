@@ -25,9 +25,5 @@ private:
 
 } // namespace LMUFFB::FFB
 
-// Temporary bridge alias to keep existing call sites compiling
-namespace LMUFFB {
-    using FFBDebugBuffer = LMUFFB::FFB::FFBDebugBuffer;
-}
-
+// Aliases removed
 #endif // FFDBEBUG_BUFFER_H

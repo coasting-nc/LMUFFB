@@ -46,9 +46,5 @@ private:
 
 } // namespace LMUFFB::FFB
 
-// Temporary bridge alias to keep existing call sites compiling
-namespace LMUFFB {
-    using PolyphaseResampler = LMUFFB::FFB::PolyphaseResampler;
-}
-
+// Aliases removed
 #endif // UPSAMPLER_H
