@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.260]
+### Changed
+- **FFB Default Tuning (Issue #507)**:
+  - Reduced default **Stationary Damping** from 100% (1.0) to **40% (0.4)** project-wide.
+  - This provides a lighter and more natural steering feel when the car is stationary by default, while still maintaining enough resistance to prevent oscillations.
+  - Audited all built-in presets to ensure they adopt the new default value.
+- **Architectural Polish**:
+  - Refactored `Config::TomlToPreset` to be a public static member of the `Config` class, enabling robust preset verification in unit tests.
+  - Hardened the `Preset` inheritance test suite with direct TOML parsing verification.
+
 ## [0.7.259]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

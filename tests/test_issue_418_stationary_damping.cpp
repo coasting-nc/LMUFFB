@@ -4,10 +4,33 @@ using namespace FFBEngineTests;
 
 TEST_CASE(test_stationary_damping_default, "Physics") {
     FFBEngine engine;
-    ASSERT_NEAR(engine.m_advanced.stationary_damping, 1.0f, 0.0001f);
+    ASSERT_NEAR(engine.m_advanced.stationary_damping, 0.4f, 0.0001f);
 
     Preset p;
-    ASSERT_NEAR(p.advanced.stationary_damping, 1.0f, 0.0001f);
+    ASSERT_NEAR(p.advanced.stationary_damping, 0.4f, 0.0001f);
+}
+
+TEST_CASE(test_stationary_damping_preset_inheritance, "Physics") {
+    FFBEngine engine;
+    // Preset with no Advanced section should inherit default 0.4f
+    std::string toml_content = R"(
+        name = "InheritDefault"
+        [General]
+        gain = 1.0
+    )";
+
+    try {
+        toml::table tbl = toml::parse(toml_content);
+        Preset p("InheritDefault", false);
+        Config::TomlToPreset(tbl, p);
+
+        ASSERT_NEAR(p.advanced.stationary_damping, 0.4f, 0.0001f);
+
+        p.Apply(engine);
+        ASSERT_NEAR(engine.m_advanced.stationary_damping, 0.4f, 0.0001f);
+    } catch (...) {
+        FAIL_TEST("Failed to parse test TOML");
+    }
 }
 
 TEST_CASE(test_stationary_damping_at_zero_speed, "Physics") {

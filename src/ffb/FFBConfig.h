@@ -371,7 +371,7 @@ struct VibrationConfig {
 struct AdvancedConfig {
     float gyro_gain = 0.0f;
     float gyro_smoothing = 0.0f;
-    float stationary_damping = 1.0f;
+    float stationary_damping = 0.4f;
     bool soft_lock_enabled = true;
     float soft_lock_stiffness = 20.0f;
     float soft_lock_damping = 0.5f;

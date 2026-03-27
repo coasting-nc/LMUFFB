@@ -253,7 +253,57 @@ toml::table PresetToToml(const Preset& p) {
     return tbl;
 }
 
-void TomlToPreset(const toml::table& tbl, Preset& p) {
+
+std::string SanitizeFilename(std::string name) {
+    std::string out = name;
+    // Replace spaces with underscores
+    std::replace(out.begin(), out.end(), ' ', '_');
+    // Remove illegal Windows filename characters (\ / : * ? " < > |)
+    const std::string illegal = "\\/:*?\"<>|";
+    out.erase(std::remove_if(out.begin(), out.end(), [&](char c) {
+        return illegal.find(c) != std::string::npos;
+    }), out.end());
+    return out;
+}
+
+void SaveUserPresetFile(const Preset& p) {
+    std::string filename = Config::m_user_presets_path + "/" + SanitizeFilename(p.name) + ".toml";
+    std::filesystem::create_directories(Config::m_user_presets_path);
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        file << PresetToToml(p);
+    }
+}
+
+// --- End TOML Serialization Helpers ---
+
+void FinalizePreset(Preset& p, const std::string& name, const std::string& version, bool hack, float hack_val) {
+    p.name = name;
+    if (!version.empty()) p.app_version = version;
+
+    if (hack && IsVersionLessEqual(version, "0.7.66")) {
+        p.general.gain *= (15.0f / hack_val);
+    }
+    // Apply Issue #37 reset if necessary
+    if (IsVersionLessEqual(version, "0.7.146")) {
+        p.rear_axle.sop_smoothing_factor = 0.0f;
+    }
+    p.Validate();
+    // Add or Update
+    bool found = false;
+    for (auto& existing : Config::presets) {
+        if (existing.name == name && !existing.is_builtin) {
+            existing = p;
+            found = true;
+            break;
+        }
+    }
+    if (!found) Config::presets.push_back(p);
+}
+
+} // anonymous namespace
+
+void Config::TomlToPreset(const toml::table& tbl, Preset& p) {
     auto baseline = p; // Keep defaults for missing keys
 
     if (auto val = tbl["name"].as_string()) p.name = val->get();
@@ -410,55 +460,6 @@ void TomlToPreset(const toml::table& tbl, Preset& p) {
         p.safety.stutter_threshold = (float)(*sa)["stutter_threshold"].value_or((double)baseline.safety.stutter_threshold);
     }
 }
-
-std::string SanitizeFilename(std::string name) {
-    std::string out = name;
-    // Replace spaces with underscores
-    std::replace(out.begin(), out.end(), ' ', '_');
-    // Remove illegal Windows filename characters (\ / : * ? " < > |)
-    const std::string illegal = "\\/:*?\"<>|";
-    out.erase(std::remove_if(out.begin(), out.end(), [&](char c) {
-        return illegal.find(c) != std::string::npos;
-    }), out.end());
-    return out;
-}
-
-void SaveUserPresetFile(const Preset& p) {
-    std::string filename = Config::m_user_presets_path + "/" + SanitizeFilename(p.name) + ".toml";
-    std::filesystem::create_directories(Config::m_user_presets_path);
-    std::ofstream file(filename);
-    if (file.is_open()) {
-        file << PresetToToml(p);
-    }
-}
-
-// --- End TOML Serialization Helpers ---
-
-void FinalizePreset(Preset& p, const std::string& name, const std::string& version, bool hack, float hack_val) {
-    p.name = name;
-    if (!version.empty()) p.app_version = version;
-
-    if (hack && IsVersionLessEqual(version, "0.7.66")) {
-        p.general.gain *= (15.0f / hack_val);
-    }
-    // Apply Issue #37 reset if necessary
-    if (IsVersionLessEqual(version, "0.7.146")) {
-        p.rear_axle.sop_smoothing_factor = 0.0f;
-    }
-    p.Validate();
-    // Add or Update
-    bool found = false;
-    for (auto& existing : Config::presets) {
-        if (existing.name == name && !existing.is_builtin) {
-            existing = p;
-            found = true;
-            break;
-        }
-    }
-    if (!found) Config::presets.push_back(p);
-}
-
-} // anonymous namespace
 
 // --- Legacy INI Parsing Helpers (Phase 2 Migration Path) ---
 
