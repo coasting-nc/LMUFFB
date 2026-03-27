@@ -7,6 +7,8 @@
 #include <thread>
 #include <optional>
 
+namespace LMUFFB { class RestApiProviderTestAccess; }
+
 namespace LMUFFB::IO {
 
 class RestApiProvider {

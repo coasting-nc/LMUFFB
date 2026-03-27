@@ -10,7 +10,8 @@ All notable changes to this project will be documented in this file.
   - Updated the `friend` declaration in `RestApiProvider.h` from `friend class RestApiProviderTestAccess;` to `friend class ::LMUFFB::RestApiProviderTestAccess;` to use a fully-qualified name, since the provider now lives in `namespace LMUFFB::IO` while the test accessor lives in `namespace LMUFFB`.
   - The `friend class ::FFBEngineTests::GameConnectorTestAccessor;` in `GameConnector.h` was already fully-qualified and required no change.
   - The anonymous namespace inside `GameConnector.cpp` (containing `LEGACY_SHARED_MEMORY_NAME`) is now correctly scoped inside `namespace LMUFFB::IO { namespace {} }`, consistent with project Unity Build policy.
-  - Verified 100% test pass rate (633/633) with no regressions.
+  - Added a forward declaration for `RestApiProviderTestAccess` in `src/io/RestApiProvider.h` to fix a build regression (error C2039) where the test accessor was not found in `namespace LMUFFB` following the sub-namespace migration.
+  - Verified 100% test pass rate (633/633) locally (Fixes CI build failure).
 
 ## [0.7.262]
 ### Changed
