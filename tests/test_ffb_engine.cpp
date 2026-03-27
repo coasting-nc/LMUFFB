@@ -21,7 +21,7 @@ TEST_CASE(test_load_weighted_grip, "Physics") {
     double prev_load1 = 10000.0, prev_load2 = 500.0;
     bool warned = false;
 
-    GripResult result = engine.calculate_axle_grip(
+    Physics::GripResult result = engine.calculate_axle_grip(
         data.mWheel[WHEEL_FL], data.mWheel[WHEEL_FR], 5250.0, warned,
         prev_slip1, prev_slip2, prev_load1, prev_load2, 20.0, 0.0025, "TestCar", &data, true
     );
@@ -95,7 +95,7 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
     data.mSteeringShaftTorque = 10.0;
 
-    auto get_long_load_force = [&](LoadTransform transform, double g_force) {
+    auto get_long_load_force = [&](Physics::LoadTransform transform, double g_force) {
         engine.m_load_forces.long_load_transform = static_cast<int>(transform);
         engine.m_accel_z_smoothed = g_force;
         // Issue #397: Flush the 10ms transient ramp
@@ -110,17 +110,17 @@ TEST_CASE(test_long_load_transformations, "Physics") {
     // long_load_force = 10.0 * (transform(0.1) * 5.0)
 
     // Linear: 10 * 0.5 = 5.0
-    ASSERT_NEAR(get_long_load_force(LoadTransform::LINEAR, 0.5 * 9.81), 5.0f, 0.8f);
+    ASSERT_NEAR(get_long_load_force(Physics::LoadTransform::LINEAR, 0.5 * 9.81), 5.0f, 0.8f);
 
     // Cubic: 10 * (transform_cubic(0.1) * 5.0) = 10 * (0.1495 * 5.0) = 7.475
     // Issue #397/469: Holt-Winters (Shaft Torque) damping reduces settled state
-    ASSERT_NEAR(get_long_load_force(LoadTransform::CUBIC, 0.5 * 9.81), 7.475f, 1.0f);
+    ASSERT_NEAR(get_long_load_force(Physics::LoadTransform::CUBIC, 0.5 * 9.81), 7.475f, 1.0f);
 
     // Quadratic: 10 * (transform_quadratic(0.1) * 5.0) = 10 * (0.19 * 5.0) = 9.5
-    ASSERT_NEAR(get_long_load_force(LoadTransform::QUADRATIC, 0.5 * 9.81), 9.5f, 1.0f);
+    ASSERT_NEAR(get_long_load_force(Physics::LoadTransform::QUADRATIC, 0.5 * 9.81), 9.5f, 1.0f);
 
     // Hermite: 10 * (transform_hermite(0.1) * 5.0) = 10 * (0.109 * 5.0) = 5.45
-    ASSERT_NEAR(get_long_load_force(LoadTransform::HERMITE, 0.5 * 9.81), 5.45f, 0.8f);
+    ASSERT_NEAR(get_long_load_force(Physics::LoadTransform::HERMITE, 0.5 * 9.81), 5.45f, 0.8f);
 }
 
 TEST_CASE(test_long_load_multiplier_behavior, "Physics") {

@@ -40,7 +40,7 @@ TEST_CASE(test_grip_symmetric_falloff, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.05, 0.0); // 50% of optimal slip
     SetupWheelForSlip(w2, speed, 0.05, 0.0);
     
-    GripResult res1;
+    Physics::GripResult res1;
     for (int i = 0; i < 100; i++) {
         res1 = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
         prev_load1 = w1.mTireLoad; prev_load2 = w2.mTireLoad; // Update historical loads for filters
@@ -56,7 +56,7 @@ TEST_CASE(test_grip_symmetric_falloff, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.20, 0.0); // 200% of optimal slip
     SetupWheelForSlip(w2, speed, 0.20, 0.0);
     
-    GripResult res2;
+    Physics::GripResult res2;
     for (int i = 0; i < 100; i++) {
         res2 = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
         prev_load1 = w1.mTireLoad; prev_load2 = w2.mTireLoad;
@@ -95,7 +95,7 @@ TEST_CASE(test_grip_asymmetric_split, "SlipGrip") {
     // Wheel 2: Massive lockup (100% longitudinal slip)
     SetupWheelForSlip(w2, speed, 0.0, -1.0);
 
-    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
+    Physics::GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
 
     // Wheel 1 Grip: 1.0
     // Wheel 2 Grip: long_metric = 1.0 / 0.10 = 10.0. excess = 9.0. 
@@ -130,7 +130,7 @@ TEST_CASE(test_grip_friction_circle, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.08, 0.08);
     SetupWheelForSlip(w2, speed, 0.08, 0.08);
 
-    GripResult res;
+    Physics::GripResult res;
     for (int i = 0; i < 100; i++) {
         res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
         prev_load1 = w1.mTireLoad; prev_load2 = w2.mTireLoad;
@@ -168,7 +168,7 @@ TEST_CASE(test_grip_low_speed_bypass, "SlipGrip") {
     SetupWheelForSlip(w1, speed, 0.50, 1.0);
     SetupWheelForSlip(w2, speed, 0.50, 1.0);
 
-    GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
+    Physics::GripResult res = engine.calculate_axle_grip(w1, w2, 8000.0, warned, prev_slip1, prev_slip2, prev_load1, prev_load2, speed, dt, "TestCar", nullptr, true);
 
     // Because speed < 5.0, it should bypass the math and return 1.0
     ASSERT_NEAR(res.value, 1.0, 0.001);

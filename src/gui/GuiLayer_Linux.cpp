@@ -156,7 +156,7 @@ bool GuiLayer::Init() {
     return true;
 }
 
-void GuiLayer::Shutdown(FFBEngine& engine) {
+void GuiLayer::Shutdown(LMUFFB::FFBEngine& engine) {
     SaveCurrentWindowGeometryPlatform(Config::show_graphs);
     Config::Save(engine);
 
@@ -172,7 +172,7 @@ void* GuiLayer::GetWindowHandle() {
     return (void*)g_window;
 }
 
-bool GuiLayer::Render(FFBEngine& engine) {
+bool GuiLayer::Render(LMUFFB::FFBEngine& engine) {
     if (glfwWindowShouldClose(g_window)) {
         g_running = false;
         return false;
@@ -208,10 +208,10 @@ bool GuiLayer::Init() {
     Logger::Get().LogFile("[GUI] Disabled (Headless Mode)");
     return true;
 }
-void GuiLayer::Shutdown(FFBEngine& engine) {
+void GuiLayer::Shutdown(LMUFFB::FFBEngine& engine) {
     Config::Save(engine);
 }
-bool GuiLayer::Render(FFBEngine& engine) { return true; }
+bool GuiLayer::Render(LMUFFB::FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 #endif

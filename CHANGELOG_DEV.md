@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.261]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Implemented **Namespace Hygiene** for the `Physics` and `GUI` subsystems by removing temporary bridge aliases in `GripLoadEstimation.h`, `VehicleUtils.h`, `SteeringUtils.h`, and `GuiLayer.h`.
+  - Migrated over 150 call sites and header types project-wide to use explicit `LMUFFB::Physics::` and `LMUFFB::GUI::` qualifications.
+  - Resolved ODR and visibility issues in the Unity test runner by ensuring proper header inclusion and namespace scoping.
+  - Verified 100% test pass rate (633/633) under the fully decoupled and encapsulated namespaced architecture.
+  - Updated the Unity Build Plan documentation with implementation notes and refined next steps for the `FFB` and `IO` subsystems.
+
 ## [0.7.260]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

@@ -13,7 +13,7 @@
 #include <mutex>
 
 #include "FFBEngine.h"
-#include "GuiLayer.h"
+#include "gui/GuiLayer.h"
 #include "Config.h"
 #include "DirectInputFFB.h"
 #include "GameConnector.h"
@@ -48,8 +48,8 @@ namespace {
 void PopulateSessionInfo(SessionInfo& info, const VehicleScoringInfoV01& scoring, const char* trackName, const FFBEngine& engine) {
     info.app_version = LMUFFB_VERSION;
     info.vehicle_name = scoring.mVehicleName;
-    info.vehicle_class = VehicleClassToString(ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
-    info.vehicle_brand = ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
+    info.vehicle_class = Physics::VehicleClassToString(Physics::ParseVehicleClass(scoring.mVehicleClass, scoring.mVehicleName));
+    info.vehicle_brand = Physics::ParseVehicleBrand(scoring.mVehicleClass, scoring.mVehicleName);
     info.track_name = trackName ? trackName : "Unknown";
     info.driver_name = "Auto";
     info.general = engine.m_general;
@@ -343,11 +343,11 @@ int lmuffb_app_main(int argc, char* argv[]) noexcept {
         }
 
         if (!headless) {
-            if (!GuiLayer::Init()) {
+            if (!GUI::GuiLayer::Init()) {
                 // §2.1: was logging the same message twice; use LogFile so it survives a crash
                 Logger::Get().LogFile("Failed to initialize GUI.");
             }
-            DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GuiLayer::GetWindowHandle()));
+            DirectInputFFB::Get().Initialize(reinterpret_cast<HWND>(GUI::GuiLayer::GetWindowHandle()));
         } else {
             // §2.1: was logging the same message twice
             Logger::Get().Log("Running in HEADLESS mode.");
@@ -366,7 +366,7 @@ int lmuffb_app_main(int argc, char* argv[]) noexcept {
         Logger::Get().LogFile("[GUI] Main Loop Started.");
 
         while (g_running) {
-            GuiLayer::Render(g_engine);
+            GUI::GuiLayer::Render(g_engine);
 
             // Process background save requests from the FFB thread (v0.7.70)
             if (Config::m_needs_save.exchange(false)) {
@@ -381,7 +381,7 @@ int lmuffb_app_main(int argc, char* argv[]) noexcept {
         Config::Save(g_engine);
         if (!headless) {
             Logger::Get().LogFile("Shutting down GUI...");
-            GuiLayer::Shutdown(g_engine);
+            GUI::GuiLayer::Shutdown(g_engine);
         }
         if (ffb_thread.joinable()) {
             Logger::Get().LogFile("Stopping FFB Thread...");

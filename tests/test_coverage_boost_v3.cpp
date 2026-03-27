@@ -18,7 +18,7 @@ TEST_CASE(test_engine_debug_batch_empty, "Physics") {
 TEST_CASE(test_engine_signal_conditioning_thresholds, "Physics") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry();
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 1.0; // Below idle_speed_threshold (default 3.0)
 
@@ -62,7 +62,7 @@ TEST_CASE(test_engine_disabled_effects, "Physics") {
 TEST_CASE(test_engine_bottoming_fallback, "Physics") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry();
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
 
     engine.m_vibration.bottoming_enabled = true;
@@ -213,7 +213,7 @@ TEST_CASE(test_config_exhaustive_keys, "Config") {
 TEST_CASE(test_steering_utils_nan_inf, "Physics") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry();
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
 
     // NaN steering
     data.mUnfilteredSteering = std::numeric_limits<double>::quiet_NaN();

@@ -208,6 +208,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files with anonymous namespaces (Batch 1: core/gui). (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Utils` subsystem. (v0.7.260)
+- [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Physics` and `GUI` subsystems. (v0.7.261)
 - [ ] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io).
 - [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`.
 - [ ] Transition `io/` files to `namespace LMUFFB::IO`.
@@ -216,7 +217,16 @@ This section tracks the progress made towards fully refactoring the main code an
 
 ## 7. Implementation Notes
 
-### 7.1 Implementation Notes (v0.7.260)
+### 7.1 Implementation Notes (v0.7.261)
+- **Encountered Issues:**
+  - **Namespace Visibility (Unity Tests):** Encountered an error in the Unity test runner where `LMUFFB::GUI` was not recognized as a namespace-name. This was due to `GuiLayer.h` being wrapped in a `LMUFFB` namespace block that didn't explicitly open the `GUI` sub-namespace before the `using` declarations in the test header. Resolved by ensuring consistent namespace opening/closing and using fully qualified names in `tests/test_ffb_common.h`.
+  - **Test Regression False Alarm:** Verified that removing bridge aliases and enforcing sub-namespace qualification does not alter the physics baseline; the `test_refactor_load_forces_consistency` test continues to pass with its existing baseline.
+- **Deviations from the Plan:** None.
+- **Suggestions for the Future:**
+  - Proceed with the Internal Linkage Audit for `src/ffb/` and `src/io/` (Batch 2).
+  - Transition remaining root subsystems (`ffb/`, `io/`) to their respective sub-namespaces.
+
+### 7.2 Implementation Notes (v0.7.260)
 - **Encountered Issues:**
   - Found that `FFBEngine.h` and other headers used `LMUFFB::` prefixed utility types like `BiquadNotch` and `HoltWintersFilter`. Removing the bridge aliases required updating these to `LMUFFB::Utils::` or adding appropriate `using` directives in the headers (which is generally discouraged for headers). Resolved by using fully qualified `LMUFFB::Utils::` names in headers where possible.
   - Test files like `test_math_utils.cpp` and `test_reconstruction.cpp` had many direct references to `LMUFFB::` types. Updated these to use `using namespace LMUFFB::Utils;` at file scope to keep the code clean while maintaining hygiene.
@@ -370,14 +380,14 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 Phase 6 and internal hardening are now well underway. All major subsystems are namespaced, and internal linkage hardening has progressed significantly.
 
 ### Your Objectives for the Next PR:
-1. **Namespace Hygiene (Physics and GUI Subsystems):**
-   - Systematically remove temporary bridge aliases in `src/physics/GripLoadEstimation.h` and any remaining GUI-related bridge aliases.
-   - Update all call sites project-wide (including tests) to use fully qualified names or file-scope `using namespace`.
-2. **Continued Subsystem Migration (FFB & I/O):**
+1. **Continued Subsystem Migration (FFB & I/O):**
    - Transition `src/ffb/` and `src/io/` modules to `namespace LMUFFB::FFB` and `namespace LMUFFB::IO` respectively.
    - Maintain the "Include Rule" and "Using Placement Rule" during migration.
-3. **Extended Internal Linkage Audit (FFB & I/O Subsystems):**
-   - Conduct a systematic review of `.cpp` files in `src/ffb/` and `src/io/` to move internal helper functions and constants into anonymous namespaces.
+   - Use temporary bridge aliases to maintain build stability during the transition.
+2. **Extended Internal Linkage Audit (FFB & I/O Subsystems):**
+   - Conduct a systematic review of `.cpp` files in `src/ffb/` and `src/io/` to move internal helper functions and constants into anonymous namespaces (Batch 2).
+3. **Final Namespace Hygiene Sweep:**
+   - Systematically remove all remaining temporary bridge aliases in the root `LMUFFB` namespace once Batch 2 migration is complete.
 
 ### Critical Reminders for Phase 6
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.

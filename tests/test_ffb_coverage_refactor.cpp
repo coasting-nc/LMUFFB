@@ -59,7 +59,7 @@ TEST_CASE(test_coverage_init_load_ref, "Coverage") {
     FFBEngineTestAccess::SetAutoPeakLoad(engine, 1000.0);
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "GTE", "Ferrari 488 GTE");
     
-    // detailed logic inside ParseVehicleClass is covered elsewhere, but we need to hit InitializeLoadReference
+    // detailed logic inside Physics::ParseVehicleClass is covered elsewhere, but we need to hit InitializeLoadReference
     ASSERT_GT(FFBEngineTestAccess::GetAutoPeakLoad(engine), 2000.0);
 }
 
@@ -103,7 +103,7 @@ TEST_CASE(test_coverage_slip_utils, "Coverage") {
 TEST_CASE(test_coverage_textures, "Coverage") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry();
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     ctx.speed_gate = 1.0;
@@ -202,7 +202,7 @@ TEST_CASE(test_coverage_slope_grip_fusion, "Coverage") {
 TEST_CASE(test_coverage_bottoming_rh, "Coverage") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry();
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025; // Smaller dt for better phase control
     ctx.speed_gate = 1.0;
     
@@ -227,7 +227,7 @@ TEST_CASE(test_coverage_bottoming_rh, "Coverage") {
 TEST_CASE(test_coverage_bottoming_dforce, "Coverage") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry();
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
 
@@ -251,7 +251,7 @@ TEST_CASE(test_coverage_bottoming_dforce, "Coverage") {
 TEST_CASE(test_coverage_bottoming_fallback, "Coverage") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry();
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
 

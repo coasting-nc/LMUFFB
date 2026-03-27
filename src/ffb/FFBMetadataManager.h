@@ -31,7 +31,7 @@ public:
     const char* GetVehicleName() const { return m_vehicle_name; }
     const char* GetTrackName() const { return m_track_name; }
     const char* GetCurrentClassName() const { return m_current_class_name.c_str(); }
-    LMUFFB::ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }
+    LMUFFB::Physics::ParsedVehicleClass GetCurrentClass() const { return m_current_vclass; }
     bool HasWarnedInvalidRange() const { return m_warned_invalid_range; }
     void SetWarnedInvalidRange(bool val) { m_warned_invalid_range = val; }
 
@@ -39,7 +39,7 @@ public:
     char m_vehicle_name[STR_BUF_64] = "Unknown";
     char m_track_name[STR_BUF_64] = "Unknown";
     std::string m_current_class_name = "";
-    LMUFFB::ParsedVehicleClass m_current_vclass = LMUFFB::ParsedVehicleClass::UNKNOWN;
+    LMUFFB::Physics::ParsedVehicleClass m_current_vclass = LMUFFB::Physics::ParsedVehicleClass::UNKNOWN;
     std::atomic<bool> m_warned_invalid_range{false};
     std::string m_last_handled_vehicle_name = "";
     std::string m_last_logged_veh = "";

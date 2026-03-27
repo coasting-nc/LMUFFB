@@ -36,16 +36,6 @@ double GetMotionRatioForClass(ParsedVehicleClass vclass);
 double GetUnsprungWeightForClass(ParsedVehicleClass vclass, bool is_rear);
 
 } // namespace Physics
-
-// Bridge Aliases for backward compatibility during migration
-using ParsedVehicleClass = Physics::ParsedVehicleClass;
-using Physics::ParseVehicleClass;
-using Physics::GetDefaultLoadForClass;
-using Physics::VehicleClassToString;
-using Physics::ParseVehicleBrand;
-using Physics::GetMotionRatioForClass;
-using Physics::GetUnsprungWeightForClass;
-
 } // namespace LMUFFB
 
 #endif // VEHICLE_UTILS_H

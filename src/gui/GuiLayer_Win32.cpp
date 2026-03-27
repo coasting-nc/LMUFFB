@@ -207,7 +207,7 @@ bool GuiLayer::Init() {
     return true;
 }
 
-void GuiLayer::Shutdown(FFBEngine& engine) {
+void GuiLayer::Shutdown(LMUFFB::FFBEngine& engine) {
     SaveCurrentWindowGeometryPlatform(Config::show_graphs);
     Config::Save(engine);
     ImGui_ImplDX11_Shutdown();
@@ -222,7 +222,7 @@ void* GuiLayer::GetWindowHandle() {
     return (void*)g_hwnd;
 }
 
-bool GuiLayer::Render(FFBEngine& engine) {
+bool GuiLayer::Render(LMUFFB::FFBEngine& engine) {
     if (!g_pd3dDeviceContext) return true; // Safety for uninitialized state (e.g. unit tests)
 
     MSG msg;
@@ -385,10 +385,10 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 bool GuiLayer::Init() {
     return true;
 }
-void GuiLayer::Shutdown(FFBEngine& engine) {
+void GuiLayer::Shutdown(LMUFFB::FFBEngine& engine) {
     Config::Save(engine);
 }
-bool GuiLayer::Render(FFBEngine& engine) { return true; }
+bool GuiLayer::Render(LMUFFB::FFBEngine& engine) { return true; }
 void* GuiLayer::GetWindowHandle() { return nullptr; }
 
 #endif

@@ -59,13 +59,4 @@ bool SavePresetFileDialogPlatform(std::string& outPath, const std::string& defau
 }
 }
 
-namespace LMUFFB {
-    using GUI::GuiLayer;
-    using GUI::ResizeWindowPlatform;
-    using GUI::SaveCurrentWindowGeometryPlatform;
-    using GUI::SetWindowAlwaysOnTopPlatform;
-    using GUI::OpenPresetFileDialogPlatform;
-    using GUI::SavePresetFileDialogPlatform;
-}
-
 #endif // GUILAYER_H

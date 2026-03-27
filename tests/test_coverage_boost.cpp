@@ -98,7 +98,7 @@ TEST_CASE(test_coverage_stats_latching, "Coverage") {
 TEST_CASE(test_coverage_flatspot, "Coverage") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0); // 10 m/s
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 10.0;
     
@@ -124,7 +124,7 @@ TEST_CASE(test_coverage_flatspot, "Coverage") {
 TEST_CASE(test_coverage_gyro_damping, "Coverage") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     
@@ -144,7 +144,7 @@ TEST_CASE(test_coverage_gyro_damping, "Coverage") {
 TEST_CASE(test_coverage_abs_pulse, "Coverage") {
     FFBEngine engine;
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.speed_gate = 1.0;
     

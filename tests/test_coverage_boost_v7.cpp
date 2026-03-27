@@ -124,7 +124,7 @@ TEST_CASE(test_signal_conditioning_zero_crossings, "Physics") {
     InitializeEngine(engine);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     
@@ -153,7 +153,7 @@ TEST_CASE(test_notch_filter_transitions, "Physics") {
     InitializeEngine(engine);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.car_speed = 20.0;
     
@@ -327,7 +327,7 @@ TEST_CASE(test_yaw_kicks_branches, "Physics") {
     engine.m_rear_axle.sop_scale = 1.0f;
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 20.0;
     ctx.speed_gate = 1.0;
@@ -367,7 +367,7 @@ TEST_CASE(test_lockup_predictive_branches, "Physics") {
     data.mWheel[WHEEL_FL].mRotation = 100.0;
     data.mWheel[WHEEL_FL].mLongitudinalPatchVel = 0.0; // No slip yet
     
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 30.0;
     ctx.brake_load_factor = 1.0;
@@ -391,7 +391,7 @@ TEST_CASE(test_bottoming_branches, "Physics") {
     FFBEngineTestAccess::SetBottomingGain(engine, 1.0f);
     
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0, 0.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 20.0;
     ctx.speed_gate = 1.0;

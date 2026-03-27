@@ -12,7 +12,7 @@ TEST_CASE(test_gyro_damping_target_coverage, "Coverage") {
     InitializeEngine(engine);
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.car_speed = 50.0;
     
@@ -41,7 +41,7 @@ TEST_CASE(test_abs_pulse_target_coverage, "Coverage") {
     InitializeEngine(engine);
     TelemInfoV01 data;
     std::memset(&data, 0, sizeof(data));
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.01;
     ctx.speed_gate = 1.0;
     
@@ -138,14 +138,14 @@ TEST_CASE(test_parse_vehicle_class_coverage, "Coverage") {
     // FFBEngine engine; // Not needed for static method
 
     // Line 731: else if (cls.find("WEC") != std::string::npos)
-    ASSERT_EQ((int)ParseVehicleClass("LMP2 WEC", "ORECA"), (int)ParsedVehicleClass::LMP2_RESTRICTED);
+    ASSERT_EQ((int)Physics::ParseVehicleClass("LMP2 WEC", "ORECA"), (int)Physics::ParsedVehicleClass::LMP2_RESTRICTED);
     
     // Issue #225: Default LMP2 is now RESTRICTED
-    ASSERT_EQ((int)ParseVehicleClass("LMP2", "ORECA"), (int)ParsedVehicleClass::LMP2_RESTRICTED);
+    ASSERT_EQ((int)Physics::ParseVehicleClass("LMP2", "ORECA"), (int)Physics::ParsedVehicleClass::LMP2_RESTRICTED);
 
     // Other branches
-    ASSERT_EQ((int)ParseVehicleClass("LMP2 ELMS", "ORECA"), (int)ParsedVehicleClass::LMP2_UNRESTRICTED);
-    ASSERT_EQ((int)ParseVehicleClass("HYPERCAR", ""), (int)ParsedVehicleClass::HYPERCAR);
+    ASSERT_EQ((int)Physics::ParseVehicleClass("LMP2 ELMS", "ORECA"), (int)Physics::ParsedVehicleClass::LMP2_UNRESTRICTED);
+    ASSERT_EQ((int)Physics::ParseVehicleClass("HYPERCAR", ""), (int)Physics::ParsedVehicleClass::HYPERCAR);
 }
 
 TEST_CASE(test_calculate_slope_grip_torque_coverage, "Coverage") {

@@ -11,12 +11,12 @@ TEST_CASE(test_issue_355_motion_ratio_normalization, "Physics") {
 
     // Test Case 1: Hypercar (MR 0.5)
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "HYPERCAR", "Cadillac 963");
-    double mr_hyper = GetMotionRatioForClass(ParsedVehicleClass::HYPERCAR);
+    double mr_hyper = Physics::GetMotionRatioForClass(Physics::ParsedVehicleClass::HYPERCAR);
     ASSERT_EQ(mr_hyper, 0.50);
 
     // Test Case 2: GT3 (MR 0.65)
     FFBEngineTestAccess::CallInitializeLoadReference(engine, "GT3", "Ferrari 296");
-    double mr_gt3 = GetMotionRatioForClass(ParsedVehicleClass::LMGT3);
+    double mr_gt3 = Physics::GetMotionRatioForClass(Physics::ParsedVehicleClass::LMGT3);
     ASSERT_EQ(mr_gt3, 0.65);
 }
 
@@ -52,7 +52,7 @@ TEST_CASE(test_issue_355_lockup_grounding_robustness, "Physics") {
     TelemInfoV01 data = CreateBasicTestTelemetry(10.0);
     data.mUnfilteredBrake = 1.0;
 
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
     ctx.brake_load_factor = 1.0;
@@ -132,7 +132,7 @@ TEST_CASE(test_issue_355_bottoming_impulse_normalization, "Physics") {
     engine.m_advanced.speed_gate_upper = -0.5f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
 
@@ -164,7 +164,7 @@ TEST_CASE(test_issue_355_bottoming_safety_fallback, "Physics") {
     engine.m_advanced.speed_gate_upper = -0.5f;
 
     TelemInfoV01 data = CreateBasicTestTelemetry(20.0);
-    FFBCalculationContext ctx;
+    Physics::FFBCalculationContext ctx;
     ctx.dt = 0.0025;
     ctx.speed_gate = 1.0;
     ctx.frame_warn_load = true;
