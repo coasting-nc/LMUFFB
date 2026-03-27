@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-27 21:08:08</td>
+            <td class="headerValue">2026-03-27 23:00:52</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -93,15 +93,15 @@
 <span id="L22"><span class="lineNum">      22</span>                 :             :     double l_min = 0.0;</span>
 <span id="L23"><span class="lineNum">      23</span>                 :             :     double l_max = 0.0;</span>
 <span id="L24"><span class="lineNum">      24</span>                 :             :     </span>
-<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">      278625 :     void Update(double val) {</span></span>
+<span id="L25"><span class="lineNum">      25</span>                 :<span class="tlaGNC tlaBgGNC">      296241 :     void Update(double val) {</span></span>
 <span id="L26"><span class="lineNum">      26</span>                 :             :         // Update Session Min/Max</span>
-<span id="L27"><span class="lineNum">      27</span>         [<span class="tlaGBC" title="Branch 0 was taken 3371 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 275254 times"> + </span>]:<span class="tlaGNC">      278625 :         if (val &lt; session_min) session_min = val;</span></span>
-<span id="L28"><span class="lineNum">      28</span>         [<span class="tlaGBC" title="Branch 0 was taken 8128 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 270497 times"> + </span>]:<span class="tlaGNC">      278625 :         if (val &gt; session_max) session_max = val;</span></span>
+<span id="L27"><span class="lineNum">      27</span>         [<span class="tlaGBC" title="Branch 0 was taken 3391 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 292850 times"> + </span>]:<span class="tlaGNC">      296241 :         if (val &lt; session_min) session_min = val;</span></span>
+<span id="L28"><span class="lineNum">      28</span>         [<span class="tlaGBC" title="Branch 0 was taken 8357 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 287884 times"> + </span>]:<span class="tlaGNC">      296241 :         if (val &gt; session_max) session_max = val;</span></span>
 <span id="L29"><span class="lineNum">      29</span>                 :             :         </span>
 <span id="L30"><span class="lineNum">      30</span>                 :             :         // Update Interval Accumulator</span>
-<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">      278625 :         interval_sum += val;</span></span>
-<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">      278625 :         interval_count++;</span></span>
-<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">      278625 :     }</span></span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC">      296241 :         interval_sum += val;</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :<span class="tlaGNC">      296241 :         interval_count++;</span></span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC">      296241 :     }</span></span>
 <span id="L34"><span class="lineNum">      34</span>                 :             :     </span>
 <span id="L35"><span class="lineNum">      35</span>                 :             :     // Called every interval (e.g. 1s) to latch data and reset interval counters</span>
 <span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC">          15 :     void ResetInterval() {</span></span>
