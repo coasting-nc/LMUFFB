@@ -211,12 +211,18 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io). (v0.7.262)
 - [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`.
 - [x] Transition `io/` files to `namespace LMUFFB::IO`. (v0.7.263)
+- [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `IO` subsystem. (v0.7.264)
 
 ---
 
 ## 7. Implementation Notes
 
-### 7.0 Implementation Notes (v0.7.263)
+### 7.0 Implementation Notes (v0.7.264)
+- **Encountered Issues:** None. The bulk replacement of the prefixed namespace references was handled easily across `src/` and `tests/`. No manual fixes for edge cases were needed. Build succeeded smoothly with no undefined references. A test failure was observed (`test_analyzer_bundling_integrity`), however it is related to Python analyzer files missing from the build output directory and entirely unrelated to the namespace migration.
+- **Deviations from the Plan:** Replaced occurrences `GameConnector` with `LMUFFB::IO::GameConnector` globally inside `src/` and `tests/` explicitly instead of adding a `using namespace LMUFFB::IO;` in the test files, to fulfill the "explicitly" criteria detailed in the objective.
+- **Suggestions for the Future:** Proceed with the last remaining sub-namespace migration: `src/ffb/` to `namespace LMUFFB::FFB`.
+
+### 7.1 Implementation Notes (v0.7.263)
 - **Encountered Issues:** None. The migration was clean — bridge aliases ensured zero call site changes were required.
 - **Deviations from the Plan:** None. Both `GameConnector` and `RestApiProvider` were fully transitioned to `namespace LMUFFB::IO` as planned.
 - **Key Decisions:**
@@ -224,7 +230,7 @@ This section tracks the progress made towards fully refactoring the main code an
   - `ControlMode` (used unqualified in `GameConnector.cpp`) is defined in the global namespace in `LmuSharedMemoryWrapper.h`, so it is visible from inside `namespace LMUFFB::IO` via normal global-scope lookup — no qualification needed.
 - **Suggestions for the Future:** Transition `src/ffb/` files to `namespace LMUFFB::FFB`. This is the largest remaining migration and will require careful planning due to the monolithic `FFBEngine` class and its cross-cutting internal dependencies.
 
-### 7.1 Implementation Notes (v0.7.260)
+### 7.2 Implementation Notes (v0.7.260)
 - **Encountered Issues:**
   - Found that `FFBEngine.h` and other headers used `LMUFFB::` prefixed utility types like `BiquadNotch` and `HoltWintersFilter`. Removing the bridge aliases required updating these to `LMUFFB::Utils::` or adding appropriate `using` directives in the headers (which is generally discouraged for headers). Resolved by using fully qualified `LMUFFB::Utils::` names in headers where possible.
   - Test files like `test_math_utils.cpp` and `test_reconstruction.cpp` had many direct references to `LMUFFB::` types. Updated these to use `using namespace LMUFFB::Utils;` at file scope to keep the code clean while maintaining hygiene.
@@ -233,7 +239,7 @@ This section tracks the progress made towards fully refactoring the main code an
   - Proceed with the Internal Linkage Audit for `src/ffb/` and `src/io/` to further harden the Unity Build.
   - Begin transitioning `src/ffb/` and `src/io/` to their respective sub-namespaces.
 
-### 7.2 Implementation Notes (v0.7.259)
+### 7.3 Implementation Notes (v0.7.259)
 - **Encountered Issues:**
   - Encountered linker errors when moving GUI platform helpers (e.g., `GetGuiPlatform`, `ResizeWindowPlatform`) into anonymous namespaces. These functions require external linkage because they are accessed by `GuiLayer_Common.cpp` (in Unity builds) and the unit test suite across different translation units. Resolved by moving them out of anonymous namespaces while keeping them protected within `namespace LMUFFB::GUI`.
   - Discovered that several unit tests relied on `LMUFFB::FFBThread` and `LMUFFB::PopulateSessionInfo` being visible globally. Moving these to anonymous namespaces in `main.cpp` broke the test runner. Fixed by restoring external linkage for these specific test-required symbols.
@@ -244,7 +250,7 @@ This section tracks the progress made towards fully refactoring the main code an
   - Continue the Namespace Hygiene rollout by incrementally removing bridge aliases for the `Utils` and `Physics` subsystems.
   - Conduct a targeted Internal Linkage sweep for the `src/ffb/` and `src/io/` directories, ensuring file-local helpers are correctly encapsulated in anonymous namespaces.
 
-### 7.3 Implementation Notes (v0.7.258)
+### 7.4 Implementation Notes (v0.7.258)
 - **Encountered Issues:**
   - Encountered linker errors for `g_engine_mutex` and `g_running` within the `LMUFFB::GUI` namespace in `GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, and `GuiLayer_Linux.cpp`. Resolved by ensuring these `extern` declarations are positioned within the root `namespace LMUFFB` while the implementation remains in `namespace LMUFFB::GUI`.
 - **Deviations from the Plan:** None.

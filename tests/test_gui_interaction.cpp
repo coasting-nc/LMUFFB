@@ -247,7 +247,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
     // Test with Game Connected
     #ifndef _WIN32
     MockSM::GetMaps()["LMU_Data"].resize(sizeof(SharedMemoryLayout));
-    GameConnector::Get().TryConnect();
+    LMUFFB::IO::GameConnector::Get().TryConnect();
     #endif
 
     ImGui::NewFrame();
@@ -353,7 +353,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
     std::remove("test_gui.csv");
 
     // Disconnect
-    GameConnector::Get().Disconnect();
+    LMUFFB::IO::GameConnector::Get().Disconnect();
     #ifndef _WIN32
     MockSM::GetMaps().erase("LMU_Data");
     #endif

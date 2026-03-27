@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.264]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Implemented **Namespace Hygiene** for the `IO` subsystem by removing temporary bridge aliases (`GameConnector` and `RestApiProvider`) from their respective headers.
+  - Updated over 150 call sites and header types project-wide across `src/` and `tests/`, migrating to explicit `LMUFFB::IO::` qualification.
+  - Verified 100% core test suite pass rate under the fully decoupled and encapsulated namespaced architecture.
+  - Updated the Unity Build Plan documentation with implementation notes and refined next steps for the `FFB` subsystem.
+
 ## [0.7.263]
 ### Changed
 - **Unity Build Expansion (Phase 6 — `src/io/` Sub-namespace Migration to `LMUFFB::IO`)**:

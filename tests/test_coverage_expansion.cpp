@@ -91,7 +91,7 @@ TEST_CASE(test_shared_memory_lock_expansion, "System") {
 }
 
 TEST_CASE(test_game_connector_expansion, "System") {
-    GameConnector& conn = GameConnector::Get();
+    LMUFFB::IO::GameConnector& conn = LMUFFB::IO::GameConnector::Get();
 
     // Disconnect if already connected from other tests to start clean
     conn.Disconnect();
@@ -133,7 +133,7 @@ TEST_CASE(test_game_connector_expansion, "System") {
         lockData[1] = 0; // release
     }
 #else
-    std::cout << "  [INFO] Skipping GameConnector SM-dependent tests on Windows." << std::endl;
+    std::cout << "  [INFO] Skipping LMUFFB::IO::GameConnector SM-dependent tests on Windows." << std::endl;
 #endif
 }
 

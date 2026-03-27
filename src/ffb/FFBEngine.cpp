@@ -445,7 +445,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Trigger REST API Fallback if enabled and range is invalid (Issue #221)
     if (seeded && m_advanced.rest_api_enabled && data->mPhysicalSteeringWheelRange <= 0.0f) {
-        RestApiProvider::Get().RequestSteeringRange(m_advanced.rest_api_port);
+        LMUFFB::IO::RestApiProvider::Get().RequestSteeringRange(m_advanced.rest_api_port);
     }
     
     // --- 1. INITIALIZE CONTEXT ---
@@ -467,7 +467,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
     // Steering Range Diagnostic (Issue #218)
     if (upsampled_data->mPhysicalSteeringWheelRange <= 0.0f) {
         if (!m_metadata.HasWarnedInvalidRange()) {
-            float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
+            float fallback = LMUFFB::IO::RestApiProvider::Get().GetFallbackRangeDeg();
             if (m_advanced.rest_api_enabled && fallback > 0.0f) {
                 Logger::Get().LogFile("[FFB] Invalid Shared Memory Steering Range. Using REST API fallback: %.1f deg", fallback);
             } else {
@@ -870,7 +870,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 
     // Fallback to REST API if enabled and SM range is invalid (Issue #221)
     if (m_advanced.rest_api_enabled && sm_range_rad <= 0.0f) {
-        float fallback = RestApiProvider::Get().GetFallbackRangeDeg();
+        float fallback = LMUFFB::IO::RestApiProvider::Get().GetFallbackRangeDeg();
         if (fallback > 0.0f) {
             range_deg = fallback;
         }
@@ -1427,7 +1427,7 @@ void FFBEngine::calculate_gyro_damping(const TelemInfoV01* data, LMUFFB::Physics
 
     // Fallback to REST API if enabled and SM range is invalid (Issue #221)
     if (m_advanced.rest_api_enabled && range <= 0.0f) {
-        float fallback_deg = RestApiProvider::Get().GetFallbackRangeDeg();
+        float fallback_deg = LMUFFB::IO::RestApiProvider::Get().GetFallbackRangeDeg();
         if (fallback_deg > 0.0f) {
             range = fallback_deg * ((float)PI / 180.0f);
         }

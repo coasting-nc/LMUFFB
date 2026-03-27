@@ -242,11 +242,11 @@ TEST_CASE(test_window_always_on_top_interface, "GUI") {
 }
 
 TEST_CASE(test_game_connector_staleness, "Windows") {
-    std::cout << "\nTest: GameConnector Staleness (Heartbeat Watchdog)" << std::endl;
+    std::cout << "\nTest: LMUFFB::IO::GameConnector Staleness (Heartbeat Watchdog)" << std::endl;
 
     // 1. Disconnected state should be stale
-    GameConnector::Get().Disconnect();
-    ASSERT_TRUE(GameConnector::Get().IsStale() == true);
+    LMUFFB::IO::GameConnector::Get().Disconnect();
+    ASSERT_TRUE(LMUFFB::IO::GameConnector::Get().IsStale() == true);
 
     // 2. Mocking connection to test watchdog logic
     // We create the shared memory mapping LMU expects
@@ -263,34 +263,34 @@ TEST_CASE(test_game_connector_staleness, "Windows") {
             pBuf->data.generic.events[SME_UPDATE_TELEMETRY] = static_cast<SharedMemoryEvent>(1);
             pBuf->data.telemetry.telemInfo[0].mElapsedTime = 100.0;
             
-            // SharedMemoryLock for GameConnector::TryConnect
-            // This will create the lock mapping and event that GameConnector expects
+            // SharedMemoryLock for LMUFFB::IO::GameConnector::TryConnect
+            // This will create the lock mapping and event that LMUFFB::IO::GameConnector expects
             auto mockLock = SharedMemoryLock::MakeSharedMemoryLock(); 
 
             // Connect (should succeed now that mapping & lock exist)
-            if (GameConnector::Get().TryConnect()) {
+            if (LMUFFB::IO::GameConnector::Get().TryConnect()) {
                 SharedMemoryObjectOut dest;
                 
                 // First update - should be fresh
-                GameConnector::Get().CopyTelemetry(dest);
-                ASSERT_TRUE(GameConnector::Get().IsStale(100) == false);
+                LMUFFB::IO::GameConnector::Get().CopyTelemetry(dest);
+                ASSERT_TRUE(LMUFFB::IO::GameConnector::Get().IsStale(100) == false);
 
                 // Wait 150ms without updating pBuf->data.telemetry.telemInfo[0].mElapsedTime
                 std::this_thread::sleep_for(std::chrono::milliseconds(150));
                 
                 // Call CopyTelemetry again (simulates the loop running)
                 // Since mElapsedTime hasn't changed, heartbeat shouldn't update
-                GameConnector::Get().CopyTelemetry(dest);
+                LMUFFB::IO::GameConnector::Get().CopyTelemetry(dest);
                 
                 // Now it should be stale
-                ASSERT_TRUE(GameConnector::Get().IsStale(100) == true);
+                ASSERT_TRUE(LMUFFB::IO::GameConnector::Get().IsStale(100) == true);
 
                 // Update mElapsedTime to simulate game advancing
                 pBuf->data.telemetry.telemInfo[0].mElapsedTime = 100.01;
-                GameConnector::Get().CopyTelemetry(dest);
+                LMUFFB::IO::GameConnector::Get().CopyTelemetry(dest);
                 
                 // Should be fresh again
-                ASSERT_TRUE(GameConnector::Get().IsStale(100) == false);
+                ASSERT_TRUE(LMUFFB::IO::GameConnector::Get().IsStale(100) == false);
             } else {
                 std::cout << "  [SKIP] Could not mock connection for staleness test." << std::endl;
             }
@@ -299,7 +299,7 @@ TEST_CASE(test_game_connector_staleness, "Windows") {
         CloseHandle(hMap);
     }
     
-    GameConnector::Get().Disconnect();
+    LMUFFB::IO::GameConnector::Get().Disconnect();
 }
 
 } // namespace FFBEngineTests

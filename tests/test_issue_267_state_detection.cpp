@@ -10,7 +10,7 @@ using namespace LMUFFB::Utils;
 namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_issue_267_initial_connection_menu, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;
@@ -37,7 +37,7 @@ TEST_CASE_TAGGED(test_issue_267_initial_connection_menu, "Functional", (std::vec
 }
 
 TEST_CASE_TAGGED(test_issue_267_initial_connection_cockpit, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;
@@ -64,7 +64,7 @@ TEST_CASE_TAGGED(test_issue_267_initial_connection_cockpit, "Functional", (std::
 }
 
 TEST_CASE_TAGGED(test_issue_267_transition_cockpit, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;
@@ -83,7 +83,7 @@ TEST_CASE_TAGGED(test_issue_267_transition_cockpit, "Functional", (std::vector<s
 }
 
 TEST_CASE_TAGGED(test_issue_267_session_end_clears_realtime, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;
@@ -103,7 +103,7 @@ TEST_CASE_TAGGED(test_issue_267_session_end_clears_realtime, "Functional", (std:
 }
 
 TEST_CASE_TAGGED(test_issue_267_session_type_change, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;

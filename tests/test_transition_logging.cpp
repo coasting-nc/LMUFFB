@@ -13,7 +13,7 @@ namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::string>{"logging", "transitions"})) {
     Logger::Get().Init("test_transitions.log", "", false);
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut data;
@@ -22,7 +22,7 @@ TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::
     // 1. Options Location Transition
     std::cout << "Testing Options Location Transition..." << std::endl;
     // Reset previous state to avoid cross-test interference since it's a singleton
-    // But since we can't easily reset GameConnector, let's adapt to its current state.
+    // But since we can't easily reset LMUFFB::IO::GameConnector, let's adapt to its current state.
     // The previous test run showed OptionsLocation starting at 0 if we are lucky,
     // but here it says 255 because it's a fresh run? No, it's a singleton.
 

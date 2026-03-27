@@ -7,7 +7,7 @@
 namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_issue_269_control_state_detection, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;

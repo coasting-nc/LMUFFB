@@ -4,7 +4,7 @@
 namespace FFBEngineTests {
 
 TEST_CASE(test_vehicle_brand_parsing, "Internal") {
-    // Test ParseVehicleBrand which replaced RestApiProvider manufacturer detection
+    // Test ParseVehicleBrand which replaced LMUFFB::IO::RestApiProvider manufacturer detection
 
     // Ferrari
     ASSERT_EQ_STR(Physics::ParseVehicleBrand("GTE", "Ferrari 488 GTE Evo"), "Ferrari");

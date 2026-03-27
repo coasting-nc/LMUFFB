@@ -41,7 +41,7 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
         changed = true;
 
         // Issue #379: Reset steering range on car change
-        RestApiProvider::Get().ResetSteeringRange();
+        LMUFFB::IO::RestApiProvider::Get().ResetSteeringRange();
     }
 
     if (vehicleClass && std::string(vehicleClass) != m_current_class_name) {

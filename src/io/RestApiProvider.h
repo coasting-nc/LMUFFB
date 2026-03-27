@@ -47,9 +47,4 @@ private:
 
 } // namespace LMUFFB::IO
 
-// Bridge alias: keeps existing call sites (LMUFFB::RestApiProvider) compiling without changes
-namespace LMUFFB {
-    using RestApiProvider = LMUFFB::IO::RestApiProvider;
-} // namespace LMUFFB
-
 #endif // RESTAPIPROVIDER_H

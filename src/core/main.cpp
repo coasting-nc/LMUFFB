@@ -124,14 +124,14 @@ void FFBThread() {
             double force_physics = 0.0;
 
             bool in_realtime_phys = false;
-            if (g_ffb_active && GameConnector::Get().IsConnected()) {
-                GameConnector::Get().CopyTelemetry(g_localData);
+            if (g_ffb_active && LMUFFB::IO::GameConnector::Get().IsConnected()) {
+                LMUFFB::IO::GameConnector::Get().CopyTelemetry(g_localData);
                 g_engine.m_metadata.UpdateMetadata(g_localData); // Update names/classes immediately
 
-                in_realtime_phys = GameConnector::Get().IsInRealtime();
-                long current_session = GameConnector::Get().GetSessionType();
+                in_realtime_phys = LMUFFB::IO::GameConnector::Get().IsInRealtime();
+                long current_session = LMUFFB::IO::GameConnector::Get().GetSessionType();
 
-                bool is_stale = GameConnector::Get().IsStale(kStaleThresholdMs);
+                bool is_stale = LMUFFB::IO::GameConnector::Get().IsStale(kStaleThresholdMs);
 
                 // §2.3: plain locals — reset on every thread launch (no static bleed in tests)
                 bool was_driving = false;
@@ -139,7 +139,7 @@ void FFBThread() {
 
                 // is_driving uses IsPlayerActivelyDriving() which correctly gates on
                 // inRealtime AND playerControl==0 AND gamePhase!=9 (paused).
-                bool is_driving = GameConnector::Get().IsPlayerActivelyDriving();
+                bool is_driving = LMUFFB::IO::GameConnector::Get().IsPlayerActivelyDriving();
 
                 bool should_start_log = (is_driving && !was_driving);
                 bool should_stop_log  = (!is_driving && was_driving);
@@ -249,7 +249,7 @@ void FFBThread() {
                 std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
                 double t_rate = (g_engine.m_front_axle.torque_source == 1) ? genTorqueMonitor.GetRate() : torqueMonitor.GetRate();
                 health = HealthMonitor::Check(loopMonitor.GetRate(), telemMonitor.GetRate(), t_rate, g_engine.m_front_axle.torque_source, physicsMonitor.GetRate(),
-                                              GameConnector::Get().IsConnected(), GameConnector::Get().IsSessionActive(), GameConnector::Get().GetSessionType(), GameConnector::Get().IsInRealtime(), GameConnector::Get().GetPlayerControl());
+                                              LMUFFB::IO::GameConnector::Get().IsConnected(), LMUFFB::IO::GameConnector::Get().IsSessionActive(), LMUFFB::IO::GameConnector::Get().GetSessionType(), LMUFFB::IO::GameConnector::Get().IsInRealtime(), LMUFFB::IO::GameConnector::Get().GetPlayerControl());
             }
 
             if (in_realtime_phys && !health.is_healthy) {
@@ -354,11 +354,11 @@ int lmuffb_app_main(int argc, char* argv[]) noexcept {
             DirectInputFFB::Get().Initialize(NULL);
         }
 
-        if (GameConnector::Get().CheckLegacyConflict()) {
+        if (LMUFFB::IO::GameConnector::Get().CheckLegacyConflict()) {
             Logger::Get().LogFile("[Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)");
         }
 
-        if (!GameConnector::Get().TryConnect()) {
+        if (!LMUFFB::IO::GameConnector::Get().TryConnect()) {
             Logger::Get().LogFile("Game not running or Shared Memory not ready. Waiting...");
         }
 

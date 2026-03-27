@@ -229,7 +229,7 @@ void PumpEngineSteadyState(FFBEngine& engine, TelemInfoV01& data) {
 }
 
 // --- Friend Access for Testing ---
-void GameConnectorTestAccessor::Reset(LMUFFB::GameConnector& gc) {
+void GameConnectorTestAccessor::Reset(LMUFFB::IO::GameConnector& gc) {
     std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
     gc._DisconnectLocked();
     gc.m_sessionActive.store(false);
@@ -238,7 +238,7 @@ void GameConnectorTestAccessor::Reset(LMUFFB::GameConnector& gc) {
     gc.m_currentGamePhase.store(255);
     gc.m_playerControl.store(-2);
     gc.m_pendingMenuCheck = false;
-    memset(&gc.m_prevState, 0, offsetof(LMUFFB::GameConnector::TransitionState, lastEventLogTime));
+    memset(&gc.m_prevState, 0, offsetof(LMUFFB::IO::GameConnector::TransitionState, lastEventLogTime));
     for (int i = 0; i < SME_MAX; ++i) {
         gc.m_prevState.lastEventLogTime[i] = std::chrono::steady_clock::time_point();
         gc.m_prevState.eventState[i] = 0;
@@ -252,19 +252,19 @@ void GameConnectorTestAccessor::Reset(LMUFFB::GameConnector& gc) {
     gc.m_prevState.numVehicles = -1;
 }
 
-void GameConnectorTestAccessor::SetSharedMem(LMUFFB::GameConnector& gc, SharedMemoryLayout* layout) {
+void GameConnectorTestAccessor::SetSharedMem(LMUFFB::IO::GameConnector& gc, SharedMemoryLayout* layout) {
     std::lock_guard<std::recursive_mutex> lock(gc.m_mutex);
     gc.m_pSharedMemLayout = layout;
     gc.m_connected = true;
 }
 
-void GameConnectorTestAccessor::SetSessionActive(LMUFFB::GameConnector& gc, bool val) { gc.m_sessionActive.store(val); }
-void GameConnectorTestAccessor::SetInRealtime(LMUFFB::GameConnector& gc, bool val) { gc.m_inRealtime.store(val); }
-void GameConnectorTestAccessor::SetSessionType(LMUFFB::GameConnector& gc, long val) { gc.m_currentSessionType.store(val); }
-void GameConnectorTestAccessor::SetGamePhase(LMUFFB::GameConnector& gc, unsigned char val) { gc.m_currentGamePhase.store(val); }
-void GameConnectorTestAccessor::SetPlayerControl(LMUFFB::GameConnector& gc, signed char val) { gc.m_playerControl.store(val); }
+void GameConnectorTestAccessor::SetSessionActive(LMUFFB::IO::GameConnector& gc, bool val) { gc.m_sessionActive.store(val); }
+void GameConnectorTestAccessor::SetInRealtime(LMUFFB::IO::GameConnector& gc, bool val) { gc.m_inRealtime.store(val); }
+void GameConnectorTestAccessor::SetSessionType(LMUFFB::IO::GameConnector& gc, long val) { gc.m_currentSessionType.store(val); }
+void GameConnectorTestAccessor::SetGamePhase(LMUFFB::IO::GameConnector& gc, unsigned char val) { gc.m_currentGamePhase.store(val); }
+void GameConnectorTestAccessor::SetPlayerControl(LMUFFB::IO::GameConnector& gc, signed char val) { gc.m_playerControl.store(val); }
 
-void GameConnectorTestAccessor::InjectTransitions(LMUFFB::GameConnector& gc, const SharedMemoryObjectOut& data) {
+void GameConnectorTestAccessor::InjectTransitions(LMUFFB::IO::GameConnector& gc, const SharedMemoryObjectOut& data) {
     gc.CheckTransitions(data);
 }
 

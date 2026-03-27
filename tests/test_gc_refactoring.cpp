@@ -1,6 +1,6 @@
 // test_gc_refactoring.cpp
 //
-// Pre-refactoring regression tests for GameConnector::CheckTransitions.
+// Pre-refactoring regression tests for LMUFFB::IO::GameConnector::CheckTransitions.
 // Written before the refactoring so they act as a safety net:
 // every test here should pass both BEFORE and AFTER the changes.
 //
@@ -53,7 +53,7 @@ static int CountLinesInFile(const std::string& filename, const std::string& need
 TEST_CASE_TAGGED(test_gc_poll_overrides_stale_realtime,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // Manually tell the state machine "we are in realtime"
@@ -74,7 +74,7 @@ TEST_CASE_TAGGED(test_gc_poll_overrides_stale_realtime,
 TEST_CASE_TAGGED(test_gc_poll_overrides_stale_session,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // Manually tell the state machine "session is active"
@@ -97,7 +97,7 @@ TEST_CASE_TAGGED(test_gc_poll_overrides_stale_session,
 TEST_CASE_TAGGED(test_gc_end_session_event_overrides_poll,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // Snapshot: buffer still claims "track loaded + in realtime" (hasn't been zeroed yet)
@@ -121,7 +121,7 @@ TEST_CASE_TAGGED(test_gc_end_session_event_overrides_poll,
 TEST_CASE_TAGGED(test_gc_gamephase_updated_unconditionally,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
@@ -145,7 +145,7 @@ TEST_CASE_TAGGED(test_gc_gamephase_updated_unconditionally,
 TEST_CASE_TAGGED(test_gc_sessiontype_updated_unconditionally,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
@@ -166,7 +166,7 @@ TEST_CASE_TAGGED(test_gc_sessiontype_updated_unconditionally,
 TEST_CASE_TAGGED(test_gc_player_control_from_vehicle,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
@@ -191,7 +191,7 @@ TEST_CASE_TAGGED(test_gc_player_control_from_vehicle,
 TEST_CASE_TAGGED(test_gc_player_control_unchanged_when_no_vehicle,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // Set a known control value first
@@ -215,7 +215,7 @@ TEST_CASE_TAGGED(test_gc_player_control_unchanged_when_no_vehicle,
 TEST_CASE_TAGGED(test_gc_actively_driving_true,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
@@ -237,7 +237,7 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_paused,
 {
     // Addresses the ESC-menu-while-on-track edge case from session transition.md.
     // Game phase 9 == Paused (single-player ESC menu while on track).
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
@@ -258,7 +258,7 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_paused,
 TEST_CASE_TAGGED(test_gc_actively_driving_false_when_ai,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
@@ -277,7 +277,7 @@ TEST_CASE_TAGGED(test_gc_actively_driving_false_when_ai,
 TEST_CASE_TAGGED(test_gc_actively_driving_false_when_not_realtime,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // Player is in Garage/Monitor UI — not in realtime
@@ -301,7 +301,7 @@ TEST_CASE_TAGGED(test_gc_logging_gate_independent_of_session_active,
     // was removed. FFB and logging rely exclusively on `IsPlayerActivelyDriving()`.
     // Returning to the garage keeps IsSessionActive() = true, but must still safely
     // stop FFB/logging by turning IsPlayerActivelyDriving() = false.
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // 1. Actively driving
@@ -344,7 +344,7 @@ TEST_CASE_TAGGED(test_gc_logging_gate_independent_of_session_active,
 TEST_CASE_TAGGED(test_gc_main_menu_ends_session_via_sme_enter,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // Step 1: actively driving
@@ -370,7 +370,7 @@ TEST_CASE_TAGGED(test_gc_main_menu_ends_session_via_sme_enter,
 TEST_CASE_TAGGED(test_gc_garage_return_keeps_session_active,
     "Functional", (std::vector<std::string>{"state_machine", "refactoring"}))
 {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     // Step 1: actively driving
@@ -405,7 +405,7 @@ TEST_CASE_TAGGED(test_gc_no_duplicate_log_on_same_state,
     "Functional", (std::vector<std::string>{"transitions", "refactoring"}))
 {
     Logger::Get().Init("test_refactoring_noduplicate.log", "", false);
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();
@@ -439,7 +439,7 @@ TEST_CASE_TAGGED(test_gc_sme_event_name_lookup,
     // If the helper doesn't exist yet (before refactoring), this test still
     // exercises the behaviour indirectly through transition logging.
     Logger::Get().Init("test_refactoring_sme_names.log", "", false);
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryObjectOut snap = MakeEmptySnapshot();

@@ -31,7 +31,7 @@ void test_issue_281_transition_smoothing() {
     data.mUnfilteredSteering = 1.1; // 110% lock
 
     // Simulate main.cpp logic:
-    // is_driving = GameConnector::Get().IsPlayerActivelyDriving();
+    // is_driving = LMUFFB::IO::GameConnector::Get().IsPlayerActivelyDriving();
     // full_allowed = g_engine.m_safety.IsFFBAllowed(...) && is_driving;
     // force = g_engine.calculate_force(..., full_allowed);
     // [FIX] if (scoring.mControl != 0) force = 0.0;

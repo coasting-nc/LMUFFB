@@ -248,11 +248,11 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFBEngine& engine) {
 
     static std::chrono::steady_clock::time_point last_check_time = std::chrono::steady_clock::now();
 
-    if (!LMUFFB::GameConnector::Get().IsConnected()) {
+    if (!LMUFFB::IO::GameConnector::Get().IsConnected()) {
       ImGui::TextColored(ImVec4(1, 1, 0, 1), "Connecting to LMU...");
       if (std::chrono::steady_clock::now() - last_check_time > CONNECT_ATTEMPT_INTERVAL) {
         last_check_time = std::chrono::steady_clock::now();
-        LMUFFB::GameConnector::Get().TryConnect();
+        LMUFFB::IO::GameConnector::Get().TryConnect();
       }
     } else {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "Connected to LMU");
@@ -1190,7 +1190,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine& engine) {
     // System Health Diagnostics (Moved from Tuning window - Issue #149)
     if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
         HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_front_axle.torque_source, engine.m_physics_rate,
-                                              LMUFFB::GameConnector::Get().IsConnected(), LMUFFB::GameConnector::Get().IsSessionActive(), LMUFFB::GameConnector::Get().GetSessionType(), LMUFFB::GameConnector::Get().IsInRealtime(), LMUFFB::GameConnector::Get().GetPlayerControl());
+                                              LMUFFB::IO::GameConnector::Get().IsConnected(), LMUFFB::IO::GameConnector::Get().IsSessionActive(), LMUFFB::IO::GameConnector::Get().GetSessionType(), LMUFFB::IO::GameConnector::Get().IsInRealtime(), LMUFFB::IO::GameConnector::Get().GetPlayerControl());
 
         ImGui::Columns(6, "RateCols", false);
         DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);
@@ -1246,7 +1246,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFBEngine& engine) {
             ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
         }
 
-        if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && LMUFFB::GameConnector::Get().IsConnected()) {
+        if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && LMUFFB::IO::GameConnector::Get().IsConnected()) {
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings.");
         }
         ImGui::Separator();

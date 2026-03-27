@@ -125,9 +125,4 @@ private:
 
 } // namespace LMUFFB::IO
 
-// Bridge alias: keeps existing call sites (LMUFFB::GameConnector) compiling without changes
-namespace LMUFFB {
-    using GameConnector = LMUFFB::IO::GameConnector;
-} // namespace LMUFFB
-
 #endif // GAMECONNECTOR_H

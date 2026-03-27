@@ -6,7 +6,7 @@
 using namespace FFBEngineTests;
 
 TEST_CASE(test_rest_api_parsing, "RestApi") {
-    RestApiProvider& provider = RestApiProvider::Get();
+    LMUFFB::IO::RestApiProvider& provider = LMUFFB::IO::RestApiProvider::Get();
 
     // 1. Valid JSON with degrees
     std::string json1 = "{\"VM_STEER_LOCK\":{\"stringValue\":\"540 deg\"}}";
@@ -47,5 +47,5 @@ TEST_CASE(test_engine_rest_fallback_integration, "RestApi") {
     ASSERT_TRUE(FFBEngineTestAccess::HasWarnings(engine)); // Should warn about fallback
 
     // Verify no crash when requesting on Linux
-    RestApiProvider::Get().RequestSteeringRange(1234);
+    LMUFFB::IO::RestApiProvider::Get().RequestSteeringRange(1234);
 }

@@ -8,7 +8,7 @@ using namespace LMUFFB::Utils;
 namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_issue_274_robust_session_fallback, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;
@@ -26,7 +26,7 @@ TEST_CASE_TAGGED(test_issue_274_robust_session_fallback, "Functional", (std::vec
 }
 
 TEST_CASE_TAGGED(test_issue_274_robust_realtime_fallback, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;
@@ -44,7 +44,7 @@ TEST_CASE_TAGGED(test_issue_274_robust_realtime_fallback, "Functional", (std::ve
 }
 
 TEST_CASE_TAGGED(test_issue_274_robust_menu_fallback, "Functional", (std::vector<std::string>{"state_machine"})) {
-    GameConnector& gc = GameConnector::Get();
+    LMUFFB::IO::GameConnector& gc = LMUFFB::IO::GameConnector::Get();
     GameConnectorTestAccessor::Reset(gc);
 
     SharedMemoryLayout layout;

@@ -14,7 +14,7 @@ extern std::atomic<bool> g_running;
 namespace FFBEngineTests {
 
 /**
- * Isolated test case for GameConnector state machine and shared memory locking.
+ * Isolated test case for LMUFFB::IO::GameConnector state machine and shared memory locking.
  * This test is sensitive to global mock state and background thread contention, 
  * so it is intentionally excluded from the large unity build chunk to run in its own process.
  */
@@ -23,7 +23,7 @@ TEST_CASE(test_game_connector_branch_boost_isolated, "System") {
     LMUFFB::g_running = false;
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-    GameConnector& conn = GameConnector::Get();
+    LMUFFB::IO::GameConnector& conn = LMUFFB::IO::GameConnector::Get();
     conn.Disconnect();
 
     #ifndef _WIN32

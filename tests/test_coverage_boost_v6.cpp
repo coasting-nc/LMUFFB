@@ -217,7 +217,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
     layout->data.scoring.scoringInfo.mInRealtime = 1;
 
     // Ensure connector is connected
-    GameConnector::Get().TryConnect();
+    LMUFFB::IO::GameConnector::Get().TryConnect();
 
     LMUFFB::g_ffb_active = true;
     LMUFFB::g_running = true;
@@ -239,7 +239,7 @@ TEST_CASE(test_main_thread_branches_v6, "System") {
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // 4. Trigger "stale" branch
-    // GameConnector::IsStale(100)
+    // LMUFFB::IO::GameConnector::IsStale(100)
     // We don't update layout for 200ms
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
@@ -368,7 +368,7 @@ TEST_CASE(test_gui_layer_common_branches_v6, "GUI") {
         #ifndef _WIN32
         MockSM::GetMaps()["LMU_Data"].resize(sizeof(SharedMemoryLayout));
         #endif
-        GameConnector::Get().TryConnect();
+        LMUFFB::IO::GameConnector::Get().TryConnect();
 
         GuiLayerTestAccess::DrawTuningWindow(engine);
 
@@ -482,10 +482,10 @@ TEST_CASE(test_gui_widgets_branches_v6, "GUI") {
 }
 
 TEST_CASE(test_game_connector_branches_v6, "System") {
-    std::cout << "\nTest: GameConnector Branches (Coverage Boost V6)" << std::endl;
+    std::cout << "\nTest: LMUFFB::IO::GameConnector Branches (Coverage Boost V6)" << std::endl;
 
 #ifndef _WIN32
-    GameConnector& conn = GameConnector::Get();
+    LMUFFB::IO::GameConnector& conn = LMUFFB::IO::GameConnector::Get();
     conn.Disconnect();
 
     // 1. CheckLegacyConflict
@@ -515,7 +515,7 @@ TEST_CASE(test_game_connector_branches_v6, "System") {
 
     ASSERT_TRUE(conn.IsConnected());
     // In LinuxMock, IsWindow((HWND)3) returns FALSE.
-    // We can't easily change the stored HWND in GameConnector as it's private.
+    // We can't easily change the stored HWND in LMUFFB::IO::GameConnector as it's private.
     // But we've exercised the basic path.
 
     // 6. CopyTelemetry - Lock failure simulation
@@ -530,7 +530,7 @@ TEST_CASE(test_game_connector_branches_v6, "System") {
 
     conn.Disconnect();
 #endif
-    std::cout << "[PASS] GameConnector branches exercised" << std::endl;
+    std::cout << "[PASS] LMUFFB::IO::GameConnector branches exercised" << std::endl;
     g_tests_passed++;
 }
 

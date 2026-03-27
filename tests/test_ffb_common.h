@@ -31,12 +31,12 @@ namespace LMUFFB {
 class RestApiProviderTestAccess {
 public:
     static void SetFallbackRange(float val) {
-        RestApiProvider::Get().m_fallbackRangeDeg = val;
+        LMUFFB::IO::RestApiProvider::Get().m_fallbackRangeDeg = val;
     }
     static void ResetRequestState() {
-        RestApiProvider::Get().m_isRequesting = false;
+        LMUFFB::IO::RestApiProvider::Get().m_isRequesting = false;
     }
-    static float ParseSteeringLock(RestApiProvider& p, const std::string& json) {
+    static float ParseSteeringLock(LMUFFB::IO::RestApiProvider& p, const std::string& json) {
         return p.ParseSteeringLock(json);
     }
 };
@@ -410,14 +410,14 @@ void Run(); // Main runner
 // --- Friend Access for Testing ---
 class GameConnectorTestAccessor {
 public:
-    static void Reset(LMUFFB::GameConnector& gc);
-    static void SetSharedMem(LMUFFB::GameConnector& gc, struct SharedMemoryLayout* layout);
-    static void SetSessionActive(LMUFFB::GameConnector& gc, bool val);
-    static void SetInRealtime(LMUFFB::GameConnector& gc, bool val);
-    static void SetSessionType(LMUFFB::GameConnector& gc, long val);
-    static void SetGamePhase(LMUFFB::GameConnector& gc, unsigned char val);
-    static void SetPlayerControl(LMUFFB::GameConnector& gc, signed char val);
-    static void InjectTransitions(LMUFFB::GameConnector& gc, const struct SharedMemoryObjectOut& data);
+    static void Reset(LMUFFB::IO::GameConnector& gc);
+    static void SetSharedMem(LMUFFB::IO::GameConnector& gc, struct SharedMemoryLayout* layout);
+    static void SetSessionActive(LMUFFB::IO::GameConnector& gc, bool val);
+    static void SetInRealtime(LMUFFB::IO::GameConnector& gc, bool val);
+    static void SetSessionType(LMUFFB::IO::GameConnector& gc, long val);
+    static void SetGamePhase(LMUFFB::IO::GameConnector& gc, unsigned char val);
+    static void SetPlayerControl(LMUFFB::IO::GameConnector& gc, signed char val);
+    static void InjectTransitions(LMUFFB::IO::GameConnector& gc, const struct SharedMemoryObjectOut& data);
 };
 
 class FFBEngineTestAccess {

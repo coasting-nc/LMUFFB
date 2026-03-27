@@ -147,29 +147,29 @@ TEST_CASE(test_window_title_extraction, "Logic") {
 }
 
 TEST_CASE(test_game_connector_lifecycle, "Logic") {
-    std::cout << "\nTest: GameConnector Lifecycle (Disconnect/Reconnect)" << std::endl;
+    std::cout << "\nTest: LMUFFB::IO::GameConnector Lifecycle (Disconnect/Reconnect)" << std::endl;
 
-    bool initial_state = GameConnector::Get().IsConnected();
+    bool initial_state = LMUFFB::IO::GameConnector::Get().IsConnected();
     std::cout << "  Initial State: " << (initial_state ? "Connected" : "Disconnected") << std::endl;
 
-    GameConnector::Get().Disconnect();
+    LMUFFB::IO::GameConnector::Get().Disconnect();
 
-    bool after_disconnect = GameConnector::Get().IsConnected();
+    bool after_disconnect = LMUFFB::IO::GameConnector::Get().IsConnected();
     ASSERT_TRUE(after_disconnect == false);
 
     // Mock shared memory to ensure connection succeeds even on Linux
     HANDLE hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(SharedMemoryLayout), LMU_SHARED_MEMORY_FILE);
     auto mockLock = SharedMemoryLock::MakeSharedMemoryLock();
 
-    bool connect_result = GameConnector::Get().TryConnect();
+    bool connect_result = LMUFFB::IO::GameConnector::Get().TryConnect();
 
     if (connect_result) {
-        std::cout << "  [PASS] GameConnector connected (Shared Memory mocked). Verifying Disconnect persistence..." << std::endl;
-        ASSERT_TRUE(GameConnector::Get().IsConnected() == true);
-        GameConnector::Get().Disconnect();
-        ASSERT_TRUE(GameConnector::Get().IsConnected() == false);
+        std::cout << "  [PASS] LMUFFB::IO::GameConnector connected (Shared Memory mocked). Verifying Disconnect persistence..." << std::endl;
+        ASSERT_TRUE(LMUFFB::IO::GameConnector::Get().IsConnected() == true);
+        LMUFFB::IO::GameConnector::Get().Disconnect();
+        ASSERT_TRUE(LMUFFB::IO::GameConnector::Get().IsConnected() == false);
     } else {
-        std::cout << "  [FAIL] GameConnector failed to connect despite mocking." << std::endl;
+        std::cout << "  [FAIL] LMUFFB::IO::GameConnector failed to connect despite mocking." << std::endl;
         ASSERT_TRUE(false);
     }
 
@@ -177,22 +177,22 @@ TEST_CASE(test_game_connector_lifecycle, "Logic") {
 }
 
 TEST_CASE(test_game_connector_thread_safety, "Logic") {
-    std::cout << "\nTest: GameConnector Thread Safety (Stress Test)" << std::endl;
+    std::cout << "\nTest: LMUFFB::IO::GameConnector Thread Safety (Stress Test)" << std::endl;
 
     std::atomic<bool> running{true};
 
     std::thread t1([&]() {
         SharedMemoryObjectOut telemetry;
         while (running) {
-            bool in_realtime = GameConnector::Get().CopyTelemetry(telemetry);
+            bool in_realtime = LMUFFB::IO::GameConnector::Get().CopyTelemetry(telemetry);
             (void)in_realtime;
         }
     });
 
     std::thread t2([&]() {
         while (running) {
-            GameConnector::Get().Disconnect();
-            GameConnector::Get().TryConnect();
+            LMUFFB::IO::GameConnector::Get().Disconnect();
+            LMUFFB::IO::GameConnector::Get().TryConnect();
         }
     });
 
@@ -202,7 +202,7 @@ TEST_CASE(test_game_connector_thread_safety, "Logic") {
     t1.join();
     t2.join();
 
-    std::cout << "  [PASS] GameConnector survived stress test without crashing." << std::endl;
+    std::cout << "  [PASS] LMUFFB::IO::GameConnector survived stress test without crashing." << std::endl;
     g_tests_passed++;
 }
 
