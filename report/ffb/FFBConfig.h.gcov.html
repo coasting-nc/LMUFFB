@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-27 18:26:54</td>
+            <td class="headerValue">2026-03-27 18:37:09</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -75,7 +75,7 @@
 <span id="L4"><span class="lineNum">       4</span>                 :             : #include &lt;algorithm&gt;</span>
 <span id="L5"><span class="lineNum">       5</span>                 :             : #include &lt;cmath&gt;</span>
 <span id="L6"><span class="lineNum">       6</span>                 :             : </span>
-<span id="L7"><span class="lineNum">       7</span>                 :             : namespace LMUFFB {</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : namespace LMUFFB::FFB {</span>
 <span id="L8"><span class="lineNum">       8</span>                 :             : </span>
 <span id="L9"><span class="lineNum">       9</span>                 :             : struct GeneralConfig {</span>
 <span id="L10"><span class="lineNum">      10</span>                 :             :     float gain = 1.0f;</span>
@@ -520,9 +520,23 @@
 <span id="L447"><span class="lineNum">     447</span>                 :<span class="tlaGNC">        3392 :     }</span></span>
 <span id="L448"><span class="lineNum">     448</span>                 :             : };</span>
 <span id="L449"><span class="lineNum">     449</span>                 :             : </span>
-<span id="L450"><span class="lineNum">     450</span>                 :             : } // namespace LMUFFB</span>
+<span id="L450"><span class="lineNum">     450</span>                 :             : } // namespace LMUFFB::FFB</span>
 <span id="L451"><span class="lineNum">     451</span>                 :             : </span>
-<span id="L452"><span class="lineNum">     452</span>                 :             : #endif // FFBCONFIG_H</span>
+<span id="L452"><span class="lineNum">     452</span>                 :             : // Temporary bridge aliases to keep existing call sites compiling</span>
+<span id="L453"><span class="lineNum">     453</span>                 :             : namespace LMUFFB {</span>
+<span id="L454"><span class="lineNum">     454</span>                 :             :     using GeneralConfig = LMUFFB::FFB::GeneralConfig;</span>
+<span id="L455"><span class="lineNum">     455</span>                 :             :     using FrontAxleConfig = LMUFFB::FFB::FrontAxleConfig;</span>
+<span id="L456"><span class="lineNum">     456</span>                 :             :     using RearAxleConfig = LMUFFB::FFB::RearAxleConfig;</span>
+<span id="L457"><span class="lineNum">     457</span>                 :             :     using LoadForcesConfig = LMUFFB::FFB::LoadForcesConfig;</span>
+<span id="L458"><span class="lineNum">     458</span>                 :             :     using GripEstimationConfig = LMUFFB::FFB::GripEstimationConfig;</span>
+<span id="L459"><span class="lineNum">     459</span>                 :             :     using SlopeDetectionConfig = LMUFFB::FFB::SlopeDetectionConfig;</span>
+<span id="L460"><span class="lineNum">     460</span>                 :             :     using BrakingConfig = LMUFFB::FFB::BrakingConfig;</span>
+<span id="L461"><span class="lineNum">     461</span>                 :             :     using VibrationConfig = LMUFFB::FFB::VibrationConfig;</span>
+<span id="L462"><span class="lineNum">     462</span>                 :             :     using AdvancedConfig = LMUFFB::FFB::AdvancedConfig;</span>
+<span id="L463"><span class="lineNum">     463</span>                 :             :     using SafetyConfig = LMUFFB::FFB::SafetyConfig;</span>
+<span id="L464"><span class="lineNum">     464</span>                 :             : }</span>
+<span id="L465"><span class="lineNum">     465</span>                 :             : </span>
+<span id="L466"><span class="lineNum">     466</span>                 :             : #endif // FFBCONFIG_H</span>
         </pre>
               </td>
             </tr>
