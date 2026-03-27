@@ -10,6 +10,8 @@
 #include <atomic>
 #include "Version.h"
 
+namespace toml { inline namespace v3 { class table; } }
+
 namespace LMUFFB {
 
 struct Preset {
@@ -347,6 +349,9 @@ public:
 
     // NEW: Import/Export (v0.7.12)
     static void ExportPreset(int index, const std::string& filename);
+
+    // Serialization (Internal use)
+    static void TomlToPreset(const toml::table& tbl, Preset& p);
     static bool ImportPreset(const std::string& filename, const FFBEngine& engine);
 
     // NEW: Persist selected device
