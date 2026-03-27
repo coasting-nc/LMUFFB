@@ -3,6 +3,8 @@
 #include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <cstring>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_issue_265_metadata_sync, "Functional", (std::vector<std::string>{"logging", "metadata"})) {

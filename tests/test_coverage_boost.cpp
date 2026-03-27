@@ -2,6 +2,8 @@
 #include <thread>
 #include <chrono>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_coverage_slope_torque, "Coverage") {

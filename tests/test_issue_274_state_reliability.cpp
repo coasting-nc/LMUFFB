@@ -3,6 +3,8 @@
 #include "../src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 #include <cstring>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_issue_274_robust_session_fallback, "Functional", (std::vector<std::string>{"state_machine"})) {

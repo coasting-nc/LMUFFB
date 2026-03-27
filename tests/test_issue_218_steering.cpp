@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_issue_218_steering_calculations, "Issue_218") {

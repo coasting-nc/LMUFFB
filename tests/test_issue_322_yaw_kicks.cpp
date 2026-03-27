@@ -4,6 +4,7 @@
 #include <cmath>
 
 using namespace FFBEngineTests;
+using namespace LMUFFB::Utils;
 
 TEST_CASE(test_unloaded_yaw_kick_activation, "YawKicks") {
     FFBEngine engine;
