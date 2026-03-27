@@ -19,6 +19,8 @@ using namespace LMUFFB::Utils;
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;
 
+namespace FFB {
+
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
 
@@ -1768,10 +1770,10 @@ void FFBEngine::ResetNormalization() {
     double saved_rear_load = 0.0;
     std::string vName = m_metadata.GetVehicleName();
     
-    if (Config::GetSavedStaticLoad(vName, saved_front_load)) {
+    if (::LMUFFB::Config::GetSavedStaticLoad(vName, saved_front_load)) {
         m_static_front_load = saved_front_load;
         
-        if (Config::GetSavedStaticLoad(vName + "_rear", saved_rear_load)) {
+        if (::LMUFFB::Config::GetSavedStaticLoad(vName + "_rear", saved_rear_load)) {
             m_static_rear_load = saved_rear_load;
         } else {
             m_static_rear_load = m_auto_peak_front_load * 0.5;
@@ -1857,4 +1859,5 @@ void FFBEngine::UpdateUpsamplerModes() {
     ApplyAuxReconstructionMode();
 }
 
+} // namespace FFB
 } // namespace LMUFFB

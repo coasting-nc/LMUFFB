@@ -128,6 +128,7 @@ double CalculateApproximateLoad(const TelemWheelV01& w, ParsedVehicleClass vclas
 } // namespace Physics
 
 // --- FFBEngine member implementations ---
+namespace FFB {
 
 // Helper: Learn static front and rear load reference (v0.7.46, expanded v0.7.164)
 void FFBEngine::update_static_load_reference(double current_front_load, double current_rear_load, double speed, double dt) {
@@ -154,9 +155,9 @@ void FFBEngine::update_static_load_reference(double current_front_load, double c
         // Save to config map (v0.7.70)
         std::string vName = m_metadata.GetVehicleName();
         if (vName != "Unknown" && vName != "") {
-            Config::SetSavedStaticLoad(vName, m_static_front_load);
-            Config::SetSavedStaticLoad(vName + "_rear", m_static_rear_load);
-            Config::m_needs_save = true; // Flag main thread to write to disk
+            ::LMUFFB::Config::SetSavedStaticLoad(vName, m_static_front_load);
+            ::LMUFFB::Config::SetSavedStaticLoad(vName + "_rear", m_static_rear_load);
+            ::LMUFFB::Config::m_needs_save = true; // Flag main thread to write to disk
             Logger::Get().LogFile("[FFB] Latched and saved static loads for %s: F=%.2fN, R=%.2fN", vName.c_str(), m_static_front_load, m_static_rear_load);
         }
     }
@@ -224,10 +225,10 @@ void FFBEngine::InitializeLoadReference(const char* className, const char* vehic
     // Check if we already have a saved static load for this specific car (v0.7.70)
     double saved_front_load = 0.0;
     double saved_rear_load = 0.0;
-    if (Config::GetSavedStaticLoad(vName, saved_front_load)) {
+    if (::LMUFFB::Config::GetSavedStaticLoad(vName, saved_front_load)) {
         m_static_front_load = saved_front_load;
 
-        if (Config::GetSavedStaticLoad(vName + "_rear", saved_rear_load)) {
+        if (::LMUFFB::Config::GetSavedStaticLoad(vName + "_rear", saved_rear_load)) {
             m_static_rear_load = saved_rear_load;
         } else {
             // Migration: If we have front but no rear, estimate rear based on class default
@@ -581,4 +582,5 @@ double FFBEngine::calculate_wheel_slip_ratio(const TelemWheelV01& w) {
     return Physics::CalculateWheelSlipRatio(w);
 }
 
+} // namespace FFB
 } // namespace LMUFFB

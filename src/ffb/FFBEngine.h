@@ -44,7 +44,10 @@ namespace FFBEngineTests { class FFBEngineTestAccess; }
 
 namespace LMUFFB {
 
+class Config;
 struct Preset;
+
+namespace FFB {
 
 // FFB Engine Class
 class FFBEngine {
@@ -263,9 +266,9 @@ public:
 
     LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
-    friend class FFBEngineTests::FFBEngineTestAccess;
-    friend class Config;
-    friend struct LMUFFB::Preset;
+    friend class ::FFBEngineTests::FFBEngineTestAccess;
+    friend class ::LMUFFB::Config;
+    friend struct ::LMUFFB::Preset;
 
     FFBEngine();
 
@@ -476,7 +479,8 @@ private:
     void calculate_road_texture(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
     void calculate_suspension_bottoming(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
 };
-
+} // namespace FFB
+using FFBEngine = FFB::FFBEngine;
 } // namespace LMUFFB
 
 #endif // FFBENGINE_H

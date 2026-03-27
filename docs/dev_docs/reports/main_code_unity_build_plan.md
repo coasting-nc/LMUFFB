@@ -209,13 +209,18 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Utils` subsystem. (v0.7.260)
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io). (v0.7.262)
-- [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`. (In progress: `FFBSnapshot`, `FFBConfig`, `FFBDebugBuffer`, `UpSampler` migrated in v0.7.265. `FFBSafetyMonitor`, `FFBMetadataManager`, `DirectInputFFB` migrated in v0.7.266)
+- [x] Transition `ffb/` files to `namespace LMUFFB::FFB`. (Completed: `FFBEngine` transitioned in v0.7.267)
 - [x] Transition `io/` files to `namespace LMUFFB::IO`. (v0.7.263)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `IO` subsystem. (v0.7.264)
 
 ---
 
 ## 7. Implementation Notes
+
+### 7.0 Implementation Notes (v0.7.267)
+- **Encountered Issues:** Upon wrapping `FFBEngine` in `namespace LMUFFB::FFB`, the `friend class Config;` declaration incorrectly shadowed the global `LMUFFB::Config` class, causing sweeping C2027 (undefined type) compiler errors in `GripLoadEstimation.cpp` and `Config.cpp`.
+- **Deviations from the Plan:** Fixed issues with class-friend scoping MSVC lookup bugs by explicitly forward-declaring `class Config;` at the `namespace LMUFFB` scope, alongside fully qualifying `friend class ::LMUFFB::Config;`. 
+- **Suggestions for the Future:** The `ffb/` module component migration is completed. The next step is to clean up all temporary `using FFBEngine = LMUFFB::FFB::FFBEngine;` aliases planted in the `src/ffb/` headers by updating all their call sites across the codebase.
 
 ### 7.0 Implementation Notes (v0.7.266)
 - **Encountered Issues:** None. The files `FFBSafetyMonitor`, `FFBMetadataManager`, and `DirectInputFFB` were cleanly encapsulated and migrated alongside their bridge aliases without hitting ODR or cyclic dependencies.
@@ -391,16 +396,14 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 **When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253), `src/utils/` to `LMUFFB::Utils` (v0.7.256), and `src/physics/` to `LMUFFB::Physics` (v0.7.257). Sub-namespace migration for `src/gui/` (`LMUFFB::GUI`) is the next objective.
 
 ## 9. Next Steps: Post-Migration Cleanup and Hardening
-Phase 6 `io/` migration to `LMUFFB::IO` is complete (v0.7.263). The only remaining sub-namespace migration is `src/ffb/` → `namespace LMUFFB::FFB`.
+Phase 6 `ffb/` migration to `LMUFFB::FFB` is structurally complete (v0.7.267). 
 
 ### Your Objectives for the Next PR:
-1. **Transition remaining `src/ffb/` files to `namespace LMUFFB::FFB`:**
-   - Migrate remaining files (`FFBEngine`, `FFBSafetyMonitor`, `FFBMetadataManager`, `DirectInputFFB`) to `namespace LMUFFB::FFB`.
-   - Add bridge aliases (`using FFBEngine = LMUFFB::FFB::FFBEngine;` etc.) in `namespace LMUFFB` to preserve existing call sites.
-   - **Warning:** `FFBEngine` is a monolithic class with ~1900 lines and many internal cross-dependencies. Proceed incrementally — migrate leaf types (`FFBSnapshot`, `FFBDebugBuffer`) first, then work inward toward `FFBEngine`.
-   - Maintain the "Include Rule" and "Using Placement Rule" during migration.
-2. **Bridge Alias Cleanup for `src/io/`:**
-   - Once all consumer call sites have been updated to use `LMUFFB::IO::GameConnector` and `LMUFFB::IO::RestApiProvider` explicitly, remove the temporary bridge aliases from `GameConnector.h` and `RestApiProvider.h`.
+1. **Bridge Alias Cleanup for `src/ffb/`:**
+   - Now that all `src/ffb/` files have been migrated to the sub-namespace, remove the temporary bridge aliases (e.g., `using FFBEngine = LMUFFB::FFB::FFBEngine;`) from the root `namespace LMUFFB` located at the bottom of the `ffb` headers.
+   - Update all corresponding consumer call sites dynamically across `src/` and `tests/` to use explicit `LMUFFB::FFB::` qualification.
+2. **Final Verification:**
+   - Execute the test suite after the sweeps to guarantee complete code health.
 
 ### Critical Reminders for Phase 6
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.

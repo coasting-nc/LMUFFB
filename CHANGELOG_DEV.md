@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.267]
+### Changed
+- **Unity Build Expansion (Phase 6 Completion - `src/ffb/` Subsystem)**:
+  - Successfully migrated the monolithic `FFBEngine` module (headers and multi-implementation files) into `namespace LMUFFB::FFB`.
+  - Added temporary bridge alias `using FFBEngine = LMUFFB::FFB::FFBEngine;` in root `namespace LMUFFB` to preserve backward compatibility for existing call sites.
+  - Resolved complex MSVC `C2027` (undefined type) scoping bugs caused by `friend class Config;` incorrectly registering `Config` within the sub-namespace rather than the root namespace. Fix applied via explicit forward declaration and fully-qualified friendship definition (`friend class ::LMUFFB::Config;`).
+  - Verified 100% test pass rate (632 cases) with the newly decoupled and namespaced core engine architecture.
+  - Updated the Unity Build Plan documentation to mark the `src/ffb/` structural migration as complete, preparing for the final bridge alias cleanup.
+
 ## [0.7.266]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:
