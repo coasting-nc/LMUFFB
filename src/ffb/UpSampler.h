@@ -4,6 +4,7 @@
 #include <array>
 
 namespace LMUFFB {
+namespace FFB {
 
 /**
  * @brief Polyphase Resampler for 5/2 ratio (400Hz -> 1000Hz)
@@ -43,6 +44,11 @@ private:
         { 0.34753,  0.67102, -0.01855}  // Phase 4
     };
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using PolyphaseResampler = FFB::PolyphaseResampler;
 
 } // namespace LMUFFB
 

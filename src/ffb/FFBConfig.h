@@ -5,6 +5,7 @@
 #include <cmath>
 
 namespace LMUFFB {
+namespace FFB {
 
 struct GeneralConfig {
     float gain = 1.0f;
@@ -446,6 +447,20 @@ struct SafetyConfig {
         stutter_threshold = (std::max)(1.01f, stutter_threshold);
     }
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using GeneralConfig = FFB::GeneralConfig;
+using FrontAxleConfig = FFB::FrontAxleConfig;
+using RearAxleConfig = FFB::RearAxleConfig;
+using LoadForcesConfig = FFB::LoadForcesConfig;
+using GripEstimationConfig = FFB::GripEstimationConfig;
+using SlopeDetectionConfig = FFB::SlopeDetectionConfig;
+using BrakingConfig = FFB::BrakingConfig;
+using VibrationConfig = FFB::VibrationConfig;
+using AdvancedConfig = FFB::AdvancedConfig;
+using SafetyConfig = FFB::SafetyConfig;
 
 } // namespace LMUFFB
 

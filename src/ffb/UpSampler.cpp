@@ -2,6 +2,7 @@
 #include <algorithm>
 
 namespace LMUFFB {
+namespace FFB {
 
 PolyphaseResampler::PolyphaseResampler() {
     Reset();
@@ -51,4 +52,5 @@ double PolyphaseResampler::Process(double latest_physics_sample, bool is_new_phy
     return output;
 }
 
+} // namespace FFB
 } // namespace LMUFFB

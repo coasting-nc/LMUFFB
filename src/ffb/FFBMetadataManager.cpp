@@ -8,6 +8,7 @@ using namespace LMUFFB::Utils;
 using namespace LMUFFB::Physics;
 
 namespace LMUFFB {
+namespace FFB {
 
 bool FFBMetadataManager::UpdateMetadata(const SharedMemoryObjectOut& data) {
     const char* trackName = data.scoring.scoringInfo.mTrackName;
@@ -60,4 +61,5 @@ bool FFBMetadataManager::UpdateInternal(const char* vehicleClass, const char* ve
     return changed;
 }
 
+} // namespace FFB
 } // namespace LMUFFB

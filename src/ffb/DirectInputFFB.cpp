@@ -25,6 +25,7 @@ namespace {
 }
 
 namespace LMUFFB {
+namespace FFB {
 
 // Keep existing implementations
 DirectInputFFB& DirectInputFFB::Get() {
@@ -137,7 +138,7 @@ const char* GetDirectInputErrorString(HRESULT hr) {
     
     return "Unknown DirectInput Error";
 }
-}
+} // anonymous namespace
 #endif
 
 DirectInputFFB::~DirectInputFFB() {
@@ -456,4 +457,5 @@ bool DirectInputFFB::UpdateForce(double normalizedForce) {
     return true;
 }
 
+} // namespace FFB
 } // namespace LMUFFB

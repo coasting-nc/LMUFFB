@@ -40,11 +40,15 @@
 
 // BiquadNotch moved to MathUtils.h
 
+namespace LMUFFB {
+    struct Preset;
+    class Config;
+}
 namespace FFBEngineTests { class FFBEngineTestAccess; }
 
 namespace LMUFFB {
+namespace FFB {
 
-struct Preset;
 class FFBDebugBuffer;
 
 // FFB Engine Class
@@ -265,7 +269,7 @@ public:
     LMUFFB::FFBDebugBuffer m_debug_buffer{100}; // DEBUG_BUFFER_CAP
     
     friend class FFBEngineTests::FFBEngineTestAccess;
-    friend class Config;
+    friend class LMUFFB::Config;
     friend struct LMUFFB::Preset;
 
     FFBEngine();
@@ -477,6 +481,11 @@ private:
     void calculate_road_texture(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
     void calculate_suspension_bottoming(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx);
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using FFBEngine = FFB::FFBEngine;
 
 } // namespace LMUFFB
 

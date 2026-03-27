@@ -19,6 +19,8 @@ using namespace LMUFFB::Utils;
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;
 
+namespace FFB {
+
 FFBEngine::FFBEngine() {
     last_log_time = std::chrono::steady_clock::now();
 
@@ -1857,4 +1859,5 @@ void FFBEngine::UpdateUpsamplerModes() {
     ApplyAuxReconstructionMode();
 }
 
+} // namespace FFB
 } // namespace LMUFFB

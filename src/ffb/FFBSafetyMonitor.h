@@ -10,6 +10,7 @@
 #include "FFBConfig.h"
 
 namespace LMUFFB {
+namespace FFB {
 
 class FFBSafetyMonitor {
 public:
@@ -64,6 +65,11 @@ public:
     bool was_soft_locked = false;
     bool soft_lock_significant = false;
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using FFBSafetyMonitor = FFB::FFBSafetyMonitor;
 
 } // namespace LMUFFB
 

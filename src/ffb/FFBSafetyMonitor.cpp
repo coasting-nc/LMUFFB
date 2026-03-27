@@ -4,6 +4,7 @@ using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
+namespace FFB {
 
 bool FFBSafetyMonitor::IsFFBAllowed(const VehicleScoringInfoV01& scoring, unsigned char gamePhase) const {
     // 1. Mute if not player vehicle
@@ -159,4 +160,5 @@ double FFBSafetyMonitor::ApplySafetySlew(double target_force, double dt, bool re
     return safety_smoothed_force;
 }
 
+} // namespace FFB
 } // namespace LMUFFB

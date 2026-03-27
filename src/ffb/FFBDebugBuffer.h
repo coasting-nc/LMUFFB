@@ -6,6 +6,7 @@
 #include "FFBSnapshot.h"
 
 namespace LMUFFB {
+namespace FFB {
 
 class FFBDebugBuffer {
 public:
@@ -22,6 +23,11 @@ private:
     std::vector<FFBSnapshot> m_buffer;
     size_t m_capacity;
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using FFBDebugBuffer = FFB::FFBDebugBuffer;
 
 } // namespace LMUFFB
 

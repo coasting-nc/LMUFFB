@@ -18,7 +18,8 @@
 #include "ffb/FFBConfig.h"
 
 namespace LMUFFB {
-class FFBEngine;
+namespace FFB { class FFBEngine; }
+using FFBEngine = FFB::FFBEngine;
 }
 
 namespace LMUFFB::Logging {

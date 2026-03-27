@@ -10,6 +10,7 @@
 #include "io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
 
 namespace LMUFFB {
+namespace FFB {
 
 class FFBMetadataManager {
 public:
@@ -47,6 +48,11 @@ public:
 private:
     std::mutex m_mutex;
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using FFBMetadataManager = FFB::FFBMetadataManager;
 
 } // namespace LMUFFB
 

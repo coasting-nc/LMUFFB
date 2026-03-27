@@ -21,6 +21,7 @@ typedef void* LPDIRECTINPUTEFFECT;
 #endif
 
 namespace LMUFFB {
+namespace FFB {
 
 struct DeviceInfo {
     GUID guid;
@@ -76,6 +77,12 @@ private:
 
     long m_last_force = -999999; 
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using DeviceInfo = FFB::DeviceInfo;
+using DirectInputFFB = FFB::DirectInputFFB;
 
 } // namespace LMUFFB
 

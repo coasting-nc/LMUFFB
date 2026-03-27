@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+namespace LMUFFB {
+namespace FFB {
+
 // 1. Define the Snapshot Struct (Unified FFB + Telemetry)
 struct FFBSnapshot {
     // --- Header A: FFB Components (Outputs) ---
@@ -83,5 +86,12 @@ struct FFBSnapshot {
     float gen_torque_rate;
     float physics_rate; // New v0.7.117 (Issue #217)
 };
+
+} // namespace FFB
+
+// Bridge Aliases
+using FFBSnapshot = FFB::FFBSnapshot;
+
+} // namespace LMUFFB
 
 #endif // FFBSNAPSHOT_H
