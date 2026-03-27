@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.261]
+### Changed
+- **Unity Build Hardening (Phase 6 — Internal Linkage Audit Batch 2: ffb/io)**:
+  - Conducted a systematic internal linkage audit across all `.cpp` files in `src/ffb/` and `src/io/`.
+  - Found that `DirectInputFFB.cpp` had `DIAGNOSTIC_LOG_INTERVAL_MS` and `RECOVERY_COOLDOWN_MS` defined in a **global** anonymous namespace placed before the `namespace LMUFFB {}` block, inconsistent with the project's layering conventions.
+  - Moved these constants into `namespace LMUFFB { namespace {} }` to ensure proper unity-build scoping and consistency with the established pattern (e.g., `GameConnector.cpp`).
+  - Confirmed all other `ffb/` and `io/` `.cpp` files already compliant: helper constants and callbacks in `DirectInputFFB.cpp` (`GetDirectInputErrorString`, `EnumJoysticksCallback`) were already inside `namespace LMUFFB`; all other files had no bare file-local helpers.
+  - Added a **Critical Plan Review** section to `main_code_unity_build_plan.md` documenting architectural risks for the upcoming `ffb/io` sub-namespace transition phase.
+  - Verified 100% test pass rate (633/633) with no regressions.
+
 ## [0.7.260]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

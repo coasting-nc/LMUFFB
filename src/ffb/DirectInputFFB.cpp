@@ -18,13 +18,13 @@ using namespace LMUFFB::Utils;
 #include <string>
 #endif
 
-// Constants
+namespace LMUFFB {
+
 namespace {
+    // Constants: internal linkage within LMUFFB, safe for Unity Build bundling
     constexpr uint32_t DIAGNOSTIC_LOG_INTERVAL_MS = 1000; // Rate limit diagnostic logging to 1 second
     constexpr uint32_t RECOVERY_COOLDOWN_MS = 2000;       // Wait 2 seconds between recovery attempts
 }
-
-namespace LMUFFB {
 
 // Keep existing implementations
 DirectInputFFB& DirectInputFFB::Get() {

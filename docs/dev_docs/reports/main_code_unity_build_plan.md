@@ -208,13 +208,24 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files with anonymous namespaces (Batch 1: core/gui). (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Utils` subsystem. (v0.7.260)
-- [ ] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io).
+- [x] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io). (v0.7.261)
+- [ ] Remove bridge aliases for `Physics` and `GUI` subsystems (e.g., in `GripLoadEstimation.h`).
 - [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`.
 - [ ] Transition `io/` files to `namespace LMUFFB::IO`.
 
 ---
 
 ## 7. Implementation Notes
+
+### 7.0 Implementation Notes (v0.7.261)
+- **Encountered Issues:**
+  - The audit found that `DirectInputFFB.cpp` had `DIAGNOSTIC_LOG_INTERVAL_MS` and `RECOVERY_COOLDOWN_MS` defined in a **global** anonymous `namespace {}` placed **before** the `namespace LMUFFB {` block opened (lines 22-25 of the original file). In a Unity Build, global anonymous namespaces from concatenated `.cpp` files share the same translation unit scope. While the C++ standard guarantees these names are unique per translation unit (the anonymous namespace mechanism), placing them at global scope rather than inside `namespace LMUFFB` is an inconsistency with the project's layering conventions and could cause confusion in future audits.
+  - All other `ffb/` and `io/` `.cpp` files were found to be **already compliant**: `FFBSafetyMonitor.cpp`, `FFBDebugBuffer.cpp`, `FFBMetadataManager.cpp`, `UpSampler.cpp` have no file-local helpers outside class methods. `GameConnector.cpp` already had its `LEGACY_SHARED_MEMORY_NAME` constant inside `namespace LMUFFB { namespace {} }`. `RestApiProvider.cpp` had no bare helpers.
+  - The two other anonymous namespace blocks in `DirectInputFFB.cpp` (`GetDirectInputErrorString` and `EnumJoysticksCallback`) were already correctly placed **inside** `namespace LMUFFB {}`. Only the leading constants block needed correction.
+- **Deviations from the Plan:** None. The audit scope was limited to confirming internal linkage hygiene per the plan's bullet. A code reviewer additionally recommended promoting the constants to `private static constexpr` class members. After evaluation, we opted to retain the `namespace LMUFFB { namespace {} }` pattern (consistent with `GameConnector.cpp`) to avoid header pollution with Windows-only constants.
+- **Suggestions for the Future:**
+  - Proceed with removing bridge aliases for the `Physics` and `GUI` subsystems (e.g., in `GripLoadEstimation.h`) before starting the `ffb/` and `io/` namespace transitions.
+  - Transition `src/ffb/` files to `namespace LMUFFB::FFB` and `src/io/` files to `namespace LMUFFB::IO` as the next major Phase 6 milestone.
 
 ### 7.1 Implementation Notes (v0.7.260)
 - **Encountered Issues:**
@@ -367,7 +378,7 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 **When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253), `src/utils/` to `LMUFFB::Utils` (v0.7.256), and `src/physics/` to `LMUFFB::Physics` (v0.7.257). Sub-namespace migration for `src/gui/` (`LMUFFB::GUI`) is the next objective.
 
 ## 9. Next Steps: Post-Migration Cleanup and Hardening
-Phase 6 and internal hardening are now well underway. All major subsystems are namespaced, and internal linkage hardening has progressed significantly.
+Phase 6 internal hardening is now complete for all major `.cpp` files. The next focus is alias cleanup and sub-namespace transitions for `ffb/` and `io/`.
 
 ### Your Objectives for the Next PR:
 1. **Namespace Hygiene (Physics and GUI Subsystems):**
@@ -376,8 +387,16 @@ Phase 6 and internal hardening are now well underway. All major subsystems are n
 2. **Continued Subsystem Migration (FFB & I/O):**
    - Transition `src/ffb/` and `src/io/` modules to `namespace LMUFFB::FFB` and `namespace LMUFFB::IO` respectively.
    - Maintain the "Include Rule" and "Using Placement Rule" during migration.
-3. **Extended Internal Linkage Audit (FFB & I/O Subsystems):**
-   - Conduct a systematic review of `.cpp` files in `src/ffb/` and `src/io/` to move internal helper functions and constants into anonymous namespaces.
+
+### Critical Plan Review Notes (as of v0.7.261)
+
+> [!NOTE]
+> The following observations were made during a systematic review of the plan during the v0.7.261 audit:
+
+1. **`io/rF2/rF2Data.h` exclusion**: The plan correctly marks this as a DO NOT TOUCH proprietary file. Verify that `CMakeLists.txt` has `SKIP_UNITY_BUILD_INCLUSION` set for any related source files.
+2. **Bridge alias removal ordering**: The plan calls for bridge alias removal (`Physics`, `GUI` subsystems) before the `ffb/io` namespace transitions. This ordering must be respected — attempting to transition `ffb/` to `LMUFFB::FFB` while `Physics`/`GUI` aliases still exist in headers will cause compounded lookup ambiguity.
+3. **`FFBEngine.h` dependency chain**: Because `FFBEngine.h` includes many subsystem headers (`FFBSafetyMonitor.h`, `FFBMetadataManager.h`, etc.), transitioning `ffb/` to `LMUFFB::FFB` will require updating all consumers simultaneously. Plan for a wider-scope PR than previous iterations.
+4. **`io/` files and plugin ABI**: `GameConnector.cpp` and `RestApiProvider.cpp` are I/O boundary files. When transitioning to `LMUFFB::IO`, be especially careful that no plugin API structures (from `lmu_sm_interface/`) are accidentally pulled into the sub-namespace.
 
 ### Critical Reminders for Phase 6
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.
