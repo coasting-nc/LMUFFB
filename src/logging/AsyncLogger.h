@@ -210,16 +210,16 @@ struct SessionInfo {
     std::string app_version;
     
     // Key settings snapshot
-    GeneralConfig general;
-    FrontAxleConfig front_axle;
-    RearAxleConfig rear_axle;
-    LoadForcesConfig load_forces;
-    GripEstimationConfig grip_estimation;
-    SlopeDetectionConfig slope_detection;
-    BrakingConfig braking;
-    VibrationConfig vibration;
-    AdvancedConfig advanced;
-    SafetyConfig safety;
+    LMUFFB::FFB::GeneralConfig general;
+    LMUFFB::FFB::FrontAxleConfig front_axle;
+    LMUFFB::FFB::RearAxleConfig rear_axle;
+    LMUFFB::FFB::LoadForcesConfig load_forces;
+    LMUFFB::FFB::GripEstimationConfig grip_estimation;
+    LMUFFB::FFB::SlopeDetectionConfig slope_detection;
+    LMUFFB::FFB::BrakingConfig braking;
+    LMUFFB::FFB::VibrationConfig vibration;
+    LMUFFB::FFB::AdvancedConfig advanced;
+    LMUFFB::FFB::SafetyConfig safety;
 };
 
 class AsyncLogger {

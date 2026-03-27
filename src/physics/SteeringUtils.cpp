@@ -20,9 +20,9 @@ namespace SteeringUtils {
 // Provides a progressive spring-damping force when the wheel exceeds 100% lock.
 void CalculateSoftLock(const TelemInfoV01* data, 
                        FFBCalculationContext& ctx, 
-                       const AdvancedConfig& advanced_cfg, 
-                       const GeneralConfig& general_cfg, 
-                       FFBSafetyMonitor& safety, 
+                       const LMUFFB::FFB::AdvancedConfig& advanced_cfg, 
+                       const LMUFFB::FFB::GeneralConfig& general_cfg, 
+                       LMUFFB::FFB::FFBSafetyMonitor& safety, 
                        double steering_velocity_smoothed) {
     ctx.soft_lock_force = 0.0;
     if (!advanced_cfg.soft_lock_enabled) return;

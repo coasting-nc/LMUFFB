@@ -213,6 +213,31 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Transition `io/` files to `namespace LMUFFB::IO`. (v0.7.263)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `IO` subsystem. (v0.7.264)
 
+### 6.8 Phase 7: Bridge Alias Cleanup for `src/ffb/` Subsystem
+
+This phase removes the temporary bridge aliases planted across all `src/ffb/` headers during the `LMUFFB::FFB` migration, updating all consumer call sites to use explicit `LMUFFB::FFB::` qualification. Due to the breadth of callsites across `src/`, `tests/`, and multiple headers, this work is divided into three lower-risk incremental steps.
+
+**Step 7.1 — `FFBConfig` struct bridges (leaf types, no test changes required):**
+- [ ] Remove 10 bridge aliases from `src/ffb/FFBConfig.h` (`GeneralConfig`, `FrontAxleConfig`, `RearAxleConfig`, `LoadForcesConfig`, `GripEstimationConfig`, `SlopeDetectionConfig`, `BrakingConfig`, `VibrationConfig`, `AdvancedConfig`, `SafetyConfig`).
+- [ ] Fix `FFBSafetyMonitor.h` internal reference: `LMUFFB::SafetyConfig` → `SafetyConfig` (same namespace).
+- [ ] Fix `FFBEngine.h` internal member declarations: `LMUFFB::GeneralConfig` → `GeneralConfig` etc. (already in `LMUFFB::FFB`); `LMUFFB::FFBDebugBuffer` → `FFBDebugBuffer`.
+- [ ] Update `src/core/Config.h` (`Preset` struct field types and `Config` method signatures): unqualified FFBConfig types → `FFB::*` (inside `namespace LMUFFB`).
+- [ ] Update `src/logging/AsyncLogger.h` (`SessionInfo` struct fields): unqualified FFBConfig types → `LMUFFB::FFB::*` (inside `namespace LMUFFB::Logging`).
+- [ ] Update `src/physics/SteeringUtils.h` and `SteeringUtils.cpp`: `AdvancedConfig`, `GeneralConfig`, `FFBSafetyMonitor` parameters → `LMUFFB::FFB::*` (inside `namespace LMUFFB::Physics`).
+
+**Step 7.2 — Helper class bridges (`FFBSnapshot`, `FFBDebugBuffer`, `FFBMetadataManager`, `FFBSafetyMonitor`, `PolyphaseResampler`):**
+- [ ] Remove bridge aliases from `FFBSnapshot.h`, `FFBDebugBuffer.h`, `FFBMetadataManager.h`, `FFBSafetyMonitor.h`, `UpSampler.h`.
+- [ ] Add `using namespace LMUFFB::FFB;` at file scope in `tests/test_ffb_common.h` (replaces all individual unqualified test references in one line).
+- [ ] Update `src/core/main.cpp`: `PolyphaseResampler resampler;` → `FFB::PolyphaseResampler resampler;` (inside `namespace LMUFFB`).
+
+**Step 7.3 — `FFBEngine` and `DirectInputFFB` bridges (broadest callsite impact):**
+- [ ] Remove `using FFBEngine = FFB::FFBEngine;` bridge from `src/ffb/FFBEngine.h`.
+- [ ] Remove `DeviceInfo` and `DirectInputFFB` bridges from `src/ffb/DirectInputFFB.h`.
+- [ ] Update `src/gui/GuiLayer.h` method signatures: `LMUFFB::FFBEngine&` → `LMUFFB::FFB::FFBEngine&`.
+- [ ] Update `src/gui/GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, `GuiLayer_Linux.cpp` method definitions accordingly.
+- [ ] Update `src/core/main.cpp`: `FFBEngine g_engine;` → `FFB::FFBEngine g_engine;`, `DirectInputFFB::Get()` → `FFB::DirectInputFFB::Get()`.
+- [ ] Update `tests/main_test_runner.cpp`: `FFBEngine g_engine;` → `LMUFFB::FFB::FFBEngine g_engine;`.
+
 ---
 
 ## 7. Implementation Notes
@@ -396,20 +421,21 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 **When to transition:** The sub-namespace migration was always gated on completing Phases 1–5 first. That gate has been passed (v0.7.251). Phase 6 is now active — `src/logging/` has been transitioned to `LMUFFB::Logging` (v0.7.253), `src/utils/` to `LMUFFB::Utils` (v0.7.256), and `src/physics/` to `LMUFFB::Physics` (v0.7.257). Sub-namespace migration for `src/gui/` (`LMUFFB::GUI`) is the next objective.
 
 ## 9. Next Steps: Post-Migration Cleanup and Hardening
-Phase 6 `ffb/` migration to `LMUFFB::FFB` is structurally complete (v0.7.267). 
+Phase 6 `ffb/` migration to `LMUFFB::FFB` is structurally complete (v0.7.267). Phase 7 (bridge alias cleanup) is now active.
 
-### Your Objectives for the Next PR:
-1. **Bridge Alias Cleanup for `src/ffb/`:**
-   - Now that all `src/ffb/` files have been migrated to the sub-namespace, remove the temporary bridge aliases (e.g., `using FFBEngine = LMUFFB::FFB::FFBEngine;`) from the root `namespace LMUFFB` located at the bottom of the `ffb` headers.
-   - Update all corresponding consumer call sites dynamically across `src/` and `tests/` to use explicit `LMUFFB::FFB::` qualification.
+### Your Objectives for the Next PR (Step 7.2):
+1. **Remove bridges for `FFBSnapshot`, `FFBDebugBuffer`, `FFBMetadataManager`, `FFBSafetyMonitor`, `PolyphaseResampler`:**
+   - Remove bridge alias blocks from `FFBSnapshot.h`, `FFBDebugBuffer.h`, `FFBMetadataManager.h`, `FFBSafetyMonitor.h`, and `UpSampler.h`.
+   - Add `using namespace LMUFFB::FFB;` at file scope in `tests/test_ffb_common.h` (a single line that resolves all unqualified FFB type references in the entire test suite).
+   - Update `src/core/main.cpp`: `PolyphaseResampler resampler;` → `FFB::PolyphaseResampler resampler;`.
 2. **Final Verification:**
    - Execute the test suite after the sweeps to guarantee complete code health.
 
-### Critical Reminders for Phase 6
+### Critical Reminders for Phase 7
 *   **The Include Rule:** All `#include` directives **MUST** remain outside namespace blocks. This is non-negotiable for Unity Build compatibility.
-*   **The `using namespace` Placement Rule:** In `.cpp` files, `using namespace LMUFFB::SomeSubNs;` directives **MUST** be placed at **file scope** — after all `#include` directives and before the `namespace LMUFFB { ... }` block. Do **not** place them inside a namespace block. See §8.12 for the real-world example of this issue occurring in `FFBSafetyMonitor.cpp` and three GUI files during v0.7.253.
+*   **The `using namespace` Placement Rule:** In `.cpp` files, `using namespace LMUFFB::SomeSubNs;` directives **MUST** be placed at **file scope** — after all `#include` directives and before the `namespace LMUFFB { ... }` block. Test headers (`.h` in `tests/`) are an exception — the single `using namespace LMUFFB::FFB;` line added to `test_ffb_common.h` is acceptable for test infrastructure headers.
 *   **Internal Linkage:** Use anonymous namespaces for any helper functions or constants within `.cpp` files to avoid ODR violations when bundled.
-*   **Bridge Aliases:** When migrating a header to a sub-namespace, add temporary `using` alias bridges inside `namespace LMUFFB { using Foo = LMUFFB::SubNs::Foo; }` at the bottom of the header to keep existing call sites compiling. Remove them only once all call sites have been updated.
+*   **Step 7.1 Lessons:** In `namespace LMUFFB::FFB`, member references to same-namespace types must drop the `LMUFFB::` prefix (e.g., `GeneralConfig` not `LMUFFB::GeneralConfig`). In `namespace LMUFFB`, use `FFB::` prefix. In external namespaces `LMUFFB::Logging`, `LMUFFB::Physics`, etc., use the full `LMUFFB::FFB::` qualification.
 
 ### See also:
 

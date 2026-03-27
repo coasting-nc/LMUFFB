@@ -449,18 +449,4 @@ struct SafetyConfig {
 
 } // namespace LMUFFB::FFB
 
-// Temporary bridge aliases to keep existing call sites compiling
-namespace LMUFFB {
-    using GeneralConfig = LMUFFB::FFB::GeneralConfig;
-    using FrontAxleConfig = LMUFFB::FFB::FrontAxleConfig;
-    using RearAxleConfig = LMUFFB::FFB::RearAxleConfig;
-    using LoadForcesConfig = LMUFFB::FFB::LoadForcesConfig;
-    using GripEstimationConfig = LMUFFB::FFB::GripEstimationConfig;
-    using SlopeDetectionConfig = LMUFFB::FFB::SlopeDetectionConfig;
-    using BrakingConfig = LMUFFB::FFB::BrakingConfig;
-    using VibrationConfig = LMUFFB::FFB::VibrationConfig;
-    using AdvancedConfig = LMUFFB::FFB::AdvancedConfig;
-    using SafetyConfig = LMUFFB::FFB::SafetyConfig;
-}
-
 #endif // FFBCONFIG_H

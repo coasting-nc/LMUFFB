@@ -58,15 +58,15 @@ public:
     static constexpr int STR_BUF_64 = 64;
 
     // Settings (GUI Sliders)
-    LMUFFB::GeneralConfig m_general;
-    LMUFFB::FrontAxleConfig m_front_axle;
-    LMUFFB::RearAxleConfig m_rear_axle;
-    LMUFFB::LoadForcesConfig m_load_forces;
-    LMUFFB::GripEstimationConfig m_grip_estimation;
-    LMUFFB::SlopeDetectionConfig m_slope_detection;
-    LMUFFB::BrakingConfig m_braking;
-    LMUFFB::VibrationConfig m_vibration;
-    LMUFFB::AdvancedConfig m_advanced;
+    GeneralConfig m_general;
+    FrontAxleConfig m_front_axle;
+    RearAxleConfig m_rear_axle;
+    LoadForcesConfig m_load_forces;
+    GripEstimationConfig m_grip_estimation;
+    SlopeDetectionConfig m_slope_detection;
+    BrakingConfig m_braking;
+    VibrationConfig m_vibration;
+    AdvancedConfig m_advanced;
 
     // Configurable Smoothing & Caps (v0.3.9)
     bool m_invert_force = true;

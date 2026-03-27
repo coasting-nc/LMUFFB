@@ -15,9 +15,9 @@ namespace SteeringUtils {
  */
 void CalculateSoftLock(const TelemInfoV01* data, 
                        FFBCalculationContext& ctx, 
-                       const AdvancedConfig& advanced_cfg, 
-                       const GeneralConfig& general_cfg, 
-                       FFBSafetyMonitor& safety, 
+                       const LMUFFB::FFB::AdvancedConfig& advanced_cfg, 
+                       const LMUFFB::FFB::GeneralConfig& general_cfg, 
+                       LMUFFB::FFB::FFBSafetyMonitor& safety, 
                        double steering_velocity_smoothed);
 
 } // namespace SteeringUtils

@@ -30,16 +30,16 @@ struct Preset {
     // 3. Any test presets in Config.cpp that rely on these defaults
     //
     // Current defaults match: GT3 DD 15 Nm (Simagic Alpha) - v0.6.35
-    GeneralConfig general;
-    FrontAxleConfig front_axle;
-    RearAxleConfig rear_axle;
-    LoadForcesConfig load_forces;
-    GripEstimationConfig grip_estimation;
-    SlopeDetectionConfig slope_detection;
-    BrakingConfig braking;
-    VibrationConfig vibration;
-    AdvancedConfig advanced;
-    SafetyConfig safety;
+    FFB::GeneralConfig general;
+    FFB::FrontAxleConfig front_axle;
+    FFB::RearAxleConfig rear_axle;
+    FFB::LoadForcesConfig load_forces;
+    FFB::GripEstimationConfig grip_estimation;
+    FFB::SlopeDetectionConfig slope_detection;
+    FFB::BrakingConfig braking;
+    FFB::VibrationConfig vibration;
+    FFB::AdvancedConfig advanced;
+    FFB::SafetyConfig safety;
 
     // 2. Constructors
     Preset(std::string n, bool builtin = false) : name(n), is_builtin(builtin), app_version(LMUFFB_VERSION) {}

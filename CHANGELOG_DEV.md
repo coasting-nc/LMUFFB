@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.268]
+### Changed
+- **Unity Build Expansion (Phase 7, Step 7.1 — FFBConfig Bridge Cleanup)**:
+  - Removed 10 temporary bridge aliases for `FFBConfig` structs from `src/ffb/FFBConfig.h`.
+  - Updated consumer call sites in `Config.h`, `AsyncLogger.h`, `SteeringUtils.h`, and `SteeringUtils.cpp` to use explicit `FFB::` or `LMUFFB::FFB::` qualifications where appropriate.
+  - Removed redundant `LMUFFB::` prefixes from internal members inside `FFBEngine.h` and `FFBSafetyMonitor.h`.
+  - Maintained 100% test pass rate (632 cases) with fully decoupled configuration types.
+  - Documented updated Unity Build Plan with the new 3-step Phase 7 refactoring breakdown.
+
 ## [0.7.267]
 ### Changed
 - **Unity Build Expansion (Phase 6 Completion - `src/ffb/` Subsystem)**:
