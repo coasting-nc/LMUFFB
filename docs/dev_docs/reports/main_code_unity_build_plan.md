@@ -207,6 +207,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - [x] Transition `gui/` files to `namespace LMUFFB::GUI`. (v0.7.258)
 - [x] Conduct Internal Linkage Audit and harden `.cpp` files with anonymous namespaces (Batch 1: core/gui). (v0.7.259)
 - [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Logging` subsystem. (v0.7.259)
+- [x] Remove temporary bridge aliases in root `namespace LMUFFB` for the `Utils` subsystem. (v0.7.260)
 - [ ] Conduct Internal Linkage Audit and harden `.cpp` files (Batch 2: ffb/io).
 - [ ] Transition `ffb/` files to `namespace LMUFFB::FFB`.
 - [ ] Transition `io/` files to `namespace LMUFFB::IO`.
@@ -215,7 +216,16 @@ This section tracks the progress made towards fully refactoring the main code an
 
 ## 7. Implementation Notes
 
-### 7.1 Implementation Notes (v0.7.259)
+### 7.1 Implementation Notes (v0.7.260)
+- **Encountered Issues:**
+  - Found that `FFBEngine.h` and other headers used `LMUFFB::` prefixed utility types like `BiquadNotch` and `HoltWintersFilter`. Removing the bridge aliases required updating these to `LMUFFB::Utils::` or adding appropriate `using` directives in the headers (which is generally discouraged for headers). Resolved by using fully qualified `LMUFFB::Utils::` names in headers where possible.
+  - Test files like `test_math_utils.cpp` and `test_reconstruction.cpp` had many direct references to `LMUFFB::` types. Updated these to use `using namespace LMUFFB::Utils;` at file scope to keep the code clean while maintaining hygiene.
+- **Deviations from the Plan:** None.
+- **Suggestions for the Future:**
+  - Proceed with the Internal Linkage Audit for `src/ffb/` and `src/io/` to further harden the Unity Build.
+  - Begin transitioning `src/ffb/` and `src/io/` to their respective sub-namespaces.
+
+### 7.2 Implementation Notes (v0.7.259)
 - **Encountered Issues:**
   - Encountered linker errors when moving GUI platform helpers (e.g., `GetGuiPlatform`, `ResizeWindowPlatform`) into anonymous namespaces. These functions require external linkage because they are accessed by `GuiLayer_Common.cpp` (in Unity builds) and the unit test suite across different translation units. Resolved by moving them out of anonymous namespaces while keeping them protected within `namespace LMUFFB::GUI`.
   - Discovered that several unit tests relied on `LMUFFB::FFBThread` and `LMUFFB::PopulateSessionInfo` being visible globally. Moving these to anonymous namespaces in `main.cpp` broke the test runner. Fixed by restoring external linkage for these specific test-required symbols.
@@ -226,13 +236,13 @@ This section tracks the progress made towards fully refactoring the main code an
   - Continue the Namespace Hygiene rollout by incrementally removing bridge aliases for the `Utils` and `Physics` subsystems.
   - Conduct a targeted Internal Linkage sweep for the `src/ffb/` and `src/io/` directories, ensuring file-local helpers are correctly encapsulated in anonymous namespaces.
 
-### 7.2 Implementation Notes (v0.7.258)
+### 7.3 Implementation Notes (v0.7.258)
 - **Encountered Issues:**
   - Encountered linker errors for `g_engine_mutex` and `g_running` within the `LMUFFB::GUI` namespace in `GuiLayer_Common.cpp`, `GuiLayer_Win32.cpp`, and `GuiLayer_Linux.cpp`. Resolved by ensuring these `extern` declarations are positioned within the root `namespace LMUFFB` while the implementation remains in `namespace LMUFFB::GUI`.
 - **Deviations from the Plan:** None.
 - **Suggestions for the Future:** Phase 6 (Subsystem Namespace Migration) is now complete for all major functional directories. Future efforts should focus on refining internal linkage within these namespaces and potentially migrating remaining root-level files if architectural needs arise.
 
-### 7.3 Implementation Notes (v0.7.257)
+### 7.4 Implementation Notes (v0.7.257)
 - **Encountered Issues:**
   - Discovered that `FFBEngine.h` had several hardcoded types and constants (`LoadTransform`, `GripResult`, `FFBCalculationContext`, `DEFAULT_CALC_DT`) that belonged to the physics domain. Moving them to a new header `src/physics/GripLoadEstimation.h` caused circular dependency issues and ambiguous symbol errors because `DEFAULT_CALC_DT` was also defined in `FFBEngine.h`. Resolved by centralizing these in the new header under `LMUFFB::Physics`, renaming the constant to `PHYSICS_CALC_DT`, and adding bridge aliases.
   - Encountered linker errors for `g_engine_mutex` when used within the `LMUFFB::Physics` namespace in `GripLoadEstimation.cpp`. Resolved by ensuring `extern std::recursive_mutex g_engine_mutex;` is declared in the root `LMUFFB` namespace and correctly referenced.
@@ -242,14 +252,14 @@ This section tracks the progress made towards fully refactoring the main code an
   - **Named Constants Preservation:** While some named constants (`MIN_SLIP_ANGLE_VELOCITY`, `SLOPE_HOLD_TIME`) were initially replaced by literals during the refactor, they have been fully restored as `static constexpr` members within `namespace LMUFFB::Physics` in `GripLoadEstimation.h` to maintain codebase consistency and avoid magic numbers.
 - **Suggestions for the Future:** Continue Phase 6 by transitioning `src/gui/` files (e.g., `GuiLayer.h`, `GuiWidgets.h`, `Tooltips.h`) to `namespace LMUFFB::GUI`.
 
-### 7.4 Implementation Notes (v0.7.256)
+### 7.5 Implementation Notes (v0.7.256)
 - **Encountered Issues:**
   - Encountered conflicts between `extern` declarations of mock time globals (`g_mock_time`, `g_use_mock_time`) in `tests/test_main_harness.cpp` and `main.cpp` vs their new definition in `LMUFFB::Utils`. Resolved by using `using Utils::g_mock_time;` and `using Utils::g_use_mock_time;` in the consumer files and defining them inside `namespace Utils` in `tests/main_test_runner.cpp`.
   - Discovered that the initial bridge implementation `namespace LMUFFB { using LMUFFB::Utils::PI; ... }` inside `MathUtils.h` was causing "invalid use of qualified-name" errors and member access issues in `Config.h` and other headers because of how the compiler handles nested namespaces and using declarations within the same translation unit. Fixed by using non-qualified `using Utils::PI;` etc. within `namespace LMUFFB` in the headers.
 - **Deviations from the Plan:** None.
 - **Suggestions for the Future:** Continue Phase 6 by transitioning `src/physics/` files (e.g., `VehicleUtils.h`, `SteeringUtils.h`, `GripLoadEstimation.cpp`) to `namespace LMUFFB::Physics`.
 
-### 7.5 Implementation Notes (v0.7.253)
+### 7.6 Implementation Notes (v0.7.253)
 - **Encountered Issues:**
   - Namespacing `Logger.h` required widespread updates across the codebase.
   - **Code Review Finding (Header Pollution):** Initial implementation included `using namespace LMUFFB::Logging;` in `FFBEngine.h`. This was flagged as an anti-pattern that pollutes all dependent files. Resolved by removing the directive and using qualified names where necessary.
@@ -262,7 +272,7 @@ This section tracks the progress made towards fully refactoring the main code an
   - Namespaced all six logging files instead of just the initial two, as it proved more maintainable for the directory's internal consistency.
 - **Suggestions for the Future:** Continue Phase 6 by transitioning `src/utils/` files (e.g., `MathUtils.h`, `TimeUtils.h`, `StringUtils.h`) to `namespace LMUFFB::Utils`.
 
-### 7.6 Implementation Notes (v0.7.251)
+### 7.7 Implementation Notes (v0.7.251)
 - **Encountered Issues:**
   - Moving globals (`g_running`, `g_engine`, etc.) to `namespace LMUFFB` required updating `extern` declarations in multiple files. Failure to wrap these `extern` declarations in `namespace LMUFFB` would result in linker errors due to name mangling mismatches.
   - Test files that utilized these globals as mocks (e.g., `test_main_harness.cpp`) also required wrapping their declarations and ensuring they match the core's namespacing.
@@ -273,7 +283,7 @@ This section tracks the progress made towards fully refactoring the main code an
   - Standardized on `LMUFFB::lmuffb_app_main` as the namespaced entry point to ensure link-time compatibility with existing unit test conventions.
 - **Suggestions for the Future:** With Phase 5 complete and all core files whitelisted for Unity builds, Phase 6 can begin. This will involve moving files from the root `LMUFFB` namespace into more granular sub-namespaces (`LMUFFB::Physics`, `LMUFFB::GUI`, etc.). Start with the leaf modules refactored in Phase 1.
 
-### 7.7 Implementation Notes (v0.7.250)
+### 7.8 Implementation Notes (v0.7.250)
 - **Encountered Issues:**
   - Encountered linker errors regarding platform-agnostic helper functions (e.g., `ResizeWindowPlatform`). These were originally global and called from `GuiLayer_Common.cpp`. Because `GuiLayer_Common.cpp` was moved into the Unity chunk, it could no longer see the global definitions if the platform-specific files weren't also wrapped and included. Fixed by moving all platform helpers and the `IGuiPlatform` interface into `namespace LMUFFB`.
   - Discovered a namespace visibility issue for `GuiLayerTestAccess`. As a `friend` class declared in the global scope but trying to access a namespaced class, it required a global forward declaration and explicit qualification (`friend class ::GuiLayerTestAccess`) in `GuiLayer.h`.
@@ -285,7 +295,7 @@ This section tracks the progress made towards fully refactoring the main code an
 - **Deviations from the Plan:** None. The GUI layer was successfully namespaced and whitelisted for Unity builds.
 - **Suggestions for the Future:** Phase 5 is nearly complete. The final step is to clean up `core/main.cpp` by removing temporary `using namespace` directives and fully qualifying remaining calls, and then proceeding to Phase 6 (Subsystem Namespace Migration).
 
-### 7.8 Implementation Notes (v0.7.249)
+### 7.9 Implementation Notes (v0.7.249)
 - **Encountered Issues:**
   - Initial refactor introduced build breakages due to missing namespace qualification in call sites across `main.cpp`, `GuiLayer_Common.cpp`, and numerous test files.
   - A typo (`mNumVeholes` instead of `mNumVehicles`) was accidentally introduced during automated string replacement.
@@ -294,22 +304,22 @@ This section tracks the progress made towards fully refactoring the main code an
   - Updated `tests/test_ffb_common.h` and `tests/test_ffb_common.cpp` to ensure `GameConnectorTestAccessor` remains compatible with the namespaced `GameConnector`.
 - **Suggestions for the Future:** Phase 4 is technically complete for core OS boundaries. Proceed to Phase 5 (UI & Final Integration).
 
-### 7.9 Implementation Notes (v0.7.248)
+### 7.10 Implementation Notes (v0.7.248)
 - **Encountered Issues:** None.
 - **Deviations from the Plan:** None. The `DXGIUtils` module was refactored and integrated into the Unity Build pipeline as instructed.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `io/GameConnector.h/.cpp` or other remaining UI-related modules.
 
-### 7.10 Implementation Notes (v0.7.247)
+### 7.11 Implementation Notes (v0.7.247)
 - **Encountered Issues:** None.
 - **Deviations from the Plan:** None. The `RestApiProvider` module was refactored and integrated into the Unity Build pipeline as instructed.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `gui/DXGIUtils.h/.cpp` or `io/GameConnector.h/.cpp`.
 
-### 7.11 Implementation Notes (v0.7.246)
+### 7.12 Implementation Notes (v0.7.246)
 - **Encountered Issues:** None.
 - **Deviations from the Plan:** None. The `DirectInputFFB` module was refactored and integrated into the Unity Build pipeline as instructed.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `RestApiProvider.h/.cpp` or `DXGIUtils.h/.cpp`.
 
-### 7.12 Implementation Notes (v0.7.244)
+### 7.13 Implementation Notes (v0.7.244)
 - **Encountered Issues:** None.
 - **Deviations from the Plan:**
   - Refactored `AsyncLogger.h` only.
@@ -318,12 +328,12 @@ This section tracks the progress made towards fully refactoring the main code an
   - Confirmed via local compilation (standard and Unity mode) and full test suite execution (631 tests passing) that no linker or compilation errors were introduced.
 - **Suggestions for the Future:** Continue Phase 4 by refactoring `DirectInputFFB.h/.cpp` or `RestApiProvider.h/.cpp`, which do possess implementation files.
 
-### 7.13 Implementation Notes (v0.7.240)
+### 7.14 Implementation Notes (v0.7.240)
 - **Encountered Issues:** None. The `UpSampler` module was already correctly namespaced within `LMUFFB`, and its consumers in `main.cpp` were already using the `LMUFFB` namespace. The primary task was build system integration.
 - **Deviations from the Plan:** None. The task was executed as a single incremental step to conclude Phase 3 as instructed.
 - **Suggestions for the Future:** Now that Phase 3 is complete, Phase 4 should proceed with high caution regarding external OS headers. It is recommended to refactor `AsyncLogger` next, as it has the fewest OS-specific dependencies compared to `DirectInputFFB` or `DXGIUtils`.
 
-### 7.14 Phase 1-3 Implementation Notes (v0.7.233 - v0.7.237)
+### 7.15 Phase 1-3 Implementation Notes (v0.7.233 - v0.7.237)
 - **Encountered Issues:**
   - **Compilation Order Masking:** During early whitelist configuration, failing builds were sometimes masked by successful previous binaries in PowerShell.
   - **Hidden Dependencies:** Refactoring leaf modules broke dependent files requiring explicit `using namespace LMUFFB;`.
@@ -360,9 +370,9 @@ For the demonstrative "first refactoring", it was temporarily attached to the gl
 Phase 6 and internal hardening are now well underway. All major subsystems are namespaced, and internal linkage hardening has progressed significantly.
 
 ### Your Objectives for the Next PR:
-1. **Namespace Hygiene (Utils Subsystem):**
-   - Systematically remove temporary bridge aliases in `src/utils/MathUtils.h`, `src/utils/StringUtils.h`, and `src/utils/TimeUtils.h`.
-   - Update all call sites project-wide (including tests) to use fully qualified names (`Utils::...`) or file-scope `using namespace LMUFFB::Utils;`.
+1. **Namespace Hygiene (Physics and GUI Subsystems):**
+   - Systematically remove temporary bridge aliases in `src/physics/GripLoadEstimation.h` and any remaining GUI-related bridge aliases.
+   - Update all call sites project-wide (including tests) to use fully qualified names or file-scope `using namespace`.
 2. **Continued Subsystem Migration (FFB & I/O):**
    - Transition `src/ffb/` and `src/io/` modules to `namespace LMUFFB::FFB` and `namespace LMUFFB::IO` respectively.
    - Maintain the "Include Rule" and "Using Placement Rule" during migration.

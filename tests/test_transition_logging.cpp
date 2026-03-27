@@ -7,6 +7,8 @@
 #include <iostream>
 #include <filesystem>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE_TAGGED(test_transition_logging_logic, "Functional", (std::vector<std::string>{"logging", "transitions"})) {

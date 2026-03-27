@@ -1,6 +1,8 @@
 #include "test_ffb_common.h"
 #include <cmath>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_ingame_ffb_scaling_fix, "InGameFFB") {

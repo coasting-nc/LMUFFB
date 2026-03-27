@@ -1,6 +1,8 @@
 #include "test_ffb_common.h"
 #include <iostream>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 /**

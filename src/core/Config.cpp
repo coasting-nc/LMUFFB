@@ -9,6 +9,7 @@
 #include "GeneratedBuiltinPresets.h"
 #endif
 #include "logging/Logger.h"
+#include "utils/StringUtils.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -18,6 +19,7 @@
 #include <filesystem>
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
 extern std::recursive_mutex g_engine_mutex;

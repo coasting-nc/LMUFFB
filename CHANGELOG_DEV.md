@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.260]
+### Changed
+- **Unity Build Expansion (Phase 6 Continuation)**:
+  - Implemented **Namespace Hygiene** for the `Utils` subsystem by removing temporary bridge aliases in `MathUtils.h`, `StringUtils.h`, and `TimeUtils.h`.
+  - Updated over 100 call sites and header types project-wide, migrating to `LMUFFB::Utils::` qualification or file-scope `using namespace LMUFFB::Utils`.
+  - Ensured all `#include` directives for utility headers remain outside namespace blocks to maintain Unity Build compatibility.
+  - Verified 100% test pass rate (633/633) under the hardened namespaced architecture.
+  - Updated the Unity Build Plan documentation with implementation notes and revised next steps targeting the `FFB` and `IO` subsystems.
+
 ## [0.7.259]
 ### Changed
 - **Unity Build Expansion (Phase 6 Continuation)**:

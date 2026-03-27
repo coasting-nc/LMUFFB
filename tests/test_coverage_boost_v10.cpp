@@ -2,6 +2,8 @@
 #include "../src/io/RestApiProvider.h"
 #include "../src/utils/StringUtils.h"
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_ffb_engine_rest_api_fallback, "Safety") {

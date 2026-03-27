@@ -1,5 +1,7 @@
 #include "test_ffb_common.h"
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 TEST_CASE(test_ffb_engine_control_transition_extended, "Safety") {

@@ -25,14 +25,6 @@ namespace TimeUtils {
     }
 } // namespace TimeUtils
 } // namespace Utils
-
-// Temporary bridge for legacy code
-namespace TimeUtils = Utils::TimeUtils;
-#ifdef LMUFFB_UNIT_TEST
-using Utils::g_mock_time;
-using Utils::g_use_mock_time;
-#endif
-
 } // namespace LMUFFB
 
 #endif // TIMEOUTILS_H

@@ -1,11 +1,13 @@
 #include "test_ffb_common.h"
 #include "MathUtils.h"
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 // Regression test for Issue #393: Holt-Winters 100Hz Sawtooth (The "Buzz" Bug)
 TEST_CASE(test_math_utils_issue_393_holt_winters_continuity, "Math") {
-    LMUFFB::HoltWintersFilter filter;
+    HoltWintersFilter filter;
     filter.Configure(0.5, 0.1, 0.01); // alpha=0.5, 100Hz game tick
 
     // Initial value

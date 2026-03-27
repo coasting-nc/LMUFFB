@@ -62,10 +62,6 @@ inline int SafeScan(const char* src, const char* format, ...) {
 
 } // namespace StringUtils
 } // namespace Utils
-
-// Temporary bridge for legacy code
-namespace StringUtils = Utils::StringUtils;
-
 } // namespace LMUFFB
 
 #endif // STRINGUTILS_H

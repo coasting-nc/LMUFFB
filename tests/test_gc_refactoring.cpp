@@ -20,6 +20,8 @@
 #include <fstream>
 #include <string>
 
+using namespace LMUFFB::Utils;
+
 namespace FFBEngineTests {
 
 // ---------------------------------------------------------------------------

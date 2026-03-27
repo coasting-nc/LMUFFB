@@ -24,6 +24,7 @@
 #endif
 
 using namespace LMUFFB::Logging;
+using namespace LMUFFB::Utils;
 
 namespace LMUFFB {
     extern std::atomic<bool> g_running;
