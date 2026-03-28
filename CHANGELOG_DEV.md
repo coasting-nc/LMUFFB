@@ -14,6 +14,20 @@ All notable changes to this project will be documented in this file.
 - Added comprehensive regression tests in `tests/repro_issue_511.cpp` and `tests/test_ffb_yaw_gyro.cpp` verifying gating thresholds, deadzone accuracy, and force clamping.
 - Verified 100% pass rate across the full test suite.
 
+---
+
+## Cumulative changes from version 0.7.252 till 0.7.272
+### Fixed
+- Hand-off protection: the Gyroscopic Damping setting now acts as an effective hands-off protection while on straights, and at the same time it does not affect responsiveness during cornering or fine road details in straights. Setting it to 9-10% should be enough to prevent wheel oscillations on straights.
+It is "gated" (disabled) by lateral G-force (so it does not affect cornering) and has a dead zone by steering velocity (so it does not affect fine road details).
+This setting will be renamed to simply "Hand-off protection" in a future release.
+Gyroscopic Damping is currently found at the end of the "Rear Axle" section in the GUI (it will be moved in a future release to be easier to find).
+- Updated Tooltips for GYRO_DAMPING, GYRO_SMOOTH, STATIONARY_DAMPING.
+- Lateral Load setting persistance after app restart. Resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon app restart, despite the GUI allowing values up to 10.0 (1000%).
+
+---
+
+
 ## [0.7.271]
 ### Changed
 - Update Tooltips for GYRO_DAMPING, GYRO_SMOOTH, STATIONARY_DAMPING.
@@ -168,6 +182,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.254]
 
+---
 
 ### Fixed
 - **Lateral Load Slider Persistence (Issue #475)**:
