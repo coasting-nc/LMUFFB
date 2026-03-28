@@ -422,27 +422,42 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
         const char* preview_value = "Custom";
         if (selected_preset >= 0 && selected_preset < (int)Config::presets.size()) {
             const auto& p = Config::presets[selected_preset];
-            preview_buf = (p.is_builtin ? "[Default] " : "") + p.name;
-            if (Config::IsEngineDirtyRelativeToPreset(selected_preset, engine)) {
-                preview_buf += "*";
-            }
+            std::string n = p.name;
+            if (n.rfind("Guide:", 0) == 0) n = n.substr(n.find(':') + 1);
+            else if (n.rfind("Test:", 0) == 0) n = n.substr(n.find(':') + 1);
+            if (!n.empty() && n[0] == ' ') n.erase(0, 1);
+            preview_buf = n + (Config::IsEngineDirtyRelativeToPreset(selected_preset, engine) ? "*" : "");
             preview_value = preview_buf.c_str();
         }
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.6f);
         if (ImGui::BeginCombo("Load Preset", preview_value)) {
-            for (int i = 0; i < (int)Config::presets.size(); i++) {
-                const auto& p = Config::presets[i];
-                std::string display_name = (p.is_builtin ? "[Default] " : "") + p.name;
-                bool is_selected = (selected_preset == i);
-                ImGui::PushID(i);
-                if (ImGui::Selectable(display_name.c_str(), is_selected)) {
-                    selected_preset = i;
-                    Config::ApplyPreset(i, engine);
+            auto DrawCat = [&](const char* cat, auto filter) {
+                bool has_any = false;
+                for (const auto& pr : Config::presets) { if (filter(pr)) { has_any = true; break; } }
+                if (has_any && ImGui::BeginMenu(cat)) {
+                    for (int i = 0; i < (int)Config::presets.size(); i++) {
+                        const auto& p = Config::presets[i];
+                        if (filter(p)) {
+                            std::string n = p.name;
+                            if (n.rfind("Guide:", 0) == 0) n = n.substr(n.find(':') + 1);
+                            else if (n.rfind("Test:", 0) == 0) n = n.substr(n.find(':') + 1);
+                            if (!n.empty() && n[0] == ' ') n.erase(0, 1);
+                            ImGui::PushID(i);
+                            if (ImGui::MenuItem(n.c_str(), nullptr, selected_preset == i)) {
+                                selected_preset = i;
+                                Config::ApplyPreset(i, engine);
+                            }
+                            ImGui::PopID();
+                        }
+                    }
+                    ImGui::EndMenu();
                 }
-                if (is_selected) ImGui::SetItemDefaultFocus();
-                ImGui::PopID();
-            }
+            };
+            DrawCat("User", [](const Preset& p) { return !p.is_builtin; });
+            DrawCat("Presets", [](const Preset& p) { return p.is_builtin && p.name.rfind("Guide:", 0) != 0 && p.name.rfind("Test:", 0) != 0; });
+            DrawCat("Guides", [](const Preset& p) { return p.is_builtin && p.name.rfind("Guide:", 0) == 0; });
+            DrawCat("Tests", [](const Preset& p) { return p.is_builtin && p.name.rfind("Test:", 0) == 0; });
             ImGui::EndCombo();
         }
 
