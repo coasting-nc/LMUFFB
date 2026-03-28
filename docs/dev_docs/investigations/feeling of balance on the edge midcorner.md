@@ -213,3 +213,131 @@ Call the new function inside `calculate_force`, right after your other effects, 
 3. **It is perfectly synchronized with the Slope Drop:** Because it uses the exact same derivatives that trigger the `understeer_drop` (loss of steering weight), the vibration will fade in at the *exact millisecond* the steering wheel goes light. 
 
 This creates a highly intuitive, multi-layered cue: The wheel goes light (Lagging indicator of grip loss) while simultaneously buzzing with organic track noise (Tactile confirmation of scrubbing).
+
+## Lateral Patch Velocity for "Stick-Slip" chatter
+
+
+
+
+Yes, absolutely! In fact, using **Lateral Patch Velocity (`mLateralPatchVel`)** is arguably the **most physically accurate** way to achieve the "Stick-Slip" chatter, because it directly measures the rubber scrubbing across the tarmac.
+
+Here is why it works perfectly for mid-corner micro-slides, and exactly how you can implement it to replace or augment your existing synthetic effects.
+
+### The Physics Rationale: Why `mLateralPatchVel`?
+
+*   **When Planted (Under the limit):** The tire is rolling perfectly. `mLateralPatchVel` is essentially `0.0 m/s`.
+*   **When Sliding (Over the limit):** The tire is scrubbing. `mLateralPatchVel` becomes a steady value (e.g., `2.0 m/s`).
+*   **On the Edge of Grip (Micro-slides):** The tire is rapidly alternating between gripping (static friction) and slipping (kinetic friction). This causes `mLateralPatchVel` to violently spike up and down. 
+
+If we take the **derivative** of this velocity (which gives us Lateral Patch *Acceleration*), we isolate exactly that violent spiking noise. This gives us a pure, 100% organic audio/tactile waveform of the tire chattering against the asphalt.
+
+### How to Implement Organic Patch Chatter
+
+This implementation will extract the high-frequency noise from the tire patch and use the grip loss as a volume knob.
+
+#### 1. Update `FFBEngine.h`
+You need to store the previous frame's patch velocity to calculate the derivative. Add this to your state variables in `FFBEngine.h`:
+
+```cpp
+    // Inside class FFBEngine { ...
+    
+    double m_prev_vert_deflection[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_vert_accel = 0.0; 
+    double m_prev_slip_angle[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
+    double m_prev_load[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0};
+    double m_prev_rotation[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0};    
+    double m_prev_brake_pressure[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
+    
+    // ---> ADD THIS LINE <---
+    double m_prev_lat_patch_vel[NUM_WHEELS] = {0.0, 0.0, 0.0, 0.0}; 
+```
+
+#### 2. Update State Tracking in `FFBEngine.cpp`
+In `calculate_force`, right where you update the other `m_prev_*` variables at the end of the frame, add the patch velocity:
+
+```cpp
+    // --- 8. STATE UPDATES (POST-CALC) ---
+    for (int i = 0; i < NUM_WHEELS; i++) {
+        m_prev_vert_deflection[i] = upsampled_data->mWheel[i].mVerticalTireDeflection;
+        m_prev_rotation[i] = upsampled_data->mWheel[i].mRotation;
+        m_prev_brake_pressure[i] = upsampled_data->mWheel[i].mBrakePressure;
+        
+        // ---> ADD THIS LINE <---
+        m_prev_lat_patch_vel[i] = upsampled_data->mWheel[i].mLateralPatchVel;
+    }
+```
+
+#### 3. Create the Organic Chatter Effect
+Add this new function to `FFBEngine.cpp`. This replaces the need for a synthetic sine/sawtooth wave.
+
+```cpp
+// Helper: Calculate Organic Stick-Slip Chatter (Using Patch Velocity)
+void FFBEngine::calculate_organic_scrub_vibration(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
+    // You can tie this to a new UI toggle, or reuse m_vibration.slide_enabled
+    if (!m_vibration.slide_enabled) return;
+
+    // 1. Calculate Patch Acceleration (Derivative of Velocity)
+    // This isolates the high-frequency "chatter" of the tire grabbing and releasing the road.
+    double patch_accel_fl = (data->mWheel[WHEEL_FL].mLateralPatchVel - m_prev_lat_patch_vel[WHEEL_FL]) / ctx.dt;
+    double patch_accel_fr = (data->mWheel[WHEEL_FR].mLateralPatchVel - m_prev_lat_patch_vel[WHEEL_FR]) / ctx.dt;
+
+    // Average the front axle chatter
+    double front_chatter = (patch_accel_fl + patch_accel_fr) / 2.0;
+
+    // 2. The Envelope: How much front grip have we lost?
+    double grip_loss = std::clamp(1.0 - ctx.avg_front_grip, 0.0, 1.0);
+
+    // Only trigger if we are actually losing grip (micro-slides and beyond)
+    if (grip_loss > 0.02) {
+        
+        // Apply a gamma curve so the vibration ramps up smoothly
+        double severity = std::pow(grip_loss, 1.5); 
+        
+        // 3. Scale the chatter
+        // Patch acceleration can be numerically huge (e.g., +/- 500 m/s^2 during a stutter), 
+        // so we multiply by a small tuning scaler (e.g., 0.005) to bring it into the Nm range.
+        double tuning_scaler = 0.005; 
+        double vibe_force = front_chatter * severity * m_vibration.slide_gain * tuning_scaler;
+
+        // Clamp for safety against physics engine teleport/collision spikes
+        vibe_force = std::clamp(vibe_force, -15.0, 15.0);
+
+        // 4. Output to context
+        // We write this to ctx.slide_noise, effectively replacing the old synthetic sawtooth wave
+        ctx.slide_noise = vibe_force * ctx.texture_load_factor * ctx.speed_gate;
+    } else {
+        ctx.slide_noise = 0.0;
+    }
+}
+```
+
+#### 4. Swap out the old Synthetic effect
+In `FFBEngine.cpp` inside `calculate_force`, replace the call to your old `calculate_slide_texture` with the new one:
+
+```cpp
+    // D. Effects
+    calculate_abs_pulse(upsampled_data, ctx);
+    calculate_lockup_vibration(upsampled_data, ctx);
+    calculate_wheel_spin(upsampled_data, ctx);
+    
+    // REMOVE THIS: calculate_slide_texture(upsampled_data, ctx);
+    // ADD THIS:
+    calculate_organic_scrub_vibration(upsampled_data, ctx); 
+    
+    calculate_road_texture(upsampled_data, ctx);
+    calculate_suspension_bottoming(upsampled_data, ctx);
+```
+
+### Why this is the ultimate solution for "Mid-Corner Balance"
+
+If you look at your old `calculate_slide_texture` code, it had this line:
+`if (effective_slip_vel > SLIDE_VEL_THRESHOLD)` where the threshold was `1.5 m/s`. 
+
+That meant the old effect **completely ignored micro-slides**. It only turned on when you were already massively understeering. 
+
+By using the **derivative** of the patch velocity (`patch_accel`), you don't need a velocity threshold anymore. 
+* If the car is planted, `patch_accel` is `0.0`. The wheel is silent.
+* The *millisecond* the tire starts to micro-slide, it stutters. `patch_accel` spikes, and because `grip_loss` is > `0.02`, you instantly feel a subtle, organic "fizz" in the wheel. 
+* As you push harder and the slide becomes violent, the "fizz" turns into a heavy, chaotic rumble.
+
+This gives the driver a continuous, high-resolution audio-tactile stream of exactly what the contact patch is doing, allowing them to balance the car on the absolute limit.
