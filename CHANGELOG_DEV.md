@@ -18,12 +18,14 @@ All notable changes to this project will be documented in this file.
 
 ## Cumulative changes from version 0.7.252 till 0.7.272
 ### Fixed
-- **Hand-off Protection**: the Gyroscopic Damping setting now acts as an effective hands-off protection while on straights, and at the same time it does not affect responsiveness during cornering or fine road details in straights. Setting it to 9-10% should be enough to prevent wheel oscillations on straights.
-It is "gated" (disabled) by lateral G-force (so it does not affect cornering) and has a dead zone by steering velocity (so it does not affect fine road details).
-This setting will be renamed to simply "Hand-off protection" in a future release.
-Gyroscopic Damping is currently found at the end of the "Rear Axle" section in the GUI (it will be moved in a future release to be easier to find).
+- **Hands-off Protection**: the Gyroscopic Damping ("Gyro Damping") setting now acts as an effective hands-off protection while on straights, and at the same time it does not affect responsiveness during cornering or fine road details in straights. 
+  - Setting it to 9-10% should be enough to prevent wheel oscillations on straights.
+  - It is "gated" (disabled) by lateral G-force (so it does not have effect during cornering) and has a dead zone by steering velocity (so it does not affect fine road details while on straights).
+  - This setting will be renamed to simply "Hands-off protection" in a future release, to be more intuitive.
+  - Gyroscopic Damping ("Gyro Damping") is currently found at the end of the "Rear Axle" section in the GUI (it will be moved in a future release to be easier to find).
 - Updated **Tooltips** for GYRO_DAMPING, GYRO_SMOOTH, STATIONARY_DAMPING.
-- **Lateral Load** setting persistance after app restart. Resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon app restart, despite the GUI allowing values up to 10.0 (1000%).
+- Fixed **Lateral Load** setting persistence after app restart: resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon app restart, despite the GUI allowing values up to 10.0 (1000%).
+
 
 ---
 
