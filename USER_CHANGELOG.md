@@ -2,6 +2,19 @@
 
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
+[size=5][b]March 29, 2026[/b][/size]
+[b]Version 0.7.273 - Preset Branding & Usability Update[/b]
+
+[b]New release[/b] (0.7.273): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]Preset Renaming[/b]: Renamed the standard "**Thrustmaster T300 / TX**" preset to "**T300 (Legacy)**" to better reflect its role as a baseline configuration.
+[*][b]New "T300 (Yaw)" Preset[/b]: Renamed the "**Thrustmaster T300 (v0.7.164 Optimized)**" preset to "**T300 (Yaw)**" for clearer identification of its enhanced yaw-based feedback characteristics.
+[*][b]Consistency Improvements[/b]: Updated internal metadata and display labels across the entire application to ensure a unified and professional presentation of these core presets.
+[/list]
+
+---
+
 [size=5][b]March 26, 2026[/b][/size]
 [b]Version 0.7.252 - Codebase Standardization: Wheel Index Refactoring[/b]
 

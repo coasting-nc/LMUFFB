@@ -224,9 +224,9 @@ struct Preset {
     }
 
     // 4. Static method to apply defaults to FFBEngine (Single Source of Truth)
-    // This is called by FFBEngine constructor to initialize with T300 defaults
+    // This is called by FFBEngine constructor to initialize with T300 (Legacy) defaults
     static void ApplyDefaultsToEngine(FFBEngine& engine) {
-        Preset defaults; // Uses default member initializers (T300 values)
+        Preset defaults; // Uses default member initializers (T300 (Legacy) values)
         defaults.Apply(engine);
     }
 

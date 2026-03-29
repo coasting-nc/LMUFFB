@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.273]
+### Changed
+- **Preset Renaming**:
+  - Renamed "**Thrustmaster T300 / TX**" built-in preset to "**T300 (Legacy)**".
+  - Deleted empty presets
+  - Updated internal preset names in TOML and resource display names in the configuration system for consistency.
+
+---
+
 ## [0.7.272]
 ### Added
 - **Smart Gyro Damping (Issue #511)**:
