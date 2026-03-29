@@ -11,6 +11,7 @@ This document contains all version release posts by ErwinMoss from the [url=http
 [*][b]New DD (Yaw) Preset[/b]: Added a dedicated preset for Direct Drive wheels based on the "T300 (Yaw)" profile, specifically tuned for the requirements of high-torque hardware. 
 [*][b]Refined Yaw Dynamics[/b]: Set `min_force` to 0.0 and tuned the **Braking** and **Throttle Yaw Kicks** for smoother, more communicative transitions during weight transfer.
 [*][b]Enhanced Communication[/b]: Optimized the general-purpose yaw kick with an activation threshold of 0.27 rad/s^2 and a 0.004s smoothing factor, delivering precise, high-fidelity car orientation feedback.
+[*][b]Updated "T300 (Yaw)" Preset[/b]: Significantly updated the settings for **Power Yaw**, **Braking Yaw**, and **Lateral / Longitudinal Load** components. These adjustments restore the high-fidelity feedback characteristics originally developed for the `0.7.222` release cycle.
 [/list]
 
 ---

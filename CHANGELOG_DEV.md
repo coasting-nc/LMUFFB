@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
   - Adjusted **Braking Yaw Kick**: Gain 10%, Gamma 1.0, Unload Sensitivity 1.0.
   - Adjusted **Throttle Yaw Kick**: Gain 10%, Gamma 1.0.
   - Adjusted **General Purpose Yaw Kick**: Gain 20% (0.2), Activation Threshold 0.27 rad/s^2, Smoothing ("kick response") 0.004 s.
+- **Updated Built-in Preset: "T300 (Yaw)"**:
+  - Refined **Power Yaw**, **Braking Yaw**, **Lateral Load**, and **Longitudinal Load** settings using high-fidelity data from the `0.7.222` release cycle.
+  - Integrated modern physics compatibility fields: `kerb_strike_rejection`, `understeer_gamma`, and others to match the latest FFB engine improvements.
 
 ---
 

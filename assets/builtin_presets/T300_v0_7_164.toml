@@ -1,12 +1,16 @@
 name = "T300 (Yaw)"
-app_version = "0.7.165"
+app_version = "0.7.222"
+
 [General]
-gain = 0.559471
-wheelbase_max_nm = 25.1
+gain = 0.56
+wheelbase_max_nm = 25.0
 target_rim_nm = 24.5
 min_force = 0.02
+auto_load_normalization_enabled = false
+dynamic_normalization_enabled = false
+
 [FrontAxle]
-steering_shaft_gain = 0.955947
+steering_shaft_gain = 0.95
 ingame_ffb_gain = 1.0
 steering_shaft_smoothing = 0.0
 understeer_effect = 1.0
@@ -18,10 +22,13 @@ flatspot_strength = 1.0
 static_notch_enabled = false
 static_notch_freq = 11.0
 static_notch_width = 2.0
+steering_100hz_reconstruction = 0
+understeer_gamma = 1.0
+
 [RearAxle]
 oversteer_boost = 0.0
 sop_effect = 0.0
-rear_align_effect = 0.828194
+rear_align_effect = 0.828
 sop_yaw_gain = 0.418502
 yaw_kick_threshold = 1.01
 unloaded_yaw_gain = 1.0
@@ -32,17 +39,20 @@ unloaded_yaw_punch = 0.0
 power_yaw_gain = 1.0
 power_yaw_threshold = 0.0
 power_slip_threshold = 0.0618062
-power_yaw_gamma = 0.2
+power_yaw_gamma = 0.4
 power_yaw_punch = 0.0
 yaw_accel_smoothing = 0.001
 sop_smoothing_factor = 0.0
 sop_scale = 1.0
+kerb_strike_rejection = 0.0
+
 [LoadForces]
-long_load_effect = 2.68722
+long_load_effect = 0.176
 long_load_smoothing = 0.15
 long_load_transform = 0
-lat_load_effect = 2.81938
+lat_load_effect = 1.32
 lat_load_transform = 2
+
 [GripEstimation]
 grip_smoothing_steady = 0.05
 grip_smoothing_fast = 0.005
@@ -51,6 +61,8 @@ slip_angle_smoothing = 0.002
 chassis_inertia_smoothing = 0.0
 optimal_slip_angle = 0.1
 optimal_slip_ratio = 0.12
+load_sensitivity_enabled = true
+
 [Advanced]
 gyro_gain = 0.0
 gyro_smoothing = 0.0
@@ -63,6 +75,9 @@ rest_api_enabled = true
 rest_api_port = 6397
 speed_gate_lower = 1.0
 speed_gate_upper = 5.0
+aux_telemetry_reconstruction = 0
+stationary_damping = 0.3
+
 [SlopeDetection]
 enabled = false
 sg_window = 15
@@ -77,6 +92,7 @@ g_slew_limit = 50.0
 use_torque = true
 torque_sensitivity = 0.5
 confidence_max_rate = 0.1
+
 [Braking]
 lockup_enabled = true
 lockup_gain = 3.0
@@ -91,6 +107,7 @@ lockup_rear_boost = 10.0
 abs_pulse_enabled = false
 abs_gain = 2.0
 abs_freq = 25.5
+
 [Vibration]
 texture_load_cap = 1.5
 slide_enabled = false
@@ -106,6 +123,7 @@ scrub_drag_gain = 0.0
 bottoming_enabled = true
 bottoming_gain = 1.0
 bottoming_method = 0
+
 [Safety]
 window_duration = 0.0
 gain_reduction = 0.3
