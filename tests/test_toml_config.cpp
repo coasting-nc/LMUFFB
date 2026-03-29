@@ -149,7 +149,7 @@ TEST_CASE(test_builtin_preset_fidelity, "Config") {
     // NOTE: In tests, InitializeEngine sets wheelbase_max_nm = 15 and target_rim_nm = 10.
     // Presets like G25/T300 inherit these because they don't override them.
     // However, the DD presets (Moza, Simagic) explicitly override them to 15/10, 21/12 etc.
-    check_preset("Thrustmaster T300/TX", 15.0f, 10.0f);
+    check_preset("T300 (Legacy)", 4.0f, 4.0f);
     check_preset("GT3 DD 15 Nm (Simagic Alpha)", 15.0f, 10.0f);
     check_preset("GM DD 21 Nm (Moza R21 Ultra)", 21.0f, 12.0f);
 }

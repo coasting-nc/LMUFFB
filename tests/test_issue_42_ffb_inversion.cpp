@@ -20,7 +20,7 @@ TEST_CASE(test_issue_42_ffb_inversion_persistence, "Config") {
     // Apply "T300" preset (which used to set it to true explicitly)
     int t300_idx = -1;
     for(int i=0; i<(int)Config::presets.size(); i++) {
-        if(Config::presets[i].name == "T300") {
+        if(Config::presets[i].name == "T300 (Legacy)") {
             t300_idx = i;
             break;
         }

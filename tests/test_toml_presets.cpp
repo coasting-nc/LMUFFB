@@ -19,7 +19,7 @@ TEST_CASE(test_phase3_embedded_builtins, "Presets") {
     for (const auto& p : Config::presets) {
         // Built-in presets are embedded in the binary as TOML strings.
         // Their names come from the 'name' key in TOML or the key in the BUILTIN_PRESETS map.
-        if (p.name == "Thrustmaster T300/TX") {
+        if (p.name == "T300 (Legacy)") {
             found_t300 = true;
             ASSERT_TRUE(p.is_builtin);
             // Verify some core values are loaded
