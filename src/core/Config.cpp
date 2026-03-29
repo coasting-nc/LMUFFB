@@ -1047,6 +1047,7 @@ void Config::LoadPresets() {
         { IDR_PRESET_GUIDE_UNDERSTEER__FRONT_GRIP_, "Guide: Understeer (Front Grip)" },
         { IDR_PRESET_LMPXHY_DD_15_NM__SIMAGIC_ALPHA_, "LMPx/HY DD 15 Nm (Simagic Alpha)" },
         { IDR_PRESET_T300_V0_7_164, "T300 (Yaw)" },
+        { IDR_PRESET_T300_LEGACY, "T300 (Legacy)" },
         { IDR_PRESET_TEST_GAME_BASE_FFB_ONLY, "Test: Game Base FFB Only" },
         { IDR_PRESET_TEST_NO_EFFECTS, "Test: No Effects" },
         { IDR_PRESET_TEST_REAR_ALIGN_TORQUE_ONLY, "Test: Rear Align Torque Only" },
