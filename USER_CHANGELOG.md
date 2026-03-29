@@ -3,6 +3,19 @@
 This document contains all version release posts by ErwinMoss from the [url=https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/]lmuFFB App thread[/url] on Le Mans Ultimate Community.
 
 [size=5][b]March 29, 2026[/b][/size]
+[b]Version 0.7.274 - New Specialized "DD (Yaw)" Preset[/b]
+
+[b]New release[/b] (0.7.274): https://github.com/coasting-nc/LMUFFB/releases
+
+[list]
+[*][b]New DD (Yaw) Preset[/b]: Added a dedicated preset for Direct Drive wheels based on the "T300 (Yaw)" profile, specifically tuned for the requirements of high-torque hardware. 
+[*][b]Refined Yaw Dynamics[/b]: Set `min_force` to 0.0 and tuned the **Braking** and **Throttle Yaw Kicks** for smoother, more communicative transitions during weight transfer.
+[*][b]Enhanced Communication[/b]: Optimized the general-purpose yaw kick with an activation threshold of 0.27 rad/s^2 and a 0.004s smoothing factor, delivering precise, high-fidelity car orientation feedback.
+[/list]
+
+---
+
+[size=5][b]March 29, 2026[/b][/size]
 [b]Version 0.7.273 - Preset Branding & Usability Update[/b]
 
 [b]New release[/b] (0.7.273): https://github.com/coasting-nc/LMUFFB/releases

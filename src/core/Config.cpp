@@ -1034,6 +1034,7 @@ void Config::LoadPresets() {
     // 1. Load Built-in Presets from Windows Resources
     static const std::vector<std::pair<int, std::string>> resource_presets = {
         { IDR_PRESET_DEFAULT, "Default" },
+        { IDR_PRESET_DD_YAW, "DD (Yaw)" },
         { IDR_PRESET_GM___YAW_KICK_DD_21_NM__MOZA_R21_ULTRA_, "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)" },
         { IDR_PRESET_GM_DD_21_NM__MOZA_R21_ULTRA_, "GM DD 21 Nm (Moza R21 Ultra)" },
         { IDR_PRESET_GT3_DD_15_NM__SIMAGIC_ALPHA_, "GT3 DD 15 Nm (Simagic Alpha)" },

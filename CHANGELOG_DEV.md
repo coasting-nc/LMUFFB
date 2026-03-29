@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.274]
+### Added
+- **New Built-in Preset: "DD (Yaw)"**:
+  - Introduced a specialized Direct Drive preset optimized for enhanced yaw-based feedback, based on the "T300 (Yaw)" profile with modifications for high-torque hardware.
+  - Set `min_force` to 0.0 for DD compatibility.
+  - Adjusted **Braking Yaw Kick**: Gain 10%, Gamma 1.0, Unload Sensitivity 1.0.
+  - Adjusted **Throttle Yaw Kick**: Gain 10%, Gamma 1.0.
+  - Adjusted **General Purpose Yaw Kick**: Gain 20% (0.2), Activation Threshold 0.27 rad/s^2, Smoothing ("kick response") 0.004 s.
+
+---
+
 ## [0.7.273]
 ### Changed
 - **Preset Renaming**:
