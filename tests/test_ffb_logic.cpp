@@ -532,7 +532,7 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         int t300_idx = -1;
         int default_idx = -1;
         for(int i=0; i<(int)Config::presets.size(); i++) {
-            if(Config::presets[i].name == "Thrustmaster T300/TX") t300_idx = i;
+            if(Config::presets[i].name == "T300 (Legacy)") t300_idx = i;
             if(Config::presets[i].name == "Default") default_idx = i;
         }
 
@@ -543,8 +543,8 @@ TEST_CASE(test_defaults_consistency, "Logic") {
         const Preset& t300_preset = Config::presets[t300_idx];
 
         // T300 builtin has special min_force and steering_shaft_smoothing
-        ASSERT_NEAR(t300_preset.general.min_force, 0.08f, 0.0001f);
-        ASSERT_NEAR(t300_preset.front_axle.steering_shaft_smoothing, 0.15f, 0.0001f);
+        ASSERT_NEAR(t300_preset.general.min_force, 0.01f, 0.0001f);
+        ASSERT_NEAR(t300_preset.front_axle.steering_shaft_smoothing, 0.0f, 0.0001f);
 
         ASSERT_TRUE(default_preset.general.min_force != t300_preset.general.min_force);
     }

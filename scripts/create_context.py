@@ -72,7 +72,8 @@ EXCLUDE_FILES = {
 EXAMPLE_TEST_FILES = {
     'tests/main_test_runner.cpp',
     'tests/test_ffb_common.cpp',
-    'tests/test_ffb_common.h'
+    'tests/test_ffb_common.h',
+    'tests/test_ffb_engine.cpp'
 }
 
 def is_code_file(filename):
@@ -108,15 +109,53 @@ def get_main_code_component(relpath_normalized):
     
     path = relpath_normalized[4:] # strip 'src/'
     
+    # 0. Precise Main entrypoint check
+    if path == 'core/main.cpp' or path == 'main.cpp':
+        return 'main'
+
+    # 1. Folder based categorization (Modern structure)
+    if path.startswith('gui/'):
+        return 'gui'
+    
+    if path.startswith('logging/'):
+        if any(token in path for token in ['RateMonitor', 'HealthMonitor', 'ChannelMonitor']):
+            return 'monitor'
+        return 'logger'
+        
+    if path.startswith('ffb/'):
+        if 'DirectInputFFB' in path:
+            return 'io'
+        if 'FFBSafetyMonitor' in path:
+            return 'monitor'
+        # Most of ffb/ is physics related (FFBEngine, UpSampler, etc.)
+        return 'physics'
+        
+    if path.startswith('physics/'):
+        # GripLoadEstimation used to be physics, staying as such
+        return 'physics'
+        
+    if path.startswith('io/'):
+        if 'lmu_sm_interface' in path or 'rF2' in path:
+            return 'game_shared_memory'
+        return 'io'
+        
+    if path.startswith('core/'):
+        return 'common'
+        
+    if path.startswith('utils/'):
+        # MathUtils was historically physics
+        if 'MathUtils' in path:
+            return 'physics'
+        return 'common'
+
+    # 2. Legacy prefix based categorization (Fallback for root files/older structures)
     # GUI
     if any(path.startswith(prefix) for prefix in ['GuiLayer', 'GuiPlatform', 'GuiWidgets', 'Tooltips', 'DXGIUtils', 'resource.h', 'res.rc.in']):
         return 'gui'
     
-    # Logger
+    # Logger / Monitor
     if any(path.startswith(prefix) for prefix in ['AsyncLogger', 'Logger.h']):
         return 'logger'
-        
-    # Monitor
     if any(path.startswith(prefix) for prefix in ['RateMonitor', 'HealthMonitor']):
         return 'monitor'
 
@@ -132,10 +171,6 @@ def get_main_code_component(relpath_normalized):
     if any(path.startswith(prefix) for prefix in ['lmu_sm_interface', 'rF2']):
         return 'game_shared_memory'
         
-    # Main
-    if any(path.startswith(prefix) for prefix in ['main.cpp']):
-        return 'main'
-
     # Common
     if any(path.startswith(prefix) for prefix in ['Config', 'StringUtils', 'Version.h.in']):
         return 'common'

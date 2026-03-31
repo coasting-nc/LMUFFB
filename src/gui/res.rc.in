@@ -52,8 +52,6 @@ IDI_ICON1               ICON                    "@LMUFFB_SOURCE_DIR@/icon/lmuffb
 //
 
 IDR_PRESET_DEFAULT RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Default.toml"
-IDR_PRESET_FANATEC_CSL_DD__GT_DD_PRO RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Fanatec_CSL_DD__GT_DD_Pro.toml"
-IDR_PRESET_FANATEC_PODIUM_DD1DD2 RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Fanatec_Podium_DD1DD2.toml"
 IDR_PRESET_GM___YAW_KICK_DD_21_NM__MOZA_R21_ULTRA_ RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/GM___Yaw_Kick_DD_21_Nm__Moza_R21_Ultra_.toml"
 IDR_PRESET_GM_DD_21_NM__MOZA_R21_ULTRA_ RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/GM_DD_21_Nm__Moza_R21_Ultra_.toml"
 IDR_PRESET_GT3_DD_15_NM__SIMAGIC_ALPHA_ RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/GT3_DD_15_Nm__Simagic_Alpha_.toml"
@@ -65,11 +63,8 @@ IDR_PRESET_GUIDE_SOP_YAW__KICK_ RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_prese
 IDR_PRESET_GUIDE_TRACTION_LOSS__SPIN_ RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Guide_Traction_Loss__Spin_.toml"
 IDR_PRESET_GUIDE_UNDERSTEER__FRONT_GRIP_ RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Guide_Understeer__Front_Grip_.toml"
 IDR_PRESET_LMPXHY_DD_15_NM__SIMAGIC_ALPHA_ RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/LMPxHY_DD_15_Nm__Simagic_Alpha_.toml"
-IDR_PRESET_LOGITECH_G25G27G29G920 RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Logitech_G25G27G29G920.toml"
-IDR_PRESET_MOZA_R5R9R16R21 RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Moza_R5R9R16R21.toml"
-IDR_PRESET_SIMAGIC_ALPHAALPHA_MINIALPHA_U RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Simagic_AlphaAlpha_MiniAlpha_U.toml"
-IDR_PRESET_SIMUCUBE_2_SPORTPROULTIMATE RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Simucube_2_SportProUltimate.toml"
 IDR_PRESET_T300_V0_7_164 RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/T300_v0_7_164.toml"
+IDR_PRESET_T300_LEGACY RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/T300_Legacy.toml"
 IDR_PRESET_TEST_GAME_BASE_FFB_ONLY RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Test_Game_Base_FFB_Only.toml"
 IDR_PRESET_TEST_NO_EFFECTS RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Test_No_Effects.toml"
 IDR_PRESET_TEST_REAR_ALIGN_TORQUE_ONLY RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Test_Rear_Align_Torque_Only.toml"
@@ -79,9 +74,7 @@ IDR_PRESET_TEST_SOP_ONLY RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Test
 IDR_PRESET_TEST_TEXTURES_ONLY RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Test_Textures_Only.toml"
 IDR_PRESET_TEST_UNDERSTEER_ONLY RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Test_Understeer_Only.toml"
 IDR_PRESET_TEST_YAW_KICK_ONLY RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Test_Yaw_Kick_Only.toml"
-IDR_PRESET_THRUSTMASTER_T_GTT_GT_II RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Thrustmaster_T_GTT_GT_II.toml"
-IDR_PRESET_THRUSTMASTER_T300TX RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Thrustmaster_T300TX.toml"
-IDR_PRESET_THRUSTMASTER_TS_PCTS_XW RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/Thrustmaster_TS_PCTS_XW.toml"
+IDR_PRESET_DD_YAW RCDATA "@LMUFFB_SOURCE_DIR@/assets/builtin_presets/DD_Yaw.toml"
 
 
 

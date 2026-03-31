@@ -1034,8 +1034,7 @@ void Config::LoadPresets() {
     // 1. Load Built-in Presets from Windows Resources
     static const std::vector<std::pair<int, std::string>> resource_presets = {
         { IDR_PRESET_DEFAULT, "Default" },
-        { IDR_PRESET_FANATEC_CSL_DD__GT_DD_PRO, "Fanatec CSL DD / GT DD Pro" },
-        { IDR_PRESET_FANATEC_PODIUM_DD1DD2, "Fanatec Podium DD1/DD2" },
+        { IDR_PRESET_DD_YAW, "DD (Yaw)" },
         { IDR_PRESET_GM___YAW_KICK_DD_21_NM__MOZA_R21_ULTRA_, "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)" },
         { IDR_PRESET_GM_DD_21_NM__MOZA_R21_ULTRA_, "GM DD 21 Nm (Moza R21 Ultra)" },
         { IDR_PRESET_GT3_DD_15_NM__SIMAGIC_ALPHA_, "GT3 DD 15 Nm (Simagic Alpha)" },
@@ -1047,11 +1046,8 @@ void Config::LoadPresets() {
         { IDR_PRESET_GUIDE_TRACTION_LOSS__SPIN_, "Guide: Traction Loss (Spin)" },
         { IDR_PRESET_GUIDE_UNDERSTEER__FRONT_GRIP_, "Guide: Understeer (Front Grip)" },
         { IDR_PRESET_LMPXHY_DD_15_NM__SIMAGIC_ALPHA_, "LMPx/HY DD 15 Nm (Simagic Alpha)" },
-        { IDR_PRESET_LOGITECH_G25G27G29G920, "Logitech G25/G27/G29/G920" },
-        { IDR_PRESET_MOZA_R5R9R16R21, "Moza R5 / R9 / R16 / R21" },
-        { IDR_PRESET_SIMAGIC_ALPHAALPHA_MINIALPHA_U, "Simagic Alpha / Alpha Mini / Alpha U" },
-        { IDR_PRESET_SIMUCUBE_2_SPORTPROULTIMATE, "Simucube 2 Sport / Pro / Ultimate" },
-        { IDR_PRESET_T300_V0_7_164, "Thrustmaster T300 (v0.7.164 Optimized)" },
+        { IDR_PRESET_T300_V0_7_164, "T300 (Yaw)" },
+        { IDR_PRESET_T300_LEGACY, "T300 (Legacy)" },
         { IDR_PRESET_TEST_GAME_BASE_FFB_ONLY, "Test: Game Base FFB Only" },
         { IDR_PRESET_TEST_NO_EFFECTS, "Test: No Effects" },
         { IDR_PRESET_TEST_REAR_ALIGN_TORQUE_ONLY, "Test: Rear Align Torque Only" },
@@ -1061,9 +1057,6 @@ void Config::LoadPresets() {
         { IDR_PRESET_TEST_TEXTURES_ONLY, "Test: Textures Only" },
         { IDR_PRESET_TEST_UNDERSTEER_ONLY, "Test: Understeer Only" },
         { IDR_PRESET_TEST_YAW_KICK_ONLY, "Test: Yaw Kick Only" },
-        { IDR_PRESET_THRUSTMASTER_T_GTT_GT_II, "Thrustmaster T-GT / T-GT II" },
-        { IDR_PRESET_THRUSTMASTER_T300TX, "Thrustmaster T300 / TX" },
-        { IDR_PRESET_THRUSTMASTER_TS_PCTS_XW, "Thrustmaster TS-PC / TS-XW" }
     };
 
     for (const auto& [resId, displayName] : resource_presets) {

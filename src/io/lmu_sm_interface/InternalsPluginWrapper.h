@@ -8,3 +8,6 @@
 
 #include "PluginObjectsWrapper.h"
 #include "InternalsPlugin.hpp"
+
+
+// Info aboout double mSuspForce: CRITICAL: pushrod/spring load in Newtons (requires Motion Ratio normalization for wheel load)

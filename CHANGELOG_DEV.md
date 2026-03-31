@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.275]
+
+### Updated
+- Recompiled with new LMU 1.3 shared memory interface.
+
+
+---
+
+## Cumulative changes from version 0.7.272 till 0.7.275
+
+## [0.7.275]
+### Updated
+- Recompiled with new LMU 1.3 shared memory interface.
+
+### Changed
+- **Preset Renaming**: 
+  - Renamed built-in preset to "**T300 (Legacy)**".
+  - Deleted empty presets
+  - Updated internal preset names in TOML and resource display names in the configuration system for consistency.
+- **Updated Built-in Preset: "T300 (Yaw)"**:
+  - Refined **Power Yaw**, **Braking Yaw**, **Lateral Load**, and **Longitudinal Load** settings.
+- **New Built-in Preset: "DD (Yaw)"**:
+  - Introduced a specialized Direct Drive preset based on the "T300 (Yaw)" profile with modifications for DDs.
+  - Set `min_force` to 0.0 for DD compatibility.
+  - Adjusted **Braking Yaw Kick**: Gain 10%, Gamma 1.0, Unload Sensitivity 1.0.
+  - Adjusted **Throttle Yaw Kick**: Gain 10%, Gamma 1.0.
+  - Adjusted **General Purpose Yaw Kick**: Gain 20% (0.2), Activation Threshold 0.27 rad/s^2, Smoothing ("kick response") 0.004 s.
+
+
+---
+
+## [0.7.274]
+### Added
+- **New Built-in Preset: "DD (Yaw)"**:
+  - Introduced a specialized Direct Drive preset optimized for enhanced yaw-based feedback, based on the "T300 (Yaw)" profile with modifications for high-torque hardware.
+  - Set `min_force` to 0.0 for DD compatibility.
+  - Adjusted **Braking Yaw Kick**: Gain 10%, Gamma 1.0, Unload Sensitivity 1.0.
+  - Adjusted **Throttle Yaw Kick**: Gain 10%, Gamma 1.0.
+  - Adjusted **General Purpose Yaw Kick**: Gain 20% (0.2), Activation Threshold 0.27 rad/s^2, Smoothing ("kick response") 0.004 s.
+- **Updated Built-in Preset: "T300 (Yaw)"**:
+  - Refined **Power Yaw**, **Braking Yaw**, **Lateral Load**, and **Longitudinal Load** settings using high-fidelity data from the `0.7.222` release cycle.
+  - Integrated modern physics compatibility fields: `kerb_strike_rejection`, `understeer_gamma`, and others to match the latest FFB engine improvements.
+
+---
+
+## [0.7.273]
+### Changed
+- **Preset Renaming**:
+  - Renamed "**Thrustmaster T300 / TX**" built-in preset to "**T300 (Legacy)**".
+  - Deleted empty presets
+  - Updated internal preset names in TOML and resource display names in the configuration system for consistency.
+
+---
+
 ## [0.7.272]
 ### Added
 - **Smart Gyro Damping (Issue #511)**:
@@ -13,6 +67,22 @@ All notable changes to this project will be documented in this file.
 ### Testing
 - Added comprehensive regression tests in `tests/repro_issue_511.cpp` and `tests/test_ffb_yaw_gyro.cpp` verifying gating thresholds, deadzone accuracy, and force clamping.
 - Verified 100% pass rate across the full test suite.
+
+---
+
+## Cumulative changes from version 0.7.252 till 0.7.272
+### Fixed
+- **Hands-off Protection**: the Gyroscopic Damping ("Gyro Damping") setting now acts as an effective hands-off protection while on straights, and at the same time it does not affect responsiveness during cornering or fine road details in straights. 
+  - Setting it to 9-10% should be enough to prevent wheel oscillations on straights.
+  - It is "gated" (disabled) by lateral G-force (so it does not have effect during cornering) and has a dead zone by steering velocity (so it does not affect fine road details while on straights).
+  - This setting will be renamed to simply "Hands-off protection" in a future release, to be more intuitive.
+  - Gyroscopic Damping ("Gyro Damping") is currently found at the end of the "Rear Axle" section in the GUI (it will be moved in a future release to be easier to find).
+- Updated **Tooltips** for GYRO_DAMPING, GYRO_SMOOTH, STATIONARY_DAMPING.
+- Fixed **Lateral Load** setting persistence after app restart: resolved an issue where the "Lateral Load" slider value was incorrectly clamped to 2.0 (200%) upon app restart, despite the GUI allowing values up to 10.0 (1000%).
+
+
+---
+
 
 ## [0.7.271]
 ### Changed
@@ -168,6 +238,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.254]
 
+---
 
 ### Fixed
 - **Lateral Load Slider Persistence (Issue #475)**:

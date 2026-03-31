@@ -62,7 +62,7 @@ TEST_CASE(test_presets, "Config") {
     // Use a known builtin instead of "Test: SoP Only" which might not exist in production
     int idx = -1;
     for(size_t i=0; i<Config::presets.size(); i++) {
-        if(Config::presets[i].name == "Thrustmaster T300/TX" || Config::presets[i].name == "Thrustmaster_T300TX") {
+        if(Config::presets[i].name == "T300 (Legacy)") {
             idx = (int)i;
             break;
         }
@@ -70,9 +70,9 @@ TEST_CASE(test_presets, "Config") {
     
     if(idx != -1) {
         Config::ApplyPreset(idx, engine);
-        ASSERT_NEAR(engine.m_general.min_force, 0.08f, 0.01);
+        ASSERT_NEAR(engine.m_general.min_force, 0.01f, 0.01);
     } else {
-        FAIL_TEST("Preset 'Thrustmaster T300/TX' not found");
+        FAIL_TEST("Preset 'T300 (Legacy)' not found");
     }
 }
 
@@ -83,18 +83,16 @@ TEST_CASE(test_preset_initialization, "Config") {
     // In Phase 3, built-in names are restored to their original descriptive strings.
     const char* preset_names[] = {
         "Default",
-        "Logitech G25/G27/G29/G920",
-        "Thrustmaster T300/TX",
-        "Thrustmaster T-GT/T-GT II",
-        "Thrustmaster TS-PC/TS-XW",
-        "Fanatec CSL DD / GT DD Pro",
-        "Fanatec Podium DD1/DD2",
-        "Simucube 2 Sport/Pro/Ultimate",
-        "Simagic Alpha/Alpha Mini/Alpha U",
-        "Moza R5/R9/R16/R21"
+        "DD (Yaw)",
+        "GM + Yaw Kick DD 21 Nm (Moza R21 Ultra)",
+        "GM DD 21 Nm (Moza R21 Ultra)",
+        "GT3 DD 15 Nm (Simagic Alpha)",
+        "LMPx/HY DD 15 Nm (Simagic Alpha)",
+        "T300 (Yaw)",
+        "T300 (Legacy)"
     };
     
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 8; i++) {
         bool found = false;
         for (const auto& p : Config::presets) {
             if (p.name == preset_names[i]) {

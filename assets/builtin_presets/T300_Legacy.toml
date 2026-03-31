@@ -1,19 +1,19 @@
-name = "T300 (Yaw)"
-app_version = "0.7.222"
+name = "T300 (Legacy)"
+app_version = "0.7.274"
 
 [General]
-gain = 0.56
-wheelbase_max_nm = 25.0
-target_rim_nm = 24.5
-min_force = 0.02
+gain = 1.0
+wheelbase_max_nm = 4.0
+target_rim_nm = 4.0
+min_force = 0.01
 auto_load_normalization_enabled = false
 dynamic_normalization_enabled = false
 
 [FrontAxle]
-steering_shaft_gain = 0.95
+steering_shaft_gain = 1.0
 ingame_ffb_gain = 1.0
 steering_shaft_smoothing = 0.0
-understeer_effect = 1.0
+understeer_effect = 0.5
 torque_source = 0
 torque_passthrough = false
 flatspot_suppression = false
@@ -22,61 +22,57 @@ flatspot_strength = 1.0
 static_notch_enabled = false
 static_notch_freq = 11.0
 static_notch_width = 2.0
-steering_100hz_reconstruction = 0
-understeer_gamma = 1.0
 
 [RearAxle]
-oversteer_boost = 0.0
-sop_effect = 0.0
-rear_align_effect = 0.828
-sop_yaw_gain = 0.418502
-yaw_kick_threshold = 1.01
-unloaded_yaw_gain = 1.0
-unloaded_yaw_threshold = 0.0
-unloaded_yaw_sens = 0.1
-unloaded_yaw_gamma = 0.1
-unloaded_yaw_punch = 0.0
-power_yaw_gain = 1.0
-power_yaw_threshold = 0.0
-power_slip_threshold = 0.0618062
-power_yaw_gamma = 0.4
-power_yaw_punch = 0.0
-yaw_accel_smoothing = 0.001
+oversteer_boost = 2.40336
+sop_effect = 0.425003
+rear_align_effect = 0.966383
+sop_yaw_gain = 0.386555
+yaw_kick_threshold = 1.68
+unloaded_yaw_gain = 0.0
+unloaded_yaw_threshold = 0.2
+unloaded_yaw_sens = 1.0
+unloaded_yaw_gamma = 0.5
+unloaded_yaw_punch = 0.05
+power_yaw_gain = 0.0
+power_yaw_threshold = 0.2
+power_slip_threshold = 0.1
+power_yaw_gamma = 0.5
+power_yaw_punch = 0.05
+yaw_accel_smoothing = 0.005
 sop_smoothing_factor = 0.0
 sop_scale = 1.0
-kerb_strike_rejection = 0.0
 
 [LoadForces]
-long_load_effect = 0.176
+long_load_effect = 0.0
 long_load_smoothing = 0.15
 long_load_transform = 0
-lat_load_effect = 1.32
-lat_load_transform = 2
+lat_load_effect = 0.0
+lat_load_transform = 0
 
 [GripEstimation]
 grip_smoothing_steady = 0.05
 grip_smoothing_fast = 0.005
 grip_smoothing_sensitivity = 0.1
-slip_angle_smoothing = 0.002
+slip_angle_smoothing = 0.0
 chassis_inertia_smoothing = 0.0
 optimal_slip_angle = 0.1
 optimal_slip_ratio = 0.12
 load_sensitivity_enabled = true
 
 [Advanced]
-gyro_gain = 0.0
+gyro_gain = 0.0336134
 gyro_smoothing = 0.0
 understeer_affects_sop = false
 road_fallback_scale = 0.05
-soft_lock_enabled = false
+soft_lock_enabled = true
 soft_lock_stiffness = 20.0
 soft_lock_damping = 0.5
-rest_api_enabled = true
+rest_api_enabled = false
 rest_api_port = 6397
-speed_gate_lower = 1.0
-speed_gate_upper = 5.0
-aux_telemetry_reconstruction = 0
-stationary_damping = 0.3
+speed_gate_lower = 0.0
+speed_gate_upper = 0.277778
+stationary_damping = 1.0
 
 [SlopeDetection]
 enabled = false
@@ -91,11 +87,10 @@ confidence_enabled = true
 g_slew_limit = 50.0
 use_torque = true
 torque_sensitivity = 0.5
-confidence_max_rate = 0.1
 
 [Braking]
 lockup_enabled = true
-lockup_gain = 3.0
+lockup_gain = 2.0
 brake_load_cap = 10.0
 lockup_freq_scale = 1.02
 lockup_gamma = 0.1
@@ -104,22 +99,22 @@ lockup_full_pct = 5.0
 lockup_prediction_sens = 10.0
 lockup_bump_reject = 0.1
 lockup_rear_boost = 10.0
-abs_pulse_enabled = false
+abs_pulse_enabled = true
 abs_gain = 2.0
-abs_freq = 25.5
+abs_freq = 20.0
 
 [Vibration]
-texture_load_cap = 1.5
-slide_enabled = false
-slide_gain = 0.226562
+texture_load_cap = 1.96
+slide_enabled = true
+slide_gain = 0.235294
 slide_freq = 1.0
-road_enabled = false
-road_gain = 0.0
+road_enabled = true
+road_gain = 2.0
 vibration_gain = 1.0
-spin_enabled = false
+spin_enabled = true
 spin_gain = 0.5
 spin_freq_scale = 1.0
-scrub_drag_gain = 0.0
+scrub_drag_gain = 0.0462185
 bottoming_enabled = true
 bottoming_gain = 1.0
 bottoming_method = 0
