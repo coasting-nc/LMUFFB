@@ -1,3 +1,16 @@
+/******************************************************************************
+ *  Copyright (c) 2025 Studio 397 BV and Motorsport Games Inc.
+ *  All rights reserved.
+ *
+ *  This header is part of the Studio 397 Plugin SDK. It may be used solely
+ *  for the purpose of developing plugins or extensions for supported Studio 397
+ *  products. Redistribution or modification of this header is not permitted.
+ *
+ *  This file contains proprietary information of Studio 397 B.V. and is
+ *  provided on a strictly "as is" basis, without warranty of any kind, either
+ *  express or implied. Studio 397 B.V. shall not be liable for any damages
+ *  arising out of the use of this file or any plugins created with it.
+ ******************************************************************************/
 #pragma once
 #include "InternalsPlugin.hpp"
 
@@ -181,7 +194,7 @@ struct SharedMemoryScoringData { // Remember to check CopySharedMemoryObj still 
     char scoringStream[65536];
 };
 
-struct SharedMemoryTelemtryData { // Remember to check CopySharedMemoryObj still works properly when updating this struct
+struct SharedMemoryTelemetryData { // Remember to check CopySharedMemoryObj still works properly when updating this struct
     uint8_t activeVehicles;
     uint8_t playerVehicleIdx;
     bool playerHasVehicle;
@@ -207,7 +220,7 @@ struct SharedMemoryObjectOut { // Remember to check CopySharedMemoryObj still wo
     SharedMemoryGeneric generic;
     SharedMemoryPathData paths;
     SharedMemoryScoringData scoring;
-    SharedMemoryTelemtryData telemetry;
+    SharedMemoryTelemetryData telemetry;
 };
 
 struct SharedMemoryLayout {

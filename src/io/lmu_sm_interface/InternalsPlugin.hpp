@@ -1,15 +1,16 @@
-//###########################################################################
-//#                                                                         #
-//# Module: Header file for internals plugin                                #
-//#                                                                         #
-//# Description: Interface declarations for internals plugin                #
-//#                                                                         #
-//# This source code module, and all information, data, and algorithms      #
-//# associated with it, are part of isiMotor Technology (tm).               #
-//#                 PROPRIETARY AND CONFIDENTIAL                            #
-//# Copyright (c) 2025 Studio 397 BV and Motorsport Games Inc.              #
-//#                                                                         #
-//###########################################################################
+/******************************************************************************
+ *  Copyright (c) 2025 Studio 397 BV and Motorsport Games Inc.
+ *  All rights reserved.
+ *
+ *  This header is part of the Studio 397 Plugin SDK. It may be used solely
+ *  for the purpose of developing plugins or extensions for supported Studio 397
+ *  products. Redistribution or modification of this header is not permitted.
+ *
+ *  This file contains proprietary information of Studio 397 B.V. and is
+ *  provided on a strictly "as is" basis, without warranty of any kind, either
+ *  express or implied. Studio 397 B.V. shall not be liable for any damages
+ *  arising out of the use of this file or any plugins created with it.
+ ******************************************************************************/
 
 #ifndef _INTERNALS_PLUGIN_HPP_
 #define _INTERNALS_PLUGIN_HPP_
@@ -22,6 +23,22 @@
 // with another #pragma.
 #pragma pack( push, 4 )
 
+enum class IP_VehicleClass : uint8_t {
+    Hypercar = 0x00,
+    LMP2_ELMS = 0x02,
+    LMP2,
+    LMP3,
+    GTE,
+    GT3,
+    PaceCar = 0x08,
+    Unknown = 0xFF
+};
+
+enum class IP_VehicleChampionship : uint8_t {
+    WEC_2023 = 0x00, WEC_2024, WEC_2025, WEC_2026,
+    ELMS_2025 = 0X10, ELMS_2026,
+    Unknown = 0xFF
+};
 
 //#########################################################################
 //# Version01 Structures                                                   #
@@ -157,7 +174,10 @@ struct TelemWheelV01
   double mTireCarcassTemperature;       // rough average of temperature samples from carcass (Kelvin)
   double mTireInnerLayerTemperature[3]; // rough average of temperature samples from innermost layer of rubber (before carcass) (Kelvin)
 
-  unsigned char mExpansion[ 24 ];// for future use
+  float_t mOptimalTemp;
+  unsigned char mCompoundIndex;
+  unsigned char mCompoundType;
+  unsigned char mExpansion[18];
 };
 
 
@@ -279,14 +299,46 @@ struct TelemInfoV01
   double mElectricBoostMotorTemperature; // current temperature of boost motor
   double mElectricBoostWaterTemperature; // current water temperature of boost motor cooler if present (0 otherwise)
   unsigned char mElectricBoostMotorState; // 0=unavailable 1=inactive, 2=propulsion, 3=regeneration
-  
+  bool mLapInvalidated;
+  bool mABSActive;
+  bool mTCActive;
+  bool mSpeedLimiterActive;
+  uint8_t mWiperState;
+  uint8_t mTC;
+  uint8_t mTCMax;
+  uint8_t mTCSlip;
+  uint8_t mTCSlipMax;
+  uint8_t mTCCut;
+  uint8_t mTCCutMax;
+  uint8_t mABS;
+  uint8_t mABSMax;
+  uint8_t mMotorMap;
+  uint8_t mMotorMapMax;
+  uint8_t mMigration;
+  uint8_t mMigrationMax;
+  uint8_t mFrontAntiSway;
+  uint8_t mFrontAntiSwayMax;
+  uint8_t mRearAntiSway;
+  uint8_t mRearAntiSwayMax;
+  uint8_t mLiftAndCoastProgress;
+  uint8_t mTrackLimitsSteps; // Normalized track limits points (TrackLimitPoints * TrackLimitStepsPerPoint)
+  float mRegen; //kW
+  float mSoC;
+  float mVirtualEnergy;
+  float mTimeGapCarAhead;
+  float mTimeGapCarBehind;
+  float mTimeGapPlaceAhead;
+  float mTimeGapPlaceBehind;
+  char mVehicleModel[30];
+  IP_VehicleClass mVehicleClass;
+  IP_VehicleChampionship mVehicleChampionship;
+
   // Future use
-  unsigned char mExpansion[111-8]; // for future use (note that the slot ID has been moved to mID above)
+  unsigned char mExpansion[20]; // for future use (note that the slot ID has been moved to mID above)
 
   // keeping this at the end of the structure to make it easier to replace in future versions
   TelemWheelV01 mWheel[4];       // wheel info (front left, front right, rear left, rear right)
 };
-
 
 struct GraphicsInfoV01
 {
@@ -436,8 +488,8 @@ struct VehicleScoringInfoV01
   bool mDRSState;
 
   // Future use
-  unsigned char mExpansion[4];		// for future use
-};
+    unsigned char mExpansion[4];		// for future use
+  };
 
 
 struct ScoringInfoV01
@@ -504,9 +556,15 @@ struct ScoringInfoV01
 
   //
   double mAvgPathWetness;          // average wetness on main path 0.0-1.0
-
+  float mSessionTimeRemaining;
+  float mTimeOfDay;
+  bool mIsFixedSetup;
+  uint8_t mTrackGripLevel;
+  uint8_t mCloudCoverage;
+  uint8_t mTrackLimitsStepsPerPenalty;
+  uint8_t mTrackLimitsStepsPerPoint;
   // Future use
-  unsigned char mExpansion[200];
+  unsigned char mExpansion[187];
 
   // keeping this at the end of the structure to make it easier to replace in future versions
   VehicleScoringInfoV01 *mVehicle; // array of vehicle scoring info's
