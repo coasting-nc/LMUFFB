@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.275]
+
+### Updated
+- Recompiled with new LMU 1.3 shared memory interface.
+
 ## [0.7.274]
 ### Added
 - **New Built-in Preset: "DD (Yaw)"**:
