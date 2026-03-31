@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test Date:</td>
-            <td class="headerValue">2026-03-31 09:47:07</td>
+            <td class="headerValue">2026-03-31 12:39:22</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
@@ -177,18 +177,18 @@
 <span id="L106"><span class="lineNum">     106</span>                 :             : </span>
 <span id="L107"><span class="lineNum">     107</span>                 :             : class SharedMemoryLock {</span>
 <span id="L108"><span class="lineNum">     108</span>                 :             : public:</span>
-<span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC tlaBgGNC">        7177 :     static std::optional&lt;SharedMemoryLock&gt; MakeSharedMemoryLock() {</span></span>
-<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">        7177 :         SharedMemoryLock memoryLock;</span></span>
-<span id="L111"><span class="lineNum">     111</span>   [<span class="tlaGBC" title="Branch 0 was taken 7177 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 7174 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 3 times"> + </span>]:<span class="tlaGNC">        7177 :         if (memoryLock.Init()) {</span></span>
-<span id="L112"><span class="lineNum">     112</span>         [<span class="tlaGBC" title="Branch 0 was taken 7174 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        7174 :             return std::move(memoryLock);</span></span>
+<span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC tlaBgGNC">        8795 :     static std::optional&lt;SharedMemoryLock&gt; MakeSharedMemoryLock() {</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">        8795 :         SharedMemoryLock memoryLock;</span></span>
+<span id="L111"><span class="lineNum">     111</span>   [<span class="tlaGBC" title="Branch 0 was taken 8795 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span><span class="tlaGBC" title="Branch 2 was taken 8792 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 3 times"> + </span>]:<span class="tlaGNC">        8795 :         if (memoryLock.Init()) {</span></span>
+<span id="L112"><span class="lineNum">     112</span>         [<span class="tlaGBC" title="Branch 0 was taken 8792 times"> + </span><span class="tlaUNC" title="Branch 1 was not taken"> - </span>]:<span class="tlaGNC">        8792 :             return std::move(memoryLock);</span></span>
 <span id="L113"><span class="lineNum">     113</span>                 :             :         }</span>
 <span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">           3 :         return std::nullopt;</span></span>
-<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">        7177 :     }</span></span>
-<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">        7985 :     bool Lock(DWORD dwMilliseconds = INFINITE) {</span></span>
-<span id="L117"><span class="lineNum">     117</span>                 :<span class="tlaGNC">        7985 :         int MAX_SPINS = 4000;</span></span>
-<span id="L118"><span class="lineNum">     118</span>         [<span class="tlaGBC" title="Branch 0 was taken 23981 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">       23985 :         for (int spins = 0; spins &lt; MAX_SPINS; ++spins) {</span></span>
-<span id="L119"><span class="lineNum">     119</span>         [<span class="tlaGBC" title="Branch 0 was taken 7981 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16000 times"> + </span>]:<span class="tlaGNC">       23981 :             if (InterlockedCompareExchange(&amp;mDataPtr-&gt;busy, 1, 0) == 0)</span></span>
-<span id="L120"><span class="lineNum">     120</span>                 :<span class="tlaGNC">        7981 :                 return true;</span></span>
+<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">        8795 :     }</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">        5906 :     bool Lock(DWORD dwMilliseconds = INFINITE) {</span></span>
+<span id="L117"><span class="lineNum">     117</span>                 :<span class="tlaGNC">        5906 :         int MAX_SPINS = 4000;</span></span>
+<span id="L118"><span class="lineNum">     118</span>         [<span class="tlaGBC" title="Branch 0 was taken 21902 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 4 times"> + </span>]:<span class="tlaGNC">       21906 :         for (int spins = 0; spins &lt; MAX_SPINS; ++spins) {</span></span>
+<span id="L119"><span class="lineNum">     119</span>         [<span class="tlaGBC" title="Branch 0 was taken 5902 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 16000 times"> + </span>]:<span class="tlaGNC">       21902 :             if (InterlockedCompareExchange(&amp;mDataPtr-&gt;busy, 1, 0) == 0)</span></span>
+<span id="L120"><span class="lineNum">     120</span>                 :<span class="tlaGNC">        5902 :                 return true;</span></span>
 <span id="L121"><span class="lineNum">     121</span>                 :<span class="tlaGNC">       16000 :             YieldProcessor(); // CPU pause hint</span></span>
 <span id="L122"><span class="lineNum">     122</span>                 :             :         }</span>
 <span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaGNC">           4 :         InterlockedIncrement(&amp;mDataPtr-&gt;waiters);</span></span>
@@ -200,26 +200,26 @@
 <span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC tlaBgGNC">           4 :             return WaitForSingleObject(mWaitEventHandle, dwMilliseconds) == WAIT_OBJECT_0;</span></span>
 <span id="L130"><span class="lineNum">     130</span>                 :             :         }</span>
 <span id="L131"><span class="lineNum">     131</span>                 :             :     }</span>
-<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">        7982 :     void Unlock() {</span></span>
-<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">        7982 :         InterlockedExchange(&amp;mDataPtr-&gt;busy, 0);</span></span>
-<span id="L134"><span class="lineNum">     134</span>         [<span class="tlaGBC" title="Branch 0 was taken 380 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7602 times"> + </span>]:<span class="tlaGNC">        7982 :         if (mDataPtr-&gt;waiters &gt; 0) {</span></span>
+<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">        5903 :     void Unlock() {</span></span>
+<span id="L133"><span class="lineNum">     133</span>                 :<span class="tlaGNC">        5903 :         InterlockedExchange(&amp;mDataPtr-&gt;busy, 0);</span></span>
+<span id="L134"><span class="lineNum">     134</span>         [<span class="tlaGBC" title="Branch 0 was taken 380 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5523 times"> + </span>]:<span class="tlaGNC">        5903 :         if (mDataPtr-&gt;waiters &gt; 0) {</span></span>
 <span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaGNC">         380 :             SetEvent(mWaitEventHandle);</span></span>
 <span id="L136"><span class="lineNum">     136</span>                 :             :         }</span>
-<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">        7982 :     }</span></span>
+<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">        5903 :     }</span></span>
 <span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">           3 :     void Reset() { // Call this function only from the core application.</span></span>
 <span id="L139"><span class="lineNum">     139</span>                 :<span class="tlaGNC">           3 :         mDataPtr-&gt;waiters = 0;</span></span>
 <span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">           3 :         mDataPtr-&gt;busy = 0;</span></span>
 <span id="L141"><span class="lineNum">     141</span>                 :<span class="tlaGNC">           3 :     }</span></span>
-<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">       35846 :     ~SharedMemoryLock() {</span></span>
-<span id="L143"><span class="lineNum">     143</span>         [<span class="tlaGBC" title="Branch 0 was taken 7174 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 28672 times"> + </span>]:<span class="tlaGNC">       35846 :         if (mWaitEventHandle)</span></span>
-<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaGNC">        7174 :             CloseHandle(mWaitEventHandle);</span></span>
-<span id="L145"><span class="lineNum">     145</span>         [<span class="tlaGBC" title="Branch 0 was taken 7174 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 28672 times"> + </span>]:<span class="tlaGNC">       35846 :         if (mMapHandle)</span></span>
-<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">        7174 :             CloseHandle(mMapHandle);</span></span>
-<span id="L147"><span class="lineNum">     147</span>         [<span class="tlaGBC" title="Branch 0 was taken 7174 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 28672 times"> + </span>]:<span class="tlaGNC">       35846 :         if (mDataPtr)</span></span>
-<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaGNC">        7174 :             UnmapViewOfFile(mDataPtr);</span></span>
-<span id="L149"><span class="lineNum">     149</span>                 :<span class="tlaGNC">       35846 :     }</span></span>
-<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">       28669 :     SharedMemoryLock(SharedMemoryLock&amp;&amp; other) : mMapHandle(std::exchange(other.mMapHandle, nullptr)), mWaitEventHandle(std::exchange(other.mWaitEventHandle, nullptr)) ,</span></span>
-<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">       28669 :         mDataPtr(std::exchange(other.mDataPtr, nullptr)) {}</span></span>
+<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">       43936 :     ~SharedMemoryLock() {</span></span>
+<span id="L143"><span class="lineNum">     143</span>         [<span class="tlaGBC" title="Branch 0 was taken 8792 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 35144 times"> + </span>]:<span class="tlaGNC">       43936 :         if (mWaitEventHandle)</span></span>
+<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaGNC">        8792 :             CloseHandle(mWaitEventHandle);</span></span>
+<span id="L145"><span class="lineNum">     145</span>         [<span class="tlaGBC" title="Branch 0 was taken 8792 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 35144 times"> + </span>]:<span class="tlaGNC">       43936 :         if (mMapHandle)</span></span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">        8792 :             CloseHandle(mMapHandle);</span></span>
+<span id="L147"><span class="lineNum">     147</span>         [<span class="tlaGBC" title="Branch 0 was taken 8792 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 35144 times"> + </span>]:<span class="tlaGNC">       43936 :         if (mDataPtr)</span></span>
+<span id="L148"><span class="lineNum">     148</span>                 :<span class="tlaGNC">        8792 :             UnmapViewOfFile(mDataPtr);</span></span>
+<span id="L149"><span class="lineNum">     149</span>                 :<span class="tlaGNC">       43936 :     }</span></span>
+<span id="L150"><span class="lineNum">     150</span>                 :<span class="tlaGNC">       35141 :     SharedMemoryLock(SharedMemoryLock&amp;&amp; other) : mMapHandle(std::exchange(other.mMapHandle, nullptr)), mWaitEventHandle(std::exchange(other.mWaitEventHandle, nullptr)) ,</span></span>
+<span id="L151"><span class="lineNum">     151</span>                 :<span class="tlaGNC">       35141 :         mDataPtr(std::exchange(other.mDataPtr, nullptr)) {}</span></span>
 <span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">           3 :     SharedMemoryLock&amp; operator=(SharedMemoryLock&amp;&amp; other) {</span></span>
 <span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC">           3 :         std::swap(mMapHandle, other.mMapHandle);</span></span>
 <span id="L154"><span class="lineNum">     154</span>                 :<span class="tlaGNC">           3 :         std::swap(mWaitEventHandle, other.mWaitEventHandle);</span></span>
@@ -232,26 +232,26 @@
 <span id="L161"><span class="lineNum">     161</span>                 :             :         volatile LONG busy;</span>
 <span id="L162"><span class="lineNum">     162</span>                 :             :     };</span>
 <span id="L163"><span class="lineNum">     163</span>                 :             :     SharedMemoryLock() = default;</span>
-<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">        7177 :     bool Init() {</span></span>
-<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">        7177 :         mMapHandle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(LockData), &quot;LMU_SharedMemoryLockData&quot;);</span></span>
-<span id="L166"><span class="lineNum">     166</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7174 times"> + </span>]:<span class="tlaGNC">        7177 :         if (!mMapHandle) {</span></span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">        8795 :     bool Init() {</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">        8795 :         mMapHandle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, (DWORD)sizeof(LockData), &quot;LMU_SharedMemoryLockData&quot;);</span></span>
+<span id="L166"><span class="lineNum">     166</span>         [<span class="tlaGBC" title="Branch 0 was taken 3 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8792 times"> + </span>]:<span class="tlaGNC">        8795 :         if (!mMapHandle) {</span></span>
 <span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">           3 :             return false;</span></span>
 <span id="L168"><span class="lineNum">     168</span>                 :             :         }</span>
-<span id="L169"><span class="lineNum">     169</span>                 :<span class="tlaGNC">        7174 :         mDataPtr = (LockData*)MapViewOfFile(mMapHandle, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(LockData));</span></span>
-<span id="L170"><span class="lineNum">     170</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 7174 times"> + </span>]:<span class="tlaGNC">        7174 :         if (!mDataPtr) {</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :<span class="tlaGNC">        8792 :         mDataPtr = (LockData*)MapViewOfFile(mMapHandle, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(LockData));</span></span>
+<span id="L170"><span class="lineNum">     170</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 8792 times"> + </span>]:<span class="tlaGNC">        8792 :         if (!mDataPtr) {</span></span>
 <span id="L171"><span class="lineNum">     171</span>                 :<span class="tlaUNC tlaBgUNC">           0 :             CloseHandle(mMapHandle);</span></span>
 <span id="L172"><span class="lineNum">     172</span>                 :<span class="tlaUNC">           0 :             return false;</span></span>
 <span id="L173"><span class="lineNum">     173</span>                 :             :         }</span>
-<span id="L174"><span class="lineNum">     174</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7172 times"> + </span>]:<span class="tlaGNC tlaBgGNC">        7174 :         if (GetLastError() != ERROR_ALREADY_EXISTS) {</span></span>
+<span id="L174"><span class="lineNum">     174</span>         [<span class="tlaGBC" title="Branch 0 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 8790 times"> + </span>]:<span class="tlaGNC tlaBgGNC">        8792 :         if (GetLastError() != ERROR_ALREADY_EXISTS) {</span></span>
 <span id="L175"><span class="lineNum">     175</span>                 :<span class="tlaGNC">           2 :             Reset();</span></span>
 <span id="L176"><span class="lineNum">     176</span>                 :             :         }</span>
-<span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaGNC">        7174 :         mWaitEventHandle = CreateEventA(NULL, FALSE, FALSE, &quot;LMU_SharedMemoryLockEvent&quot;);</span></span>
-<span id="L178"><span class="lineNum">     178</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 7174 times"> + </span>]:<span class="tlaGNC">        7174 :         if (!mWaitEventHandle) {</span></span>
+<span id="L177"><span class="lineNum">     177</span>                 :<span class="tlaGNC">        8792 :         mWaitEventHandle = CreateEventA(NULL, FALSE, FALSE, &quot;LMU_SharedMemoryLockEvent&quot;);</span></span>
+<span id="L178"><span class="lineNum">     178</span>         [<span class="tlaUNC" title="Branch 0 was not taken"> - </span><span class="tlaGBC" title="Branch 1 was taken 8792 times"> + </span>]:<span class="tlaGNC">        8792 :         if (!mWaitEventHandle) {</span></span>
 <span id="L179"><span class="lineNum">     179</span>                 :<span class="tlaUNC tlaBgUNC">           0 :             UnmapViewOfFile(mDataPtr);</span></span>
 <span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaUNC">           0 :             CloseHandle(mMapHandle);</span></span>
 <span id="L181"><span class="lineNum">     181</span>                 :<span class="tlaUNC">           0 :             return false;</span></span>
 <span id="L182"><span class="lineNum">     182</span>                 :             :         }</span>
-<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC tlaBgGNC">        7174 :         return true;</span></span>
+<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC tlaBgGNC">        8792 :         return true;</span></span>
 <span id="L184"><span class="lineNum">     184</span>                 :             :     }</span>
 <span id="L185"><span class="lineNum">     185</span>                 :             :     HANDLE mMapHandle = NULL;</span>
 <span id="L186"><span class="lineNum">     186</span>                 :             :     HANDLE mWaitEventHandle = NULL;</span>
@@ -298,9 +298,9 @@
 <span id="L227"><span class="lineNum">     227</span>                 :             :     SharedMemoryObjectOut data;</span>
 <span id="L228"><span class="lineNum">     228</span>                 :             : };</span>
 <span id="L229"><span class="lineNum">     229</span>                 :             : </span>
-<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">        7984 : static void CopySharedMemoryObj(SharedMemoryObjectOut&amp; dst, SharedMemoryObjectOut&amp; src) {</span></span>
-<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">        7984 :     memcpy(&amp;dst.generic, &amp;src.generic, sizeof(SharedMemoryGeneric));</span></span>
-<span id="L232"><span class="lineNum">     232</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7978 times"> + </span>]:<span class="tlaGNC">        7984 :     if (src.generic.events[SME_UPDATE_SCORING]) {</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">        5905 : static void CopySharedMemoryObj(SharedMemoryObjectOut&amp; dst, SharedMemoryObjectOut&amp; src) {</span></span>
+<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">        5905 :     memcpy(&amp;dst.generic, &amp;src.generic, sizeof(SharedMemoryGeneric));</span></span>
+<span id="L232"><span class="lineNum">     232</span>         [<span class="tlaGBC" title="Branch 0 was taken 6 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5899 times"> + </span>]:<span class="tlaGNC">        5905 :     if (src.generic.events[SME_UPDATE_SCORING]) {</span></span>
 <span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">           6 :         memcpy(&amp;dst.scoring.scoringInfo, &amp;src.scoring.scoringInfo, sizeof(ScoringInfoV01));</span></span>
 <span id="L234"><span class="lineNum">     234</span>                 :<span class="tlaGNC">           6 :         memcpy(&amp;dst.scoring.vehScoringInfo, &amp;src.scoring.vehScoringInfo, src.scoring.scoringInfo.mNumVehicles * sizeof(VehicleScoringInfoV01));</span></span>
 <span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">           6 :         memcpy(&amp;dst.scoring.scoringStream, &amp;src.scoring.scoringStream, src.scoring.scoringStreamSize);</span></span>
@@ -309,17 +309,17 @@
 <span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">           6 :         dst.scoring.scoringInfo.mVehicle = &amp;dst.scoring.vehScoringInfo[0];</span></span>
 <span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">           6 :         dst.scoring.scoringInfo.mResultsStream = &amp;dst.scoring.scoringStream[0];</span></span>
 <span id="L240"><span class="lineNum">     240</span>                 :             :     }</span>
-<span id="L241"><span class="lineNum">     241</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 7975 times"> + </span>]:<span class="tlaGNC">        7984 :     if (src.generic.events[SME_UPDATE_TELEMETRY]) {</span></span>
+<span id="L241"><span class="lineNum">     241</span>         [<span class="tlaGBC" title="Branch 0 was taken 9 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 5896 times"> + </span>]:<span class="tlaGNC">        5905 :     if (src.generic.events[SME_UPDATE_TELEMETRY]) {</span></span>
 <span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC">           9 :         dst.telemetry.activeVehicles = src.telemetry.activeVehicles;</span></span>
 <span id="L243"><span class="lineNum">     243</span>                 :<span class="tlaGNC">           9 :         dst.telemetry.playerHasVehicle = src.telemetry.playerHasVehicle;</span></span>
 <span id="L244"><span class="lineNum">     244</span>                 :<span class="tlaGNC">           9 :         dst.telemetry.playerVehicleIdx = src.telemetry.playerVehicleIdx;</span></span>
 <span id="L245"><span class="lineNum">     245</span>                 :<span class="tlaGNC">           9 :         memcpy(&amp;dst.telemetry.telemInfo, &amp;src.telemetry.telemInfo, src.telemetry.activeVehicles * sizeof(TelemInfoV01));</span></span>
 <span id="L246"><span class="lineNum">     246</span>                 :             :     }</span>
-<span id="L247"><span class="lineNum">     247</span>   [<span class="tlaGBC" title="Branch 0 was taken 7983 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 7981 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2 times"> + </span> :<span class="tlaGNC">        7984 :     if (src.generic.events[SME_ENTER] || src.generic.events[SME_EXIT] || src.generic.events[SME_SET_ENVIRONMENT]) {</span></span>
-<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 7979 times"> + </span>]
+<span id="L247"><span class="lineNum">     247</span>   [<span class="tlaGBC" title="Branch 0 was taken 5904 times"> + </span><span class="tlaGBC" title="Branch 1 was taken 1 time"> + </span><span class="tlaGBC" title="Branch 2 was taken 5902 times"> + </span><span class="tlaGBC" title="Branch 3 was taken 2 times"> + </span> :<span class="tlaGNC">        5905 :     if (src.generic.events[SME_ENTER] || src.generic.events[SME_EXIT] || src.generic.events[SME_SET_ENVIRONMENT]) {</span></span>
+<span class="lineNum">        </span>          <span class="tlaGBC" title="Branch 4 was taken 2 times"> + </span><span class="tlaGBC" title="Branch 5 was taken 5900 times"> + </span>]
 <span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">           5 :         memcpy(&amp;dst.paths, &amp;src.paths, sizeof(SharedMemoryPathData));</span></span>
 <span id="L249"><span class="lineNum">     249</span>                 :             :     }</span>
-<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">        7984 : }</span></span>
+<span id="L250"><span class="lineNum">     250</span>                 :<span class="tlaGNC">        5905 : }</span></span>
         </pre>
               </td>
             </tr>
