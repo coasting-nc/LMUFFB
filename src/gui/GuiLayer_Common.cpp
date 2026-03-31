@@ -90,23 +90,50 @@ namespace {
         float GetMax() const { if (data.empty()) return 0.0f; return *std::max_element(data.begin(), data.end()); }
     };
 
-    void PlotWithStats(const char* label, const RollingBuffer& buffer, float scale_min, float scale_max, const ImVec2& size = ImVec2(0, 40), const char* tooltip = nullptr) {
-        ImGui::Text("%s", label); char hidden_label[256]; StringUtils::SafeFormat(hidden_label, sizeof(hidden_label), "##%s", label);
-        ImGui::PlotLines(hidden_label, buffer.data.data(), (int)buffer.data.size(), buffer.offset, NULL, scale_min, scale_max, size);
-        if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
-        float current = buffer.GetCurrent(); float min_val = buffer.GetMin(); float max_val = buffer.GetMax();
-        char stats_overlay[128]; StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
-        ImVec2 p_min = ImGui::GetItemRectMin(); ImVec2 p_max = ImGui::GetItemRectMax(); float plot_width = p_max.x - p_min.x; p_min.x += 2; p_min.y += 2;
-        ImDrawList* draw_list = ImGui::GetWindowDrawList(); ImFont* font = ImGui::GetFont(); float font_size = ImGui::GetFontSize(); ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
-        if (text_size.x > plot_width - 4) { StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "%.4f [%.3f, %.3f]", current, min_val, max_val); text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
-            if (text_size.x > plot_width - 4) { StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Val: %.4f", current); text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay); } }
-        draw_list->AddRectFilled(ImVec2(p_min.x - 1, p_min.y), ImVec2(p_min.x + text_size.x + 2, p_min.y + text_size.y), IM_COL32(0, 0, 0, 90));
-        draw_list->AddText(font, font_size, p_min, IM_COL32(255, 255, 255, 255), stats_overlay);
+    void PlotWithStats(const char* label, const RollingBuffer& buffer,
+        float scale_min, float scale_max,
+        const ImVec2& size = ImVec2(0, 40),
+        const char* tooltip = nullptr) {
+    ImGui::Text("%s", label);
+    char hidden_label[256];
+    StringUtils::SafeFormat(hidden_label, sizeof(hidden_label), "##%s", label);
+    ImGui::PlotLines(hidden_label, buffer.data.data(), (int)buffer.data.size(),
+    buffer.offset, NULL, scale_min, scale_max, size);
+    if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
+
+    float current = buffer.GetCurrent();
+    float min_val = buffer.GetMin();
+    float max_val = buffer.GetMax();
+    char stats_overlay[128];
+    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
+
+    ImVec2 p_min = ImGui::GetItemRectMin();
+    ImVec2 p_max = ImGui::GetItemRectMax();
+    float plot_width = p_max.x - p_min.x;
+    p_min.x += 2; p_min.y += 2;
+
+    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+    ImFont* font = ImGui::GetFont();
+    float font_size = ImGui::GetFontSize();
+    ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
+
+    if (text_size.x > plot_width - 4) {
+    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "%.4f [%.3f, %.3f]", current, min_val, max_val);
+    text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
+    if (text_size.x > plot_width - 4) {
+    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Val: %.4f", current);
+    text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
+    }
+    }
+    draw_list->AddRectFilled(ImVec2(p_min.x - 1, p_min.y), ImVec2(p_min.x + text_size.x + 2, p_min.y + text_size.y), IM_COL32(0, 0, 0, 90));
+    draw_list->AddText(font, font_size, p_min, IM_COL32(255, 255, 255, 255), stats_overlay);
     }
 
+    // Global Buffers
     RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
     RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
     RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
+
     bool g_warn_dt = false;
 }
 
@@ -232,56 +259,771 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
         ImGui::Text("Enter directory for logs:"); ImGui::InputText("##path", buf, sizeof(buf)); if (ImGui::Button("Save", ImVec2(120, 0))) { Config::m_log_path = buf; Config::Save(engine); ImGui::CloseCurrentPopup(); }
         ImGui::SameLine(); if (ImGui::Button("Cancel", ImVec2(120, 0))) ImGui::CloseCurrentPopup(); ImGui::EndPopup();
     }
-    auto FormatDecoupled = [&](float val, float base_nm) { float estimated_nm = val * base_nm; static char buf[64]; StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%% (~%.1f Nm)", val * 100.0f, estimated_nm); return (const char*)buf; };
-    auto FormatPct = [&](float val) { static char buf[32]; StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%%", val * 100.0f); return (const char*)buf; };
-    auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f", const char* tooltip = nullptr, std::function<void()> decorator = nullptr) { GuiWidgets::Result res = GuiWidgets::Float(label, v, min, max, fmt, tooltip, decorator); if (res.deactivated) Config::Save(engine); };
-    auto BoolSetting = [&](const char* label, bool* v, const char* tooltip = nullptr) { GuiWidgets::Result res = GuiWidgets::Checkbox(label, v, tooltip); if (res.deactivated) Config::Save(engine); };
+
+    auto FormatDecoupled = [&](float val, float base_nm) {
+        float estimated_nm = val * base_nm;
+        static char buf[64];
+        StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%%%% (~%.1f Nm)", val * 100.0f, estimated_nm);
+        return (const char*)buf;
+    };
+
+    auto FormatPct = [&](float val) {
+        static char buf[32];
+        StringUtils::SafeFormat(buf, sizeof(buf), "%.1f%%%%", val * 100.0f);
+        return (const char*)buf;
+    };
+
+    auto FloatSetting = [&](const char* label, float* v, float min, float max, const char* fmt = "%.2f", const char* tooltip = nullptr, std::function<void()> decorator = nullptr) {
+        GuiWidgets::Result res = GuiWidgets::Float(label, v, min, max, fmt, tooltip, decorator);
+        if (res.deactivated) {
+            Config::Save(engine);
+        }
+    };
+
+    auto BoolSetting = [&](const char* label, bool* v, const char* tooltip = nullptr) {
+        GuiWidgets::Result res = GuiWidgets::Checkbox(label, v, tooltip);
+        if (res.deactivated) {
+            Config::Save(engine);
+        }
+    };
+
+    auto IntSetting = [&](const char* label, int* v, const char* const items[], int items_count, const char* tooltip = nullptr) {
+        GuiWidgets::Result res = GuiWidgets::Combo(label, v, items, items_count, tooltip);
+        if (res.changed) {
+            std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+            Config::Save(engine);
+        }
+    };
+    
     if (ImGui::BeginTabBar("TuningTabs")) {
-        if (ImGui::BeginTabItem("Old")) { ImGui::Columns(2, "SettingsGridOld", false); if (ImGui::TreeNodeEx("General FFB", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)) { ImGui::NextColumn(); ImGui::NextColumn(); ImGui::TextDisabled("Steering: %.1f (%.0f)", m_latest_steering_angle, m_latest_steering_range); ImGui::NextColumn(); ImGui::NextColumn(); BoolSetting("Steerlock from REST API", &engine.m_advanced.rest_api_enabled, Tooltips::REST_API_ENABLE); FloatSetting("Master Gain", &engine.m_general.gain, 0.0f, 2.0f, FormatPct(engine.m_general.gain), Tooltips::MASTER_GAIN); ImGui::TreePop(); } ImGui::NextColumn(); ImGui::NextColumn(); ImGui::Columns(1); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("General")) { ImGui::Indent(); BoolSetting("Steerlock from REST API", &engine.m_advanced.rest_api_enabled, Tooltips::REST_API_ENABLE); ImGui::Separator(); bool use_in_game_ffb = (engine.m_front_axle.torque_source == 1); if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); engine.m_front_axle.torque_source = use_in_game_ffb ? 1 : 0; Config::Save(engine); } BoolSetting("Invert FFB Signal", &engine.m_invert_force, Tooltips::INVERT_FFB); FloatSetting("Master Gain", &engine.m_general.gain, 0.0f, 2.0f, FormatPct(engine.m_general.gain), Tooltips::MASTER_GAIN); FloatSetting("Wheelbase Max Torque", &engine.m_general.wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::WHEELBASE_MAX_TORQUE); FloatSetting("Target Rim Torque", &engine.m_general.target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Front Axle")) { ImGui::Indent(); if (engine.m_front_axle.torque_source == 1) FloatSetting("In-Game FFB Gain", &engine.m_front_axle.ingame_ffb_gain, 0.0f, 2.0f, FormatPct(engine.m_front_axle.ingame_ffb_gain), Tooltips::INGAME_FFB_GAIN); else FloatSetting("Steering Shaft Gain", &engine.m_front_axle.steering_shaft_gain, 0.0f, 2.0f, FormatPct(engine.m_front_axle.steering_shaft_gain), Tooltips::STEERING_SHAFT_GAIN); FloatSetting("Understeer Effect", &engine.m_front_axle.understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_front_axle.understeer_effect), Tooltips::UNDERSTEER_EFFECT); ImGui::Separator(); BoolSetting("Flatspot Suppression", &engine.m_front_axle.flatspot_suppression, Tooltips::FLATSPOT_SUPPRESSION); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Safety")) { ImGui::Indent(); FloatSetting("Safety Duration", &engine.m_safety.m_config.window_duration, 0.0f, 10.0f, "%.1f s", Tooltips::SAFETY_WINDOW_DURATION); FloatSetting("Gain Reduction", &engine.m_safety.m_config.gain_reduction, 0.0f, 1.0f, FormatPct(engine.m_safety.m_config.gain_reduction), Tooltips::SAFETY_GAIN_REDUCTION); BoolSetting("Safety on Stuttering", &engine.m_safety.m_config.stutter_safety_enabled, Tooltips::STUTTER_SAFETY_ENABLE); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Loads")) { ImGui::Indent(); FloatSetting("Lateral Load", &engine.m_load_forces.lat_load_effect, 0.0f, 10.0f, FormatDecoupled(engine.m_load_forces.lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD); FloatSetting("Longitudinal G-Force", &engine.m_load_forces.long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_load_forces.long_load_effect), Tooltips::DYNAMIC_WEIGHT); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Rear Axle")) { ImGui::Indent(); FloatSetting("Lateral G Boost (Slide)", &engine.m_rear_axle.oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_rear_axle.oversteer_boost), Tooltips::OVERSTEER_BOOST); FloatSetting("Lateral G", &engine.m_rear_axle.sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G); FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_axle.rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN), Tooltips::REAR_ALIGN_TORQUE); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Grip & Slip")) { ImGui::Indent(); BoolSetting("Enable Dynamic Load Sensitivity", &engine.m_grip_estimation.load_sensitivity_enabled, Tooltips::LOAD_SENSITIVITY_ENABLE); FloatSetting("Slip Angle Smoothing", &engine.m_grip_estimation.slip_angle_smoothing, 0.000f, 0.100f, "%.3f s", Tooltips::SLIP_ANGLE_SMOOTHING); BoolSetting("Enable Slope Detection", &engine.m_slope_detection.enabled, Tooltips::SLOPE_DETECTION_ENABLE); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Braking")) { ImGui::Indent(); BoolSetting("Lockup Vibration", &engine.m_braking.lockup_enabled, Tooltips::LOCKUP_VIBRATION); BoolSetting("ABS Pulse", &engine.m_braking.abs_pulse_enabled, Tooltips::ABS_PULSE); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Vibrations")) { ImGui::Indent(); FloatSetting("Vibration Strength", &engine.m_vibration.vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration.vibration_gain), Tooltips::VIBRATION_GAIN); BoolSetting("Slide Rumble", &engine.m_vibration.slide_enabled, Tooltips::SLIDE_RUMBLE); BoolSetting("Road Details", &engine.m_vibration.road_enabled, Tooltips::ROAD_DETAILS); BoolSetting("Spin Vibration", &engine.m_vibration.spin_enabled, Tooltips::SPIN_VIBRATION); ImGui::Unindent(); ImGui::EndTabItem(); }
-        if (ImGui::BeginTabItem("Advanced")) { ImGui::Indent(); if (ImGui::TreeNode("Stationary Vibration Gate")) { float lower_kmh = engine.m_advanced.speed_gate_lower * 3.6f; if (ImGui::SliderFloat("Mute Below", &lower_kmh, 0.0f, 20.0f, "%.1f km/h")) { engine.m_advanced.speed_gate_lower = lower_kmh / 3.6f; if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f) engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f; } if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine); ImGui::TreePop(); } ImGui::Unindent(); ImGui::EndTabItem(); }
+        if (ImGui::BeginTabItem("General")) 
+            { 
+                ImGui::Indent(); 
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                ImGui::TextDisabled("Steering: %.1f° (%.0f)", m_latest_steering_angle, m_latest_steering_range);
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                BoolSetting("Steerlock from REST API", &engine.m_advanced.rest_api_enabled, Tooltips::REST_API_ENABLE);
+
+                ImGui::Spacing();
+                bool use_in_game_ffb = (engine.m_front_axle.torque_source == 1);
+                if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) {
+                    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                    engine.m_front_axle.torque_source = use_in_game_ffb ? 1 : 0;
+                    Config::Save(engine);
+                  }
+
+                BoolSetting("Invert FFB Signal", &engine.m_invert_force, Tooltips::INVERT_FFB);
+
+                bool prev_structural = engine.m_general.dynamic_normalization_enabled;
+                if (GuiWidgets::Checkbox("Enable Dynamic Normalization (Session Peak)", &engine.m_general.dynamic_normalization_enabled, Tooltips::DYNAMIC_NORMALIZATION_ENABLE).changed) {
+                    if (prev_structural && !engine.m_general.dynamic_normalization_enabled) {
+                        engine.ResetNormalization();
+                      }
+                    Config::Save(engine);
+                  }
+                FloatSetting("Master Gain", &engine.m_general.gain, 0.0f, 2.0f, FormatPct(engine.m_general.gain), Tooltips::MASTER_GAIN);
+                FloatSetting("Wheelbase Max Torque", &engine.m_general.wheelbase_max_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::WHEELBASE_MAX_TORQUE);
+                FloatSetting("Target Rim Torque", &engine.m_general.target_rim_nm, 1.0f, 50.0f, "%.1f Nm", Tooltips::TARGET_RIM_TORQUE);
+                FloatSetting("Min Force", &engine.m_general.min_force, 0.0f, 0.20f, "%.3f", Tooltips::MIN_FORCE);
+
+                // Dynamically format the tooltip to show the exact fade-out speed in km/h
+                char stat_damp_tooltip[512];
+                StringUtils::SafeFormat(stat_damp_tooltip, sizeof(stat_damp_tooltip),
+                    "%s\n\nCurrently fades to 0%% at: %.1f km/h (See Advanced Settings -> Speed Gate).",
+                    Tooltips::STATIONARY_DAMPING, (float)engine.m_advanced.speed_gate_upper * 3.6f);
+
+                FloatSetting("Stationary Damping", &engine.m_advanced.stationary_damping, 0.0f, 1.0f, FormatPct(engine.m_advanced.stationary_damping), stat_damp_tooltip);
+
+                if (ImGui::TreeNodeEx("Soft Lock", ImGuiTreeNodeFlags_DefaultOpen)) {
+                    ImGui::NextColumn(); ImGui::NextColumn();
+                    BoolSetting("Enable Soft Lock", &engine.m_advanced.soft_lock_enabled, Tooltips::SOFT_LOCK_ENABLE);
+                    if (engine.m_advanced.soft_lock_enabled) {
+                        FloatSetting("  Stiffness", &engine.m_advanced.soft_lock_stiffness, 0.0f, 100.0f, "%.1f", Tooltips::SOFT_LOCK_STIFFNESS);
+                        FloatSetting("  Damping", &engine.m_advanced.soft_lock_damping, 0.0f, 5.0f, "%.2f", Tooltips::SOFT_LOCK_DAMPING);
+                      }
+                    ImGui::TreePop();
+                    ImGui::Separator();
+                  }
+                    ImGui::Unindent(); 
+                    ImGui::EndTabItem(); 
+            }
+        if (ImGui::BeginTabItem("Front Axle")) 
+            { 
+                ImGui::Indent(); 
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                if (engine.m_front_axle.torque_source == 1) {
+                    FloatSetting("In-Game FFB Gain", &engine.m_front_axle.ingame_ffb_gain, 0.0f, 2.0f, FormatPct(engine.m_front_axle.ingame_ffb_gain), Tooltips::INGAME_FFB_GAIN);
+                  } else {
+                      FloatSetting("Steering Shaft Gain", &engine.m_front_axle.steering_shaft_gain, 0.0f, 2.0f, FormatPct(engine.m_front_axle.steering_shaft_gain), Tooltips::STEERING_SHAFT_GAIN);
+                    }
+
+                FloatSetting("Steering Shaft Smoothing", &engine.m_front_axle.steering_shaft_smoothing, 0.000f, 0.100f, "%.3f s",
+                    Tooltips::STEERING_SHAFT_SMOOTHING,
+                    [&]() {
+                        int ms = (int)std::lround(engine.m_front_axle.steering_shaft_smoothing * 1000.0f);
+                        ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
+                        ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
+                      });
+
+                FloatSetting("Understeer Effect", &engine.m_front_axle.understeer_effect, 0.0f, 2.0f, FormatPct(engine.m_front_axle.understeer_effect),
+                    Tooltips::UNDERSTEER_EFFECT);
+
+                FloatSetting("Response Curve (Gamma)", &engine.m_front_axle.understeer_gamma, 0.1f, 4.0f, "%.1f",
+                    Tooltips::UNDERSTEER_GAMMA);
+
+                const char* torque_sources[] = { "Shaft Torque (100Hz Legacy)", "In-Game FFB (400Hz LMU 1.2+)" };
+                IntSetting("Torque Source", &engine.m_front_axle.torque_source, torque_sources, sizeof(torque_sources)/sizeof(torque_sources[0]),
+                    Tooltips::TORQUE_SOURCE);
+
+                if (engine.m_front_axle.torque_source == 0) {
+                    const char* recon_modes[] = { "Zero Latency (Extrapolation)", "Smooth (Interpolation)" };
+                    IntSetting("  Reconstruction", &engine.m_front_axle.steering_100hz_reconstruction, recon_modes, sizeof(recon_modes)/sizeof(recon_modes[0]),
+                        Tooltips::STEERING_100HZ_RECONSTRUCTION);
+                  }
+
+                BoolSetting("Pure Passthrough", &engine.m_front_axle.torque_passthrough, Tooltips::PURE_PASSTHROUGH);
+
+                if (ImGui::TreeNodeEx("Signal Filtering", ImGuiTreeNodeFlags_DefaultOpen)) {
+                    ImGui::NextColumn(); ImGui::NextColumn();
+
+                    BoolSetting("  Flatspot Suppression", &engine.m_front_axle.flatspot_suppression, Tooltips::FLATSPOT_SUPPRESSION);
+                    if (engine.m_front_axle.flatspot_suppression) {
+                        FloatSetting("    Filter Width (Q)", &engine.m_front_axle.notch_q, 0.5f, 10.0f, "Q: %.2f", Tooltips::NOTCH_Q);
+                        FloatSetting("    Suppression Strength", &engine.m_front_axle.flatspot_strength, 0.0f, 1.0f, "%.2f", Tooltips::SUPPRESSION_STRENGTH);
+                        ImGui::Text("    Est. / Theory Freq");
+                        ImGui::NextColumn();
+                        ImGui::TextDisabled("%.1f Hz / %.1f Hz", engine.m_debug_freq, engine.m_theoretical_freq);
+                        ImGui::NextColumn();
+                      }
+
+                    BoolSetting("  Static Noise Filter", &engine.m_front_axle.static_notch_enabled, Tooltips::STATIC_NOISE_FILTER);
+                    if (engine.m_front_axle.static_notch_enabled) {
+                        FloatSetting("    Target Frequency", &engine.m_front_axle.static_notch_freq, 10.0f, 100.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_FREQ);
+                        FloatSetting("    Filter Width", &engine.m_front_axle.static_notch_width, 0.1f, 10.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_WIDTH);
+                      }
+
+                    ImGui::TreePop();
+                  } else {
+                      ImGui::NextColumn(); ImGui::NextColumn();
+                    }
+                    ImGui::Unindent(); 
+                    ImGui::EndTabItem(); 
+            }
+        if (ImGui::BeginTabItem("Safety")) 
+            { 
+                ImGui::Indent(); 
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                FloatSetting("Safety Duration", &engine.m_safety.m_config.window_duration, 0.0f, 10.0f, "%.1f s", Tooltips::SAFETY_WINDOW_DURATION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                FloatSetting("Gain Reduction", &engine.m_safety.m_config.gain_reduction, 0.0f, 1.0f, FormatPct(engine.m_safety.m_config.gain_reduction), Tooltips::SAFETY_GAIN_REDUCTION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                FloatSetting("Safety Smoothing", &engine.m_safety.m_config.smoothing_tau, 0.001f, 1.0f, "%.3f s", Tooltips::SAFETY_SMOOTHING_TAU, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                FloatSetting("Slew Restriction", &engine.m_safety.m_config.slew_full_scale_time_s, 0.1f, 5.0f, "%.2f s", Tooltips::SAFETY_SLEW_FULL_SCALE_TIME_S, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+
+                ImGui::Separator();
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Stuttering (Lost Frames)");
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                BoolSetting("Safety on Stuttering", &engine.m_safety.m_config.stutter_safety_enabled, Tooltips::STUTTER_SAFETY_ENABLE);
+                if (engine.m_safety.m_config.stutter_safety_enabled) {
+                    FloatSetting("Stutter Threshold", &engine.m_safety.m_config.stutter_threshold, 1.1f, 5.0f, "%.2fx", Tooltips::STUTTER_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                  }
+
+                ImGui::Separator();
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Spike Detection");
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                FloatSetting("Spike Threshold", &engine.m_safety.m_config.spike_detection_threshold, 10.0f, 2000.0f, "%.0f u/s", Tooltips::SPIKE_DETECTION_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                FloatSetting("Immediate Spike", &engine.m_safety.m_config.immediate_spike_threshold, 100.0f, 5000.0f, "%.0f u/s", Tooltips::IMMEDIATE_SPIKE_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                ImGui::Unindent(); 
+                ImGui::EndTabItem(); 
+            }
+        if (ImGui::BeginTabItem("Loads")) 
+            { 
+                ImGui::Indent(); 
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                FloatSetting("Lateral Load", &engine.m_load_forces.lat_load_effect, 0.0f, 10.0f, FormatDecoupled(engine.m_load_forces.lat_load_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_LOAD);
+
+                const char* load_transforms[] = { "Linear (Raw)", "Cubic (Smooth)", "Quadratic (Broad)", "Hermite (Locked Center)" };
+                int lat_transform = engine.m_load_forces.lat_load_transform;
+                if (GuiWidgets::Combo("  Lateral Transform", &lat_transform, load_transforms, 4, "Mathematical transformation to soften the lateral load limits and remove 'notchiness'.").changed) {
+                    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                    engine.m_load_forces.lat_load_transform = lat_transform;
+                    Config::Save(engine);
+                  }
+
+                ImGui::Spacing();
+
+                FloatSetting("Longitudinal G-Force", &engine.m_load_forces.long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_load_forces.long_load_effect), Tooltips::DYNAMIC_WEIGHT);
+                FloatSetting("  G-Force Smoothing", &engine.m_load_forces.long_load_smoothing, 0.000f, 0.500f, "%.3f s", Tooltips::WEIGHT_SMOOTHING);
+
+                int long_transform = engine.m_load_forces.long_load_transform;
+                if (GuiWidgets::Combo("  G-Force Transform", &long_transform, load_transforms, 4, "Mathematical transformation to soften the longitudinal load limits and remove 'notchiness'.").changed) {
+                    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                    engine.m_load_forces.long_load_transform = long_transform;
+                    Config::Save(engine);
+                  }
+                ImGui::Unindent(); 
+                ImGui::EndTabItem(); 
+                }
+        if (ImGui::BeginTabItem("Rear Axle")) 
+            { 
+                ImGui::Indent();
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                FloatSetting("Lateral G Boost (Slide)", &engine.m_rear_axle.oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_rear_axle.oversteer_boost),
+                    Tooltips::OVERSTEER_BOOST);
+                FloatSetting("Lateral G", &engine.m_rear_axle.sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
+
+                FloatSetting("SoP Self-Aligning Torque", &engine.m_rear_axle.rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),
+                    Tooltips::REAR_ALIGN_TORQUE);
+                FloatSetting("  Kerb Strike Rejection", &engine.m_rear_axle.kerb_strike_rejection, 0.0f, 1.0f, FormatPct(engine.m_rear_axle.kerb_strike_rejection),
+                    Tooltips::KERB_STRIKE_REJECTION);
+                FloatSetting("Yaw Kick", &engine.m_rear_axle.sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_rear_axle.sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),
+                    Tooltips::YAW_KICK);
+                FloatSetting("  Activation Threshold", &engine.m_rear_axle.yaw_kick_threshold, 0.0f, 10.0f, "%.2f rad/sÂ²", Tooltips::YAW_KICK_THRESHOLD);
+
+                FloatSetting("  Kick Response", &engine.m_rear_axle.yaw_accel_smoothing, 0.000f, 0.050f, "%.3f s",
+                    Tooltips::YAW_KICK_RESPONSE,
+                    [&]() {
+                        int ms = (int)std::lround(engine.m_rear_axle.yaw_accel_smoothing * 1000.0f);
+                        ImVec4 color = (ms <= 15) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
+                        ImGui::TextColored(color, "Latency: %d ms", ms);
+                      });
+
+                if (ImGui::TreeNodeEx("Unloaded Yaw Kick (Braking)", ImGuiTreeNodeFlags_DefaultOpen)) {
+                    ImGui::NextColumn(); ImGui::NextColumn();
+                    FloatSetting("  Gain", &engine.m_rear_axle.unloaded_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_rear_axle.unloaded_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::UNLOADED_YAW_GAIN);
+                    FloatSetting("  Threshold", &engine.m_rear_axle.unloaded_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::UNLOADED_YAW_THRESHOLD);
+                    FloatSetting("  Unload Sens.", &engine.m_rear_axle.unloaded_yaw_sens, 0.1f, 5.0f, "%.1fx", Tooltips::UNLOADED_YAW_SENS);
+                    FloatSetting("  Gamma", &engine.m_rear_axle.unloaded_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::UNLOADED_YAW_GAMMA);
+                    FloatSetting("  Punch (Jerk)", &engine.m_rear_axle.unloaded_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::UNLOADED_YAW_PUNCH);
+                    ImGui::TreePop();
+                  } else {
+                      ImGui::NextColumn(); ImGui::NextColumn();
+                    }
+
+                if (ImGui::TreeNodeEx("Power Yaw Kick (Acceleration)", ImGuiTreeNodeFlags_DefaultOpen)) {
+                    ImGui::NextColumn(); ImGui::NextColumn();
+                    FloatSetting("  Gain", &engine.m_rear_axle.power_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_rear_axle.power_yaw_gain, FFBEngine::BASE_NM_YAW_KICK), Tooltips::POWER_YAW_GAIN);
+                    FloatSetting("  Threshold", &engine.m_rear_axle.power_yaw_threshold, 0.0f, 2.0f, "%.2f rad/sÂ²", Tooltips::POWER_YAW_THRESHOLD);
+                    FloatSetting("  TC Slip Target", &engine.m_rear_axle.power_slip_threshold, 0.01f, 0.5f, FormatPct(engine.m_rear_axle.power_slip_threshold), Tooltips::POWER_SLIP_THRESHOLD);
+                    FloatSetting("  Gamma", &engine.m_rear_axle.power_yaw_gamma, 0.1f, 2.0f, "%.1f", Tooltips::POWER_YAW_GAMMA);
+                    FloatSetting("  Punch (Jerk)", &engine.m_rear_axle.power_yaw_punch, 0.0f, 0.2f, "%.2fx", Tooltips::POWER_YAW_PUNCH);
+                    ImGui::TreePop();
+                  } else {
+                      ImGui::NextColumn(); ImGui::NextColumn();
+                    }
+
+                FloatSetting("Gyro Damping", &engine.m_advanced.gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_advanced.gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
+
+                FloatSetting("  Gyro Smooth", &engine.m_advanced.gyro_smoothing, 0.000f, 0.050f, "%.3f s",
+                    Tooltips::GYRO_SMOOTH,
+                    [&]() {
+                        int ms = (int)std::lround(engine.m_advanced.gyro_smoothing * 1000.0f);
+                        ImVec4 color = (ms <= 20) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
+                        ImGui::TextColored(color, "Latency: %d ms", ms);
+                      });
+
+                ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                FloatSetting("SoP Smoothing", &engine.m_rear_axle.sop_smoothing_factor, 0.0f, 1.0f, "%.2f",
+                    Tooltips::SOP_SMOOTHING,
+                    [&]() {
+                        int ms = (int)std::lround(engine.m_rear_axle.sop_smoothing_factor * 100.0f);
+                        ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
+                        ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
+                      });
+
+                FloatSetting("Grip Smoothing", &engine.m_grip_estimation.grip_smoothing_steady, 0.000f, 0.100f, "%.3f s",
+                    Tooltips::GRIP_SMOOTHING);
+
+                FloatSetting("  SoP Scale", &engine.m_rear_axle.sop_scale, 0.0f, 20.0f, "%.2f", Tooltips::SOP_SCALE);
+                ImGui::Unindent(); 
+                ImGui::EndTabItem(); 
+            }
+        if (ImGui::BeginTabItem("Grip & Slip")) 
+            { 
+                ImGui::Indent();
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                if (GuiWidgets::Checkbox("Enable Dynamic Load Sensitivity", &engine.m_grip_estimation.load_sensitivity_enabled, Tooltips::LOAD_SENSITIVITY_ENABLE).deactivated) {
+                    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+                    Config::Save(engine);
+                  }
+
+                FloatSetting("Slip Angle Smoothing", &engine.m_grip_estimation.slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",
+                    Tooltips::SLIP_ANGLE_SMOOTHING,
+                    [&]() {
+                        int ms = (int)std::lround(engine.m_grip_estimation.slip_angle_smoothing * 1000.0f);
+                        ImVec4 color = (ms < LATENCY_WARNING_THRESHOLD_MS) ? ImVec4(0,1,0,1) : ImVec4(1,0,0,1);
+                        ImGui::TextColored(color, "Latency: %d ms - %s", ms, (ms < LATENCY_WARNING_THRESHOLD_MS) ? "OK" : "High");
+                      });
+
+                FloatSetting("Chassis Inertia (Load)", &engine.m_grip_estimation.chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s",
+                    Tooltips::CHASSIS_INERTIA,
+                    [&]() {
+                        int ms = (int)std::lround(engine.m_grip_estimation.chassis_inertia_smoothing * 1000.0f);
+                        ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
+                      });
+
+                FloatSetting("Optimal Slip Angle", &engine.m_grip_estimation.optimal_slip_angle, 0.040f, 0.200f, "%.3f rad",
+                    Tooltips::OPTIMAL_SLIP_ANGLE);
+                FloatSetting("Optimal Slip Ratio", &engine.m_grip_estimation.optimal_slip_ratio, 0.04f, 0.20f, "%.3f",
+                    Tooltips::OPTIMAL_SLIP_RATIO);
+
+                ImGui::Separator();
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Slope Detection (Experimental)");
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                bool prev_slope_enabled = engine.m_slope_detection.enabled;
+                GuiWidgets::Result slope_res = GuiWidgets::Checkbox("Enable Slope Detection", &engine.m_slope_detection.enabled,
+                    Tooltips::SLOPE_DETECTION_ENABLE);
+
+                if (slope_res.changed) {
+                    if (!prev_slope_enabled && engine.m_slope_detection.enabled) {
+                        engine.m_slope_buffer_count = 0;
+                        engine.m_slope_buffer_index = 0;
+                        engine.m_slope_smoothed_output = 1.0;
+                      }
+                  }
+                if (slope_res.deactivated) {
+                    Config::Save(engine);
+                  }
+
+                if (engine.m_slope_detection.enabled && engine.m_rear_axle.oversteer_boost > 0.01f) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f),
+                        "Note: Lateral G Boost (Slide) is auto-disabled when Slope Detection is ON.");
+                    ImGui::NextColumn(); ImGui::NextColumn();
+                  }
+
+                if (engine.m_slope_detection.enabled) {
+                    int window = engine.m_slope_detection.sg_window;
+                    if (ImGui::SliderInt("  Filter Window", &window, 5, 41)) {
+                        if (window % 2 == 0) window++;
+                        engine.m_slope_detection.sg_window = window;
+                      }
+                    if (ImGui::IsItemHovered()) {
+                        ImGui::SetTooltip("%s", Tooltips::SLOPE_FILTER_WINDOW);
+                      }
+                    if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+
+                    ImGui::SameLine();
+                    float latency_ms = (static_cast<float>(engine.m_slope_detection.sg_window) / 2.0f) * (float)Physics::PHYSICS_CALC_DT * 1000.0f;
+                    ImVec4 color = (latency_ms < 25.0f) ? ImVec4(0,1,0,1) : ImVec4(1,0.5f,0,1);
+                    ImGui::TextColored(color, "~%.0f ms latency", latency_ms);
+                    ImGui::NextColumn(); ImGui::NextColumn();
+
+                    FloatSetting("  Sensitivity", &engine.m_slope_detection.sensitivity, 0.1f, 5.0f, "%.1fx",
+                        Tooltips::SLOPE_SENSITIVITY);
+
+                    if (ImGui::TreeNode("Advanced Slope Settings")) {
+                        ImGui::NextColumn(); ImGui::NextColumn();
+                        FloatSetting("  Slope Threshold", &engine.m_slope_detection.min_threshold, -1.0f, 0.0f, "%.2f", Tooltips::SLOPE_THRESHOLD);
+                        FloatSetting("  Output Smoothing", &engine.m_slope_detection.smoothing_tau, 0.005f, 0.100f, "%.3f s", Tooltips::SLOPE_OUTPUT_SMOOTHING);
+
+                        ImGui::Separator();
+                        ImGui::Text("Stability Fixes (v0.7.3)");
+                        ImGui::NextColumn(); ImGui::NextColumn();
+                        FloatSetting("  Alpha Threshold", &engine.m_slope_detection.alpha_threshold, 0.001f, 0.100f, "%.3f", Tooltips::SLOPE_ALPHA_THRESHOLD);
+                        FloatSetting("  Decay Rate", &engine.m_slope_detection.decay_rate, 0.5f, 20.0f, "%.1f", Tooltips::SLOPE_DECAY_RATE);
+                        BoolSetting("  Confidence Gate", &engine.m_slope_detection.confidence_enabled, Tooltips::SLOPE_CONFIDENCE_GATE);
+
+                        ImGui::TreePop();
+                      } else {
+                          ImGui::NextColumn(); ImGui::NextColumn();
+                        }
+
+                    ImGui::Text("  Live Slope: %.3f | Grip: %.0f%%",
+                        engine.m_slope_current,
+                        engine.m_slope_smoothed_output * 100.0f);
+                    ImGui::NextColumn(); ImGui::NextColumn();
+                  }
+            ImGui::Unindent(); 
+            ImGui::EndTabItem(); 
+            }
+        if (ImGui::BeginTabItem("Braking")) 
+            { 
+                ImGui::Indent();
+                BoolSetting("Lockup Vibration", &engine.m_braking.lockup_enabled, Tooltips::LOCKUP_VIBRATION);
+                if (engine.m_braking.lockup_enabled) {
+                    FloatSetting("  Lockup Strength", &engine.m_braking.lockup_gain, 0.0f, 3.0f, FormatDecoupled(engine.m_braking.lockup_gain, FFBEngine::BASE_NM_LOCKUP_VIBRATION), Tooltips::LOCKUP_STRENGTH);
+                    FloatSetting("  Brake Load Cap", &engine.m_braking.brake_load_cap, 1.0f, 10.0f, "%.2fx", Tooltips::BRAKE_LOAD_CAP);
+                    FloatSetting("  Vibration Pitch", &engine.m_braking.lockup_freq_scale, 0.5f, 2.0f, "%.2fx", Tooltips::VIBRATION_PITCH);
+
+                    ImGui::Separator();
+                    ImGui::Text("Response Curve");
+                    ImGui::NextColumn(); ImGui::NextColumn();
+
+                    FloatSetting("  Gamma", &engine.m_braking.lockup_gamma, 0.1f, 3.0f, "%.1f", Tooltips::LOCKUP_GAMMA);
+                    FloatSetting("  Start Slip %", &engine.m_braking.lockup_start_pct, 1.0f, 10.0f, "%.1f%%", Tooltips::LOCKUP_START_PCT);
+                    FloatSetting("  Full Slip %", &engine.m_braking.lockup_full_pct, 5.0f, 25.0f, "%.1f%%", Tooltips::LOCKUP_FULL_PCT);
+
+                    ImGui::Separator();
+                    ImGui::Text("Prediction (Advanced)");
+                    ImGui::NextColumn(); ImGui::NextColumn();
+
+                    FloatSetting("  Sensitivity", &engine.m_braking.lockup_prediction_sens, 10.0f, 100.0f, "%.0f", Tooltips::LOCKUP_PREDICTION_SENS);
+                    FloatSetting("  Bump Rejection", &engine.m_braking.lockup_bump_reject, 0.1f, 5.0f, "%.1f m/s", Tooltips::LOCKUP_BUMP_REJECT);
+                    FloatSetting("  Rear Boost", &engine.m_braking.lockup_rear_boost, 1.0f, 10.0f, "%.2fx", Tooltips::LOCKUP_REAR_BOOST);
+                  }
+
+                ImGui::Separator();
+                ImGui::Text("ABS & Hardware");
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                BoolSetting("ABS Pulse", &engine.m_braking.abs_pulse_enabled, Tooltips::ABS_PULSE);
+                if (engine.m_braking.abs_pulse_enabled) {
+                    FloatSetting("  Pulse Gain", &engine.m_braking.abs_gain, 0.0f, 10.0f, "%.2f", Tooltips::ABS_PULSE_GAIN);
+                    FloatSetting("  Pulse Frequency", &engine.m_braking.abs_freq, 10.0f, 50.0f, "%.1f Hz", Tooltips::ABS_PULSE_FREQ);
+                  }
+                ImGui::Unindent(); 
+                ImGui::EndTabItem(); 
+            }
+        if (ImGui::BeginTabItem("Vibrations")) 
+            { 
+                ImGui::Indent(); 
+                ImGui::NextColumn(); ImGui::NextColumn();
+
+                bool prev_vibration_norm = engine.m_general.auto_load_normalization_enabled;
+                if (GuiWidgets::Checkbox("Enable Dynamic Load Normalization", &engine.m_general.auto_load_normalization_enabled, Tooltips::DYNAMIC_LOAD_NORMALIZATION_ENABLE).changed) {
+                    if (prev_vibration_norm && !engine.m_general.auto_load_normalization_enabled) {
+                        engine.ResetNormalization();
+                      }
+                    Config::Save(engine);
+                  }
+
+                FloatSetting("Texture Load Cap", &engine.m_vibration.texture_load_cap, 1.0f, 3.0f, "%.2fx", Tooltips::TEXTURE_LOAD_CAP);
+                FloatSetting("Vibration Strength", &engine.m_vibration.vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration.vibration_gain), Tooltips::VIBRATION_GAIN);
+
+                BoolSetting("Slide Rumble", &engine.m_vibration.slide_enabled, Tooltips::SLIDE_RUMBLE);
+                if (engine.m_vibration.slide_enabled) {
+                    FloatSetting("  Slide Gain", &engine.m_vibration.slide_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.slide_gain, FFBEngine::BASE_NM_SLIDE_TEXTURE), Tooltips::SLIDE_GAIN);
+                    FloatSetting("  Slide Pitch", &engine.m_vibration.slide_freq, 0.5f, 5.0f, "%.2fx", Tooltips::SLIDE_PITCH);
+                  }
+
+                BoolSetting("Road Details", &engine.m_vibration.road_enabled, Tooltips::ROAD_DETAILS);
+                if (engine.m_vibration.road_enabled) {
+                    FloatSetting("  Road Gain", &engine.m_vibration.road_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.road_gain, FFBEngine::BASE_NM_ROAD_TEXTURE), Tooltips::ROAD_GAIN);
+                  }
+
+                BoolSetting("Spin Vibration", &engine.m_vibration.spin_enabled, Tooltips::SPIN_VIBRATION);
+                if (engine.m_vibration.spin_enabled) {
+                    FloatSetting("  Spin Strength", &engine.m_vibration.spin_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.spin_gain, FFBEngine::BASE_NM_SPIN_VIBRATION), Tooltips::SPIN_STRENGTH);
+                    FloatSetting("  Spin Pitch", &engine.m_vibration.spin_freq_scale, 0.5f, 2.0f, "%.2fx", Tooltips::SPIN_PITCH);
+                  }
+
+                FloatSetting("Scrub Drag", &engine.m_vibration.scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_vibration.scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), Tooltips::SCRUB_DRAG);
+
+                BoolSetting("Bottoming Effect", &engine.m_vibration.bottoming_enabled, Tooltips::BOTTOMING_EFFECT);
+                if (engine.m_vibration.bottoming_enabled) {
+                    FloatSetting("  Bottoming Strength", &engine.m_vibration.bottoming_gain, 0.0f, 2.0f, FormatDecoupled(engine.m_vibration.bottoming_gain, FFBEngine::BASE_NM_BOTTOMING), Tooltips::BOTTOMING_STRENGTH);
+                    const char* bottoming_modes[] = { "Method A: Scraping", "Method B: Susp. Spike" };
+                    IntSetting("  Bottoming Logic", &engine.m_vibration.bottoming_method, bottoming_modes, sizeof(bottoming_modes)/sizeof(bottoming_modes[0]), Tooltips::BOTTOMING_LOGIC);
+                  }
+                ImGui::Unindent(); 
+                ImGui::EndTabItem(); 
+            }
+        if (ImGui::BeginTabItem("Advanced")) 
+            { 
+                ImGui::Indent(); 
+                ImGui::Indent();
+
+                if (ImGui::TreeNode("Stationary Vibration Gate")) {
+                    float lower_kmh = engine.m_advanced.speed_gate_lower * 3.6f;
+                    if (ImGui::SliderFloat("Mute Below", &lower_kmh, 0.0f, 20.0f, "%.1f km/h")) {
+                        engine.m_advanced.speed_gate_lower = lower_kmh / 3.6f;
+                        if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f)
+                        engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
+                      }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::MUTE_BELOW);
+                    if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+
+                    float upper_kmh = engine.m_advanced.speed_gate_upper * 3.6f;
+                    if (ImGui::SliderFloat("Full Above", &upper_kmh, 1.0f, 50.0f, "%.1f km/h")) {
+                        engine.m_advanced.speed_gate_upper = upper_kmh / 3.6f;
+                        if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f)
+                        engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
+                      }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::FULL_ABOVE);
+                    if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+
+                    ImGui::TreePop();
+                  }
+
+                if (ImGui::TreeNode("Telemetry Upsampling")) {
+                    const char* recon_modes[] = { "Zero Latency (Predictive)", "Smooth (Delayed)" };
+                    GuiWidgets::Result res = GuiWidgets::Combo("Aux. Reconstruction", &engine.m_advanced.aux_telemetry_reconstruction, recon_modes, 2, Tooltips::AUX_TELEMETRY_RECONSTRUCTION);
+                    if (res.changed) {
+                        engine.UpdateUpsamplerModes();
+                        Config::Save(engine);
+                      }
+                    ImGui::TreePop();
+                  }
+
+                if (ImGui::TreeNode("Telemetry Logger")) {
+                    if (ImGui::Checkbox("Enable Logging Logic", &Config::m_auto_start_logging)) {
+                        Config::Save(engine);
+                      }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::AUTO_START_LOGGING);
+
+                    char log_path_buf[256];
+                    StringUtils::SafeCopy(log_path_buf, sizeof(log_path_buf), Config::m_log_path.c_str());
+                    if (ImGui::InputText("Log Path", log_path_buf, 255)) {
+                        Config::m_log_path = log_path_buf;
+                      }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_PATH);
+                    if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+
+                    if (AsyncLogger::Get().IsLogging()) {
+                        ImGui::BulletText("Filename: %s", AsyncLogger::Get().GetFilename().c_str());
+                      }
+                    ImGui::TreePop();
+                  }
+                ImGui::Unindent();
+                ImGui::Unindent();
+                ImGui::EndTabItem();
+            }
         ImGui::EndTabBar();
     }
     ImGui::End();
 }
-
+    
 void GuiLayer::UpdateTelemetry(LMUFFB::FFB::FFBEngine& engine) {
     auto snapshots = engine.GetDebugBatch();
     for (const auto& snap : snapshots) {
-        m_latest_steering_range = snap.steering_range_deg; m_latest_steering_angle = snap.steering_angle_deg;
-        plot_total.Add(snap.total_output); plot_base.Add(snap.base_force); plot_sop.Add(snap.sop_force); plot_yaw_kick.Add(snap.ffb_yaw_kick); plot_rear_torque.Add(snap.ffb_rear_torque); plot_gyro_damping.Add(snap.ffb_gyro_damping); plot_stationary_damping.Add(snap.ffb_stationary_damping); plot_scrub_drag.Add(snap.ffb_scrub_drag); plot_soft_lock.Add(snap.ffb_soft_lock); plot_oversteer.Add(snap.oversteer_boost); plot_understeer.Add(snap.understeer_drop); plot_clipping.Add(snap.clipping); plot_road.Add(snap.texture_road); plot_slide.Add(snap.texture_slide); plot_lockup.Add(snap.texture_lockup); plot_spin.Add(snap.texture_spin); plot_bottoming.Add(snap.texture_bottoming);
-        plot_calc_front_load.Add(snap.calc_front_load); plot_calc_rear_load.Add(snap.calc_rear_load); plot_calc_front_grip.Add(snap.calc_front_grip); plot_calc_rear_grip.Add(snap.calc_rear_grip); plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio); plot_calc_slip_angle_smoothed.Add(snap.calc_front_slip_angle_smoothed); plot_calc_rear_slip_angle_smoothed.Add(snap.calc_rear_slip_angle_smoothed); plot_calc_rear_lat_force.Add(snap.calc_rear_lat_force); plot_slope_current.Add(snap.slope_current);
-        plot_raw_steer.Add(snap.steer_force); plot_raw_shaft_torque.Add(snap.raw_shaft_torque); plot_raw_gen_torque.Add(snap.raw_gen_torque); plot_raw_input_steering.Add(snap.raw_input_steering); plot_raw_throttle.Add(snap.raw_input_throttle); plot_raw_brake.Add(snap.raw_input_brake); plot_input_accel.Add(snap.accel_x); plot_raw_car_speed.Add(snap.raw_car_speed); plot_raw_load.Add(snap.raw_front_tire_load); plot_raw_grip.Add(snap.raw_front_grip_fract); plot_raw_rear_grip.Add(snap.raw_rear_grip); plot_raw_front_slip_ratio.Add(snap.raw_front_slip_ratio); plot_raw_susp_force.Add(snap.raw_front_susp_force); plot_raw_ride_height.Add(snap.raw_front_ride_height); plot_raw_front_lat_patch_vel.Add(snap.raw_front_lat_patch_vel); plot_raw_front_long_patch_vel.Add(snap.raw_front_long_patch_vel); plot_raw_rear_lat_patch_vel.Add(snap.raw_rear_lat_patch_vel); plot_raw_rear_long_patch_vel.Add(snap.raw_rear_long_patch_vel); plot_raw_slip_angle.Add(snap.raw_front_slip_angle); plot_raw_rear_slip_angle.Add(snap.raw_rear_slip_angle); plot_raw_front_deflection.Add(snap.raw_front_deflection); g_warn_dt = snap.warn_dt;
+        m_latest_steering_range = snap.steering_range_deg;
+        m_latest_steering_angle = snap.steering_angle_deg;
+
+        plot_total.Add(snap.total_output);
+        plot_base.Add(snap.base_force);
+        plot_sop.Add(snap.sop_force);
+        plot_yaw_kick.Add(snap.ffb_yaw_kick);
+        plot_rear_torque.Add(snap.ffb_rear_torque);
+        plot_gyro_damping.Add(snap.ffb_gyro_damping);
+        plot_stationary_damping.Add(snap.ffb_stationary_damping);
+        plot_scrub_drag.Add(snap.ffb_scrub_drag);
+        plot_soft_lock.Add(snap.ffb_soft_lock);
+        plot_oversteer.Add(snap.oversteer_boost);
+        plot_understeer.Add(snap.understeer_drop);
+        plot_clipping.Add(snap.clipping);
+        plot_road.Add(snap.texture_road);
+        plot_slide.Add(snap.texture_slide);
+        plot_lockup.Add(snap.texture_lockup);
+        plot_spin.Add(snap.texture_spin);
+        plot_bottoming.Add(snap.texture_bottoming);
+        plot_calc_front_load.Add(snap.calc_front_load);
+        plot_calc_rear_load.Add(snap.calc_rear_load);
+        plot_calc_front_grip.Add(snap.calc_front_grip);
+        plot_calc_rear_grip.Add(snap.calc_rear_grip);
+        plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
+        plot_calc_slip_angle_smoothed.Add(snap.calc_front_slip_angle_smoothed);
+        plot_calc_rear_slip_angle_smoothed.Add(snap.calc_rear_slip_angle_smoothed);
+        plot_calc_rear_lat_force.Add(snap.calc_rear_lat_force);
+        plot_slope_current.Add(snap.slope_current);
+        plot_raw_steer.Add(snap.steer_force);
+        plot_raw_shaft_torque.Add(snap.raw_shaft_torque);
+        plot_raw_gen_torque.Add(snap.raw_gen_torque);
+        plot_raw_input_steering.Add(snap.raw_input_steering);
+        plot_raw_throttle.Add(snap.raw_input_throttle);
+        plot_raw_brake.Add(snap.raw_input_brake);
+        plot_input_accel.Add(snap.accel_x);
+        plot_raw_car_speed.Add(snap.raw_car_speed);
+        plot_raw_load.Add(snap.raw_front_tire_load);
+        plot_raw_grip.Add(snap.raw_front_grip_fract);
+        plot_raw_rear_grip.Add(snap.raw_rear_grip);
+        plot_raw_front_slip_ratio.Add(snap.raw_front_slip_ratio);
+        plot_raw_susp_force.Add(snap.raw_front_susp_force);
+        plot_raw_ride_height.Add(snap.raw_front_ride_height);
+        plot_raw_front_lat_patch_vel.Add(snap.raw_front_lat_patch_vel);
+        plot_raw_front_long_patch_vel.Add(snap.raw_front_long_patch_vel);
+        plot_raw_rear_lat_patch_vel.Add(snap.raw_rear_lat_patch_vel);
+        plot_raw_rear_long_patch_vel.Add(snap.raw_rear_long_patch_vel);
+        plot_raw_slip_angle.Add(snap.raw_front_slip_angle);
+        plot_raw_rear_slip_angle.Add(snap.raw_rear_slip_angle);
+        plot_raw_front_deflection.Add(snap.raw_front_deflection);
+        g_warn_dt = snap.warn_dt;
     }
 }
 
+
 void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
     if (!Config::show_graphs) return;
-    ImGuiViewport* viewport = ImGui::GetMainViewport(); ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + CONFIG_PANEL_WIDTH, viewport->WorkPos.y)); ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x - CONFIG_PANEL_WIDTH, viewport->WorkSize.y));
-    ImGui::Begin("FFB Analysis", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + CONFIG_PANEL_WIDTH, viewport->WorkPos.y));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x - CONFIG_PANEL_WIDTH, viewport->WorkSize.y));
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+    ImGui::Begin("FFB Analysis", nullptr, flags);
+
+    // System Health Diagnostics (Moved from Tuning window - Issue #149)
     if (ImGui::CollapsingHeader("System Health", ImGuiTreeNodeFlags_DefaultOpen)) {
-        HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_front_axle.torque_source, engine.m_physics_rate, LMUFFB::IO::GameConnector::Get().IsConnected(), LMUFFB::IO::GameConnector::Get().IsSessionActive(), LMUFFB::IO::GameConnector::Get().GetSessionType(), LMUFFB::IO::GameConnector::Get().IsInRealtime(), LMUFFB::IO::GameConnector::Get().GetPlayerControl());
-        ImGui::Columns(6, "RateCols", false); DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0); ImGui::NextColumn(); DisplayRate("Physics", engine.m_physics_rate, 400.0); ImGui::NextColumn(); DisplayRate("Telemetry", engine.m_telemetry_rate, 100.0); ImGui::NextColumn(); DisplayRate("Hardware", engine.m_hw_rate, 1000.0); ImGui::NextColumn(); DisplayRate("S.Torque", engine.m_torque_rate, 100.0); ImGui::NextColumn(); DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0); ImGui::Columns(1);
+        HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_front_axle.torque_source, engine.m_physics_rate,
+                                                LMUFFB::IO::GameConnector::Get().IsConnected(), LMUFFB::IO::GameConnector::Get().IsSessionActive(), LMUFFB::IO::GameConnector::Get().GetSessionType(), LMUFFB::IO::GameConnector::Get().IsInRealtime(), LMUFFB::IO::GameConnector::Get().GetPlayerControl());
+
+        ImGui::Columns(6, "RateCols", false);
+        DisplayRate("USB Loop", engine.m_ffb_rate, 1000.0);
+        ImGui::NextColumn();
+        DisplayRate("Physics", engine.m_physics_rate, 400.0);
+        ImGui::NextColumn();
+        DisplayRate("Telemetry", engine.m_telemetry_rate, 100.0); // Standard LMU is 100Hz
+        ImGui::NextColumn();
+        DisplayRate("Hardware", engine.m_hw_rate, 1000.0);
+        ImGui::NextColumn();
+        DisplayRate("S.Torque", engine.m_torque_rate, 100.0);
+        ImGui::NextColumn();
+        DisplayRate("G.Torque", engine.m_gen_torque_rate, 400.0);
+        ImGui::Columns(1);
+        
         ImGui::Separator();
-        if (!hs.is_connected) ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Sim: Disconnected from LMU");
-        else { bool active = hs.session_active; ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Sim: %s", active ? "Track Loaded" : "Main Menu"); }
+
+        // Robust State Machine (#269, #274)
+        if (!hs.is_connected) {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Sim: Disconnected from LMU");
+        } else {
+            bool active = hs.session_active;
+            ImGui::TextColored(active ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                "Sim: %s", active ? "Track Loaded" : "Main Menu");
+        }
+
+        if (hs.is_connected && hs.session_active) {
+            ImGui::SameLine();
+            const char* sessionStr = "Unknown";
+            long stype = hs.session_type;
+            if (stype == 0) sessionStr = "Test Day";
+            else if (stype >= 1 && stype <= 4) sessionStr = "Practice";
+            else if (stype >= 5 && stype <= 8) sessionStr = "Qualifying";
+            else if (stype == 9) sessionStr = "Warmup";
+            else if (stype >= 10 && stype <= 13) sessionStr = "Race";
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Session: %s", sessionStr);
+
+            bool driving = hs.is_realtime;
+            ImGui::TextColored(driving ? ImVec4(0.4f, 1.0f, 0.4f, 1.0f) : ImVec4(1.0f, 1.0f, 0.4f, 1.0f),
+                "State: %s", driving ? "Driving" : "In Menu");
+
+            ImGui::SameLine();
+            const char* ctrlStr = "Unknown";
+            signed char ctrl = hs.player_control;
+            switch (ctrl) {
+                case -1: ctrlStr = "Nobody"; break;
+                case 0: ctrlStr = "Player"; break;
+                case 1: ctrlStr = "AI"; break;
+                case 2: ctrlStr = "Remote"; break;
+                case 3: ctrlStr = "Replay"; break;
+                default: ctrlStr = "Unknown"; break;
+            }
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "| Control: %s", ctrlStr);
+        }
+
+        if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && LMUFFB::IO::GameConnector::Get().IsConnected()) {
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings.");
+        }
         ImGui::Separator();
     }
-    if (g_warn_dt) { ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); ImGui::Text("TELEMETRY WARNINGS: - Invalid DeltaTime"); ImGui::PopStyleColor(); ImGui::Separator(); }
-    if (ImGui::CollapsingHeader("FFB Components (Output)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        PlotWithStats("Total Output", plot_total, -1.0f, 1.0f, ImVec2(0, 60)); ImGui::Separator();
-        ImGui::Columns(3, "FFBMain", false); ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "[Main Forces]");
-        PlotWithStats("Base Torque (Nm)", plot_base, -30.0f, 30.0f); PlotWithStats("SoP (Chassis G)", plot_sop, -20.0f, 20.0f); PlotWithStats("Yaw Kick", plot_yaw_kick, -20.0f, 20.0f); PlotWithStats("Rear Align", plot_rear_torque, -20.0f, 20.0f); PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f); PlotWithStats("Stationary Damping", plot_stationary_damping, -20.0f, 20.0f); PlotWithStats("Scrub Drag", plot_scrub_drag, -20.0f, 20.0f); PlotWithStats("Soft Lock", plot_soft_lock, -50.0f, 50.0f);
-        ImGui::NextColumn(); ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]"); PlotWithStats("Lateral G Boost", plot_oversteer, -20.0f, 20.0f); PlotWithStats("Understeer Cut", plot_understeer, -20.0f, 20.0f); PlotWithStats("Clipping", plot_clipping, 0.0f, 1.1f);
-        ImGui::NextColumn(); ImGui::TextColored(ImVec4(0.7f, 1.0f, 0.7f, 1.0f), "[Textures]"); PlotWithStats("Road Texture", plot_road, -10.0f, 10.0f); PlotWithStats("Slide Texture", plot_slide, -10.0f, 10.0f); PlotWithStats("Lockup Vib", plot_lockup, -10.0f, 10.0f); PlotWithStats("Spin Vib", plot_spin, -10.0f, 10.0f); PlotWithStats("Bottoming", plot_bottoming, -10.0f, 10.0f); ImGui::Columns(1);
+
+
+    if (g_warn_dt) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::Text("TELEMETRY WARNINGS: - Invalid DeltaTime");
+        ImGui::PopStyleColor();
+        ImGui::Separator();
     }
+
+    if (ImGui::CollapsingHeader("A. FFB Components (Output)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        PlotWithStats("Total Output", plot_total, -1.0f, 1.0f, ImVec2(0, 60));
+        ImGui::Separator();
+        ImGui::Columns(3, "FFBMain", false);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "[Main Forces]");
+        PlotWithStats("Base Torque (Nm)", plot_base, -30.0f, 30.0f);
+        PlotWithStats("SoP (Chassis G)", plot_sop, -20.0f, 20.0f);
+        PlotWithStats("Yaw Kick", plot_yaw_kick, -20.0f, 20.0f);
+        PlotWithStats("Rear Align", plot_rear_torque, -20.0f, 20.0f);
+        PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f);
+        PlotWithStats("Stationary Damping", plot_stationary_damping, -20.0f, 20.0f);
+        PlotWithStats("Scrub Drag", plot_scrub_drag, -20.0f, 20.0f);
+        PlotWithStats("Soft Lock", plot_soft_lock, -50.0f, 50.0f);
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]");
+        PlotWithStats("Lateral G Boost", plot_oversteer, -20.0f, 20.0f);
+        PlotWithStats("Understeer Cut", plot_understeer, -20.0f, 20.0f);
+        PlotWithStats("Clipping", plot_clipping, 0.0f, 1.1f);
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(0.7f, 1.0f, 0.7f, 1.0f), "[Textures]");
+        PlotWithStats("Road Texture", plot_road, -10.0f, 10.0f);
+        PlotWithStats("Slide Texture", plot_slide, -10.0f, 10.0f);
+        PlotWithStats("Lockup Vib", plot_lockup, -10.0f, 10.0f);
+        PlotWithStats("Spin Vib", plot_spin, -10.0f, 10.0f);
+        PlotWithStats("Bottoming", plot_bottoming, -10.0f, 10.0f);
+        ImGui::Columns(1);
+    }
+
+    if (ImGui::CollapsingHeader("B. Internal Physics (Brain)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(3, "PhysCols", false);
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Loads]");
+        ImGui::Text("Front: %.0f N | Rear: %.0f N", plot_calc_front_load.GetCurrent(), plot_calc_rear_load.GetCurrent());
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PlotLines("##CLoadF", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor();
+        ImVec2 pos_load = ImGui::GetItemRectMin();
+        ImGui::SetCursorScreenPos(pos_load);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0,0,0,0));
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 1.0f, 1.0f));
+        ImGui::PlotLines("##CLoadR", plot_calc_rear_load.data.data(), (int)plot_calc_rear_load.data.size(), plot_calc_rear_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor(2);
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Grip/Slip]");
+        PlotWithStats("Calc Front Grip", plot_calc_front_grip, 0.0f, 1.2f);
+        PlotWithStats("Calc Rear Grip", plot_calc_rear_grip, 0.0f, 1.2f);
+        PlotWithStats("Front Slip Ratio", plot_calc_slip_ratio, -1.0f, 1.0f);
+        PlotWithStats("Front Slip Angle", plot_calc_slip_angle_smoothed, 0.0f, 1.0f);
+        PlotWithStats("Rear Slip Angle", plot_calc_rear_slip_angle_smoothed, 0.0f, 1.0f);
+        if (engine.m_slope_detection.enabled) PlotWithStats("Slope", plot_slope_current, -5.0f, 5.0f);
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Forces]");
+        PlotWithStats("Calc Rear Lat Force", plot_calc_rear_lat_force, -5000.0f, 5000.0f);
+        ImGui::Columns(1);
+    }
+
+    if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
+        ImGui::Columns(4, "TelCols", false);
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Driver Input]");
+        PlotWithStats("Selected Torque", plot_raw_steer, -30.0f, 30.0f, ImVec2(0, 40), Tooltips::PLOT_SELECTED_TORQUE);
+        PlotWithStats("Shaft Torque (100Hz)", plot_raw_shaft_torque, -30.0f, 30.0f, ImVec2(0, 40), Tooltips::PLOT_SHAFT_TORQUE);
+        PlotWithStats("In-Game FFB (400Hz)", plot_raw_gen_torque, -30.0f, 30.0f, ImVec2(0, 40), Tooltips::PLOT_INGAME_FFB);
+        PlotWithStats("Steering Input", plot_raw_input_steering, -1.0f, 1.0f);
+        ImGui::Text("Combined Input");
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::PlotLines("##BrkComb", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor();
+        ImGui::SetCursorScreenPos(pos);
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+        ImGui::PlotLines("##ThrComb", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
+        ImGui::PopStyleColor(2);
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Vehicle State]");
+        PlotWithStats("Lat Accel", plot_input_accel, -20.0f, 20.0f);
+        PlotWithStats("Speed (m/s)", plot_raw_car_speed, 0.0f, 100.0f);
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Raw Tire Data]");
+        PlotWithStats("Raw Front Load", plot_raw_load, 0.0f, 10000.0f);
+        PlotWithStats("Raw Front Grip", plot_raw_grip, 0.0f, 1.2f);
+        PlotWithStats("Raw Rear Grip", plot_raw_rear_grip, 0.0f, 1.2f);
+        ImGui::NextColumn();
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Patch Velocities]");
+        PlotWithStats("F-Lat PatchVel", plot_raw_front_lat_patch_vel, 0.0f, 20.0f);
+        PlotWithStats("R-Lat PatchVel", plot_raw_rear_lat_patch_vel, 0.0f, 20.0f);
+        PlotWithStats("F-Long PatchVel", plot_raw_front_long_patch_vel, -20.0f, 20.0f);
+        PlotWithStats("R-Long PatchVel", plot_raw_rear_long_patch_vel, -20.0f, 20.0f);
+        ImGui::Columns(1);
+    }
+
     ImGui::End();
 }
 #else
