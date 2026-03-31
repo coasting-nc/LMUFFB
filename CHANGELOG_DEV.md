@@ -7,6 +7,32 @@ All notable changes to this project will be documented in this file.
 ### Updated
 - Recompiled with new LMU 1.3 shared memory interface.
 
+
+---
+
+## Cumulative changes from version 0.7.272 till 0.7.275
+
+## [0.7.275]
+### Updated
+- Recompiled with new LMU 1.3 shared memory interface.
+
+### Changed
+- **Preset Renaming**: 
+  - Renamed built-in preset to "**T300 (Legacy)**".
+  - Deleted empty presets
+  - Updated internal preset names in TOML and resource display names in the configuration system for consistency.
+- **Updated Built-in Preset: "T300 (Yaw)"**:
+  - Refined **Power Yaw**, **Braking Yaw**, **Lateral Load**, and **Longitudinal Load** settings.
+- **New Built-in Preset: "DD (Yaw)"**:
+  - Introduced a specialized Direct Drive preset based on the "T300 (Yaw)" profile with modifications for DDs.
+  - Set `min_force` to 0.0 for DD compatibility.
+  - Adjusted **Braking Yaw Kick**: Gain 10%, Gamma 1.0, Unload Sensitivity 1.0.
+  - Adjusted **Throttle Yaw Kick**: Gain 10%, Gamma 1.0.
+  - Adjusted **General Purpose Yaw Kick**: Gain 20% (0.2), Activation Threshold 0.27 rad/s^2, Smoothing ("kick response") 0.004 s.
+
+
+---
+
 ## [0.7.274]
 ### Added
 - **New Built-in Preset: "DD (Yaw)"**:
