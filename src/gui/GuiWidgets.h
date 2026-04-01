@@ -13,6 +13,32 @@ namespace LMUFFB {
 namespace GUI {
 namespace GuiWidgets {
 
+    inline bool& UseTableLayoutFlag() {
+        static bool use_table_layout = false;
+        return use_table_layout;
+    }
+
+    struct ScopedTableLayout {
+        explicit ScopedTableLayout(bool enabled) : previous(UseTableLayoutFlag()) {
+            UseTableLayoutFlag() = enabled;
+        }
+
+        ~ScopedTableLayout() {
+            UseTableLayoutFlag() = previous;
+        }
+
+    private:
+        bool previous;
+    };
+
+    inline void AdvanceColumn() {
+        if (UseTableLayoutFlag()) {
+            ImGui::TableNextColumn();
+        } else {
+            ImGui::NextColumn();
+        }
+    }
+
     /**
      * Represents the result of a widget interaction.
      * Use this to trigger higher-level logic like auto-save or preset dirtying.
@@ -29,7 +55,7 @@ namespace GuiWidgets {
         Result res;
         ImGui::Text("%s", label);
         bool labelHovered = ImGui::IsItemHovered();
-        ImGui::NextColumn();
+        AdvanceColumn();
 
         // Render decorator (e.g., latency indicator) above the slider
         if (decorator) {
@@ -78,7 +104,7 @@ namespace GuiWidgets {
             }
         }
 
-        ImGui::NextColumn();
+        AdvanceColumn();
         return res;
     }
 
@@ -89,7 +115,7 @@ namespace GuiWidgets {
         Result res;
         ImGui::Text("%s", label);
         bool labelHovered = ImGui::IsItemHovered();
-        ImGui::NextColumn();
+        AdvanceColumn();
         std::string id = "##" + std::string(label);
         
         if (ImGui::Checkbox(id.c_str(), v)) {
@@ -101,7 +127,7 @@ namespace GuiWidgets {
             ImGui::SetTooltip("%s", tooltip);
         }
 
-        ImGui::NextColumn();
+        AdvanceColumn();
         return res;
     }
 
@@ -112,7 +138,7 @@ namespace GuiWidgets {
         Result res;
         ImGui::Text("%s", label);
         bool labelHovered = ImGui::IsItemHovered();
-        ImGui::NextColumn();
+        AdvanceColumn();
         ImGui::SetNextItemWidth(-1);
         std::string id = "##" + std::string(label);
 
@@ -125,7 +151,7 @@ namespace GuiWidgets {
             ImGui::SetTooltip("%s", tooltip);
         }
 
-        ImGui::NextColumn();
+        AdvanceColumn();
         return res;
     }
 }
