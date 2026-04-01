@@ -3,10 +3,6 @@ project(LMUFFB_CPP)
 
 set(CMAKE_CXX_STANDARD 17)
 
-if(POLICY CMP0169)
-  cmake_policy(SET CMP0169 OLD) #Policy CMP0169 can be set to OLD to allow FetchContent_Populate() to be called directly for now
-endif()
-
 # Enable Ccache if available
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
