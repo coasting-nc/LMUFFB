@@ -134,13 +134,14 @@ namespace {
         if (ImPlot::BeginPlot(label, size, ImPlotFlags_NoTitle | ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoBoxSelect)) {
             ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoGridLines, ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines);
             float current_time = buffer.Data.empty() ? 0.0f : (buffer.Offset == 0 ? buffer.Data.back().x : buffer.Data[buffer.Offset-1].x);
-            ImPlot::SetupAxisLinks(ImAxis_X1, nullptr, nullptr);
             ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
-            ImPlot::SetupAxisLimits(ImAxis_Y1, scale_min, scale_max, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1, (double)scale_min, (double)scale_max, ImGuiCond_Always);
 
-            if (color) ImPlot::PushStyleColor(ImPlotCol_Line, *color);
-            ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), 0, buffer.Offset, 2 * sizeof(float));
-            if (color) ImPlot::PopStyleColor();
+            if (color) {
+                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, *color, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            } else {
+                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            }
 
             float current = buffer.GetCurrent();
             float min_val = buffer.GetMin();
@@ -1167,13 +1168,8 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
             ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
             ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 10000.0f, ImGuiCond_Always);
 
-            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_CYAN);
-            ImPlot::PlotLine("Front", &plot_calc_front_load.Data[0].x, &plot_calc_front_load.Data[0].y, (int)plot_calc_front_load.Data.size(), 0, plot_calc_front_load.Offset, 2 * sizeof(float));
-            ImPlot::PopStyleColor();
-
-            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_MAGENTA);
-            ImPlot::PlotLine("Rear", &plot_calc_rear_load.Data[0].x, &plot_calc_rear_load.Data[0].y, (int)plot_calc_rear_load.Data.size(), 0, plot_calc_rear_load.Offset, 2 * sizeof(float));
-            ImPlot::PopStyleColor();
+            ImPlot::PlotLine("Front", &plot_calc_front_load.Data[0].x, &plot_calc_front_load.Data[0].y, (int)plot_calc_front_load.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_CYAN, ImPlotProp_Offset, plot_calc_front_load.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            ImPlot::PlotLine("Rear", &plot_calc_rear_load.Data[0].x, &plot_calc_rear_load.Data[0].y, (int)plot_calc_rear_load.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_MAGENTA, ImPlotProp_Offset, plot_calc_rear_load.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
 
             ImPlot::EndPlot();
         }
@@ -1207,13 +1203,8 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
             ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
             ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1.0f, ImGuiCond_Always);
 
-            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_RED);
-            ImPlot::PlotLine("Brake", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), 0, plot_raw_brake.Offset, 2 * sizeof(float));
-            ImPlot::PopStyleColor();
-
-            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_GREEN);
-            ImPlot::PlotLine("Throttle", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), 0, plot_raw_throttle.Offset, 2 * sizeof(float));
-            ImPlot::PopStyleColor();
+            ImPlot::PlotLine("Brake", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_RED, ImPlotProp_Offset, plot_raw_brake.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            ImPlot::PlotLine("Throttle", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_GREEN, ImPlotProp_Offset, plot_raw_throttle.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
 
             ImPlot::EndPlot();
         }
