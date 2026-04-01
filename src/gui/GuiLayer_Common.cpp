@@ -39,6 +39,18 @@
 using namespace LMUFFB::Logging;
 using namespace LMUFFB::Utils;
 
+namespace {
+
+std::string PresetMenuDisplayName(const LMUFFB::Preset& p) {
+    std::string n = p.name;
+    if (n.rfind("Guide:", 0) == 0) n = n.substr(n.find(':') + 1);
+    else if (n.rfind("Test:", 0) == 0) n = n.substr(n.find(':') + 1);
+    if (!n.empty() && n[0] == ' ') n.erase(0, 1);
+    return n;
+}
+
+} // namespace
+
 namespace LMUFFB {
     extern std::atomic<bool> g_running;
     extern std::recursive_mutex g_engine_mutex;
@@ -152,7 +164,7 @@ namespace {
             if (color) {
                 ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, *color, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             } else {
-                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, ImVec4(1,1,1,1), ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             }
 
             float current = buffer.GetCurrent();
@@ -180,7 +192,7 @@ namespace {
         ImGui::Text("%s", label);
         if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
 
-        ImPlot::PushColormap(ImPlotColormap_Dark);
+        ImPlot::PushColormap(ImPlotColormap_Pink);
         ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0, 0));
         ImPlot::PushStyleVar(ImPlotStyleVar_FitPadding, ImVec2(0, 0));
         if (ImPlot::BeginPlot(label, size, plot_flags)) {
@@ -190,9 +202,9 @@ namespace {
             ImPlot::SetupAxisLimits(ImAxis_Y1, (double)scale_min, (double)scale_max, ImGuiCond_Always);
 
             if (color) {
-                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, *color, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, *color, ImPlotProp_LineWeight, 2.0f, ImPlotProp_FillColor, *color, ImPlotProp_FillAlpha, 0.5f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             } else {
-                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, ImVec4(1,1,1,1), ImPlotProp_LineWeight, 2.0f, ImPlotProp_FillColor, ImVec4(1,1,1,1), ImPlotProp_FillAlpha, 0.5f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             }
 
             ImPlot::EndPlot();
@@ -242,7 +254,11 @@ void GuiLayer::SetupGUIStyle() {
 void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Presets")) {
+            if (m_selected_preset >= 0 && m_selected_preset < (int)Config::presets.size()) {
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", PresetMenuDisplayName(Config::presets[m_selected_preset]).c_str());
+            }
             bool can_save_current = (m_selected_preset >= 0 && m_selected_preset < (int)Config::presets.size() && !Config::presets[m_selected_preset].is_builtin);
+            ImGui::Separator();
             if (ImGui::MenuItem("Save", nullptr, false, can_save_current)) { Config::AddUserPreset(Config::presets[m_selected_preset].name, engine); }
             if (ImGui::MenuItem("Save New...")) { m_show_save_new_popup = true; }
             bool can_delete = (m_selected_preset >= 0 && m_selected_preset < (int)Config::presets.size() && !Config::presets[m_selected_preset].is_builtin);
@@ -255,7 +271,7 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
                 bool has_any = false; for (const auto& pr : Config::presets) { if (filter(pr)) { has_any = true; break; } }
                 if (has_any && ImGui::BeginMenu(cat)) {
                     for (int i = 0; i < (int)Config::presets.size(); i++) { const auto& p = Config::presets[i]; if (filter(p)) {
-                            std::string n = p.name; if (n.rfind("Guide:", 0) == 0) n = n.substr(n.find(':') + 1); else if (n.rfind("Test:", 0) == 0) n = n.substr(n.find(':') + 1); if (!n.empty() && n[0] == ' ') n.erase(0, 1);
+                            std::string n = PresetMenuDisplayName(p);
                             ImGui::PushID(i); if (ImGui::MenuItem(n.c_str(), nullptr, m_selected_preset == i)) { m_selected_preset = i; Config::ApplyPreset(i, engine); } ImGui::PopID();
                     } }
                     ImGui::EndMenu();
@@ -264,11 +280,18 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
             DrawCatMenu("User", [](const Preset& p) { return !p.is_builtin; }); DrawCatMenu("Defaults", [](const Preset& p) { return p.is_builtin && p.name.rfind("Guide:", 0) != 0 && p.name.rfind("Test:", 0) != 0; }); DrawCatMenu("Guides", [](const Preset& p) { return p.is_builtin && p.name.rfind("Guide:", 0) == 0; }); DrawCatMenu("Tests", [](const Preset& p) { return p.is_builtin && p.name.rfind("Test:", 0) == 0; });
             ImGui::EndMenu();
         }
+        
         if (ImGui::BeginMenu("Devices")) {
-            if (m_devices.empty()) { m_devices = FFB::DirectInputFFB::Get().EnumerateDevices(); if (m_selected_device_idx == -1 && !Config::m_last_device_guid.empty()) { GUID target = FFB::DirectInputFFB::StringToGuid(Config::m_last_device_guid); for (int i = 0; i < (int)m_devices.size(); i++) { if (memcmp(&m_devices[i].guid, &target, sizeof(GUID)) == 0) { m_selected_device_idx = i; FFB::DirectInputFFB::Get().SelectDevice(m_devices[i].guid); break; } } } }
+            bool connected = LMUFFB::IO::GameConnector::Get().IsConnected();
+            bool exclusive = FFB::DirectInputFFB::Get().IsExclusive();
+            ImGui::Text("Game:"); ImGui::SameLine(); ImGui::TextColored(connected ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1), connected ? "Connected" : "Disconnected");
+            ImGui::Text("FFB:"); ImGui::SameLine(); ImGui::TextColored(exclusive ? ImVec4(0, 1, 0, 1) : ImVec4(1, 1, 0, 1), exclusive ? "Exclusive" : "Shared");
+            ImGui::Separator();
+
             if (ImGui::MenuItem("Rescan")) { m_devices = FFB::DirectInputFFB::Get().EnumerateDevices(); m_selected_device_idx = -1; }
             if (ImGui::MenuItem("Unbind", nullptr, false, m_selected_device_idx != -1)) { FFB::DirectInputFFB::Get().ReleaseDevice(); m_selected_device_idx = -1; }
             ImGui::Separator();
+
             for (int i = 0; i < (int)m_devices.size(); i++) { 
                 bool is_selected = (m_selected_device_idx == i); 
                 if (ImGui::MenuItem(m_devices[i].name.c_str(), nullptr, is_selected)) 
@@ -280,9 +303,11 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
                 }
             ImGui::EndMenu();
         }
+
         if (ImGui::BeginMenu("Logging")) {
             bool is_logging = Config::m_auto_start_logging; 
-            if (ImGui::MenuItem(is_logging ? "Stop Auto-Logging" : "Start Auto-Logging", nullptr, is_logging)) 
+            ImGui::Text("Logging:"); ImGui::SameLine(); ImGui::TextColored(is_logging ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1), is_logging ? "Auto" : "Disabled");
+            if (ImGui::MenuItem(is_logging ? "Stop Auto-Log" : "Start Auto-Log", nullptr, is_logging)) 
                 { Config::m_auto_start_logging = !is_logging; if (!Config::m_auto_start_logging) AsyncLogger::Get().Stop(); Config::Save(engine); }
             if (ImGui::MenuItem("Set Log Path...")) { m_show_log_path_popup = true; }
             ImGui::Separator();
@@ -303,8 +328,9 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
                 if (found) LaunchLogAnalyzer(latest_path.string());
             }
             ImGui::EndMenu();
+            
         }
-        if (ImGui::BeginMenu("lmuFFB Settings")) {
+        if (ImGui::BeginMenu("UI Settings")) {
             if (ImGui::MenuItem("Always on Top", nullptr, Config::m_always_on_top)) { 
                 Config::m_always_on_top = !Config::m_always_on_top; SetWindowAlwaysOnTopPlatform(Config::m_always_on_top); Config::Save(engine); 
             }
@@ -316,6 +342,16 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
                 ResizeWindowPlatform(Config::win_pos_x, Config::win_pos_y, target_w, target_h); 
                 Config::Save(engine); 
             }
+            ImGui::Separator();
+            
+            int hist = Config::m_graph_history_s;
+            ImGui::SetNextItemWidth(60.0f);
+            if (ImGui::SliderInt("Graph History(s)", &hist, 10, 60)) {
+                Config::m_graph_history_s = hist;
+                if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Set graph history length, range 10-60 seconds");
+
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -483,6 +519,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         Tooltips::STATIONARY_DAMPING, (float)engine.m_advanced.speed_gate_upper * 3.6f);
                     FloatSetting("Stationary Damping", &engine.m_advanced.stationary_damping, 0.0f, 1.0f, FormatPct(engine.m_advanced.stationary_damping), stat_damp_tooltip);
 
+                    if (!engine.m_advanced.stationary_damping == 0) {
                     ImGui::Indent();
                     ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextDisabled("Stationary Enabled:"); 
                     ImGui::TableSetColumnIndex(1); 
@@ -506,7 +543,8 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::FULL_ABOVE);
                     if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
                     ImGui::Unindent();
-                                        
+                    }
+
                     ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
                     ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
                     ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Advanced/ Experimental settings:");
@@ -1095,13 +1133,6 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         ImGui::Columns(1);
         
         ImGui::Separator();
-        int hist = Config::m_graph_history_s;
-        ImGui::SetNextItemWidth(60.0f);
-        if (ImGui::SliderInt("Graph History (s)", &hist, 10, 120)) {
-            Config::m_graph_history_s = hist;
-        }
-        if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
-        ImGui::SameLine();
 
         // Robust State Machine (#269, #274)
         if (!hs.is_connected) {
@@ -1144,6 +1175,14 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && LMUFFB::IO::GameConnector::Get().IsConnected()) {
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings.");
         }
+
+        //int hist = Config::m_graph_history_s;
+        //ImGui::SetNextItemWidth(60.0f);
+        //if (ImGui::SliderInt("Graph(s)", &hist, 10, 60)) {
+        //    Config::m_graph_history_s = hist;
+        //}
+        //if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+        //if (ImGui::IsItemHovered()) ImGui::SetTooltip("Set graph history length, range 10-60 seconds");
         ImGui::Separator();
     }
 
@@ -1156,10 +1195,12 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
     }
 
     float history = (float)Config::m_graph_history_s;
-    static const ImVec4 COLOR_RED(1.0F, 0.0F, 0.0F, 1.0F);
-    static const ImVec4 COLOR_GREEN(0.0F, 1.0F, 0.0F, 1.0F);
+    static const ImVec4 COLOR_RED(1.0F, 0.4F, 0.4F, 1.0F);
+    static const ImVec4 COLOR_GREEN(0.4F, 1.0F, 0.4F, 1.0F);
+    static const ImVec4 COLOR_YELLOW(1.0F, 1.0F, 0.4F, 1.0F);
     static const ImVec4 COLOR_CYAN(0.0F, 1.0F, 1.0F, 1.0F);
     static const ImVec4 COLOR_MAGENTA(1.0F, 0.0F, 1.0F, 1.0F);
+    static const ImVec4 COLOR_WHITE(1.0F, 1.0F, 1.0F, 1.0F);
 
     if (ImGui::CollapsingHeader("A. FFB Components (Output)", ImGuiTreeNodeFlags_DefaultOpen)) {
 
@@ -1204,7 +1245,9 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         PlotNoStats("Lateral G Boost", plot_oversteer, history, -20.0f, 20.0f);
         PlotNoStats("Understeer Cut", plot_understeer, history, -20.0f, 20.0f);
         PlotNoStats("Clipping", plot_clipping, history, 0.0f, 1.1f);
-        PlotNoStats("Stationary Damping", plot_stationary_damping, history, -20.0f, 20.0f);
+        if (!engine.m_advanced.stationary_damping == 0) {
+            PlotNoStats("Stationary Damping", plot_stationary_damping, history, -20.0f, 20.0f);
+        }
         if (engine.m_advanced.soft_lock_enabled) PlotNoStats("Soft Lock", plot_soft_lock, history, -50.0f, 50.0f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(0.7f, 1.0f, 0.7f, 1.0f), "[Textures]");
@@ -1260,6 +1303,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         } else {
             PlotNoStats("In-Game FFB (400Hz)", plot_raw_gen_torque, history, -30.0f, 30.0f, ImVec2(-1, 60), Tooltips::PLOT_INGAME_FFB);
         }
+        PlotNoStats("Steering Input", plot_raw_input_steering, history, -30.0f, 30.0f, ImVec2(-1, 60));
 
         ImGui::Text("Combined Input");
         if (ImPlot::BeginPlot("##InputComb", ImVec2(-1, 60), kDefaultPlotFlags)) {
@@ -1267,12 +1311,12 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
             ImPlot::PushStyleVar(ImPlotStyleVar_FitPadding, ImVec2(0, 0));
             ImPlot::SetupAxes(nullptr, nullptr, kDefaultXAxisFlags, kDefaultYAxisFlags | ImPlotAxisFlags_NoGridLines);
             float current_time = plot_raw_brake.Data.empty() ? 0.0f : (plot_raw_brake.Offset == 0 ? plot_raw_brake.Data.back().x : plot_raw_brake.Data[plot_raw_brake.Offset-1].x);
-            ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_X1, -15.0f, current_time, ImGuiCond_Always);
             ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1.0f, ImGuiCond_Always);
 
-            ImPlot::PlotLine("Brake", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_RED, ImPlotProp_Offset, plot_raw_brake.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
-            ImPlot::PlotLine("Throttle", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_GREEN, ImPlotProp_Offset, plot_raw_throttle.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
-            ImPlot::PlotLine("Steering", &plot_raw_input_steering.Data[0].x, &plot_raw_input_steering.Data[0].y, (int)plot_raw_input_steering.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_CYAN, ImPlotProp_Offset, plot_raw_input_steering.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            ImPlot::PlotLine("Brake", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_RED, ImPlotProp_LineWeight, 2.0f, ImPlotProp_FillColor, COLOR_RED, ImPlotProp_FillAlpha, 0.3f, ImPlotProp_Offset, plot_raw_brake.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            ImPlot::PlotLine("Throttle", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_GREEN, ImPlotProp_LineWeight, 2.0f, ImPlotProp_Offset, plot_raw_throttle.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            //ImPlot::PlotLine("Steering", &plot_raw_input_steering.Data[0].x, &plot_raw_input_steering.Data[0].y, (int)plot_raw_input_steering.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_CYAN, ImPlotProp_Offset, plot_raw_input_steering.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
 
             ImPlot::PopStyleVar(1);
             ImPlot::EndPlot();
