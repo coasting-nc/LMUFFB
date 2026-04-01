@@ -212,6 +212,7 @@ void GuiLayer::Shutdown(LMUFFB::FFB::FFBEngine& engine) {
     Config::Save(engine);
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
     CleanupDeviceD3D();
     ::DestroyWindow(g_hwnd);

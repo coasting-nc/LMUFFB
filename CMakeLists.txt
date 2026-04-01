@@ -105,6 +105,26 @@ else()
     set(IMGUI_FETCHED TRUE)
 endif()
 
+# ImPlot Detection & FetchContent
+set(IMPLOT_DIR "${CMAKE_SOURCE_DIR}/vendor/implot")
+if(EXISTS "${IMPLOT_DIR}/implot.cpp")
+    message(STATUS "ImPlot found locally.")
+    set(IMPLOT_LOCAL_FOUND TRUE)
+else()
+    message(STATUS "ImPlot not found locally. Using FetchContent...")
+    FetchContent_Declare(
+      implot
+      GIT_REPOSITORY https://github.com/epezent/implot.git
+      GIT_TAG        v0.16
+    )
+    FetchContent_GetProperties(implot)
+    if(NOT implot_POPULATED)
+        FetchContent_Populate(implot)
+    endif()
+    set(IMPLOT_DIR "${implot_SOURCE_DIR}")
+    set(IMPLOT_FETCHED TRUE)
+endif()
+
 # LZ4 Detection & FetchContent
 set(LZ4_DIR "${CMAKE_SOURCE_DIR}/vendor/lz4")
 if(EXISTS "${LZ4_DIR}/lz4.c")
@@ -149,6 +169,9 @@ if(EXISTS "${IMGUI_DIR}/imgui.cpp")
         ${IMGUI_DIR}/imgui_draw.cpp
         ${IMGUI_DIR}/imgui_tables.cpp
         ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMPLOT_DIR}/implot.cpp
+        ${IMPLOT_DIR}/implot_demo.cpp
+        ${IMPLOT_DIR}/implot_items.cpp
     )
 endif()
 
@@ -188,6 +211,7 @@ if(VENDOR_SOURCES)
     target_include_directories(LMUFFB_Vendor SYSTEM PUBLIC 
         ${IMGUI_DIR} 
         ${IMGUI_DIR}/backends 
+        ${IMPLOT_DIR}
         ${LZ4_DIR}
     )
     target_link_libraries(LMUFFB_Vendor PUBLIC tomlplusplus::tomlplusplus)

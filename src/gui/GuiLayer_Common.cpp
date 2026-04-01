@@ -22,6 +22,7 @@
 
 #ifdef ENABLE_IMGUI
 #include "imgui.h"
+#include "implot.h"
 #endif
 
 #ifdef _WIN32
@@ -76,69 +77,96 @@ namespace {
     constexpr int LATENCY_WARNING_THRESHOLD_MS = 15;
     static constexpr std::chrono::seconds CONNECT_ATTEMPT_INTERVAL(2);
 
-    const float PLOT_HISTORY_SEC = 10.0f;
     const int PHYSICS_RATE_HZ = 400;
-    const int PLOT_BUFFER_SIZE = (int)(PLOT_HISTORY_SEC * PHYSICS_RATE_HZ);
 
-    struct RollingBuffer {
-        std::vector<float> data;
-        int offset = 0;
-        RollingBuffer() { data.resize(PLOT_BUFFER_SIZE, 0.0f); }
-        void Add(float val) { data[offset] = val; offset = (offset + 1) % (int)data.size(); }
-        float GetCurrent() const { if (data.empty()) return 0.0f; return data[(offset - 1 + (int)data.size()) % (int)data.size()]; }
-        float GetMin() const { if (data.empty()) return 0.0f; return *std::min_element(data.begin(), data.end()); }
-        float GetMax() const { if (data.empty()) return 0.0f; return *std::max_element(data.begin(), data.end()); }
+    struct ScrollingBuffer {
+        int MaxSize;
+        int Offset;
+        std::vector<ImVec2> Data;
+        ScrollingBuffer(int max_size = 4000) {
+            MaxSize = max_size;
+            Offset  = 0;
+            Data.reserve(MaxSize);
+        }
+        void AddPoint(float x, float y) {
+            if (Data.size() < (size_t)MaxSize)
+                Data.push_back(ImVec2(x,y));
+            else {
+                Data[Offset] = ImVec2(x,y);
+                Offset = (Offset + 1) % MaxSize;
+            }
+        }
+        void Erase() {
+            if (Data.size() > 0) {
+                Data.shrink_to_fit();
+                Data.clear();
+            }
+            Offset  = 0;
+        }
+        float GetCurrent() const {
+            if (Data.empty()) return 0.0f;
+            int last_idx = (Offset - 1 + (int)Data.size()) % (int)Data.size();
+            return Data[last_idx].y;
+        }
+        float GetMin() const {
+            if (Data.empty()) return 0.0f;
+            float m = Data[0].y;
+            for (const auto& p : Data) if (p.y < m) m = p.y;
+            return m;
+        }
+        float GetMax() const {
+            if (Data.empty()) return 0.0f;
+            float m = Data[0].y;
+            for (const auto& p : Data) if (p.y > m) m = p.y;
+            return m;
+        }
     };
 
-    void PlotWithStats(const char* label, const RollingBuffer& buffer,
-        float scale_min, float scale_max,
-        const ImVec2& size = ImVec2(0, 40),
-        const char* tooltip = nullptr) {
-    ImGui::Text("%s", label);
-    char hidden_label[256];
-    StringUtils::SafeFormat(hidden_label, sizeof(hidden_label), "##%s", label);
-    ImGui::PlotLines(hidden_label, buffer.data.data(), (int)buffer.data.size(),
-    buffer.offset, NULL, scale_min, scale_max, size);
-    if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
+    void PlotWithStats(const char* label, const ScrollingBuffer& buffer,
+        float history, float scale_min, float scale_max,
+        const ImVec2& size = ImVec2(-1, 60),
+        const char* tooltip = nullptr,
+        const ImVec4* color = nullptr) {
 
-    float current = buffer.GetCurrent();
-    float min_val = buffer.GetMin();
-    float max_val = buffer.GetMax();
-    char stats_overlay[128];
-    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
+        ImGui::Text("%s", label);
+        if (tooltip && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
 
-    ImVec2 p_min = ImGui::GetItemRectMin();
-    ImVec2 p_max = ImGui::GetItemRectMax();
-    float plot_width = p_max.x - p_min.x;
-    p_min.x += 2; p_min.y += 2;
+        if (ImPlot::BeginPlot(label, size, ImPlotFlags_NoTitle | ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoBoxSelect)) {
+            ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoGridLines, ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines);
+            float current_time = buffer.Data.empty() ? 0.0f : (buffer.Offset == 0 ? buffer.Data.back().x : buffer.Data[buffer.Offset-1].x);
+            ImPlot::SetupAxisLinks(ImAxis_X1, nullptr, nullptr);
+            ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1, scale_min, scale_max, ImGuiCond_Always);
 
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-    ImFont* font = ImGui::GetFont();
-    float font_size = ImGui::GetFontSize();
-    ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
+            if (color) ImPlot::PushStyleColor(ImPlotCol_Line, *color);
+            ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), 0, buffer.Offset, 2 * sizeof(float));
+            if (color) ImPlot::PopStyleColor();
 
-    if (text_size.x > plot_width - 4) {
-    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "%.4f [%.3f, %.3f]", current, min_val, max_val);
-    text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
-    if (text_size.x > plot_width - 4) {
-    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Val: %.4f", current);
-    text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, stats_overlay);
-    }
-    }
-    draw_list->AddRectFilled(ImVec2(p_min.x - 1, p_min.y), ImVec2(p_min.x + text_size.x + 2, p_min.y + text_size.y), IM_COL32(0, 0, 0, 90));
-    draw_list->AddText(font, font_size, p_min, IM_COL32(255, 255, 255, 255), stats_overlay);
+            float current = buffer.GetCurrent();
+            float min_val = buffer.GetMin();
+            float max_val = buffer.GetMax();
+            char stats_overlay[128];
+            StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Cur:%.4f Min:%.3f Max:%.3f", current, min_val, max_val);
+
+            ImPlot::Annotation(current_time, current, ImVec4(0,0,0,0), ImVec2(0,0), true, "%s", stats_overlay);
+
+            ImPlot::EndPlot();
+        }
     }
 
     // Global Buffers
-    RollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
-    RollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
-    RollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
+    ScrollingBuffer plot_total, plot_base, plot_sop, plot_yaw_kick, plot_rear_torque, plot_gyro_damping, plot_stationary_damping, plot_scrub_drag, plot_soft_lock, plot_oversteer, plot_understeer, plot_clipping, plot_road, plot_slide, plot_lockup, plot_spin, plot_bottoming;
+    ScrollingBuffer plot_calc_front_load, plot_calc_rear_load, plot_calc_front_grip, plot_calc_rear_grip, plot_calc_slip_ratio, plot_calc_slip_angle_smoothed, plot_calc_rear_slip_angle_smoothed, plot_slope_current, plot_calc_rear_lat_force;
+    ScrollingBuffer plot_raw_steer, plot_raw_shaft_torque, plot_raw_gen_torque, plot_raw_input_steering, plot_raw_throttle, plot_raw_brake, plot_input_accel, plot_raw_car_speed, plot_raw_load, plot_raw_grip, plot_raw_rear_grip, plot_raw_front_slip_ratio, plot_raw_susp_force, plot_raw_ride_height, plot_raw_front_lat_patch_vel, plot_raw_front_long_patch_vel, plot_raw_rear_lat_patch_vel, plot_raw_rear_long_patch_vel, plot_raw_slip_angle, plot_raw_rear_slip_angle, plot_raw_front_deflection;
 
     bool g_warn_dt = false;
+    float g_plot_time = 0;
+    bool g_prev_active = false;
 }
 
 // Professional "Flat Dark" Theme
 void GuiLayer::SetupGUIStyle() {
+    ImPlot::CreateContext();
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowRounding = 5.0f; style.ChildRounding = 5.0f; style.PopupRounding = 5.0f; style.FrameRounding = 4.0f; style.GrabRounding = 4.0f;
     style.WindowPadding = ImVec2(10, 10); style.FramePadding = ImVec2(8, 4); style.ItemSpacing = ImVec2(8, 6);
@@ -893,65 +921,120 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                 ImGui::Unindent(); 
                 ImGui::EndTabItem(); 
         }
+        if (ImGui::BeginTabItem("Advanced")) {
+            ImGui::Indent();
+            if (ImGui::BeginTable("AdvancedTable", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_SizingStretchProp)) {
+                ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupColumn("Setting", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+                GuiWidgets::ScopedTableLayout table_layout(true);
+                ImGui::PushTextWrapPos(0.0f);
+
+                ImGui::TableNextColumn();
+                int hist = Config::m_graph_history_s;
+                if (ImGui::SliderInt("Graph History (s)", &hist, 10, 300)) {
+                    Config::m_graph_history_s = hist;
+                }
+                if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
+
+                ImGui::PopTextWrapPos();
+                ImGui::EndTable();
+            }
+            ImGui::Unindent();
+            ImGui::EndTabItem();
+        }
         ImGui::EndTabBar();
     }
     ImGui::End();
 }
     
 void GuiLayer::UpdateTelemetry(LMUFFB::FFB::FFBEngine& engine) {
+    bool is_active = LMUFFB::IO::GameConnector::Get().IsConnected() && LMUFFB::IO::GameConnector::Get().IsInRealtime();
+
+    // Resume detection: Clear state once when game resumes
+    if (is_active && !g_prev_active) {
+        plot_total.Erase(); plot_base.Erase(); plot_sop.Erase(); plot_yaw_kick.Erase(); plot_rear_torque.Erase();
+        plot_gyro_damping.Erase(); plot_stationary_damping.Erase(); plot_scrub_drag.Erase(); plot_soft_lock.Erase();
+        plot_oversteer.Erase(); plot_understeer.Erase(); plot_clipping.Erase(); plot_road.Erase(); plot_slide.Erase();
+        plot_lockup.Erase(); plot_spin.Erase(); plot_bottoming.Erase();
+        plot_calc_front_load.Erase(); plot_calc_rear_load.Erase(); plot_calc_front_grip.Erase(); plot_calc_rear_grip.Erase();
+        plot_calc_slip_ratio.Erase(); plot_calc_slip_angle_smoothed.Erase(); plot_calc_rear_slip_angle_smoothed.Erase();
+        plot_calc_rear_lat_force.Erase(); plot_slope_current.Erase();
+        plot_raw_steer.Erase(); plot_raw_shaft_torque.Erase(); plot_raw_gen_torque.Erase(); plot_raw_input_steering.Erase();
+        plot_raw_throttle.Erase(); plot_raw_brake.Erase(); plot_input_accel.Erase(); plot_raw_car_speed.Erase();
+        plot_raw_load.Erase(); plot_raw_grip.Erase(); plot_raw_rear_grip.Erase(); plot_raw_front_slip_ratio.Erase();
+        plot_raw_susp_force.Erase(); plot_raw_ride_height.Erase(); plot_raw_front_lat_patch_vel.Erase();
+        plot_raw_front_long_patch_vel.Erase(); plot_raw_rear_lat_patch_vel.Erase(); plot_raw_rear_long_patch_vel.Erase();
+        plot_raw_slip_angle.Erase(); plot_raw_rear_slip_angle.Erase(); plot_raw_front_deflection.Erase();
+    }
+    g_prev_active = is_active;
+
+    if (!is_active) return; // Freeze at last state
+
     auto snapshots = engine.GetDebugBatch();
+    int buffer_size = Config::m_graph_history_s * PHYSICS_RATE_HZ;
+
+    auto UpdateBuffer = [&](ScrollingBuffer& buf, float val) {
+        if (buf.MaxSize != buffer_size) {
+            ScrollingBuffer new_buf(buffer_size);
+            // Copy existing data if possible, but simplest is just clear/resize for efficiency
+            buf = std::move(new_buf);
+        }
+        buf.AddPoint(g_plot_time, val);
+    };
+
     for (const auto& snap : snapshots) {
         m_latest_steering_range = snap.steering_range_deg;
         m_latest_steering_angle = snap.steering_angle_deg;
 
-        plot_total.Add(snap.total_output);
-        plot_base.Add(snap.base_force);
-        plot_sop.Add(snap.sop_force);
-        plot_yaw_kick.Add(snap.ffb_yaw_kick);
-        plot_rear_torque.Add(snap.ffb_rear_torque);
-        plot_gyro_damping.Add(snap.ffb_gyro_damping);
-        plot_stationary_damping.Add(snap.ffb_stationary_damping);
-        plot_scrub_drag.Add(snap.ffb_scrub_drag);
-        plot_soft_lock.Add(snap.ffb_soft_lock);
-        plot_oversteer.Add(snap.oversteer_boost);
-        plot_understeer.Add(snap.understeer_drop);
-        plot_clipping.Add(snap.clipping);
-        plot_road.Add(snap.texture_road);
-        plot_slide.Add(snap.texture_slide);
-        plot_lockup.Add(snap.texture_lockup);
-        plot_spin.Add(snap.texture_spin);
-        plot_bottoming.Add(snap.texture_bottoming);
-        plot_calc_front_load.Add(snap.calc_front_load);
-        plot_calc_rear_load.Add(snap.calc_rear_load);
-        plot_calc_front_grip.Add(snap.calc_front_grip);
-        plot_calc_rear_grip.Add(snap.calc_rear_grip);
-        plot_calc_slip_ratio.Add(snap.calc_front_slip_ratio);
-        plot_calc_slip_angle_smoothed.Add(snap.calc_front_slip_angle_smoothed);
-        plot_calc_rear_slip_angle_smoothed.Add(snap.calc_rear_slip_angle_smoothed);
-        plot_calc_rear_lat_force.Add(snap.calc_rear_lat_force);
-        plot_slope_current.Add(snap.slope_current);
-        plot_raw_steer.Add(snap.steer_force);
-        plot_raw_shaft_torque.Add(snap.raw_shaft_torque);
-        plot_raw_gen_torque.Add(snap.raw_gen_torque);
-        plot_raw_input_steering.Add(snap.raw_input_steering);
-        plot_raw_throttle.Add(snap.raw_input_throttle);
-        plot_raw_brake.Add(snap.raw_input_brake);
-        plot_input_accel.Add(snap.accel_x);
-        plot_raw_car_speed.Add(snap.raw_car_speed);
-        plot_raw_load.Add(snap.raw_front_tire_load);
-        plot_raw_grip.Add(snap.raw_front_grip_fract);
-        plot_raw_rear_grip.Add(snap.raw_rear_grip);
-        plot_raw_front_slip_ratio.Add(snap.raw_front_slip_ratio);
-        plot_raw_susp_force.Add(snap.raw_front_susp_force);
-        plot_raw_ride_height.Add(snap.raw_front_ride_height);
-        plot_raw_front_lat_patch_vel.Add(snap.raw_front_lat_patch_vel);
-        plot_raw_front_long_patch_vel.Add(snap.raw_front_long_patch_vel);
-        plot_raw_rear_lat_patch_vel.Add(snap.raw_rear_lat_patch_vel);
-        plot_raw_rear_long_patch_vel.Add(snap.raw_rear_long_patch_vel);
-        plot_raw_slip_angle.Add(snap.raw_front_slip_angle);
-        plot_raw_rear_slip_angle.Add(snap.raw_rear_slip_angle);
-        plot_raw_front_deflection.Add(snap.raw_front_deflection);
+        UpdateBuffer(plot_total, snap.total_output);
+        UpdateBuffer(plot_base, snap.base_force);
+        UpdateBuffer(plot_sop, snap.sop_force);
+        UpdateBuffer(plot_yaw_kick, snap.ffb_yaw_kick);
+        UpdateBuffer(plot_rear_torque, snap.ffb_rear_torque);
+        UpdateBuffer(plot_gyro_damping, snap.ffb_gyro_damping);
+        UpdateBuffer(plot_stationary_damping, snap.ffb_stationary_damping);
+        UpdateBuffer(plot_scrub_drag, snap.ffb_scrub_drag);
+        UpdateBuffer(plot_soft_lock, snap.ffb_soft_lock);
+        UpdateBuffer(plot_oversteer, snap.oversteer_boost);
+        UpdateBuffer(plot_understeer, snap.understeer_drop);
+        UpdateBuffer(plot_clipping, snap.clipping);
+        UpdateBuffer(plot_road, snap.texture_road);
+        UpdateBuffer(plot_slide, snap.texture_slide);
+        UpdateBuffer(plot_lockup, snap.texture_lockup);
+        UpdateBuffer(plot_spin, snap.texture_spin);
+        UpdateBuffer(plot_bottoming, snap.texture_bottoming);
+        UpdateBuffer(plot_calc_front_load, snap.calc_front_load);
+        UpdateBuffer(plot_calc_rear_load, snap.calc_rear_load);
+        UpdateBuffer(plot_calc_front_grip, snap.calc_front_grip);
+        UpdateBuffer(plot_calc_rear_grip, snap.calc_rear_grip);
+        UpdateBuffer(plot_calc_slip_ratio, snap.calc_front_slip_ratio);
+        UpdateBuffer(plot_calc_slip_angle_smoothed, snap.calc_front_slip_angle_smoothed);
+        UpdateBuffer(plot_calc_rear_slip_angle_smoothed, snap.calc_rear_slip_angle_smoothed);
+        UpdateBuffer(plot_calc_rear_lat_force, snap.calc_rear_lat_force);
+        UpdateBuffer(plot_slope_current, snap.slope_current);
+        UpdateBuffer(plot_raw_steer, snap.steer_force);
+        UpdateBuffer(plot_raw_shaft_torque, snap.raw_shaft_torque);
+        UpdateBuffer(plot_raw_gen_torque, snap.raw_gen_torque);
+        UpdateBuffer(plot_raw_input_steering, snap.raw_input_steering);
+        UpdateBuffer(plot_raw_throttle, snap.raw_input_throttle);
+        UpdateBuffer(plot_raw_brake, snap.raw_input_brake);
+        UpdateBuffer(plot_input_accel, snap.accel_x);
+        UpdateBuffer(plot_raw_car_speed, snap.raw_car_speed);
+        UpdateBuffer(plot_raw_load, snap.raw_front_tire_load);
+        UpdateBuffer(plot_raw_grip, snap.raw_front_grip_fract);
+        UpdateBuffer(plot_raw_rear_grip, snap.raw_rear_grip);
+        UpdateBuffer(plot_raw_front_slip_ratio, snap.raw_front_slip_ratio);
+        UpdateBuffer(plot_raw_susp_force, snap.raw_front_susp_force);
+        UpdateBuffer(plot_raw_ride_height, snap.raw_front_ride_height);
+        UpdateBuffer(plot_raw_front_lat_patch_vel, snap.raw_front_lat_patch_vel);
+        UpdateBuffer(plot_raw_front_long_patch_vel, snap.raw_front_long_patch_vel);
+        UpdateBuffer(plot_raw_rear_lat_patch_vel, snap.raw_rear_lat_patch_vel);
+        UpdateBuffer(plot_raw_rear_long_patch_vel, snap.raw_rear_long_patch_vel);
+        UpdateBuffer(plot_raw_slip_angle, snap.raw_front_slip_angle);
+        UpdateBuffer(plot_raw_rear_slip_angle, snap.raw_rear_slip_angle);
+        UpdateBuffer(plot_raw_front_deflection, snap.raw_front_deflection);
         g_warn_dt = snap.warn_dt;
+        g_plot_time += 0.0025f; // 400Hz
     }
 }
 
@@ -1039,31 +1122,37 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         ImGui::Separator();
     }
 
+    float history = (float)Config::m_graph_history_s;
+    static const ImVec4 COLOR_RED(1.0F, 0.0F, 0.0F, 1.0F);
+    static const ImVec4 COLOR_GREEN(0.0F, 1.0F, 0.0F, 1.0F);
+    static const ImVec4 COLOR_CYAN(0.0F, 1.0F, 1.0F, 1.0F);
+    static const ImVec4 COLOR_MAGENTA(1.0F, 0.0F, 1.0F, 1.0F);
+
     if (ImGui::CollapsingHeader("A. FFB Components (Output)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        PlotWithStats("Total Output", plot_total, -1.0f, 1.0f, ImVec2(0, 60));
+        PlotWithStats("Total Output", plot_total, history, -1.0f, 1.0f, ImVec2(-1, 80));
         ImGui::Separator();
         ImGui::Columns(3, "FFBMain", false);
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "[Main Forces]");
-        PlotWithStats("Base Torque (Nm)", plot_base, -30.0f, 30.0f);
-        PlotWithStats("SoP (Chassis G)", plot_sop, -20.0f, 20.0f);
-        PlotWithStats("Yaw Kick", plot_yaw_kick, -20.0f, 20.0f);
-        PlotWithStats("Rear Align", plot_rear_torque, -20.0f, 20.0f);
-        PlotWithStats("Gyro Damping", plot_gyro_damping, -20.0f, 20.0f);
-        PlotWithStats("Stationary Damping", plot_stationary_damping, -20.0f, 20.0f);
-        PlotWithStats("Scrub Drag", plot_scrub_drag, -20.0f, 20.0f);
-        PlotWithStats("Soft Lock", plot_soft_lock, -50.0f, 50.0f);
+        PlotWithStats("Base Torque (Nm)", plot_base, history, -30.0f, 30.0f);
+        PlotWithStats("SoP (Chassis G)", plot_sop, history, -20.0f, 20.0f);
+        PlotWithStats("Yaw Kick", plot_yaw_kick, history, -20.0f, 20.0f);
+        PlotWithStats("Rear Align", plot_rear_torque, history, -20.0f, 20.0f);
+        PlotWithStats("Gyro Damping", plot_gyro_damping, history, -20.0f, 20.0f);
+        PlotWithStats("Stationary Damping", plot_stationary_damping, history, -20.0f, 20.0f);
+        PlotWithStats("Scrub Drag", plot_scrub_drag, history, -20.0f, 20.0f);
+        PlotWithStats("Soft Lock", plot_soft_lock, history, -50.0f, 50.0f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.7f, 1.0f), "[Modifiers]");
-        PlotWithStats("Lateral G Boost", plot_oversteer, -20.0f, 20.0f);
-        PlotWithStats("Understeer Cut", plot_understeer, -20.0f, 20.0f);
-        PlotWithStats("Clipping", plot_clipping, 0.0f, 1.1f);
+        PlotWithStats("Lateral G Boost", plot_oversteer, history, -20.0f, 20.0f);
+        PlotWithStats("Understeer Cut", plot_understeer, history, -20.0f, 20.0f);
+        PlotWithStats("Clipping", plot_clipping, history, 0.0f, 1.1f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(0.7f, 1.0f, 0.7f, 1.0f), "[Textures]");
-        PlotWithStats("Road Texture", plot_road, -10.0f, 10.0f);
-        PlotWithStats("Slide Texture", plot_slide, -10.0f, 10.0f);
-        PlotWithStats("Lockup Vib", plot_lockup, -10.0f, 10.0f);
-        PlotWithStats("Spin Vib", plot_spin, -10.0f, 10.0f);
-        PlotWithStats("Bottoming", plot_bottoming, -10.0f, 10.0f);
+        PlotWithStats("Road Texture", plot_road, history, -10.0f, 10.0f);
+        PlotWithStats("Slide Texture", plot_slide, history, -10.0f, 10.0f);
+        PlotWithStats("Lockup Vib", plot_lockup, history, -10.0f, 10.0f);
+        PlotWithStats("Spin Vib", plot_spin, history, -10.0f, 10.0f);
+        PlotWithStats("Bottoming", plot_bottoming, history, -10.0f, 10.0f);
         ImGui::Columns(1);
     }
 
@@ -1071,61 +1160,79 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         ImGui::Columns(3, "PhysCols", false);
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Loads]");
         ImGui::Text("Front: %.0f N | Rear: %.0f N", plot_calc_front_load.GetCurrent(), plot_calc_rear_load.GetCurrent());
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 1.0f, 1.0f));
-        ImGui::PlotLines("##CLoadF", plot_calc_front_load.data.data(), (int)plot_calc_front_load.data.size(), plot_calc_front_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-        ImGui::PopStyleColor();
-        ImVec2 pos_load = ImGui::GetItemRectMin();
-        ImGui::SetCursorScreenPos(pos_load);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0,0,0,0));
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 1.0f, 1.0f));
-        ImGui::PlotLines("##CLoadR", plot_calc_rear_load.data.data(), (int)plot_calc_rear_load.data.size(), plot_calc_rear_load.offset, NULL, 0.0f, 10000.0f, ImVec2(0, 40));
-        ImGui::PopStyleColor(2);
+
+        if (ImPlot::BeginPlot("##Loads", ImVec2(-1, 60), ImPlotFlags_NoTitle | ImPlotFlags_NoLegend | ImPlotFlags_NoMenus)) {
+            ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoGridLines, ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines);
+            float current_time = plot_calc_front_load.Data.empty() ? 0.0f : (plot_calc_front_load.Offset == 0 ? plot_calc_front_load.Data.back().x : plot_calc_front_load.Data[plot_calc_front_load.Offset-1].x);
+            ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 10000.0f, ImGuiCond_Always);
+
+            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_CYAN);
+            ImPlot::PlotLine("Front", &plot_calc_front_load.Data[0].x, &plot_calc_front_load.Data[0].y, (int)plot_calc_front_load.Data.size(), 0, plot_calc_front_load.Offset, 2 * sizeof(float));
+            ImPlot::PopStyleColor();
+
+            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_MAGENTA);
+            ImPlot::PlotLine("Rear", &plot_calc_rear_load.Data[0].x, &plot_calc_rear_load.Data[0].y, (int)plot_calc_rear_load.Data.size(), 0, plot_calc_rear_load.Offset, 2 * sizeof(float));
+            ImPlot::PopStyleColor();
+
+            ImPlot::EndPlot();
+        }
+
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Grip/Slip]");
-        PlotWithStats("Calc Front Grip", plot_calc_front_grip, 0.0f, 1.2f);
-        PlotWithStats("Calc Rear Grip", plot_calc_rear_grip, 0.0f, 1.2f);
-        PlotWithStats("Front Slip Ratio", plot_calc_slip_ratio, -1.0f, 1.0f);
-        PlotWithStats("Front Slip Angle", plot_calc_slip_angle_smoothed, 0.0f, 1.0f);
-        PlotWithStats("Rear Slip Angle", plot_calc_rear_slip_angle_smoothed, 0.0f, 1.0f);
-        if (engine.m_slope_detection.enabled) PlotWithStats("Slope", plot_slope_current, -5.0f, 5.0f);
+        PlotWithStats("Calc Front Grip", plot_calc_front_grip, history, 0.0f, 1.2f);
+        PlotWithStats("Calc Rear Grip", plot_calc_rear_grip, history, 0.0f, 1.2f);
+        PlotWithStats("Front Slip Ratio", plot_calc_slip_ratio, history, -1.0f, 1.0f);
+        PlotWithStats("Front Slip Angle", plot_calc_slip_angle_smoothed, history, 0.0f, 1.0f);
+        PlotWithStats("Rear Slip Angle", plot_calc_rear_slip_angle_smoothed, history, 0.0f, 1.0f);
+        if (engine.m_slope_detection.enabled) PlotWithStats("Slope", plot_slope_current, history, -5.0f, 5.0f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Forces]");
-        PlotWithStats("Calc Rear Lat Force", plot_calc_rear_lat_force, -5000.0f, 5000.0f);
+        PlotWithStats("Calc Rear Lat Force", plot_calc_rear_lat_force, history, -5000.0f, 5000.0f);
         ImGui::Columns(1);
     }
 
     if (ImGui::CollapsingHeader("C. Raw Game Telemetry (Input)", ImGuiTreeNodeFlags_None)) {
         ImGui::Columns(4, "TelCols", false);
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Driver Input]");
-        PlotWithStats("Selected Torque", plot_raw_steer, -30.0f, 30.0f, ImVec2(0, 40), Tooltips::PLOT_SELECTED_TORQUE);
-        PlotWithStats("Shaft Torque (100Hz)", plot_raw_shaft_torque, -30.0f, 30.0f, ImVec2(0, 40), Tooltips::PLOT_SHAFT_TORQUE);
-        PlotWithStats("In-Game FFB (400Hz)", plot_raw_gen_torque, -30.0f, 30.0f, ImVec2(0, 40), Tooltips::PLOT_INGAME_FFB);
-        PlotWithStats("Steering Input", plot_raw_input_steering, -1.0f, 1.0f);
+        PlotWithStats("Selected Torque", plot_raw_steer, history, -30.0f, 30.0f, ImVec2(-1, 60), Tooltips::PLOT_SELECTED_TORQUE);
+        PlotWithStats("Shaft Torque (100Hz)", plot_raw_shaft_torque, history, -30.0f, 30.0f, ImVec2(-1, 60), Tooltips::PLOT_SHAFT_TORQUE);
+        PlotWithStats("In-Game FFB (400Hz)", plot_raw_gen_torque, history, -30.0f, 30.0f, ImVec2(-1, 60), Tooltips::PLOT_INGAME_FFB);
+        PlotWithStats("Steering Input", plot_raw_input_steering, history, -1.0f, 1.0f);
+
         ImGui::Text("Combined Input");
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-        ImGui::PlotLines("##BrkComb", plot_raw_brake.data.data(), (int)plot_raw_brake.data.size(), plot_raw_brake.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-        ImGui::PopStyleColor();
-        ImGui::SetCursorScreenPos(pos);
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-        ImGui::PlotLines("##ThrComb", plot_raw_throttle.data.data(), (int)plot_raw_throttle.data.size(), plot_raw_throttle.offset, NULL, 0.0f, 1.0f, ImVec2(0, 40));
-        ImGui::PopStyleColor(2);
+        if (ImPlot::BeginPlot("##InputComb", ImVec2(-1, 60), ImPlotFlags_NoTitle | ImPlotFlags_NoLegend | ImPlotFlags_NoMenus)) {
+            ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoGridLines, ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoGridLines);
+            float current_time = plot_raw_brake.Data.empty() ? 0.0f : (plot_raw_brake.Offset == 0 ? plot_raw_brake.Data.back().x : plot_raw_brake.Data[plot_raw_brake.Offset-1].x);
+            ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1.0f, ImGuiCond_Always);
+
+            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_RED);
+            ImPlot::PlotLine("Brake", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), 0, plot_raw_brake.Offset, 2 * sizeof(float));
+            ImPlot::PopStyleColor();
+
+            ImPlot::PushStyleColor(ImPlotCol_Line, COLOR_GREEN);
+            ImPlot::PlotLine("Throttle", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), 0, plot_raw_throttle.Offset, 2 * sizeof(float));
+            ImPlot::PopStyleColor();
+
+            ImPlot::EndPlot();
+        }
+
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Vehicle State]");
-        PlotWithStats("Lat Accel", plot_input_accel, -20.0f, 20.0f);
-        PlotWithStats("Speed (m/s)", plot_raw_car_speed, 0.0f, 100.0f);
+        PlotWithStats("Lat Accel", plot_input_accel, history, -20.0f, 20.0f);
+        PlotWithStats("Speed (m/s)", plot_raw_car_speed, history, 0.0f, 100.0f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Raw Tire Data]");
-        PlotWithStats("Raw Front Load", plot_raw_load, 0.0f, 10000.0f);
-        PlotWithStats("Raw Front Grip", plot_raw_grip, 0.0f, 1.2f);
-        PlotWithStats("Raw Rear Grip", plot_raw_rear_grip, 0.0f, 1.2f);
+        PlotWithStats("Raw Front Load", plot_raw_load, history, 0.0f, 10000.0f);
+        PlotWithStats("Raw Front Grip", plot_raw_grip, history, 0.0f, 1.2f);
+        PlotWithStats("Raw Rear Grip", plot_raw_rear_grip, history, 0.0f, 1.2f);
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Patch Velocities]");
-        PlotWithStats("F-Lat PatchVel", plot_raw_front_lat_patch_vel, 0.0f, 20.0f);
-        PlotWithStats("R-Lat PatchVel", plot_raw_rear_lat_patch_vel, 0.0f, 20.0f);
-        PlotWithStats("F-Long PatchVel", plot_raw_front_long_patch_vel, -20.0f, 20.0f);
-        PlotWithStats("R-Long PatchVel", plot_raw_rear_long_patch_vel, -20.0f, 20.0f);
+        PlotWithStats("F-Lat PatchVel", plot_raw_front_lat_patch_vel, history, 0.0f, 20.0f);
+        PlotWithStats("R-Lat PatchVel", plot_raw_rear_lat_patch_vel, history, 0.0f, 20.0f);
+        PlotWithStats("F-Long PatchVel", plot_raw_front_long_patch_vel, history, -20.0f, 20.0f);
+        PlotWithStats("R-Long PatchVel", plot_raw_rear_long_patch_vel, history, -20.0f, 20.0f);
         ImGui::Columns(1);
     }
 
@@ -1133,6 +1240,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
 }
 #else
 void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {}
+void GuiLayer::SetupGUIStyle() {}
 void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {}
 void GuiLayer::UpdateTelemetry(LMUFFB::FFB::FFBEngine& engine) {}
 void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {}

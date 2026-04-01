@@ -162,6 +162,7 @@ void GuiLayer::Shutdown(LMUFFB::FFB::FFBEngine& engine) {
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
     glfwDestroyWindow(g_window);
