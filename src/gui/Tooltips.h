@@ -35,7 +35,7 @@ namespace Tooltips {
     inline constexpr const char* PRESET_EXPORT = "Export the current preset to an external .ini file.";
 
     // FFB Settings
-    inline constexpr const char* USE_INGAME_FFB = "Recommended for LMU 1.2+. Uses the high-frequency FFB channel\ndirectly from the game.\nMatches the game's internal physics rate for maximum fidelity.";
+    inline constexpr const char* USE_INGAME_FFB = "Recommended for LMU 1.2+. Uses the high-frequency FFB channel\ndirectly from the game.\nMatches the game's internal physics rate for maximum fidelity.\n\nIMPORTANT: Ensure Force Feedback is ENABLED in LMU settings\nand Strength is > 0%.";
     inline constexpr const char* INVERT_FFB = "Check this if the wheel pulls away from center instead of aligning.";
     inline constexpr const char* DYNAMIC_NORMALIZATION_ENABLE = "Automatically scales structural FFB forces based on the peak torque\nseen during a session. Ensures consistent weight across different cars.\n(NOT RECOMMENDED: May cause force drop-off after high-torque spikes).";
     inline constexpr const char* DYNAMIC_LOAD_NORMALIZATION_ENABLE = "Automatically scales vibration effects (Road, Slide, Lockup) based\non learned peak tire loads. Ensures detailed feel for all car classes.\nWhen disabled, uses fixed class-based defaults.";

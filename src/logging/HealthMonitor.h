@@ -13,6 +13,7 @@ struct HealthStatus {
     bool telem_low = false;
     bool torque_low = false;
     bool physics_low = false; // New v0.7.117 (Issue #217)
+    bool ingame_ffb_missing = false; // New v0.7.276 (Issue #446)
 
     double loop_rate = 0.0;
     double telem_rate = 0.0;
@@ -80,6 +81,19 @@ public:
         if (torque > 1.0 && torque < (status.expected_torque_rate * 0.9)) {
             status.torque_low = true;
             status.is_healthy = false;
+        }
+
+        // Issue #446: Detect missing In-Game FFB signal
+        // Triggers only when:
+        // 1. In-Game FFB is the selected source (torqueSource == 1)
+        // 2. No signal is coming from the game (torque < 1.0 Hz)
+        // 3. Game is in Realtime (isRealtime == true)
+        // 4. Player is actively driving (playerControl == 0)
+        if (torqueSource == 1 && torque < 1.0 && isRealtime && playerControl == 0) {
+            status.ingame_ffb_missing = true;
+            // Note: We don't necessarily set is_healthy = false here because
+            // the system loop and physics might still be healthy, but it's a
+            // critical configuration warning.
         }
 
         return status;

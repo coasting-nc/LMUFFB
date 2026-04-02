@@ -542,10 +542,30 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
 
         ImGui::Spacing();
         bool use_in_game_ffb = (engine.m_front_axle.torque_source == 1);
-        if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) {
+
+        // Issue #446: Visual warning for missing In-Game FFB signal
+        HealthStatus hs = HealthMonitor::Check(engine.m_ffb_rate, engine.m_telemetry_rate, engine.m_gen_torque_rate, engine.m_front_axle.torque_source, engine.m_physics_rate,
+                                              LMUFFB::IO::GameConnector::Get().IsConnected(), LMUFFB::IO::GameConnector::Get().IsSessionActive(), LMUFFB::IO::GameConnector::Get().GetSessionType(), LMUFFB::IO::GameConnector::Get().IsInRealtime(), LMUFFB::IO::GameConnector::Get().GetPlayerControl());
+
+        bool show_warning = hs.ingame_ffb_missing;
+        std::string label = "Use In-Game FFB (400Hz Native)";
+        bool blink = (fmod(ImGui::GetTime(), 1.0f) < 0.5f);
+
+        if (show_warning) {
+            label += " - NO SIGNAL! CHECK GAME SETTINGS";
+            if (blink) {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.2f, 0.2f, 1.0f)); // Bright Red
+            }
+        }
+
+        if (GuiWidgets::Checkbox(label.c_str(), &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) {
             std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
             engine.m_front_axle.torque_source = use_in_game_ffb ? 1 : 0;
             Config::Save(engine);
+        }
+
+        if (show_warning && blink) {
+            ImGui::PopStyleColor();
         }
 
         BoolSetting("Invert FFB Signal", &engine.m_invert_force, Tooltips::INVERT_FFB);

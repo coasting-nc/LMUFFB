@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.276]
+
+### Added
+- **In-Game FFB "No Signal" Warning (Issue #446)**:
+  - Implemented a visual warning in the GUI when "In-Game FFB" is selected but no signal is received while driving.
+  - Added `ingame_ffb_missing` flag to `HealthMonitor` for robust detection.
+  - The "Use In-Game FFB" checkbox now turns red and flashes with a "NO SIGNAL" message if the game FFB is disabled or inactive in LMU settings.
+  - Updated tooltips with explicit instructions to enable FFB and set strength to 100% in-game.
+
+### Changed
+- **Documentation**: Updated `README.md` with revised LMU FFB setting recommendations (100% strength).
+
+### Fixed
+- **UI Consistency**: Fixed a regression in tooltip line lengths to maintain readability.
+
 ## [0.7.275]
 
 ### Updated
