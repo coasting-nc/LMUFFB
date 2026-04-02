@@ -185,7 +185,6 @@ int main(int argc, char* argv[]) noexcept {
 
     // Ensure log file is closed before cleanup
     Logger::Get().Close();
-    ImPlot::DestroyContext();
     
     cleanup();
 
