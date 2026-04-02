@@ -362,6 +362,7 @@ public:
     static int win_w_small, win_h_small; // Dimensions for Config Only
     static int win_w_large, win_h_large; // Dimensions for Config + Graphs
     static bool show_graphs;             // Remember if graphs were open
+    static int m_graph_history_s;        // Graph history in seconds (10s to 300s)
 
     // Persistent storage for vehicle static loads (v0.7.70)
     static std::map<std::string, double> m_saved_static_loads;
