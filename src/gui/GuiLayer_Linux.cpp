@@ -13,6 +13,7 @@
 
 #if defined(ENABLE_IMGUI) && !defined(HEADLESS_GUI)
 #include "imgui.h"
+#include "implot.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
@@ -148,6 +149,7 @@ bool GuiLayer::Init() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
+    ImPlot::CreateContext();
     SetupGUIStyle();
 
     ImGui_ImplGlfw_InitForOpenGL(g_window, true);
@@ -163,6 +165,7 @@ void GuiLayer::Shutdown(LMUFFB::FFB::FFBEngine& engine) {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    ImPlot::DestroyContext();
 
     glfwDestroyWindow(g_window);
     glfwTerminate();

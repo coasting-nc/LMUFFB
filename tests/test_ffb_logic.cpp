@@ -19,6 +19,7 @@
 #include "../src/gui/GuiLayer.h"
 #include "../src/io/GameConnector.h"
 #include "imgui.h"
+#include "implot.h"
 
 #include "test_ffb_common.h"
 
@@ -210,6 +211,7 @@ TEST_CASE(test_gui_style_application, "Logic") {
     std::cout << "\nTest: GUI Style Application (Headless)" << std::endl;
 
     ImGuiContext* ctx = ImGui::CreateContext();
+    ImPlotContext* plot_ctx = ImPlot::CreateContext();
     ImGui::GetIO().IniFilename = nullptr;
     ASSERT_TRUE(ctx != nullptr);
 
@@ -226,6 +228,7 @@ TEST_CASE(test_gui_style_application, "Logic") {
     float header_a = ImGui::GetStyle().Colors[ImGuiCol_Header].w;
     ASSERT_TRUE(header_a == 0.00f);
 
+    ImPlot::DestroyContext(plot_ctx);
     ImGui::DestroyContext(ctx);
 }
 

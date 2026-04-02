@@ -40,6 +40,7 @@ int Config::win_h_small = 800;
 int Config::win_w_large = 1400;  // Wide (Config + Graphs)
 int Config::win_h_large = 800;
 bool Config::show_graphs = false;
+int Config::m_graph_history_s = 60; // Default 60s
 
 std::map<std::string, double> Config::m_saved_static_loads;
 std::recursive_mutex Config::m_static_loads_mutex;
@@ -922,6 +923,7 @@ void Config::Load(FFBEngine& engine, const std::string& filename) {
                 if (auto val = (*sys)["win_w_large"].value<int64_t>()) win_w_large = (int)*val;
                 if (auto val = (*sys)["win_h_large"].value<int64_t>()) win_h_large = (int)*val;
                 if (auto val = (*sys)["show_graphs"].value<bool>()) show_graphs = *val;
+                if (auto val = (*sys)["graph_history_s"].value<int64_t>()) m_graph_history_s = std::clamp((int)*val, 10, 300);
                 if (auto val = (*sys)["auto_start_logging"].value<bool>()) m_auto_start_logging = *val;
                 if (auto val = (*sys)["invert_force"].value<bool>()) engine.m_invert_force = *val;
                 if (auto val = (*sys)["session_peak_torque"].value<double>()) {
@@ -993,6 +995,7 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
         {"win_w_large", win_w_large},
         {"win_h_large", win_h_large},
         {"show_graphs", show_graphs},
+        {"graph_history_s", m_graph_history_s},
         {"auto_start_logging", m_auto_start_logging},
         {"log_path", m_log_path},
         {"invert_force", engine.m_invert_force},
