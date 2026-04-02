@@ -252,6 +252,26 @@ void GuiLayer::SetupGUIStyle() {
 }
 
 void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
+    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+    if (m_first_run && !Config::presets.empty()) 
+        { for (int i = 0; i < (int)Config::presets.size(); i++) 
+            { if (Config::presets[i].name == Config::m_last_preset_name) { m_selected_preset = i; break; } 
+        } m_first_run = false; 
+    }
+    if (m_devices.empty()) {
+        m_devices = FFB::DirectInputFFB::Get().EnumerateDevices();
+        if (m_selected_device_idx == -1 && !Config::m_last_device_guid.empty()) {
+            GUID target = FFB::DirectInputFFB::StringToGuid(Config::m_last_device_guid);
+            for (int i = 0; i < (int)m_devices.size(); i++) {
+                if (memcmp(&m_devices[i].guid, &target, sizeof(GUID)) == 0) {
+                    m_selected_device_idx = i;
+                    FFB::DirectInputFFB::Get().SelectDevice(m_devices[i].guid);
+                    break;
+                }
+            }
+        }
+    }
+    
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("Presets")) {
             if (m_selected_preset >= 0 && m_selected_preset < (int)Config::presets.size()) {
@@ -289,7 +309,9 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
             ImGui::Separator();
 
             if (ImGui::MenuItem("Rescan")) { m_devices = FFB::DirectInputFFB::Get().EnumerateDevices(); m_selected_device_idx = -1; }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::DEVICE_RESCAN);
             if (ImGui::MenuItem("Unbind", nullptr, false, m_selected_device_idx != -1)) { FFB::DirectInputFFB::Get().ReleaseDevice(); m_selected_device_idx = -1; }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::DEVICE_UNBIND);
             ImGui::Separator();
 
             for (int i = 0; i < (int)m_devices.size(); i++) { 
@@ -300,8 +322,10 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
                         Config::m_last_device_guid = FFB::DirectInputFFB::GuidToString(m_devices[i].guid); 
                         Config::Save(engine); 
                     } 
-                }
+                };
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::DEVICE_SELECT);
             ImGui::EndMenu();
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::DEVICE_SELECT);
         }
 
         if (ImGui::BeginMenu("Logging")) {
@@ -309,7 +333,9 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
             ImGui::Text("Logging:"); ImGui::SameLine(); ImGui::TextColored(is_logging ? ImVec4(0, 1, 0, 1) : ImVec4(1, 0, 0, 1), is_logging ? "Auto" : "Disabled");
             if (ImGui::MenuItem(is_logging ? "Stop Auto-Log" : "Start Auto-Log", nullptr, is_logging)) 
                 { Config::m_auto_start_logging = !is_logging; if (!Config::m_auto_start_logging) AsyncLogger::Get().Stop(); Config::Save(engine); }
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::AUTO_START_LOGGING);
             if (ImGui::MenuItem("Set Log Path...")) { m_show_log_path_popup = true; }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::LOG_PATH);
             ImGui::Separator();
             if (ImGui::MenuItem("Analyze Last Log")) {
                 namespace fs = std::filesystem; fs::path search_path = Config::m_log_path.empty() ? "." : Config::m_log_path; fs::path latest_path; fs::file_time_type latest_time; bool found = false;
@@ -328,6 +354,7 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
                 if (found) LaunchLogAnalyzer(latest_path.string());
             }
             ImGui::EndMenu();
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::AUTO_START_LOGGING);
             
         }
         if (ImGui::BeginMenu("UI Settings")) {
@@ -359,17 +386,45 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
 }
 
 void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
-    namespace fs = std::filesystem; fs::path exe_dir = fs::current_path();
+    namespace fs = std::filesystem;
+
+    // Get executable directory to find tools/ relative to the binary
+    fs::path exe_dir = fs::current_path();
 #ifdef _WIN32
-    char buffer[MAX_PATH]; if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) exe_dir = fs::path(buffer).parent_path();
+    char buffer[MAX_PATH];
+    if (GetModuleFileNameA(NULL, buffer, MAX_PATH)) {
+        exe_dir = fs::path(buffer).parent_path();
+    }
 #endif
-    std::string python_path = (exe_dir / "tools").string(); if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) { if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools"; else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools"; else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools"; }
+
+    // Robust PYTHONPATH lookup
+    std::string python_path = (exe_dir / "tools").string();
+    if (!fs::exists(exe_dir / "tools/lmuffb_log_analyzer")) {
+        // Dev environment fallbacks from CWD
+        if (fs::exists("tools/lmuffb_log_analyzer")) python_path = "tools";
+        else if (fs::exists("../tools/lmuffb_log_analyzer")) python_path = "../tools";
+        else if (fs::exists("../../tools/lmuffb_log_analyzer")) python_path = "../../tools";
+    }
+
+    // Windows Defender false positive mitigation :
+    // See docs\dev_docs\reports\av_detection_investigation_v0.7.222(pt.2).md
 #ifdef _WIN32
-    std::wstring wPythonPath = fs::path(python_path).wstring(); SetEnvironmentVariableW(L"PYTHONPATH", wPythonPath.c_str()); std::wstring wLogFile = fs::path(log_file).wstring(); std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
+    // 1. Set the environment variable natively in the C++ process.
+    // cmd.exe and python.exe will automatically inherit this.
+    std::wstring wPythonPath = fs::path(python_path).wstring();
+    SetEnvironmentVariableW(L"PYTHONPATH", wPythonPath.c_str());
+
+    // 2. Build a clean, unchained command. 
+    // /k tells cmd.exe to run the command and KEEP the window open (replacing the need for '& pause')
+    std::wstring wLogFile = fs::path(log_file).wstring();
+    std::wstring wArgs = L"/k python -m lmuffb_log_analyzer.cli analyze-full \"" + wLogFile + L"\"";
+
 #ifdef LMUFFB_UNIT_TEST
     m_last_shell_execute_args = wArgs;
 #endif
+
 #ifndef LMUFFB_UNIT_TEST
+    // 3. Execute
     ShellExecuteW(NULL, L"open", L"cmd.exe", wArgs.c_str(), NULL, SW_SHOWNORMAL);
 #endif
 #else
@@ -377,6 +432,7 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
 #ifdef LMUFFB_UNIT_TEST
     m_last_system_cmd = cmd;
 #endif
+
 #ifndef LMUFFB_UNIT_TEST
     system(cmd.c_str());
 #endif
@@ -384,13 +440,6 @@ void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {
 }
 
 void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
-    std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-    if (m_first_run && !Config::presets.empty()) 
-        { for (int i = 0; i < (int)Config::presets.size(); i++) 
-            { if (Config::presets[i].name == Config::m_last_preset_name) { m_selected_preset = i; break; } 
-        } m_first_run = false; 
-    }
-
     ImGuiViewport* viewport = ImGui::GetMainViewport(); float current_width = Config::show_graphs ? CONFIG_PANEL_WIDTH : viewport->WorkSize.x;
     ImGui::SetNextWindowPos(viewport->WorkPos); ImGui::SetNextWindowSize(ImVec2(current_width, viewport->WorkSize.y));
     ImGui::Begin("MainUI", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
@@ -1264,7 +1313,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Loads]");
         ImGui::Text("Front: %.0f N | Rear: %.0f N", plot_calc_front_load.GetCurrent(), plot_calc_rear_load.GetCurrent());
 
-        if (ImPlot::BeginPlot("##Loads", ImVec2(-1, 60), kDefaultPlotFlags)) {
+        if (ImPlot::BeginPlot("##Loads", ImVec2(-1, 60), ImPlotFlags_NoTitle | ImPlotFlags_NoMenus | ImPlotFlags_NoBoxSelect)) {
             ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0, 0));
             ImPlot::PushStyleVar(ImPlotStyleVar_FitPadding, ImVec2(0, 0));
             ImPlot::SetupAxes(nullptr, nullptr, kDefaultXAxisFlags, kDefaultYAxisFlags);
@@ -1272,8 +1321,8 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
             ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
             ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 10000.0f, ImGuiCond_Always);
 
-            ImPlot::PlotLine("Front", &plot_calc_front_load.Data[0].x, &plot_calc_front_load.Data[0].y, (int)plot_calc_front_load.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_CYAN, ImPlotProp_Offset, plot_calc_front_load.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
-            ImPlot::PlotLine("Rear", &plot_calc_rear_load.Data[0].x, &plot_calc_rear_load.Data[0].y, (int)plot_calc_rear_load.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_MAGENTA, ImPlotProp_Offset, plot_calc_rear_load.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            ImPlot::PlotLine("F", &plot_calc_front_load.Data[0].x, &plot_calc_front_load.Data[0].y, (int)plot_calc_front_load.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_CYAN, ImPlotProp_Offset, plot_calc_front_load.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            ImPlot::PlotLine("R", &plot_calc_rear_load.Data[0].x, &plot_calc_rear_load.Data[0].y, (int)plot_calc_rear_load.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_MAGENTA, ImPlotProp_Offset, plot_calc_rear_load.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
 
             ImPlot::PopStyleVar(1);
             ImPlot::EndPlot();
@@ -1303,7 +1352,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         } else {
             PlotNoStats("In-Game FFB (400Hz)", plot_raw_gen_torque, history, -30.0f, 30.0f, ImVec2(-1, 60), Tooltips::PLOT_INGAME_FFB);
         }
-        PlotNoStats("Steering Input", plot_raw_input_steering, history, -30.0f, 30.0f, ImVec2(-1, 60));
+        PlotNoStats("Steering Input", plot_raw_input_steering, history, -1.0f, 1.0f, ImVec2(-1, 60));
 
         ImGui::Text("Combined Input");
         if (ImPlot::BeginPlot("##InputComb", ImVec2(-1, 60), kDefaultPlotFlags)) {
@@ -1344,7 +1393,6 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
 }
 #else
 void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {}
-void GuiLayer::SetupGUIStyle() {}
 void GuiLayer::LaunchLogAnalyzer(const std::string& log_file) {}
 void GuiLayer::UpdateTelemetry(LMUFFB::FFB::FFBEngine& engine) {}
 void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {}
