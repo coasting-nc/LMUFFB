@@ -69,8 +69,8 @@ if(ENABLE_COVERAGE)
         message(STATUS "Enabling code coverage instrumentation...")
         # v0.7.145: Add -fprofile-update=atomic to prevent 'Unexpected negative count' in geninfo
         # during multi-threaded test execution on Linux.
-        add_compile_options(--coverage -O0 -g -fprofile-update=atomic)
-        add_link_options(--coverage)
+        add_compile_options(--coverage -O0 -g -fprofile-update=atomic -fsanitize=undefined -fno-sanitize-recover=undefined)
+        add_link_options(--coverage -fsanitize=undefined)
     else()
         # On Windows/MSVC, OpenCppCoverage is used. 
         # It doesn't need flags, but we should be in Debug or at least unoptimized.

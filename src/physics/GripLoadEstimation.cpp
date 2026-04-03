@@ -122,7 +122,7 @@ double CalculateApproximateLoad(const TelemWheelV01& w, ParsedVehicleClass vclas
     double motion_ratio = GetMotionRatioForClass(vclass);
     double unsprung_weight = GetUnsprungWeightForClass(vclass, is_rear);
 
-    return (std::max)(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
+    return max_val(0.0, (w.mSuspForce * motion_ratio) + unsprung_weight);
 }
 
 } // namespace Physics
