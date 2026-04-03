@@ -1168,7 +1168,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     // 1. Raw Lateral G (Chassis-relative X)
     // Clamp to 5G to prevent numeric instability in crashes
-    double raw_g = max_val(-G_LIMIT_5G * GRAVITY_MS2, min_val(G_LIMIT_5G * GRAVITY_MS2, data->mLocalAccel.x));
+    double raw_g = clamp_val(data->mLocalAccel.x, -G_LIMIT_5G * GRAVITY_MS2, G_LIMIT_5G * GRAVITY_MS2);
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
     // 2. Global Normalized Lateral Load Transfer (Chassis Roll) - Issue #306
