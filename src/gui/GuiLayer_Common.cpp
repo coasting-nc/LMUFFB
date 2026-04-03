@@ -163,19 +163,24 @@ namespace {
                 if (show_fill) {
                     ImPlot::PlotLine("##fill", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_FillColor, *color, ImPlotProp_FillAlpha, 0.4f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float)), ImPlotProp_Flags, ImPlotLineFlags_Shaded));
                 }
-                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, *color, ImPlotProp_LineWeight, 2.0f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, *color, ImPlotProp_LineWeight, 1.0f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             } else {
                 if (show_fill) {
                     ImPlot::PlotLine("##fill", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_FillColor, ImVec4(1,1,1,1), ImPlotProp_FillAlpha, 0.4f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float)), ImPlotProp_Flags, ImPlotLineFlags_Shaded));
                 }
-                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, ImVec4(1,1,1,1), ImPlotProp_LineWeight, 2.0f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+                ImPlot::PlotLine("##line", &buffer.Data[0].x, &buffer.Data[0].y, (int)buffer.Data.size(), ImPlotSpec(ImPlotProp_LineColor, ImVec4(1,1,1,1), ImPlotProp_LineWeight, 1.0f, ImPlotProp_Offset, buffer.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             }
             if (show_stats) {
                 float min_val = buffer.GetMin();
                 float max_val = buffer.GetMax();
                 char stats_overlay[128];
-                StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Max: %.2f\nMin:%.2f", max_val, min_val);
-                ImPlot::Annotation(current_time, max_val, ImVec4(0,0,0,0), ImVec2(0,0), true, "%s", stats_overlay);
+                if (!max_val== 0 && !min_val == 0) {
+                    StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Max: %.2f\nMin:%.2f", max_val, min_val);
+                } else { 
+                    if (!max_val== 0 && min_val == 0) {StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Max: %.2f", max_val);
+                    } else {StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Min:%.2f", min_val);}
+                }
+                ImPlot::Annotation(0, max_val, ImVec4(0,0,0,0.5f), ImVec2(0,0), true, "%s", stats_overlay);
             }
             ImPlot::EndPlot();
         }
@@ -875,7 +880,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     ImGui::PushTextWrapPos(0.0f); // Wrap text to the active column/window width.
                     ImGui::TableNextColumn();
 
-                    bool prev_vibration_norm = engine.m_general.auto_load_normalization_enabled;
+                    bool prev_vibration_norm = engine.m_general.auto_load_normalization_enabled;  // bug: does not scale vibrations, still need manual vibration gain settings?
                     if (GuiWidgets::Checkbox("Dynamic Load Normalization", &engine.m_general.auto_load_normalization_enabled, Tooltips::DYNAMIC_LOAD_NORMALIZATION_ENABLE).changed) {
                         if (prev_vibration_norm && !engine.m_general.auto_load_normalization_enabled) {
                             engine.ResetNormalization();
@@ -958,7 +963,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     ImGui::PushTextWrapPos(0.0f); // Wrap text to the active column/window width.
                     ImGui::TableNextColumn();
 
-                    bool prev_vibration_norm = engine.m_general.auto_load_normalization_enabled;
+                    bool prev_vibration_norm = engine.m_general.auto_load_normalization_enabled; // bug: does not scale vibrations, still need manual vibration gain settings?
                     if (GuiWidgets::Checkbox("Dynamic Load Normalization", &engine.m_general.auto_load_normalization_enabled, Tooltips::DYNAMIC_LOAD_NORMALIZATION_ENABLE).changed) {
                         if (prev_vibration_norm && !engine.m_general.auto_load_normalization_enabled) {
                             engine.ResetNormalization();
@@ -1196,8 +1201,8 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         }
 
         //if (!hs.is_healthy && engine.m_telemetry_rate > 1.0 && LMUFFB::IO::GameConnector::Get().IsConnected()) {
-        //    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings.");
-        //} // disabled temporarily - always ON
+        //    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Warning: Sub-optimal sample rates detected. Check game settings."); // bug: always on due to mismatch on G.Toque?
+        //} 
 
         ImGui::Separator();
     }
@@ -1287,7 +1292,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "[Grip/Slip]");
         PlotThis("Calc Front Grip", plot_calc_front_grip, history, 0.0f, 1.2f, true, true, &COLOR_CYAN);
         PlotThis("Calc Rear Grip", plot_calc_rear_grip, history, 0.0f, 1.2f, true, true, &COLOR_MAGENTA);
-        PlotThis("Front Slip Ratio", plot_calc_slip_ratio, history, -1.0f, 1.0f, true, true, &COLOR_WHITE);
+        PlotThis("Front Slip Ratio", plot_calc_slip_ratio, history, -1.0f, 1.0f, true, true, &COLOR_WHITE); //bug: no data if raw game data is unavilable
         PlotThis("Front Slip Angle", plot_calc_slip_angle_smoothed, history, 0.0f, 1.0f, true, true, &COLOR_INDIGO);
         PlotThis("Rear Slip Angle", plot_calc_rear_slip_angle_smoothed, history, 0.0f, 1.0f, true, true, &COLOR_INDIGO);
 
@@ -1306,20 +1311,20 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         } else {
             PlotThis("In-Game FFB (400Hz)", plot_raw_gen_torque, history, -30.0f, 30.0f, false, false, &COLOR_YELLOW, Tooltips::PLOT_INGAME_FFB);
         }
-        PlotThis("Steering Input", plot_raw_input_steering, history, -1.0f, 1.0f, false, true, &COLOR_WHITE);
+        PlotThis("Steering Input", plot_raw_input_steering, history, -1.0f, 1.0f, false, true, &COLOR_WHITE); 
 
         ImGui::Text("Combined Input");
-        if (ImPlot::BeginPlot("##InputComb", ImVec2(-1, 60), kDefaultPlotFlags)) {
+        if (ImPlot::BeginPlot("##InputComb", ImVec2(-1, 90), kDefaultPlotFlags)) {
             ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0, 0));
-            ImPlot::PushStyleVar(ImPlotStyleVar_FitPadding, ImVec2(0.0f, 0.2f));  // Y only: 0.2 = ImPlot padding factor
-            ImPlot::SetupAxes(nullptr, nullptr, kDefaultXAxisFlags, kDefaultYAxisFlags | ImPlotAxisFlags_NoGridLines);
+            ImPlot::PushStyleVar(ImPlotStyleVar_FitPadding, ImVec2(0.0f, 1.0f));  // Y only: 0.2 = ImPlot padding factor
+            ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_Foreground);
             float current_time = plot_raw_throttle.Data.empty() ? 0.0f : (plot_raw_throttle.Offset == 0 ? plot_raw_throttle.Data.back().x : plot_raw_throttle.Data[plot_raw_throttle.Offset-1].x);
-            ImPlot::SetupAxisLimits(ImAxis_X1, current_time - 20, current_time, ImGuiCond_Always);
-            ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1.0f, ImGuiCond_None);
-            //ImPlot::PlotLine("##Brake", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_RED, ImPlotProp_LineWeight, 2.0f, ImPlotProp_Offset, plot_raw_brake.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
-            ImPlot::PlotLine("##ThrottleFill", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), ImPlotSpec(ImPlotProp_FillColor, COLOR_GREEN, ImPlotProp_FillAlpha, 0.6f, ImPlotProp_Offset, plot_raw_throttle.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float)), ImPlotProp_Flags, ImPlotLineFlags_Shaded));
+            ImPlot::SetupAxisLimits(ImAxis_X1, current_time - 20, current_time, ImGuiCond_None);
+            ImPlot::SetupAxisLimits(ImAxis_Y1, -0.06f, 1.06f, ImGuiCond_Always);
             ImPlot::PlotLine("##BrakeFill", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), ImPlotSpec(ImPlotProp_FillColor, COLOR_RED, ImPlotProp_FillAlpha, 1.0f, ImPlotProp_Offset, plot_raw_brake.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float)), ImPlotProp_Flags, ImPlotLineFlags_Shaded));
+            ImPlot::PlotLine("##ThrottleFill", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), ImPlotSpec(ImPlotProp_FillColor, COLOR_GREEN, ImPlotProp_FillAlpha, 1.0f, ImPlotProp_Offset, plot_raw_throttle.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float)), ImPlotProp_Flags, ImPlotLineFlags_Shaded));
             ImPlot::PlotLine("##Throttle", &plot_raw_throttle.Data[0].x, &plot_raw_throttle.Data[0].y, (int)plot_raw_throttle.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_GREEN, ImPlotProp_LineWeight, 2.0f, ImPlotProp_Offset, plot_raw_throttle.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            ImPlot::PlotLine("##Brake", &plot_raw_brake.Data[0].x, &plot_raw_brake.Data[0].y, (int)plot_raw_brake.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_RED, ImPlotProp_LineWeight, 2.0f, ImPlotProp_Offset, plot_raw_brake.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             ImPlot::PopStyleVar(1);
             ImPlot::EndPlot();
         }
@@ -1327,7 +1332,23 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Vehicle State]");
         PlotThis("Lat Accel", plot_input_accel, history, -20.0f, 20.0f, true, true, &COLOR_GREEN2);
-        PlotThis("Speed (m/s)", plot_raw_car_speed, history, 0.0f, 100.0f, true, true, &COLOR_GREEN2);
+        //PlotThis("Speed (m/s)", plot_raw_car_speed, history, 0.0f, 100.0f, true, true, &COLOR_GREEN2);  //bug?: data stream inverted?  
+        ImGui::Text("Speed (m/s)");
+        if (ImPlot::BeginPlot("Speed (m/s)", ImVec2(-1, 60), kDefaultPlotFlags)) {
+            ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(0, 0));
+            ImPlot::PushStyleVar(ImPlotStyleVar_FitPadding, ImVec2(0.0f, 0.2f));  // Y only: 0.2 = ImPlot padding factor
+            ImPlot::SetupAxes(nullptr, nullptr, kDefaultXAxisFlags, kDefaultYAxisFlags | ImPlotAxisFlags_Invert);
+            float current_time = plot_raw_car_speed.Data.empty() ? 0.0f : (plot_raw_car_speed.Offset == 0 ? plot_raw_car_speed.Data.back().x : plot_raw_car_speed.Data[plot_raw_car_speed.Offset-1].x);
+            ImPlot::SetupAxisLimits(ImAxis_X1, current_time - history, current_time, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100.0f, ImGuiCond_None);
+            ImPlot::PlotLine("##Speedms", &plot_raw_car_speed.Data[0].x, &plot_raw_car_speed.Data[0].y, (int)plot_raw_car_speed.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_GREEN2, ImPlotProp_Offset, plot_raw_car_speed.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
+            float max_val = plot_raw_car_speed.GetMax();
+            char stats_overlay[128];
+            StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Max: %.2f\nCur:%.2f", max_val);
+            ImPlot::Annotation(0, 100, ImVec4(0,0,0,0.5f), ImVec2(0,0), true, "%s", stats_overlay);
+            ImPlot::PopStyleVar(1);
+            ImPlot::EndPlot();
+        }
         ImGui::NextColumn();
         ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "[Raw Tire Data]");
         PlotThis("Raw Front Load", plot_raw_load, history, 0.0f, 10000.0f, true, true, &COLOR_WHITE);
