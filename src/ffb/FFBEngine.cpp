@@ -933,7 +933,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
             snap.raw_front_grip_fract = (float)raw_front_grip;
             snap.raw_rear_grip = (float)((data->mWheel[WHEEL_RL].mGripFract + data->mWheel[WHEEL_RR].mGripFract) / DUAL_DIVISOR);
             snap.raw_front_susp_force = (float)((fl.mSuspForce + fr.mSuspForce) / DUAL_DIVISOR);
-            snap.raw_front_ride_height = (float)((std::min)(fl.mRideHeight, fr.mRideHeight));
+            snap.raw_front_ride_height = (float)min_val(fl.mRideHeight, fr.mRideHeight);
             snap.raw_rear_lat_force = (float)((data->mWheel[WHEEL_RL].mLateralForce + data->mWheel[WHEEL_RR].mLateralForce) / DUAL_DIVISOR);
             snap.raw_car_speed = (float)ctx.car_speed_long;
             snap.raw_input_throttle = (float)data->mUnfilteredThrottle;
@@ -1168,7 +1168,7 @@ double FFBEngine::calculate_force(const TelemInfoV01* data, const char* vehicleC
 void FFBEngine::calculate_sop_lateral(const TelemInfoV01* data, LMUFFB::Physics::FFBCalculationContext& ctx) {
     // 1. Raw Lateral G (Chassis-relative X)
     // Clamp to 5G to prevent numeric instability in crashes
-    double raw_g = (std::max)(-G_LIMIT_5G * GRAVITY_MS2, (std::min)(G_LIMIT_5G * GRAVITY_MS2, data->mLocalAccel.x));
+    double raw_g = clamp_val(data->mLocalAccel.x, -G_LIMIT_5G * GRAVITY_MS2, G_LIMIT_5G * GRAVITY_MS2);
     double lat_g_accel = (raw_g / GRAVITY_MS2);
 
     // 2. Global Normalized Lateral Load Transfer (Chassis Roll) - Issue #306
@@ -1815,7 +1815,7 @@ void FFBEngine::calculate_suspension_bottoming(const TelemInfoV01* data, LMUFFB:
     
     // Method 0: Direct Ride Height Monitoring
     if (m_vibration.bottoming_method == 0) {
-        double min_rh = (std::min)(data->mWheel[WHEEL_FL].mRideHeight, data->mWheel[WHEEL_FR].mRideHeight);
+        double min_rh = min_val(data->mWheel[WHEEL_FL].mRideHeight, data->mWheel[WHEEL_FR].mRideHeight);
         if (min_rh < BOTTOMING_RH_THRESHOLD_M && min_rh > -1.0) { // < 2mm
             triggered = true;
             intensity = (BOTTOMING_RH_THRESHOLD_M - min_rh) / BOTTOMING_RH_THRESHOLD_M; // Map 2mm->0mm to 0.0->1.0
