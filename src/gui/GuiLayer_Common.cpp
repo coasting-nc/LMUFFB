@@ -1344,7 +1344,7 @@ void GuiLayer::DrawDebugWindow(LMUFFB::FFB::FFBEngine& engine) {
             ImPlot::PlotLine("##Speedms", &plot_raw_car_speed.Data[0].x, &plot_raw_car_speed.Data[0].y, (int)plot_raw_car_speed.Data.size(), ImPlotSpec(ImPlotProp_LineColor, COLOR_GREEN2, ImPlotProp_Offset, plot_raw_car_speed.Offset, ImPlotProp_Stride, (int)(2 * sizeof(float))));
             float max_val = plot_raw_car_speed.GetMax();
             char stats_overlay[128];
-            StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Max: %.2f\nCur:%.2f", max_val);
+            StringUtils::SafeFormat(stats_overlay, sizeof(stats_overlay), "Max: %.2f", max_val);
             ImPlot::Annotation(0, 100, ImVec4(0,0,0,0.5f), ImVec2(0,0), true, "%s", stats_overlay);
             ImPlot::PopStyleVar(1);
             ImPlot::EndPlot();
