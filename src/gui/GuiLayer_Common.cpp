@@ -194,10 +194,15 @@ namespace {
 
 // Professional "Flat Dark" Theme
 void GuiLayer::SetupGUIStyle() {
-    ImPlot::CreateContext();
     ImGuiStyle& style = ImGui::GetStyle();
-    style.WindowRounding = 5.0f; style.ChildRounding = 5.0f; style.PopupRounding = 5.0f; style.FrameRounding = 4.0f; style.GrabRounding = 4.0f;
-    style.WindowPadding = ImVec2(10, 10); style.FramePadding = ImVec2(8, 4); style.ItemSpacing = ImVec2(8, 6);
+    style.WindowRounding = 5.0f; 
+    style.ChildRounding = 5.0f; 
+    style.PopupRounding = 5.0f; 
+    style.FrameRounding = 4.0f; 
+    style.GrabRounding = 4.0f;
+    style.WindowPadding = ImVec2(10, 10); 
+    style.FramePadding = ImVec2(8, 4); 
+    style.ItemSpacing = ImVec2(8, 6);
     ImVec4* colors = style.Colors;
     colors[ImGuiCol_WindowBg]       = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
     colors[ImGuiCol_ChildBg]        = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
