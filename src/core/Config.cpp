@@ -40,7 +40,7 @@ int Config::win_h_small = 800;
 int Config::win_w_large = 1400;  // Wide (Config + Graphs)
 int Config::win_h_large = 800;
 bool Config::show_graphs = false;
-int Config::m_graph_history_s = 60; // Default 60s
+int Config::m_graph_history_s = 30; // Default 30s
 
 std::map<std::string, double> Config::m_saved_static_loads;
 std::recursive_mutex Config::m_static_loads_mutex;
