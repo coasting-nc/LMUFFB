@@ -154,8 +154,8 @@ void FFBThread() {
                 bool manual_start_requested = Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging() && is_driving;
 
                 if (should_start_log || manual_start_requested) {
-                    if (should_start_log) Logger::Get().LogFile("[Game] User entered driving session (Control: Player).");
-                    else Logger::Get().LogFile("[Game] Logging manually enabled while driving.");
+                    //if (should_start_log) Logger::Get().LogFile("[Game] User entered driving session (Control: Player).");  //bug: log sanity (flooding)
+                    //else Logger::Get().LogFile("[Game] Logging manually enabled while driving.");
 
                     if (Config::m_auto_start_logging && !AsyncLogger::Get().IsLogging()) {
                         uint8_t idx = g_localData.telemetry.playerVehicleIdx;
