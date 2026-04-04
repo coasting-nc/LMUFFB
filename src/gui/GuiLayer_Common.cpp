@@ -970,9 +970,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         }
                         Config::Save(engine);
                     }
-                    if (!engine.m_general.auto_load_normalization_enabled) {
-                        FloatSetting("Vibration Gain", &engine.m_vibration.vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration.vibration_gain), Tooltips::VIBRATION_GAIN);
-                    }
+                    FloatSetting("Vibration Gain", &engine.m_vibration.vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration.vibration_gain), Tooltips::VIBRATION_GAIN);
                     FloatSetting("Vibration Limit", &engine.m_vibration.texture_load_cap, 1.0f, 3.0f, "%.2fx", Tooltips::TEXTURE_LOAD_CAP);
 
                     ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
