@@ -12,6 +12,7 @@
 #include "test_performance_types.h"
 #include "src/logging/Logger.h"
 #include "src/io/lmu_sm_interface/LmuSharedMemoryWrapper.h"
+#include "implot.h"
 
 using namespace LMUFFB;
 using namespace LMUFFB::Logging;
@@ -48,6 +49,7 @@ namespace FFBEngineTests {
 
 int main(int argc, char* argv[]) noexcept {
     try {
+        ImPlot::CreateContext();
         // Parse tag filtering arguments
         FFBEngineTests::ParseTagArguments(argc, argv);
         

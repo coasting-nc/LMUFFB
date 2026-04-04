@@ -94,6 +94,16 @@ inline double smoothstep(double edge0, double edge1, double x) {
     return (x < edge0) ? 0.0 : 1.0;
 }
 
+// Helper: Absolute Min/Max/Clamp for misaligned data
+template <typename T>
+inline T min_val(T a, T b) { return a < b ? a : b; }
+
+template <typename T>
+inline T max_val(T a, T b) { return a > b ? a : b; }
+
+template <typename T>
+inline T clamp_val(T v, T min, T max) { return v < min ? min : (v > max ? max : v); }
+
 // Helper: Apply Slew Rate Limiter
 // Clamps the rate of change of a signal.
 inline double apply_slew_limiter(double input, double& prev_val, double limit, double dt) {

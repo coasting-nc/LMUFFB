@@ -2,7 +2,9 @@
 #define GUILAYER_H
 
 #include "FFBEngine.h"
+#include "DirectInputFFB.h"
 #include <string>
+#include <vector>
 
 class GuiLayerTestAccess;
 
@@ -31,6 +33,12 @@ public:
 private:
     static float m_latest_steering_range;
     static float m_latest_steering_angle;
+    static int m_selected_preset;
+    static bool m_first_run;
+    static std::vector<LMUFFB::FFB::DeviceInfo> m_devices;
+    static int m_selected_device_idx;
+    static bool m_show_save_new_popup;
+    static bool m_show_log_path_popup;
 
 #ifdef LMUFFB_UNIT_TEST
 public:

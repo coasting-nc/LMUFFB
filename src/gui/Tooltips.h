@@ -9,7 +9,7 @@ namespace GUI {
 namespace Tooltips {
 
     // General FFB
-    inline constexpr const char* DEVICE_SELECT = "Select the DirectInput device to receive Force Feedback signals.\nTypically your steering wheel.";
+    inline constexpr const char* DEVICE_SELECT = "Select the DirectInput Force Feedback device.\nTypically your steering wheel.";
     inline constexpr const char* DEVICE_RESCAN = "Refresh the list of available DirectInput devices.";
     inline constexpr const char* DEVICE_UNBIND = "Release the current device and disable FFB output.";
     inline constexpr const char* MODE_EXCLUSIVE = "lmuFFB has exclusive control.\nThe game can read steering but cannot send FFB.\nThis prevents 'Double FFB' issues.";
@@ -153,7 +153,7 @@ namespace Tooltips {
     // Advanced
     inline constexpr const char* MUTE_BELOW = "The speed below which all vibration effects (Road, Slide, Lockup, Spin)\nare completely muted to prevent idle shaking.";
     inline constexpr const char* FULL_ABOVE = "The speed above which all vibration effects reach\ntheir full configured strength.";
-    inline constexpr const char* AUTO_START_LOGGING = "Automatically start telemetry logging when entering a driving session.";
+    inline constexpr const char* AUTO_START_LOGGING = "Automatically start telemetry logging\n when entering a driving session.";
     inline constexpr const char* LOG_PATH = "Directory where .csv telemetry logs will be saved.";
     inline constexpr const char* AUX_TELEMETRY_RECONSTRUCTION =
         "Zero Latency: Predictive upsampling for auxiliary channels.\n"

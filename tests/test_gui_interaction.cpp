@@ -2,6 +2,7 @@
 #include "test_gui_common.h"
 #include "GuiWidgets.h"
 #include "imgui.h"
+#include "implot.h"
 #include "../src/gui/GuiLayer.h"
 #include "../src/io/GameConnector.h"
 
@@ -239,6 +240,8 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
     FFBEngine engine;
     Config::show_graphs = true;
 
+    ImPlotContext* plot_ctx = ImPlot::CreateContext();
+
     // Set various rates to trigger DisplayRate color branches
     engine.m_ffb_rate = 400.0; // Green
     engine.m_telemetry_rate = 300.0; // Yellow (0.75 target)
@@ -358,6 +361,7 @@ TEST_CASE(test_gui_layer_comprehensive, "GUI") {
     MockSM::GetMaps().erase("LMU_Data");
     #endif
 
+    ImPlot::DestroyContext(plot_ctx);
     ImGui::DestroyContext(ctx);
     std::cout << "[PASS] Comprehensive GuiLayer render finished" << std::endl;
     g_tests_passed++;
