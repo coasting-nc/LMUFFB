@@ -50,16 +50,11 @@ tests/__pycache__/**
 coverage_reports/**
 imgui.ini
 old_version.ini
-LastCoverageResults.log
-lmuffb_debug.log
-lmuffb_log_*.csv
-lmuffb_log_*.bin
 cobertura.xml
 test_gui.csv/**
 test_*.ini
 test_*.log
 test_*.txt
-*.log
 src/core/GeneratedBuiltinPresets.h
 .specstory/statistics.json
 .specstory/history/2025-12-31_22-14-37Z-config-reordering-plan-implementation.md

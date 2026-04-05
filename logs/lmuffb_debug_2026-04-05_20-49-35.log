@@ -1,0 +1,2024 @@
+[20:49:35] Logger Initialized. Version: 0.7.275
+[20:49:35] Starting lmuFFB (C++ Port)...
+[20:49:35] Application Started. Version: 0.7.275
+[20:49:35] Mode: GUI
+[20:49:35] Logger Initialized. Version: 0.7.275
+[20:49:35] Logger re-initialized with user path: logs/
+[20:49:35] Window Created: 000000000002075A
+[20:49:35] D3D11 Device and Flip-Model Swap Chain Created. Feature Level: 0xB000
+[20:49:35] [DI] Initialized.
+[20:49:35] Game not running or Shared Memory not ready. Waiting...
+[20:49:35] [GUI] Main Loop Started.
+[20:49:35] [FFB] Loop Started.
+[20:49:35] [DI] Device released by user.
+[20:49:35] [DI] Attempting to create device...
+[20:49:35] [DI] Setting Data Format...
+[20:49:35] [DI] Attempting to set Cooperative Level (Exclusive | Background)...
+[20:49:35] [DI] Cooperative Level set to EXCLUSIVE.
+[20:49:35] [DI] Acquiring device...
+[20:49:35] [DI] Device Acquired in EXCLUSIVE mode.
+[20:49:35] [DI] SUCCESS: Physical Device fully initialized and FFB Effect created.
+[20:49:43] [Config] Applied preset: Simagic Alpha 15 Nm (0404)
+[20:53:04] [GameConnector] Connected to LMU Shared Memory.
+[20:53:04] [Transition] OptionsLocation: 255 -> 0 (Main UI)
+[20:53:04] [Transition] GamePhase: 255 -> 0 (Before Session)
+[20:53:04] [Transition] Session: -1 -> 0 (Test Day)
+[20:53:04] [Transition] NumVehicles: -1 -> 0
+[20:53:05] [Transition] Event: SME_EXIT (14)
+[20:53:05] [Transition] Event: SME_STARTUP (12)
+[20:53:05] [Transition] Event: SME_SHUTDOWN (2)
+[20:53:05] [Transition] Event: SME_LOAD (16)
+[20:53:05] [Transition] Event: SME_UNLOAD (16)
+[20:53:05] [Transition] Event: SME_START_SESSION (16)
+[20:53:05] [Transition] Event: SME_END_SESSION (16)
+[20:53:05] [Transition] Event: SME_ENTER_REALTIME (16)
+[20:53:05] [Transition] Event: SME_EXIT_REALTIME (16)
+[20:53:05] [Transition] Event: SME_INIT_APPLICATION (16)
+[20:53:05] [Transition] Event: SME_UNINIT_APPLICATION (16)
+[20:54:35] [Transition] Event: SME_ENTER (4)
+[20:54:35] [Transition] Event: SME_EXIT (16)
+[20:54:35] [Transition] Event: SME_STARTUP (16)
+[20:54:35] [Transition] Event: SME_SHUTDOWN (16)
+[20:54:39] [Transition] Event: SME_ENTER (6)
+[20:54:41] [Transition] Event: SME_ENTER (10)
+[20:54:41] [Transition] Session: 0 -> 1 (Practice)
+[20:54:41] [Transition] Track: '' -> 'Silverstone National Circuit'
+[20:54:41] [Transition] Event: SME_ENTER (11)
+[20:54:41] [Transition] Event: SME_EXIT (15)
+[20:54:41] [Transition] Event: SME_STARTUP (10)
+[20:54:42] [Transition] Event: SME_ENTER (10)
+[20:54:42] [Transition] Event: SME_EXIT (16)
+[20:54:42] [Transition] NumVehicles: 0 -> 1
+[20:54:43] [Transition] NumVehicles: 1 -> 2
+[20:54:44] [Transition] NumVehicles: 2 -> 3
+[20:54:45] [Transition] NumVehicles: 3 -> 4
+[20:54:45] [Transition] NumVehicles: 4 -> 5
+[20:54:46] [Transition] NumVehicles: 5 -> 6
+[20:54:46] [Transition] NumVehicles: 6 -> 7
+[20:54:47] [Transition] NumVehicles: 7 -> 8
+[20:54:48] [Transition] NumVehicles: 8 -> 9
+[20:54:48] [Transition] Event: SME_ENTER (15)
+[20:54:48] [Transition] Event: SME_EXIT (10)
+[20:54:48] [Transition] NumVehicles: 9 -> 10
+[20:54:49] [Transition] NumVehicles: 10 -> 11
+[20:54:49] [Transition] NumVehicles: 11 -> 12
+[20:54:51] [Transition] NumVehicles: 12 -> 13
+[20:54:56] [Transition] Event: SME_EXIT (11)
+[20:54:56] [Transition] Control: -2 -> 2 (Remote)
+[20:54:56] [Transition] PitState: 255 -> 0 (None)
+[20:54:56] [Transition] Vehicle: '' -> 'D'Station Racing 2024 #777:LM'
+[20:54:56] [Transition] SteeringRange: -1.00 -> 0.00
+[20:54:56] [Transition] PlayerHasVehicle: false -> true
+[20:54:56] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[20:54:56] [Safety] FFB Muted (Reason: Game/State Mute)
+[20:54:56] [WARNING] Invalid PhysicalSteeringWheelRange (<=0) for D'Station Racing 2024 #777:LM. Soft Lock and Steering UI may be incorrect.
+[20:54:56] [Transition] Event: SME_STARTUP (10)
+[20:54:56] [Transition] GamePhase: 0 -> 5 (Green Flag)
+[20:54:56] [Transition] Control: 2 -> 1 (AI)
+[20:54:56] [Safety] mControl Transition: 2 -> 1
+[20:54:56] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[20:55:01] [Transition] Event: SME_STARTUP (10)
+[20:55:01] [Transition] NumVehicles: 13 -> 14
+[20:55:04] [Transition] Event: SME_ENTER (10)
+[20:55:04] [Transition] Event: SME_EXIT (16)
+[20:55:04] [Transition] NumVehicles: 14 -> 15
+[20:55:04] [Transition] Event: SME_ENTER (15)
+[20:55:04] [Transition] Event: SME_EXIT (11)
+[20:55:06] [Transition] NumVehicles: 15 -> 16
+[20:55:06] [Transition] Event: SME_STARTUP (10)
+[20:55:11] [Transition] Event: SME_STARTUP (10)
+[20:55:16] [Transition] Event: SME_STARTUP (16)
+[20:55:19] [Transition] Event: SME_ENTER (8)
+[20:55:19] [Transition] Event: SME_EXIT (16)
+[20:55:22] [Transition] Event: SME_ENTER (11)
+[20:55:22] [Transition] Event: SME_EXIT (15)
+[20:55:22] [Transition] Event: SME_ENTER (15)
+[20:55:22] [Transition] Event: SME_EXIT (11)
+[20:55:22] [Transition] InRealtime: false -> true
+[20:55:22] [Transition] Control: 1 -> 0 (Player)
+[20:55:22] [Transition] PitState: 0 -> 5 (Unknown)
+[20:55:22] [Safety] mControl Transition: 1 -> 0
+[20:55:22] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[20:55:22] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[20:55:22]            Active Window: [Window Tracking Disabled]
+[20:55:22] [DI] Attempting to promote to Exclusive Mode...
+[20:55:22] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[20:55:22] 
+========================================
+[SUCCESS] Dynamic Promotion Active!
+lmuFFB has successfully recovered exclusive
+control after detecting a conflict.
+This feature will continue to protect your
+FFB experience automatically.
+========================================
+
+[20:55:22] [Transition] Event: SME_STARTUP (10)
+[20:55:23] [Transition] Event: SME_EXIT (10)
+[20:55:23] [Transition] NumVehicles: 16 -> 17
+[20:55:23] [Transition] Event: SME_EXIT (11)
+[20:55:24] [Transition] Event: SME_ENTER (10)
+[20:55:24] [Transition] Event: SME_EXIT (16)
+[20:55:24] [Transition] NumVehicles: 17 -> 18
+[20:55:24] [Transition] Event: SME_ENTER (15)
+[20:55:24] [Transition] Event: SME_EXIT (11)
+[20:55:26] Warning: Data for mTireLoad from the game seems to be missing for this car (D'Station Racing 2024 #777:LM). (Likely Encrypted/DLC Content). Using Suspension-based Fallback.
+[20:55:26] Warning: Data for mGripFract from the game seems to be missing for this car (D'Station Racing 2024 #777:LM). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[20:55:26] Warning: Data for mGripFract from the game seems to be missing for this car (D'Station Racing 2024 #777:LM). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[20:55:27] [Safety] FFB Unmuted
+[20:55:27] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[20:55:27] [Transition] Event: SME_STARTUP (10)
+[20:55:28] Warning: Data for mLateralForce (Front) from the game seems to be missing for this car (D'Station Racing 2024 #777:LM). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[20:55:28] Warning: Data for mLateralForce (Rear) from the game seems to be missing for this car (D'Station Racing 2024 #777:LM). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[20:55:30] [FFB] Latched and saved static loads for D'Station Racing 2024 #777:LM: F=4375.64N, R=4572.68N
+[20:55:32] [Transition] Event: SME_EXIT (10)
+[20:55:32] [Transition] NumVehicles: 18 -> 19
+[20:55:32] [Transition] Event: SME_ENTER (11)
+[20:55:32] [Transition] Event: SME_EXIT (15)
+[20:55:32] [Transition] Event: SME_ENTER (15)
+[20:55:32] [Transition] Event: SME_EXIT (11)
+[20:55:32] [Transition] Event: SME_STARTUP (16)
+[20:55:36] [Transition] Event: SME_EXIT (10)
+[20:55:36] [Transition] NumVehicles: 19 -> 20
+[20:55:36] [Transition] Event: SME_EXIT (11)
+[20:55:37] [Transition] Event: SME_STARTUP (10)
+[20:55:38] [Transition] Event: SME_ENTER (10)
+[20:55:38] [Transition] Event: SME_EXIT (16)
+[20:55:38] [Transition] NumVehicles: 20 -> 21
+[20:55:38] [Transition] Event: SME_ENTER (15)
+[20:55:38] [Transition] Event: SME_EXIT (11)
+[20:55:40] [Transition] Event: SME_ENTER (10)
+[20:55:40] [Transition] Event: SME_EXIT (16)
+[20:55:40] [Transition] NumVehicles: 21 -> 22
+[20:55:40] [Transition] Event: SME_ENTER (15)
+[20:55:40] [Transition] Event: SME_EXIT (11)
+[20:55:42] [Transition] Event: SME_STARTUP (16)
+[20:55:43] [Transition] NumVehicles: 22 -> 21
+[20:55:47] [Transition] Event: SME_STARTUP (10)
+[20:55:49] [Transition] Event: SME_EXIT (10)
+[20:55:49] [Transition] NumVehicles: 21 -> 22
+[20:55:49] [Transition] Event: SME_EXIT (11)
+[20:55:49] [Transition] Event: SME_EXIT (10)
+[20:55:49] [Transition] NumVehicles: 22 -> 23
+[20:55:49] [Transition] Event: SME_EXIT (11)
+[20:55:52] [Transition] Event: SME_STARTUP (10)
+[20:55:53] [Transition] PitState: 5 -> 0 (None)
+[20:55:57] [Transition] Event: SME_STARTUP (10)
+[20:56:00] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[20:56:00]            Active Window: [Window Tracking Disabled]
+[20:56:00] [DI] Attempting to promote to Exclusive Mode...
+[20:56:00] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[20:56:02] [Transition] Event: SME_STARTUP (16)
+[20:56:07] [Transition] Event: SME_EXIT (10)
+[20:56:07] [Transition] NumVehicles: 23 -> 24
+[20:56:07] [Transition] Event: SME_EXIT (11)
+[20:56:08] [Transition] Event: SME_STARTUP (10)
+[20:56:13] [Transition] Event: SME_STARTUP (10)
+[20:56:17] [Transition] Event: SME_EXIT (10)
+[20:56:17] [Transition] NumVehicles: 24 -> 25
+[20:56:17] [Transition] Event: SME_EXIT (11)
+[20:56:17] [Transition] Event: SME_ENTER (10)
+[20:56:17] [Transition] Event: SME_EXIT (16)
+[20:56:17] [Transition] NumVehicles: 25 -> 26
+[20:56:17] [Transition] Event: SME_ENTER (15)
+[20:56:17] [Transition] Event: SME_EXIT (11)
+[20:56:18] [Transition] Event: SME_STARTUP (16)
+[20:56:23] [Transition] Event: SME_STARTUP (10)
+[20:56:25] [Transition] Control: 0 -> 2 (Remote)
+[20:56:25] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'Manthey 1st Phorm 2025 #92:LM'
+[20:56:25] [Metadata] Vehicle Change Detected: 'Manthey 1st Phorm 2025 #92:LM' (Brand: 'Porsche', Class: 'GT3', PitGroup: 'Group22', Filename: '92_25_MANT9651C55B')
+[20:56:25] [Safety] FFB Muted (Reason: Game/State Mute)
+[20:56:25] [Safety] mControl Transition: 0 -> 2
+[20:56:25] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[20:56:25] [Transition] Control: 2 -> 0 (Player)
+[20:56:25] [Transition] Vehicle: 'Manthey 1st Phorm 2025 #92:LM' -> 'D'Station Racing 2024 #777:LM'
+[20:56:25] [Transition] NumVehicles: 26 -> 25
+[20:56:25] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[20:56:25] [Safety] FFB Unmuted
+[20:56:25] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[20:56:25] [Safety] mControl Transition: 2 -> 0
+[20:56:25] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[20:56:28] [Transition] Event: SME_STARTUP (10)
+[20:56:32] [Transition] NumVehicles: 25 -> 24
+[20:56:33] [Transition] Event: SME_STARTUP (16)
+[20:56:36] [Transition] Event: SME_EXIT (10)
+[20:56:36] [Transition] NumVehicles: 24 -> 25
+[20:56:36] [Transition] Event: SME_EXIT (11)
+[20:56:38] [Transition] Event: SME_STARTUP (16)
+[20:56:40] [Transition] Event: SME_EXIT (10)
+[20:56:40] [Transition] NumVehicles: 25 -> 26
+[20:56:40] [Transition] Event: SME_EXIT (11)
+[20:56:43] [Transition] Event: SME_STARTUP (10)
+[20:56:48] [Transition] Event: SME_STARTUP (10)
+[20:56:53] [Transition] Event: SME_STARTUP (16)
+[20:56:58] [Transition] Event: SME_STARTUP (16)
+[20:56:59] [Transition] NumVehicles: 26 -> 27
+[20:57:02] [Transition] NumVehicles: 27 -> 26
+[20:57:03] [Transition] Event: SME_STARTUP (10)
+[20:57:08] [Transition] Event: SME_STARTUP (10)
+[20:57:13] [Transition] Event: SME_STARTUP (16)
+[20:57:18] [Transition] Event: SME_STARTUP (16)
+[20:57:20] [Transition] Event: SME_ENTER (11)
+[20:57:20] [Transition] Event: SME_EXIT (15)
+[20:57:20] [Transition] NumVehicles: 26 -> 27
+[20:57:20] [Transition] Event: SME_ENTER (15)
+[20:57:20] [Transition] Event: SME_EXIT (11)
+[20:57:23] [Transition] Event: SME_STARTUP (10)
+[20:57:28] [Transition] Event: SME_STARTUP (16)
+[20:57:29] [Transition] Control: 0 -> 2 (Remote)
+[20:57:29] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'Manthey 1st Phorm 2025 #92:LM'
+[20:57:29] [Metadata] Vehicle Change Detected: 'Manthey 1st Phorm 2025 #92:LM' (Brand: 'Porsche', Class: 'GT3', PitGroup: 'Group22', Filename: '92_25_MANT9651C55B')
+[20:57:29] [Safety] FFB Muted (Reason: Game/State Mute)
+[20:57:29] [Safety] mControl Transition: 0 -> 2
+[20:57:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[20:57:29] [Transition] Control: 2 -> 0 (Player)
+[20:57:29] [Transition] Vehicle: 'Manthey 1st Phorm 2025 #92:LM' -> 'D'Station Racing 2024 #777:LM'
+[20:57:29] [Transition] NumVehicles: 27 -> 26
+[20:57:29] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[20:57:29] [Safety] FFB Unmuted
+[20:57:29] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[20:57:29] [Safety] mControl Transition: 2 -> 0
+[20:57:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[20:57:31] [Transition] Event: SME_ENTER (10)
+[20:57:31] [Transition] Event: SME_EXIT (16)
+[20:57:31] [Transition] NumVehicles: 26 -> 27
+[20:57:31] [Transition] Event: SME_ENTER (15)
+[20:57:31] [Transition] Event: SME_EXIT (11)
+[20:57:33] [Transition] Event: SME_STARTUP (16)
+[20:57:39] [Transition] Event: SME_STARTUP (10)
+[20:57:44] [Transition] Event: SME_STARTUP (16)
+[20:57:49] [Transition] Event: SME_STARTUP (10)
+[20:57:54] [Transition] Event: SME_STARTUP (16)
+[20:57:54] [Transition] NumVehicles: 27 -> 26
+[20:57:59] [Transition] Event: SME_STARTUP (10)
+[20:58:04] [Transition] Event: SME_STARTUP (16)
+[20:58:09] [Transition] Event: SME_STARTUP (10)
+[20:58:14] [Transition] Event: SME_STARTUP (16)
+[20:58:19] [Transition] Event: SME_STARTUP (10)
+[20:58:20] [Transition] Event: SME_EXIT (10)
+[20:58:20] [Transition] NumVehicles: 26 -> 27
+[20:58:20] [Transition] Event: SME_EXIT (11)
+[20:58:24] [Transition] Event: SME_STARTUP (16)
+[20:58:29] [Transition] Event: SME_STARTUP (16)
+[20:58:34] [Transition] Event: SME_STARTUP (16)
+[20:58:36] [Transition] NumVehicles: 27 -> 26
+[20:58:40] [Transition] Event: SME_STARTUP (10)
+[20:58:40] [Transition] Event: SME_EXIT (10)
+[20:58:40] [Transition] NumVehicles: 26 -> 27
+[20:58:40] [Transition] Event: SME_EXIT (11)
+[20:58:45] [Transition] Event: SME_STARTUP (10)
+[20:58:50] [Transition] Event: SME_STARTUP (16)
+[20:58:55] [Transition] Event: SME_STARTUP (10)
+[20:59:00] [Transition] Event: SME_STARTUP (16)
+[20:59:05] [Transition] Event: SME_STARTUP (10)
+[20:59:10] [Transition] Event: SME_STARTUP (16)
+[20:59:15] [Transition] Event: SME_STARTUP (16)
+[20:59:20] [Transition] Event: SME_STARTUP (10)
+[20:59:21] [Transition] NumVehicles: 27 -> 26
+[20:59:25] [Transition] Event: SME_STARTUP (10)
+[20:59:30] [Transition] Event: SME_STARTUP (16)
+[20:59:35] [Transition] Event: SME_STARTUP (10)
+[20:59:40] [Transition] Event: SME_STARTUP (10)
+[20:59:45] [Transition] Event: SME_STARTUP (16)
+[20:59:50] [Transition] Event: SME_STARTUP (16)
+[20:59:56] [Transition] Event: SME_STARTUP (10)
+[21:00:01] [Transition] Event: SME_STARTUP (10)
+[21:00:06] [Transition] Event: SME_STARTUP (16)
+[21:00:11] [Transition] Event: SME_STARTUP (16)
+[21:00:16] [Transition] Event: SME_STARTUP (10)
+[21:00:21] [Transition] Event: SME_STARTUP (10)
+[21:00:26] [Transition] Event: SME_STARTUP (16)
+[21:00:31] [Transition] Event: SME_STARTUP (10)
+[21:00:33] [Transition] NumVehicles: 26 -> 25
+[21:00:36] [Transition] Event: SME_STARTUP (10)
+[21:00:41] [Transition] Event: SME_STARTUP (16)
+[21:00:46] [Transition] Event: SME_STARTUP (10)
+[21:00:51] [Transition] Event: SME_STARTUP (16)
+[21:00:56] [Transition] Event: SME_STARTUP (10)
+[21:01:01] [Transition] Event: SME_STARTUP (16)
+[21:01:06] [Transition] Event: SME_STARTUP (16)
+[21:01:12] [Transition] Event: SME_STARTUP (10)
+[21:01:17] [Transition] Event: SME_EXIT (10)
+[21:01:17] [Transition] NumVehicles: 25 -> 26
+[21:01:17] [Transition] Event: SME_ENTER (11)
+[21:01:17] [Transition] Event: SME_EXIT (15)
+[21:01:17] [Transition] Event: SME_ENTER (15)
+[21:01:17] [Transition] Event: SME_EXIT (11)
+[21:01:17] [Transition] Event: SME_STARTUP (10)
+[21:01:22] [Transition] Event: SME_STARTUP (10)
+[21:01:27] [Transition] Event: SME_STARTUP (16)
+[21:01:32] [Transition] Event: SME_STARTUP (10)
+[21:01:37] [Transition] Event: SME_STARTUP (16)
+[21:01:42] [Transition] Event: SME_STARTUP (10)
+[21:01:47] [Transition] Event: SME_STARTUP (16)
+[21:01:52] [Transition] Event: SME_STARTUP (16)
+[21:01:57] [Transition] Event: SME_STARTUP (16)
+[21:02:02] [Transition] Event: SME_STARTUP (10)
+[21:02:07] [Transition] Event: SME_STARTUP (10)
+[21:02:12] [Transition] Event: SME_STARTUP (10)
+[21:02:17] [Transition] Event: SME_STARTUP (16)
+[21:02:22] [Transition] Event: SME_STARTUP (16)
+[21:02:24] [Transition] Event: SME_EXIT (10)
+[21:02:24] [Transition] NumVehicles: 26 -> 27
+[21:02:24] [Transition] Event: SME_EXIT (11)
+[21:02:28] [Transition] Event: SME_STARTUP (10)
+[21:02:33] [Transition] Event: SME_STARTUP (16)
+[21:02:38] [Transition] Event: SME_STARTUP (16)
+[21:02:43] [Transition] Event: SME_STARTUP (10)
+[21:02:48] [Transition] Event: SME_STARTUP (16)
+[21:02:53] [Transition] Event: SME_STARTUP (10)
+[21:02:58] [Transition] Event: SME_STARTUP (16)
+[21:03:03] [Transition] Event: SME_STARTUP (10)
+[21:03:08] [Transition] Event: SME_STARTUP (16)
+[21:03:13] [Transition] Event: SME_STARTUP (16)
+[21:03:18] [Transition] Event: SME_STARTUP (10)
+[21:03:23] [Transition] Event: SME_STARTUP (16)
+[21:03:29] [Transition] Event: SME_STARTUP (10)
+[21:03:31] [Transition] Event: SME_EXIT (10)
+[21:03:31] [Transition] NumVehicles: 27 -> 28
+[21:03:31] [Transition] Event: SME_ENTER (11)
+[21:03:31] [Transition] Event: SME_EXIT (15)
+[21:03:31] [Transition] Event: SME_ENTER (15)
+[21:03:31] [Transition] Event: SME_EXIT (11)
+[21:03:34] [Transition] Event: SME_STARTUP (16)
+[21:03:36] [Transition] NumVehicles: 28 -> 29
+[21:03:39] [Transition] Event: SME_STARTUP (16)
+[21:03:44] [Transition] Event: SME_STARTUP (16)
+[21:03:49] [Transition] Event: SME_STARTUP (10)
+[21:03:54] [Transition] Event: SME_STARTUP (16)
+[21:03:56] [Transition] NumVehicles: 29 -> 28
+[21:03:59] [Transition] Event: SME_STARTUP (16)
+[21:03:59] [Transition] Event: SME_ENTER (11)
+[21:03:59] [Transition] Event: SME_EXIT (15)
+[21:03:59] [Transition] NumVehicles: 28 -> 29
+[21:03:59] [Transition] Event: SME_ENTER (15)
+[21:03:59] [Transition] Event: SME_EXIT (11)
+[21:04:04] [Transition] Event: SME_STARTUP (10)
+[21:04:09] [Transition] Event: SME_STARTUP (16)
+[21:04:14] [Transition] Event: SME_STARTUP (10)
+[21:04:19] [Transition] Event: SME_STARTUP (10)
+[21:04:24] [Transition] Event: SME_STARTUP (10)
+[21:04:25] [Transition] NumVehicles: 29 -> 28
+[21:04:29] [Transition] Event: SME_STARTUP (16)
+[21:04:34] [Transition] Event: SME_STARTUP (10)
+[21:04:39] [Transition] Event: SME_STARTUP (10)
+[21:04:44] [Transition] Event: SME_STARTUP (16)
+[21:04:49] [Transition] Event: SME_STARTUP (16)
+[21:04:55] [Transition] Event: SME_STARTUP (10)
+[21:05:00] [Transition] Event: SME_STARTUP (10)
+[21:05:05] [Transition] Event: SME_STARTUP (16)
+[21:05:10] [Transition] Event: SME_STARTUP (10)
+[21:05:15] [Transition] Event: SME_STARTUP (10)
+[21:05:20] [Transition] Event: SME_STARTUP (16)
+[21:05:25] [Transition] Event: SME_STARTUP (16)
+[21:05:30] [Transition] Event: SME_STARTUP (10)
+[21:05:35] [Transition] Event: SME_STARTUP (10)
+[21:05:36] [Transition] NumVehicles: 28 -> 27
+[21:05:40] [Transition] Event: SME_STARTUP (16)
+[21:05:45] [Transition] Event: SME_STARTUP (16)
+[21:05:46] [Transition] Event: SME_ENTER (10)
+[21:05:46] [Transition] Event: SME_EXIT (16)
+[21:05:46] [Transition] NumVehicles: 27 -> 28
+[21:05:46] [Transition] Event: SME_ENTER (15)
+[21:05:46] [Transition] Event: SME_EXIT (11)
+[21:05:50] [Transition] Event: SME_STARTUP (10)
+[21:05:55] [Transition] Event: SME_STARTUP (10)
+[21:06:00] [Transition] Event: SME_STARTUP (16)
+[21:06:03] [Transition] Control: 0 -> 2 (Remote)
+[21:06:03] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'JMW Motorsport 2024 2024 #66:LM'
+[21:06:03] [Metadata] Vehicle Change Detected: 'JMW Motorsport 2024 2024 #66:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group50', Filename: '66_24_JMW_3051A6BA')
+[21:06:03] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:06:03] [Safety] mControl Transition: 0 -> 2
+[21:06:03] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:06:03] [Transition] Control: 2 -> 0 (Player)
+[21:06:03] [Transition] Vehicle: 'JMW Motorsport 2024 2024 #66:LM' -> 'D'Station Racing 2024 #777:LM'
+[21:06:03] [Transition] NumVehicles: 28 -> 27
+[21:06:03] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[21:06:03] [Safety] FFB Unmuted
+[21:06:03] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:06:03] [Safety] mControl Transition: 2 -> 0
+[21:06:03] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:06:05] [Transition] Event: SME_STARTUP (10)
+[21:06:07] [Transition] Event: SME_EXIT (10)
+[21:06:07] [Transition] NumVehicles: 27 -> 28
+[21:06:07] [Transition] Event: SME_EXIT (11)
+[21:06:10] [Transition] Event: SME_STARTUP (10)
+[21:06:11] [Transition] Event: SME_ENTER (11)
+[21:06:11] [Transition] Event: SME_EXIT (15)
+[21:06:11] [Transition] Event: SME_ENTER (15)
+[21:06:11] [Transition] Event: SME_EXIT (11)
+[21:06:15] [Transition] Event: SME_STARTUP (16)
+[21:06:21] [Transition] Event: SME_STARTUP (10)
+[21:06:26] [Transition] Event: SME_STARTUP (16)
+[21:06:27] [Transition] NumVehicles: 28 -> 27
+[21:06:31] [Transition] Event: SME_STARTUP (10)
+[21:06:36] [Transition] Event: SME_STARTUP (16)
+[21:06:38] [Transition] NumVehicles: 27 -> 25
+[21:06:41] [Transition] Event: SME_STARTUP (16)
+[21:06:45] [Transition] NumVehicles: 25 -> 24
+[21:06:46] [Transition] Event: SME_STARTUP (10)
+[21:06:51] [Transition] Event: SME_STARTUP (10)
+[21:06:56] [Transition] Event: SME_STARTUP (16)
+[21:07:01] [Transition] Event: SME_STARTUP (16)
+[21:07:02] [Transition] NumVehicles: 24 -> 23
+[21:07:06] [Transition] Event: SME_STARTUP (10)
+[21:07:11] [Transition] Event: SME_STARTUP (10)
+[21:07:14] [Transition] Control: 0 -> 2 (Remote)
+[21:07:14] [Transition] PitState: 0 -> 1 (Request)
+[21:07:14] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'Heart of Racing Team 2025 #27:LM'
+[21:07:14] [Metadata] Vehicle Change Detected: 'Heart of Racing Team 2025 #27:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group11', Filename: '27_25_THORD0898B77')
+[21:07:14] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:07:14] [Safety] mControl Transition: 0 -> 2
+[21:07:14] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:07:14] [Transition] Control: 2 -> 0 (Player)
+[21:07:14] [Transition] PitState: 1 -> 0 (None)
+[21:07:14] [Transition] Vehicle: 'Heart of Racing Team 2025 #27:LM' -> 'D'Station Racing 2024 #777:LM'
+[21:07:14] [Transition] NumVehicles: 23 -> 22
+[21:07:14] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[21:07:14] [Safety] FFB Unmuted
+[21:07:14] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:07:14] [Safety] mControl Transition: 2 -> 0
+[21:07:14] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:07:16] [Transition] Event: SME_STARTUP (16)
+[21:07:18] [Transition] Event: SME_ENTER (11)
+[21:07:18] [Transition] Event: SME_EXIT (15)
+[21:07:18] [Transition] NumVehicles: 22 -> 23
+[21:07:18] [Transition] Event: SME_ENTER (15)
+[21:07:18] [Transition] Event: SME_EXIT (11)
+[21:07:21] [Transition] Event: SME_STARTUP (10)
+[21:07:25] [Transition] NumVehicles: 23 -> 22
+[21:07:26] [Transition] Event: SME_STARTUP (10)
+[21:07:31] [Transition] Event: SME_STARTUP (16)
+[21:07:37] [Transition] Event: SME_STARTUP (10)
+[21:07:42] [Transition] Event: SME_STARTUP (10)
+[21:07:47] [Transition] Event: SME_STARTUP (16)
+[21:07:52] [Transition] Event: SME_STARTUP (16)
+[21:07:56] [Transition] NumVehicles: 22 -> 21
+[21:07:57] [Transition] Event: SME_STARTUP (10)
+[21:08:02] [Transition] Event: SME_STARTUP (16)
+[21:08:07] [Transition] Event: SME_STARTUP (16)
+[21:08:12] [Transition] Event: SME_STARTUP (10)
+[21:08:16] [Transition] Control: 0 -> 2 (Remote)
+[21:08:16] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'Heart of Racing Team 2025 #27:LM'
+[21:08:16] [Metadata] Vehicle Change Detected: 'Heart of Racing Team 2025 #27:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group11', Filename: '27_25_THORD0898B77')
+[21:08:16] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:08:16] [Safety] mControl Transition: 0 -> 2
+[21:08:16] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:08:16] [Transition] Control: 2 -> 0 (Player)
+[21:08:16] [Transition] Vehicle: 'Heart of Racing Team 2025 #27:LM' -> 'D'Station Racing 2024 #777:LM'
+[21:08:16] [Transition] NumVehicles: 21 -> 20
+[21:08:16] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[21:08:16] [Safety] FFB Unmuted
+[21:08:16] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:08:16] [Safety] mControl Transition: 2 -> 0
+[21:08:16] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:08:17] [Transition] Event: SME_STARTUP (16)
+[21:08:20] [Transition] Control: 0 -> 2 (Remote)
+[21:08:20] [Transition] PitState: 0 -> 5 (Unknown)
+[21:08:20] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'The Bend Team WRT 2025 #31:BRZ'
+[21:08:20] [Metadata] Vehicle Change Detected: 'The Bend Team WRT 2025 #31:BRZ' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group59', Filename: '31_25_WRT_FB7E8382')
+[21:08:20] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:08:20] [Safety] mControl Transition: 0 -> 2
+[21:08:20] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:08:20] [Transition] Control: 2 -> 0 (Player)
+[21:08:20] [Transition] PitState: 5 -> 0 (None)
+[21:08:20] [Transition] Vehicle: 'The Bend Team WRT 2025 #31:BRZ' -> 'D'Station Racing 2024 #777:LM'
+[21:08:20] [Transition] NumVehicles: 20 -> 19
+[21:08:20] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[21:08:20] [Safety] FFB Unmuted
+[21:08:20] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:08:20] [Safety] mControl Transition: 2 -> 0
+[21:08:20] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:08:21] [Transition] NumVehicles: 19 -> 18
+[21:08:22] [Transition] Event: SME_STARTUP (10)
+[21:08:27] [Transition] Event: SME_STARTUP (16)
+[21:08:32] [Transition] Event: SME_STARTUP (10)
+[21:08:37] [Transition] Event: SME_STARTUP (16)
+[21:08:43] [Transition] Event: SME_STARTUP (10)
+[21:08:44] [Transition] NumVehicles: 18 -> 17
+[21:08:47] [Transition] NumVehicles: 17 -> 16
+[21:08:48] [Transition] Event: SME_STARTUP (10)
+[21:08:49] [Transition] NumVehicles: 16 -> 15
+[21:08:50] [Transition] NumVehicles: 15 -> 14
+[21:08:53] [Transition] Event: SME_STARTUP (16)
+[21:08:55] [Transition] NumVehicles: 14 -> 13
+[21:08:58] [Transition] Event: SME_STARTUP (16)
+[21:09:02] [Transition] Control: 0 -> 2 (Remote)
+[21:09:02] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'The Bend Team WRT 2025 #31:BRZ'
+[21:09:02] [Metadata] Vehicle Change Detected: 'The Bend Team WRT 2025 #31:BRZ' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group59', Filename: '31_25_WRT_FB7E8382')
+[21:09:02] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:09:02] [Safety] mControl Transition: 0 -> 2
+[21:09:02] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:09:02] [Transition] Control: 2 -> 0 (Player)
+[21:09:02] [Transition] Vehicle: 'The Bend Team WRT 2025 #31:BRZ' -> 'D'Station Racing 2024 #777:LM'
+[21:09:02] [Transition] NumVehicles: 13 -> 12
+[21:09:02] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[21:09:02] [Safety] FFB Unmuted
+[21:09:02] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:09:02] [Safety] mControl Transition: 2 -> 0
+[21:09:02] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:09:03] [Transition] Event: SME_STARTUP (10)
+[21:09:08] [Transition] Event: SME_STARTUP (16)
+[21:09:12] [Transition] NumVehicles: 12 -> 11
+[21:09:13] [Transition] Event: SME_STARTUP (10)
+[21:09:18] [Transition] Event: SME_STARTUP (16)
+[21:09:21] [Transition] Control: 0 -> 2 (Remote)
+[21:09:21] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> '911GT3R Custom Team 2025 #397'
+[21:09:21] [Metadata] Vehicle Change Detected: '911GT3R Custom Team 2025 #397' (Brand: 'Porsche', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_911GT3R')
+[21:09:21] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:09:21] [Safety] mControl Transition: 0 -> 2
+[21:09:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:09:21] [Transition] Control: 2 -> 0 (Player)
+[21:09:21] [Transition] Vehicle: '911GT3R Custom Team 2025 #397' -> 'D'Station Racing 2024 #777:LM'
+[21:09:21] [Transition] NumVehicles: 11 -> 10
+[21:09:21] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[21:09:21] [Safety] FFB Unmuted
+[21:09:21] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:09:21] [Safety] mControl Transition: 2 -> 0
+[21:09:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:09:23] [Transition] Event: SME_STARTUP (10)
+[21:09:28] [Transition] Event: SME_STARTUP (10)
+[21:09:33] [Transition] Event: SME_STARTUP (16)
+[21:09:35] [Transition] NumVehicles: 10 -> 9
+[21:09:36] [Transition] NumVehicles: 9 -> 8
+[21:09:38] [Transition] Event: SME_STARTUP (10)
+[21:09:43] [Transition] Event: SME_STARTUP (16)
+[21:09:48] [Transition] Event: SME_STARTUP (16)
+[21:09:53] [Transition] Control: 0 -> 2 (Remote)
+[21:09:53] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> '911GT3R Custom Team 2025 #397'
+[21:09:53] [Metadata] Vehicle Change Detected: '911GT3R Custom Team 2025 #397' (Brand: 'Porsche', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_911GT3R')
+[21:09:53] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:09:53] [Safety] mControl Transition: 0 -> 2
+[21:09:53] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:09:53] [Transition] Control: 2 -> 0 (Player)
+[21:09:53] [Transition] Vehicle: '911GT3R Custom Team 2025 #397' -> 'D'Station Racing 2024 #777:LM'
+[21:09:53] [Transition] NumVehicles: 8 -> 7
+[21:09:53] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[21:09:53] [Safety] FFB Unmuted
+[21:09:53] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:09:53] [Safety] mControl Transition: 2 -> 0
+[21:09:53] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:09:53] [Transition] Event: SME_STARTUP (16)
+[21:09:59] [Transition] Event: SME_STARTUP (10)
+[21:10:04] [Transition] Event: SME_STARTUP (16)
+[21:10:05] [Transition] NumVehicles: 7 -> 6
+[21:10:07] [Transition] NumVehicles: 6 -> 5
+[21:10:09] [Transition] Event: SME_STARTUP (10)
+[21:10:14] [Transition] Event: SME_STARTUP (16)
+[21:10:14] Warning: Data for mSuspForce from the game seems to be missing for this car (D'Station Racing 2024 #777:LM). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[21:10:19] [Transition] Event: SME_STARTUP (10)
+[21:10:23] [Transition] Event: SME_ENTER (9)
+[21:10:23] [Transition] Event: SME_EXIT (16)
+[21:10:23] [Transition] Event: SME_ENTER (15)
+[21:10:23] [Transition] Event: SME_EXIT (11)
+[21:10:23] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:10:23]            Active Window: [Window Tracking Disabled]
+[21:10:23] [DI] Attempting to promote to Exclusive Mode...
+[21:10:23] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:10:24] [Transition] InRealtime: true -> false
+[21:10:24] [Diag] De-realtime snapshot: track='Silverstone National Circuit' optionsLoc=0 numVehicles=5 playerHasVehicle=true smUpdateScoring=16
+[21:10:24] [Transition] Control: 0 -> 1 (AI)
+[21:10:24] [Transition] PitState: 0 -> 5 (Unknown)
+[21:10:24] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:10:24] [Safety] mControl Transition: 0 -> 1
+[21:10:24] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:10:25] [Transition] Event: SME_EXIT (7)
+[21:10:25] [Transition] Event: SME_ENTER (14)
+[21:10:25] [Transition] Event: SME_EXIT (16)
+[21:10:25] [Transition] Event: SME_ENTER (5)
+[21:10:38] [Transition] Event: SME_ENTER (1)
+[21:10:38] [Transition] Event: SME_ENTER (13)
+[21:13:00] [Transition] Event: SME_EXIT (14)
+[21:13:00] [Transition] Event: SME_STARTUP (12)
+[21:13:00] [Transition] Event: SME_SHUTDOWN (2)
+[21:13:00] [Transition] Event: SME_LOAD (16)
+[21:13:00] [Transition] Event: SME_UNLOAD (16)
+[21:13:00] [Transition] Event: SME_START_SESSION (16)
+[21:13:00] [Transition] Event: SME_END_SESSION (16)
+[21:13:00] [Transition] Event: SME_ENTER_REALTIME (16)
+[21:13:00] [Transition] Event: SME_EXIT_REALTIME (16)
+[21:13:00] [Transition] Event: SME_INIT_APPLICATION (16)
+[21:13:00] [Transition] Event: SME_UNINIT_APPLICATION (16)
+[21:13:00] [Transition] GamePhase: 5 -> 0 (Before Session)
+[21:13:00] [Transition] Session: 1 -> 0 (Test Day)
+[21:13:00] [Transition] Track: 'Silverstone National Circuit' -> ''
+[21:13:00] [Transition] PlayerHasVehicle: true -> false
+[21:13:00] [Transition] NumVehicles: 5 -> 0
+[21:14:59] [Transition] Event: SME_ENTER (4)
+[21:14:59] [Transition] Event: SME_EXIT (16)
+[21:14:59] [Transition] Event: SME_STARTUP (16)
+[21:14:59] [Transition] Event: SME_SHUTDOWN (16)
+[21:15:01] [Transition] Event: SME_ENTER (6)
+[21:15:03] [Transition] Event: SME_ENTER (10)
+[21:15:03] [Transition] Session: 0 -> 1 (Practice)
+[21:15:03] [Transition] Track: '' -> 'Circuit de Spa-Francorchamps'
+[21:15:03] [Transition] Event: SME_ENTER (11)
+[21:15:03] [Transition] Event: SME_EXIT (15)
+[21:15:03] [Transition] Event: SME_ENTER (15)
+[21:15:03] [Transition] Event: SME_EXIT (11)
+[21:15:05] [Transition] Event: SME_EXIT (10)
+[21:15:05] [Transition] NumVehicles: 0 -> 1
+[21:15:05] [Transition] Event: SME_ENTER (10)
+[21:15:05] [Transition] Event: SME_EXIT (16)
+[21:15:05] [Transition] NumVehicles: 1 -> 2
+[21:15:06] [Transition] NumVehicles: 2 -> 3
+[21:15:06] [Transition] NumVehicles: 3 -> 4
+[21:15:07] [Transition] NumVehicles: 4 -> 5
+[21:15:07] [Transition] NumVehicles: 5 -> 6
+[21:15:08] [Transition] NumVehicles: 6 -> 7
+[21:15:08] [Transition] NumVehicles: 7 -> 8
+[21:15:09] [Transition] NumVehicles: 8 -> 9
+[21:15:09] [Transition] NumVehicles: 9 -> 10
+[21:15:10] [Transition] NumVehicles: 10 -> 11
+[21:15:11] [Transition] NumVehicles: 11 -> 12
+[21:15:11] [Transition] NumVehicles: 12 -> 13
+[21:15:12] [Transition] NumVehicles: 13 -> 14
+[21:15:12] [Transition] NumVehicles: 14 -> 15
+[21:15:13] [Transition] NumVehicles: 15 -> 16
+[21:15:13] [Transition] NumVehicles: 16 -> 17
+[21:15:14] [Transition] NumVehicles: 17 -> 18
+[21:15:14] [Transition] Event: SME_ENTER (15)
+[21:15:14] [Transition] Event: SME_EXIT (11)
+[21:15:15] [Transition] Event: SME_ENTER (10)
+[21:15:15] [Transition] Event: SME_EXIT (16)
+[21:15:15] [Transition] GamePhase: 0 -> 5 (Green Flag)
+[21:15:15] [Transition] NumVehicles: 18 -> 19
+[21:15:15] [Transition] NumVehicles: 19 -> 20
+[21:15:16] [Transition] NumVehicles: 20 -> 21
+[21:15:16] [Transition] Event: SME_ENTER (15)
+[21:15:16] [Transition] Event: SME_EXIT (10)
+[21:15:16] [Transition] NumVehicles: 21 -> 22
+[21:15:16] [Transition] Event: SME_EXIT (11)
+[21:15:16] [Transition] Event: SME_STARTUP (10)
+[21:15:17] [Transition] Event: SME_ENTER (10)
+[21:15:17] [Transition] Event: SME_EXIT (16)
+[21:15:17] [Transition] NumVehicles: 22 -> 23
+[21:15:17] [Transition] Event: SME_ENTER (15)
+[21:15:17] [Transition] Event: SME_EXIT (11)
+[21:15:18] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'Genesis Magma Racing 2026 #17:WEC'
+[21:15:18] [Transition] PlayerHasVehicle: false -> true
+[21:15:18] [Metadata] Vehicle Change Detected: 'Genesis Magma Racing 2026 #17:WEC' (Brand: 'Unknown', Class: 'Hyper', PitGroup: 'Group99', Filename: '17_26_GENE14CD51B0')
+[21:15:18] [Transition] NumVehicles: 23 -> 24
+[21:15:18] [Transition] NumVehicles: 24 -> 25
+[21:15:21] [Transition] Event: SME_STARTUP (10)
+[21:15:22] [Transition] NumVehicles: 25 -> 26
+[21:15:27] [Transition] Event: SME_STARTUP (10)
+[21:15:28] [Transition] Event: SME_EXIT (10)
+[21:15:28] [Transition] NumVehicles: 26 -> 27
+[21:15:28] [Transition] Event: SME_ENTER (11)
+[21:15:28] [Transition] Event: SME_EXIT (15)
+[21:15:28] [Transition] Event: SME_ENTER (15)
+[21:15:28] [Transition] Event: SME_EXIT (11)
+[21:15:28] [Transition] Event: SME_ENTER (10)
+[21:15:28] [Transition] Event: SME_EXIT (16)
+[21:15:28] [Transition] NumVehicles: 27 -> 28
+[21:15:28] [Transition] Event: SME_ENTER (15)
+[21:15:28] [Transition] Event: SME_EXIT (11)
+[21:15:32] [Transition] Event: SME_STARTUP (10)
+[21:15:36] [Transition] Control: 1 -> 2 (Remote)
+[21:15:36] [Safety] mControl Transition: 1 -> 2
+[21:15:36] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:15:37] [Transition] Control: 2 -> 1 (AI)
+[21:15:37] [Transition] NumVehicles: 28 -> 27
+[21:15:37] [Safety] mControl Transition: 2 -> 1
+[21:15:37] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:15:37] [Transition] Event: SME_STARTUP (10)
+[21:15:43] [Transition] Event: SME_STARTUP (10)
+[21:15:48] [Transition] Event: SME_STARTUP (10)
+[21:15:49] [Transition] NumVehicles: 27 -> 28
+[21:15:53] [Transition] Event: SME_STARTUP (16)
+[21:15:58] [Transition] Event: SME_STARTUP (10)
+[21:15:59] [Transition] Event: SME_EXIT (10)
+[21:15:59] [Transition] NumVehicles: 28 -> 29
+[21:15:59] [Transition] Event: SME_EXIT (11)
+[21:16:03] [Transition] Event: SME_STARTUP (10)
+[21:16:05] [Transition] NumVehicles: 29 -> 30
+[21:16:08] [Transition] Event: SME_STARTUP (10)
+[21:16:08] [Transition] NumVehicles: 30 -> 31
+[21:16:08] [Transition] Event: SME_EXIT (10)
+[21:16:08] [Transition] NumVehicles: 31 -> 32
+[21:16:08] [Transition] Event: SME_EXIT (11)
+[21:16:12] [Transition] NumVehicles: 32 -> 33
+[21:16:12] [Transition] NumVehicles: 33 -> 34
+[21:16:12] [Transition] Event: SME_EXIT (8)
+[21:16:19] [Transition] Event: SME_EXIT (11)
+[21:16:19] [Transition] InRealtime: false -> true
+[21:16:19] [Transition] Control: 1 -> 0 (Player)
+[21:16:19] [Safety] mControl Transition: 1 -> 0
+[21:16:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:16:19] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:16:19]            Active Window: [Window Tracking Disabled]
+[21:16:19] [DI] Attempting to promote to Exclusive Mode...
+[21:16:19] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:16:19] [Transition] Control: 0 -> 2 (Remote)
+[21:16:19] [Transition] PitState: 5 -> 0 (None)
+[21:16:19] [Safety] mControl Transition: 0 -> 2
+[21:16:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:16:19] [Transition] Event: SME_STARTUP (10)
+[21:16:19] [Transition] Control: 2 -> 0 (Player)
+[21:16:19] [Transition] PitState: 0 -> 5 (Unknown)
+[21:16:19] [Transition] NumVehicles: 34 -> 33
+[21:16:19] [Safety] mControl Transition: 2 -> 0
+[21:16:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:16:20] [Transition] Event: SME_EXIT (10)
+[21:16:20] [Transition] NumVehicles: 33 -> 34
+[21:16:20] [Transition] Event: SME_EXIT (11)
+[21:16:21] [Safety] FFB Unmuted
+[21:16:21] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:16:24] [Transition] Event: SME_STARTUP (10)
+[21:16:29] [Transition] Event: SME_STARTUP (10)
+[21:16:33] [Transition] PitState: 5 -> 0 (None)
+[21:16:34] [Transition] Event: SME_STARTUP (10)
+[21:16:39] [Transition] Event: SME_STARTUP (10)
+[21:16:44] [Transition] Control: 0 -> 2 (Remote)
+[21:16:44] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:16:44] [Safety] mControl Transition: 0 -> 2
+[21:16:44] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:16:44] [Transition] Control: 2 -> 0 (Player)
+[21:16:44] [Transition] NumVehicles: 34 -> 33
+[21:16:44] [Safety] FFB Unmuted
+[21:16:44] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:16:44] [Safety] mControl Transition: 2 -> 0
+[21:16:44] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:16:44] [Transition] Event: SME_STARTUP (10)
+[21:16:49] [Transition] Event: SME_STARTUP (10)
+[21:16:55] [Transition] Event: SME_STARTUP (10)
+[21:17:00] [Transition] Event: SME_STARTUP (10)
+[21:17:03] [Transition] NumVehicles: 33 -> 32
+[21:17:05] [Transition] Event: SME_STARTUP (10)
+[21:17:10] [Transition] Event: SME_STARTUP (10)
+[21:17:15] [Transition] Event: SME_STARTUP (10)
+[21:17:20] [Transition] Event: SME_STARTUP (10)
+[21:17:22] [Transition] Event: SME_EXIT (9)
+[21:17:22] [Transition] Event: SME_EXIT (11)
+[21:17:22] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:17:22]            Active Window: [Window Tracking Disabled]
+[21:17:22] [DI] Attempting to promote to Exclusive Mode...
+[21:17:22] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:17:22] [Transition] InRealtime: true -> false
+[21:17:22] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=32 playerHasVehicle=true smUpdateScoring=16
+[21:17:22] [Transition] Control: 0 -> 1 (AI)
+[21:17:22] [Transition] PitState: 0 -> 5 (Unknown)
+[21:17:22] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:17:22] [Safety] mControl Transition: 0 -> 1
+[21:17:22] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:17:25] [Transition] Event: SME_STARTUP (10)
+[21:17:30] [Transition] Event: SME_STARTUP (10)
+[21:17:35] [Transition] Event: SME_STARTUP (10)
+[21:17:40] [Transition] Event: SME_STARTUP (10)
+[21:17:45] [Transition] Event: SME_STARTUP (10)
+[21:17:50] [Transition] Event: SME_STARTUP (10)
+[21:17:55] [Transition] Event: SME_STARTUP (10)
+[21:17:59] [Transition] Event: SME_EXIT (8)
+[21:18:00] [Transition] Event: SME_ENTER (11)
+[21:18:00] [Transition] Event: SME_EXIT (15)
+[21:18:00] [Transition] Event: SME_ENTER (15)
+[21:18:00] [Transition] Event: SME_EXIT (11)
+[21:18:00] [Transition] InRealtime: false -> true
+[21:18:00] [Transition] Control: 1 -> 0 (Player)
+[21:18:00] [Safety] mControl Transition: 1 -> 0
+[21:18:00] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:18:00] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:18:00]            Active Window: [Window Tracking Disabled]
+[21:18:00] [DI] Attempting to promote to Exclusive Mode...
+[21:18:00] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:18:00] [Transition] Event: SME_STARTUP (10)
+[21:18:02] [Safety] FFB Unmuted
+[21:18:02] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:18:05] [Transition] Event: SME_STARTUP (10)
+[21:18:10] [Transition] Event: SME_STARTUP (10)
+[21:18:15] [Transition] Event: SME_STARTUP (10)
+[21:18:20] [Transition] Event: SME_STARTUP (10)
+[21:18:25] [Transition] Event: SME_STARTUP (10)
+[21:18:30] [Transition] Event: SME_STARTUP (10)
+[21:18:35] [Transition] Event: SME_STARTUP (10)
+[21:18:40] [Transition] Event: SME_STARTUP (10)
+[21:18:45] [Transition] Event: SME_STARTUP (10)
+[21:18:46] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:18:46]            Active Window: [Window Tracking Disabled]
+[21:18:46] [DI] Attempting to promote to Exclusive Mode...
+[21:18:46] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:18:50] [Transition] Event: SME_STARTUP (10)
+[21:18:50] [Transition] PitState: 5 -> 0 (None)
+[21:18:55] [Transition] Event: SME_STARTUP (10)
+[21:19:00] [Transition] Event: SME_STARTUP (10)
+[21:19:05] [Transition] Event: SME_STARTUP (10)
+[21:19:10] [Transition] Event: SME_STARTUP (10)
+[21:19:15] [Transition] Event: SME_STARTUP (10)
+[21:19:20] [Transition] Event: SME_STARTUP (10)
+[21:19:25] [Transition] Event: SME_STARTUP (16)
+[21:19:25] [Transition] NumVehicles: 32 -> 31
+[21:19:27] [WARNING] mVerticalTireDeflection is missing for car: Genesis Magma Racing 2026 #17:WEC. (Likely Encrypted/DLC Content). Road Texture fallback active.
+[21:19:30] [Transition] Event: SME_STARTUP (10)
+[21:19:31] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:19:31]            Active Window: [Window Tracking Disabled]
+[21:19:31] [DI] Attempting to promote to Exclusive Mode...
+[21:19:31] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:19:35] [Transition] Event: SME_STARTUP (10)
+[21:19:40] [Transition] Event: SME_STARTUP (10)
+[21:19:45] [Transition] Event: SME_STARTUP (10)
+[21:19:46] [Transition] Event: SME_ENTER (9)
+[21:19:46] [Transition] Event: SME_EXIT (16)
+[21:19:47] [Transition] Event: SME_ENTER (11)
+[21:19:47] [Transition] Event: SME_EXIT (15)
+[21:19:47] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:19:47]            Active Window: [Window Tracking Disabled]
+[21:19:47] [DI] Attempting to promote to Exclusive Mode...
+[21:19:47] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:19:47] [Transition] Event: SME_ENTER (15)
+[21:19:47] [Transition] Event: SME_EXIT (11)
+[21:19:47] [Transition] InRealtime: true -> false
+[21:19:47] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=31 playerHasVehicle=true smUpdateScoring=16
+[21:19:47] [Transition] Control: 0 -> 1 (AI)
+[21:19:47] [Transition] PitState: 0 -> 5 (Unknown)
+[21:19:47] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:19:47] [Safety] mControl Transition: 0 -> 1
+[21:19:47] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:19:50] [Transition] Event: SME_STARTUP (16)
+[21:19:55] [Transition] Event: SME_STARTUP (10)
+[21:20:00] [Transition] Event: SME_STARTUP (10)
+[21:20:05] [Transition] Event: SME_STARTUP (10)
+[21:20:10] [Transition] Event: SME_STARTUP (10)
+[21:20:15] [Transition] Event: SME_STARTUP (10)
+[21:20:20] [Transition] Event: SME_STARTUP (16)
+[21:20:25] [Transition] Event: SME_STARTUP (16)
+[21:20:30] [Transition] Event: SME_STARTUP (16)
+[21:20:35] [Transition] Event: SME_STARTUP (10)
+[21:20:40] [Transition] Event: SME_STARTUP (16)
+[21:20:45] [Transition] Event: SME_STARTUP (10)
+[21:20:50] [Transition] Event: SME_STARTUP (10)
+[21:20:55] [Transition] Event: SME_STARTUP (10)
+[21:21:00] [Transition] Event: SME_STARTUP (10)
+[21:21:05] [Transition] Event: SME_STARTUP (16)
+[21:21:10] [Transition] Event: SME_STARTUP (16)
+[21:21:15] [Transition] Event: SME_STARTUP (16)
+[21:21:21] [Transition] Event: SME_STARTUP (10)
+[21:21:26] [Transition] Event: SME_STARTUP (16)
+[21:21:31] [Transition] Event: SME_STARTUP (10)
+[21:21:34] [Transition] NumVehicles: 31 -> 30
+[21:21:36] [Transition] Event: SME_STARTUP (10)
+[21:21:41] [Transition] Event: SME_STARTUP (16)
+[21:21:46] [Transition] Event: SME_STARTUP (10)
+[21:21:51] [Transition] Event: SME_STARTUP (10)
+[21:21:56] [Transition] Event: SME_STARTUP (16)
+[21:22:01] [Transition] Event: SME_STARTUP (10)
+[21:22:06] [Transition] Event: SME_STARTUP (10)
+[21:22:11] [Transition] Event: SME_EXIT (8)
+[21:22:11] [Transition] Event: SME_ENTER (11)
+[21:22:11] [Transition] Event: SME_EXIT (15)
+[21:22:11] [Transition] Event: SME_ENTER (15)
+[21:22:11] [Transition] Event: SME_EXIT (11)
+[21:22:11] [Transition] Event: SME_STARTUP (10)
+[21:22:11] [Transition] InRealtime: false -> true
+[21:22:11] [Transition] Control: 1 -> 0 (Player)
+[21:22:11] [Safety] mControl Transition: 1 -> 0
+[21:22:11] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:22:11] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:22:11]            Active Window: [Window Tracking Disabled]
+[21:22:11] [DI] Attempting to promote to Exclusive Mode...
+[21:22:11] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:22:13] [Safety] FFB Unmuted
+[21:22:13] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:22:16] [Transition] Event: SME_STARTUP (10)
+[21:22:21] [Transition] Control: 0 -> 2 (Remote)
+[21:22:21] [Transition] PitState: 5 -> 0 (None)
+[21:22:21] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:22:21] [Safety] mControl Transition: 0 -> 2
+[21:22:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:22:21] [Transition] Event: SME_STARTUP (10)
+[21:22:21] [Transition] Control: 2 -> 0 (Player)
+[21:22:21] [Transition] PitState: 0 -> 5 (Unknown)
+[21:22:21] [Transition] NumVehicles: 30 -> 29
+[21:22:21] [Safety] FFB Unmuted
+[21:22:21] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:22:21] [Safety] mControl Transition: 2 -> 0
+[21:22:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:22:25] [Transition] PitState: 5 -> 0 (None)
+[21:22:26] [Transition] Event: SME_STARTUP (16)
+[21:22:32] [Transition] Event: SME_STARTUP (10)
+[21:22:37] [Transition] Event: SME_STARTUP (10)
+[21:22:42] [Transition] Event: SME_STARTUP (10)
+[21:22:47] [Transition] Event: SME_STARTUP (16)
+[21:22:52] [Transition] Event: SME_STARTUP (10)
+[21:22:57] [Transition] Event: SME_STARTUP (10)
+[21:23:02] [Transition] Event: SME_STARTUP (16)
+[21:23:07] [Transition] Event: SME_STARTUP (10)
+[21:23:12] [Transition] Event: SME_STARTUP (16)
+[21:23:12] [Transition] Control: 0 -> 2 (Remote)
+[21:23:12] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:23:12] [Safety] mControl Transition: 0 -> 2
+[21:23:12] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:23:12] [Transition] Control: 2 -> 0 (Player)
+[21:23:12] [Transition] NumVehicles: 29 -> 28
+[21:23:12] [Safety] FFB Unmuted
+[21:23:12] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:23:12] [Safety] mControl Transition: 2 -> 0
+[21:23:12] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:23:17] [Transition] Event: SME_STARTUP (16)
+[21:23:18] [Transition] Event: SME_EXIT (9)
+[21:23:18] [Transition] Event: SME_EXIT (11)
+[21:23:18] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:23:18]            Active Window: [Window Tracking Disabled]
+[21:23:18] [DI] Attempting to promote to Exclusive Mode...
+[21:23:18] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:23:19] [Transition] InRealtime: true -> false
+[21:23:19] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=28 playerHasVehicle=true smUpdateScoring=16
+[21:23:19] [Transition] Control: 0 -> 1 (AI)
+[21:23:19] [Transition] PitState: 0 -> 5 (Unknown)
+[21:23:19] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:23:19] [Safety] mControl Transition: 0 -> 1
+[21:23:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:23:22] [Transition] Event: SME_STARTUP (10)
+[21:23:27] [Transition] Event: SME_STARTUP (16)
+[21:23:31] [Transition] Event: SME_EXIT (8)
+[21:23:31] [Transition] Event: SME_EXIT (11)
+[21:23:31] [Transition] InRealtime: false -> true
+[21:23:31] [Transition] Control: 1 -> 0 (Player)
+[21:23:31] [Safety] mControl Transition: 1 -> 0
+[21:23:31] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:23:31] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:23:31]            Active Window: [Window Tracking Disabled]
+[21:23:31] [DI] Attempting to promote to Exclusive Mode...
+[21:23:31] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:23:32] [Transition] Event: SME_STARTUP (10)
+[21:23:33] [Safety] FFB Unmuted
+[21:23:33] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:23:37] [Transition] Event: SME_EXIT (9)
+[21:23:37] [Transition] Event: SME_EXIT (11)
+[21:23:37] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:23:37]            Active Window: [Window Tracking Disabled]
+[21:23:37] [DI] Attempting to promote to Exclusive Mode...
+[21:23:37] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:23:38] [Transition] Event: SME_STARTUP (10)
+[21:23:38] [Transition] InRealtime: true -> false
+[21:23:38] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=28 playerHasVehicle=true smUpdateScoring=16
+[21:23:38] [Transition] Control: 0 -> 1 (AI)
+[21:23:38] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:23:38] [Safety] mControl Transition: 0 -> 1
+[21:23:38] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:23:43] [Transition] Event: SME_STARTUP (16)
+[21:23:48] [Transition] Control: 1 -> 2 (Remote)
+[21:23:48] [Transition] PitState: 5 -> 0 (None)
+[21:23:48] [Safety] mControl Transition: 1 -> 2
+[21:23:48] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:23:48] [Transition] Control: 2 -> 1 (AI)
+[21:23:48] [Transition] PitState: 0 -> 5 (Unknown)
+[21:23:48] [Transition] NumVehicles: 28 -> 27
+[21:23:48] [Safety] mControl Transition: 2 -> 1
+[21:23:48] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:23:48] [Transition] Event: SME_STARTUP (16)
+[21:23:53] [Transition] Event: SME_STARTUP (10)
+[21:23:58] [Transition] Event: SME_STARTUP (16)
+[21:24:03] [Transition] Event: SME_STARTUP (16)
+[21:24:08] [Transition] Event: SME_STARTUP (10)
+[21:24:12] [Transition] Event: SME_EXIT (8)
+[21:24:12] [Transition] Event: SME_ENTER (11)
+[21:24:12] [Transition] Event: SME_EXIT (15)
+[21:24:12] [Transition] Event: SME_ENTER (15)
+[21:24:12] [Transition] Event: SME_EXIT (11)
+[21:24:12] [Transition] InRealtime: false -> true
+[21:24:12] [Transition] Control: 1 -> 0 (Player)
+[21:24:12] [Safety] mControl Transition: 1 -> 0
+[21:24:12] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:24:13] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:24:13]            Active Window: [Window Tracking Disabled]
+[21:24:13] [DI] Attempting to promote to Exclusive Mode...
+[21:24:13] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:24:13] [Transition] Event: SME_STARTUP (10)
+[21:24:14] [Safety] FFB Unmuted
+[21:24:14] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:24:15] [Transition] Control: 0 -> 2 (Remote)
+[21:24:15] [Transition] PitState: 5 -> 0 (None)
+[21:24:15] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:24:15] [Safety] mControl Transition: 0 -> 2
+[21:24:15] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:24:15] [Transition] Control: 2 -> 0 (Player)
+[21:24:15] [Transition] PitState: 0 -> 5 (Unknown)
+[21:24:15] [Transition] NumVehicles: 27 -> 26
+[21:24:15] [Safety] FFB Unmuted
+[21:24:15] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:24:15] [Safety] mControl Transition: 2 -> 0
+[21:24:15] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:24:18] [Transition] NumVehicles: 26 -> 25
+[21:24:18] [Transition] Event: SME_STARTUP (16)
+[21:24:23] [Transition] Event: SME_STARTUP (16)
+[21:24:26] [Transition] PitState: 5 -> 0 (None)
+[21:24:28] [Transition] Event: SME_STARTUP (16)
+[21:24:29] [Transition] NumVehicles: 25 -> 24
+[21:24:32] [Transition] Event: SME_ENTER (10)
+[21:24:32] [Transition] Event: SME_EXIT (16)
+[21:24:32] [Transition] NumVehicles: 24 -> 25
+[21:24:32] [Transition] Event: SME_ENTER (15)
+[21:24:32] [Transition] Event: SME_EXIT (11)
+[21:24:33] [Transition] Event: SME_STARTUP (10)
+[21:24:38] [Transition] Event: SME_STARTUP (16)
+[21:24:44] [Transition] Event: SME_STARTUP (10)
+[21:24:49] [Transition] Event: SME_STARTUP (16)
+[21:24:53] [Transition] NumVehicles: 25 -> 24
+[21:24:54] [Transition] Event: SME_STARTUP (16)
+[21:24:59] [Transition] Event: SME_STARTUP (10)
+[21:25:04] [Transition] Event: SME_STARTUP (16)
+[21:25:05] [Transition] NumVehicles: 24 -> 23
+[21:25:09] [Transition] Event: SME_STARTUP (16)
+[21:25:14] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:25:14]            Active Window: [Window Tracking Disabled]
+[21:25:14] [DI] Attempting to promote to Exclusive Mode...
+[21:25:14] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:25:14] [Transition] Event: SME_ENTER (9)
+[21:25:14] [Transition] Event: SME_EXIT (16)
+[21:25:14] [Transition] Event: SME_ENTER (15)
+[21:25:14] [Transition] Event: SME_EXIT (11)
+[21:25:14] [Transition] InRealtime: true -> false
+[21:25:14] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=23 playerHasVehicle=true smUpdateScoring=16
+[21:25:14] [Transition] Control: 0 -> 1 (AI)
+[21:25:14] [Transition] PitState: 0 -> 5 (Unknown)
+[21:25:14] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:25:14] [Safety] mControl Transition: 0 -> 1
+[21:25:14] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:25:14] [Transition] Event: SME_STARTUP (16)
+[21:25:19] [Transition] NumVehicles: 23 -> 22
+[21:25:19] [Transition] Event: SME_STARTUP (10)
+[21:25:21] [Transition] Control: 1 -> 2 (Remote)
+[21:25:21] [Safety] mControl Transition: 1 -> 2
+[21:25:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:25:21] [Transition] Control: 2 -> 1 (AI)
+[21:25:21] [Transition] NumVehicles: 22 -> 21
+[21:25:21] [Safety] mControl Transition: 2 -> 1
+[21:25:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:25:24] [Transition] Event: SME_STARTUP (10)
+[21:25:29] [Transition] Event: SME_STARTUP (16)
+[21:25:35] [Transition] Event: SME_STARTUP (10)
+[21:25:40] [Transition] Event: SME_STARTUP (10)
+[21:25:45] [Transition] Event: SME_STARTUP (16)
+[21:25:46] [Transition] Control: 1 -> 2 (Remote)
+[21:25:46] [Transition] PitState: 5 -> 0 (None)
+[21:25:46] [Safety] mControl Transition: 1 -> 2
+[21:25:46] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:25:46] [Transition] Control: 2 -> 1 (AI)
+[21:25:46] [Transition] PitState: 0 -> 5 (Unknown)
+[21:25:46] [Transition] NumVehicles: 21 -> 20
+[21:25:46] [Safety] mControl Transition: 2 -> 1
+[21:25:46] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:25:50] [Transition] Event: SME_STARTUP (16)
+[21:25:55] [Transition] Event: SME_STARTUP (10)
+[21:25:56] [Transition] NumVehicles: 20 -> 21
+[21:26:00] [Transition] Event: SME_STARTUP (16)
+[21:26:05] [Transition] Event: SME_STARTUP (10)
+[21:26:10] [Transition] Event: SME_STARTUP (16)
+[21:26:15] [Transition] Event: SME_STARTUP (10)
+[21:26:18] [Transition] NumVehicles: 21 -> 20
+[21:26:20] [Transition] Event: SME_STARTUP (16)
+[21:26:25] [Transition] Event: SME_STARTUP (16)
+[21:26:28] [Transition] Event: SME_EXIT (8)
+[21:26:29] [Transition] Event: SME_EXIT (11)
+[21:26:29] [Transition] InRealtime: false -> true
+[21:26:29] [Transition] Control: 1 -> 0 (Player)
+[21:26:29] [Safety] mControl Transition: 1 -> 0
+[21:26:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:26:29] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:26:29]            Active Window: [Window Tracking Disabled]
+[21:26:29] [DI] Attempting to promote to Exclusive Mode...
+[21:26:29] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:26:30] [Transition] Event: SME_STARTUP (16)
+[21:26:33] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:26:33]            Active Window: [Window Tracking Disabled]
+[21:26:33] [DI] Attempting to promote to Exclusive Mode...
+[21:26:35] [Safety] FFB Unmuted
+[21:26:35] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:26:35] [Transition] Event: SME_STARTUP (10)
+[21:26:40] [Transition] Event: SME_STARTUP (16)
+[21:26:43] [Transition] NumVehicles: 20 -> 19
+[21:26:46] [Transition] Event: SME_STARTUP (10)
+[21:26:46] [Transition] PitState: 5 -> 0 (None)
+[21:26:51] [Transition] Event: SME_STARTUP (10)
+[21:26:56] [Transition] Event: SME_STARTUP (16)
+[21:27:01] [Transition] Event: SME_STARTUP (10)
+[21:27:06] [Transition] Event: SME_STARTUP (16)
+[21:27:11] [Transition] Event: SME_STARTUP (10)
+[21:27:16] [Transition] Event: SME_STARTUP (16)
+[21:27:21] [Transition] Event: SME_STARTUP (10)
+[21:27:26] [Transition] Event: SME_STARTUP (16)
+[21:27:31] [Transition] Event: SME_STARTUP (10)
+[21:27:36] [Transition] Event: SME_STARTUP (16)
+[21:27:42] [Transition] Event: SME_STARTUP (10)
+[21:27:47] [Transition] Event: SME_STARTUP (16)
+[21:27:50] [Transition] Control: 0 -> 2 (Remote)
+[21:27:50] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:27:50] [Safety] mControl Transition: 0 -> 2
+[21:27:50] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:27:50] [Transition] Control: 2 -> 0 (Player)
+[21:27:50] [Transition] NumVehicles: 19 -> 18
+[21:27:50] [Safety] FFB Unmuted
+[21:27:50] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:27:50] [Safety] mControl Transition: 2 -> 0
+[21:27:50] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:27:51] [Transition] NumVehicles: 18 -> 17
+[21:27:52] [Transition] Event: SME_STARTUP (10)
+[21:27:57] [Transition] Event: SME_STARTUP (10)
+[21:28:02] [Transition] Event: SME_STARTUP (16)
+[21:28:07] [Transition] Event: SME_STARTUP (10)
+[21:28:12] [Transition] Event: SME_STARTUP (16)
+[21:28:17] [Transition] Event: SME_STARTUP (16)
+[21:28:21] [Transition] Control: 0 -> 2 (Remote)
+[21:28:21] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:28:21] [Safety] mControl Transition: 0 -> 2
+[21:28:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:28:21] [Transition] Control: 2 -> 0 (Player)
+[21:28:21] [Transition] NumVehicles: 17 -> 16
+[21:28:21] [Safety] FFB Unmuted
+[21:28:21] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:28:21] [Safety] mControl Transition: 2 -> 0
+[21:28:21] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:28:22] [Transition] Event: SME_STARTUP (10)
+[21:28:24] [Transition] NumVehicles: 16 -> 15
+[21:28:27] [Transition] Event: SME_STARTUP (16)
+[21:28:31] [Transition] Control: 0 -> 2 (Remote)
+[21:28:31] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:28:31] [Safety] mControl Transition: 0 -> 2
+[21:28:31] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:28:31] [Transition] Control: 2 -> 0 (Player)
+[21:28:31] [Transition] NumVehicles: 15 -> 14
+[21:28:31] [Safety] FFB Unmuted
+[21:28:31] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:28:31] [Safety] mControl Transition: 2 -> 0
+[21:28:31] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:28:32] [Transition] Event: SME_STARTUP (10)
+[21:28:37] [Transition] Event: SME_STARTUP (16)
+[21:28:43] [Transition] Event: SME_STARTUP (10)
+[21:28:48] [Transition] Event: SME_STARTUP (10)
+[21:28:53] [Transition] Event: SME_STARTUP (16)
+[21:28:54] [Transition] Event: SME_ENTER (11)
+[21:28:54] [Transition] Event: SME_EXIT (15)
+[21:28:54] [Transition] Event: SME_ENTER (15)
+[21:28:54] [Transition] Event: SME_EXIT (11)
+[21:28:55] [Transition] Event: SME_EXIT (9)
+[21:28:56] [Transition] Event: SME_EXIT (11)
+[21:28:56] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:28:56]            Active Window: [Window Tracking Disabled]
+[21:28:56] [DI] Attempting to promote to Exclusive Mode...
+[21:28:56] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:28:56] [Transition] InRealtime: true -> false
+[21:28:56] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=14 playerHasVehicle=true smUpdateScoring=16
+[21:28:56] [Transition] Control: 0 -> 1 (AI)
+[21:28:56] [Transition] PitState: 0 -> 5 (Unknown)
+[21:28:56] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:28:56] [Safety] mControl Transition: 0 -> 1
+[21:28:56] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:28:58] [Transition] Event: SME_STARTUP (10)
+[21:29:03] [Transition] Event: SME_STARTUP (16)
+[21:29:08] [Transition] Event: SME_STARTUP (10)
+[21:29:13] [Transition] Event: SME_STARTUP (16)
+[21:29:16] [Transition] NumVehicles: 14 -> 13
+[21:29:18] [Transition] Event: SME_STARTUP (10)
+[21:29:23] [Transition] Event: SME_STARTUP (10)
+[21:29:28] [Transition] Event: SME_STARTUP (16)
+[21:29:29] [Transition] Event: SME_EXIT (8)
+[21:29:29] [Transition] Event: SME_ENTER (11)
+[21:29:29] [Transition] Event: SME_EXIT (15)
+[21:29:29] [Transition] Event: SME_ENTER (15)
+[21:29:29] [Transition] Event: SME_EXIT (11)
+[21:29:29] [Transition] InRealtime: false -> true
+[21:29:29] [Transition] Control: 1 -> 0 (Player)
+[21:29:29] [Safety] mControl Transition: 1 -> 0
+[21:29:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:29:29] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[21:29:29]            Active Window: [Window Tracking Disabled]
+[21:29:29] [DI] Attempting to promote to Exclusive Mode...
+[21:29:29] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[21:29:31] [Safety] FFB Unmuted
+[21:29:31] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:29:33] [Transition] Event: SME_STARTUP (16)
+[21:29:34] [Transition] Control: 0 -> 2 (Remote)
+[21:29:34] [Transition] PitState: 5 -> 0 (None)
+[21:29:34] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:29:34] [Safety] mControl Transition: 0 -> 2
+[21:29:34] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:29:34] [Transition] Control: 2 -> 0 (Player)
+[21:29:34] [Transition] PitState: 0 -> 5 (Unknown)
+[21:29:34] [Transition] NumVehicles: 13 -> 12
+[21:29:34] [Safety] FFB Unmuted
+[21:29:34] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:29:34] [Safety] mControl Transition: 2 -> 0
+[21:29:34] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:29:38] [Transition] Event: SME_STARTUP (16)
+[21:29:40] [Transition] Control: 0 -> 2 (Remote)
+[21:29:40] [Transition] PitState: 5 -> 0 (None)
+[21:29:40] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:29:40] [Safety] mControl Transition: 0 -> 2
+[21:29:40] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:29:40] [Transition] Control: 2 -> 0 (Player)
+[21:29:40] [Transition] PitState: 0 -> 5 (Unknown)
+[21:29:40] [Transition] NumVehicles: 12 -> 11
+[21:29:40] [Safety] FFB Unmuted
+[21:29:40] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:29:40] [Safety] mControl Transition: 2 -> 0
+[21:29:40] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:29:42] [Transition] PitState: 5 -> 0 (None)
+[21:29:43] [Transition] Event: SME_STARTUP (10)
+[21:29:48] [Transition] Event: SME_STARTUP (10)
+[21:29:53] [Transition] Event: SME_STARTUP (16)
+[21:29:59] [Transition] Event: SME_STARTUP (10)
+[21:29:59] [Transition] Event: SME_EXIT (10)
+[21:29:59] [Transition] NumVehicles: 11 -> 12
+[21:29:59] [Transition] Event: SME_EXIT (11)
+[21:30:04] [Transition] Event: SME_STARTUP (16)
+[21:30:06] [Transition] NumVehicles: 12 -> 11
+[21:30:09] [Transition] Event: SME_STARTUP (10)
+[21:30:14] [Transition] Event: SME_STARTUP (16)
+[21:30:15] [Transition] Control: 0 -> 2 (Remote)
+[21:30:15] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:30:15] [Safety] mControl Transition: 0 -> 2
+[21:30:15] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:30:15] [Transition] Control: 2 -> 0 (Player)
+[21:30:15] [Transition] NumVehicles: 11 -> 10
+[21:30:15] [Safety] FFB Unmuted
+[21:30:15] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:30:15] [Safety] mControl Transition: 2 -> 0
+[21:30:15] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:30:16] [Transition] NumVehicles: 10 -> 9
+[21:30:18] [Transition] NumVehicles: 9 -> 8
+[21:30:19] [Transition] Event: SME_STARTUP (16)
+[21:30:20] [Transition] GamePhase: 5 -> 8 (Over)
+[21:30:20] [Transition] Event: SME_EXIT (7)
+[21:30:20] [Transition] Event: SME_ENTER (14)
+[21:30:20] [Transition] Event: SME_EXIT (16)
+[21:30:20] [Transition] Event: SME_ENTER (15)
+[21:30:20] [Transition] Event: SME_EXIT (11)
+[21:30:24] [Transition] Event: SME_STARTUP (10)
+[21:30:29] [Transition] Event: SME_STARTUP (10)
+[21:30:34] [Transition] Event: SME_STARTUP (16)
+[21:30:35] [Transition] NumVehicles: 8 -> 7
+[21:30:39] [Transition] Event: SME_STARTUP (16)
+[21:30:44] [Transition] Event: SME_STARTUP (10)
+[21:30:49] [Transition] Event: SME_STARTUP (16)
+[21:30:50] [Transition] Control: 0 -> 2 (Remote)
+[21:30:50] [Safety] FFB Muted (Reason: Game/State Mute)
+[21:30:50] [Safety] mControl Transition: 0 -> 2
+[21:30:50] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:30:50] [Transition] Control: 2 -> 0 (Player)
+[21:30:50] [Transition] NumVehicles: 7 -> 6
+[21:30:50] [Safety] FFB Unmuted
+[21:30:50] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[21:30:50] [Safety] mControl Transition: 2 -> 0
+[21:30:50] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[21:30:51] [Transition] Event: SME_EXIT (5)
+[21:32:25] [Transition] Event: SME_ENTER (1)
+[21:32:25] [Transition] Event: SME_EXIT (16)
+[21:32:25] [Transition] Event: SME_ENTER (13)
+[21:33:11] [Config] Applied preset: Simagic Alpha 15 Nm (0404)
+[22:52:44] [Transition] Event: SME_EXIT (14)
+[22:52:44] [Transition] Event: SME_STARTUP (12)
+[22:52:44] [Transition] Event: SME_SHUTDOWN (2)
+[22:52:44] [Transition] Event: SME_LOAD (16)
+[22:52:44] [Transition] Event: SME_UNLOAD (16)
+[22:52:44] [Transition] Event: SME_START_SESSION (16)
+[22:52:44] [Transition] Event: SME_END_SESSION (16)
+[22:52:44] [Transition] Event: SME_ENTER_REALTIME (16)
+[22:52:44] [Transition] Event: SME_EXIT_REALTIME (16)
+[22:52:44] [Transition] Event: SME_INIT_APPLICATION (16)
+[22:52:44] [Transition] Event: SME_UNINIT_APPLICATION (16)
+[22:52:44] [Transition] InRealtime: true -> false
+[22:52:44] [Diag] De-realtime snapshot: track='' optionsLoc=0 numVehicles=0 playerHasVehicle=false smUpdateScoring=16
+[22:52:44] [Transition] GamePhase: 8 -> 0 (Before Session)
+[22:52:44] [Transition] Session: 1 -> 0 (Test Day)
+[22:52:44] [Transition] Track: 'Circuit de Spa-Francorchamps' -> ''
+[22:52:44] [Transition] PlayerHasVehicle: true -> false
+[22:52:44] [Transition] NumVehicles: 6 -> 0
+[22:53:40] [Transition] Event: SME_ENTER (4)
+[22:53:40] [Transition] Event: SME_EXIT (16)
+[22:53:40] [Transition] Event: SME_STARTUP (16)
+[22:53:40] [Transition] Event: SME_SHUTDOWN (16)
+[22:53:43] [Transition] Event: SME_ENTER (6)
+[22:53:45] [Transition] Event: SME_ENTER (10)
+[22:53:45] [Transition] Session: 0 -> 1 (Practice)
+[22:53:45] [Transition] Track: '' -> 'Silverstone National Circuit'
+[22:53:45] [Transition] Event: SME_ENTER (11)
+[22:53:45] [Transition] Event: SME_EXIT (15)
+[22:53:46] [Transition] Event: SME_ENTER (10)
+[22:53:46] [Transition] Event: SME_EXIT (16)
+[22:53:46] [Transition] Event: SME_STARTUP (16)
+[22:53:46] [Transition] NumVehicles: 0 -> 1
+[22:53:47] [Transition] NumVehicles: 1 -> 2
+[22:53:48] [Transition] NumVehicles: 2 -> 3
+[22:53:49] [Transition] NumVehicles: 3 -> 4
+[22:53:50] [Transition] NumVehicles: 4 -> 5
+[22:53:50] [Transition] NumVehicles: 5 -> 6
+[22:53:51] [Transition] NumVehicles: 6 -> 7
+[22:53:52] [Transition] NumVehicles: 7 -> 8
+[22:53:52] [Transition] NumVehicles: 8 -> 9
+[22:53:53] [Transition] NumVehicles: 9 -> 10
+[22:53:53] [Transition] Event: SME_ENTER (11)
+[22:53:53] [Transition] Event: SME_EXIT (15)
+[22:53:54] [Transition] Event: SME_ENTER (15)
+[22:53:54] [Transition] Event: SME_EXIT (10)
+[22:53:54] [Transition] NumVehicles: 10 -> 11
+[22:54:01] [Transition] Event: SME_EXIT (11)
+[22:54:01] [Transition] Control: 0 -> 2 (Remote)
+[22:54:01] [Transition] PitState: 0 -> 5 (Unknown)
+[22:54:01] [Transition] Vehicle: 'Genesis Magma Racing 2026 #17:WEC' -> 'D'Station Racing 2024 #777:LM'
+[22:54:01] [Transition] PlayerHasVehicle: false -> true
+[22:54:01] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[22:54:01] [Safety] FFB Muted (Reason: Game/State Mute)
+[22:54:01] [Safety] mControl Transition: 0 -> 2
+[22:54:01] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[22:54:01] [Transition] Event: SME_EXIT (10)
+[22:54:01] [Transition] GamePhase: 0 -> 5 (Green Flag)
+[22:54:01] [Transition] Control: 2 -> 1 (AI)
+[22:54:01] [Transition] NumVehicles: 11 -> 12
+[22:54:01] [Transition] Event: SME_EXIT (11)
+[22:54:01] [Safety] mControl Transition: 2 -> 1
+[22:54:01] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[22:54:01] [Transition] Event: SME_STARTUP (10)
+[22:54:03] [Transition] Event: SME_EXIT (10)
+[22:54:03] [Transition] NumVehicles: 12 -> 13
+[22:54:03] [Transition] Event: SME_EXIT (11)
+[22:54:06] [Transition] Event: SME_STARTUP (16)
+[22:54:11] [Transition] Event: SME_STARTUP (16)
+[22:54:16] [Transition] Event: SME_STARTUP (16)
+[22:54:21] [Transition] Event: SME_STARTUP (10)
+[22:54:25] [Transition] NumVehicles: 13 -> 14
+[22:54:26] [Transition] Event: SME_STARTUP (16)
+[22:54:31] [Transition] Event: SME_STARTUP (16)
+[22:54:34] [Transition] Event: SME_EXIT (10)
+[22:54:34] [Transition] NumVehicles: 14 -> 15
+[22:54:34] [Transition] Event: SME_EXIT (11)
+[22:54:37] [Transition] Event: SME_STARTUP (10)
+[22:54:39] [Transition] NumVehicles: 15 -> 16
+[22:54:42] [Transition] Event: SME_STARTUP (16)
+[22:54:44] [Transition] NumVehicles: 16 -> 17
+[22:54:47] [Transition] Event: SME_STARTUP (16)
+[22:54:52] [Transition] Event: SME_STARTUP (10)
+[22:54:57] [Transition] Event: SME_STARTUP (10)
+[22:54:58] [Transition] Event: SME_ENTER (11)
+[22:54:58] [Transition] Event: SME_EXIT (15)
+[22:54:58] [Transition] NumVehicles: 17 -> 18
+[22:54:58] [Transition] Event: SME_ENTER (15)
+[22:54:58] [Transition] Event: SME_EXIT (11)
+[22:54:59] [Transition] Event: SME_EXIT (10)
+[22:54:59] [Transition] NumVehicles: 18 -> 19
+[22:54:59] [Transition] Event: SME_EXIT (11)
+[22:55:02] [Transition] Event: SME_STARTUP (16)
+[22:55:07] [Transition] Event: SME_STARTUP (10)
+[22:55:12] [Transition] Event: SME_STARTUP (16)
+[22:55:13] [Transition] NumVehicles: 19 -> 20
+[22:55:16] [Transition] NumVehicles: 20 -> 21
+[22:55:17] [Transition] Event: SME_STARTUP (10)
+[22:55:19] [Transition] NumVehicles: 21 -> 22
+[22:55:20] [Transition] NumVehicles: 22 -> 21
+[22:55:22] [Transition] Event: SME_STARTUP (16)
+[22:55:25] [Transition] NumVehicles: 21 -> 22
+[22:55:27] [Transition] Event: SME_STARTUP (16)
+[22:55:32] [Transition] Event: SME_STARTUP (16)
+[22:55:37] [Transition] Event: SME_STARTUP (16)
+[22:55:42] [Transition] NumVehicles: 22 -> 23
+[22:55:43] [Transition] Event: SME_STARTUP (10)
+[22:55:48] [Transition] Event: SME_STARTUP (16)
+[22:55:48] [Transition] Event: SME_ENTER (10)
+[22:55:48] [Transition] Event: SME_EXIT (16)
+[22:55:48] [Transition] NumVehicles: 23 -> 24
+[22:55:48] [Transition] Event: SME_ENTER (15)
+[22:55:48] [Transition] Event: SME_EXIT (11)
+[22:55:53] [Transition] Event: SME_STARTUP (16)
+[22:55:58] [Transition] Event: SME_STARTUP (10)
+[22:56:03] [Transition] Event: SME_STARTUP (10)
+[22:56:06] [Transition] Event: SME_EXIT (10)
+[22:56:06] [Transition] NumVehicles: 24 -> 25
+[22:56:06] [Transition] Event: SME_EXIT (11)
+[22:56:08] [Transition] Event: SME_STARTUP (16)
+[22:56:13] [Transition] NumVehicles: 25 -> 26
+[22:56:13] [Transition] Event: SME_STARTUP (10)
+[22:56:17] [Transition] Event: SME_EXIT (10)
+[22:56:17] [Transition] NumVehicles: 26 -> 27
+[22:56:17] [Transition] Event: SME_EXIT (11)
+[22:56:18] [Transition] Event: SME_STARTUP (10)
+[22:56:23] [Transition] Event: SME_STARTUP (16)
+[22:56:27] [Transition] Event: SME_EXIT (10)
+[22:56:27] [Transition] NumVehicles: 27 -> 28
+[22:56:27] [Transition] Event: SME_EXIT (11)
+[22:56:28] [Transition] Event: SME_STARTUP (10)
+[22:56:33] [Transition] Event: SME_STARTUP (16)
+[22:56:38] [Transition] Event: SME_STARTUP (10)
+[22:56:43] [Transition] Event: SME_STARTUP (16)
+[22:56:45] [Transition] Event: SME_EXIT (10)
+[22:56:45] [Transition] NumVehicles: 28 -> 29
+[22:56:45] [Transition] Event: SME_EXIT (11)
+[22:56:48] [Transition] Event: SME_STARTUP (16)
+[22:56:54] [Transition] Event: SME_STARTUP (10)
+[22:56:56] [Transition] NumVehicles: 29 -> 28
+[22:56:59] [Transition] Event: SME_STARTUP (16)
+[22:57:04] [Transition] Event: SME_STARTUP (16)
+[22:57:09] [Transition] Event: SME_STARTUP (10)
+[22:57:14] [Transition] Event: SME_STARTUP (10)
+[22:57:19] [Transition] Event: SME_STARTUP (16)
+[22:57:24] [Transition] Event: SME_STARTUP (10)
+[22:57:29] [Transition] Event: SME_STARTUP (10)
+[22:57:34] [Transition] Event: SME_STARTUP (16)
+[22:57:39] [Transition] Event: SME_STARTUP (16)
+[22:57:44] [Transition] Event: SME_STARTUP (10)
+[22:57:49] [Transition] Event: SME_STARTUP (16)
+[22:57:54] [Transition] Event: SME_STARTUP (16)
+[22:57:59] [Transition] Event: SME_ENTER (11)
+[22:57:59] [Transition] Event: SME_EXIT (15)
+[22:57:59] [Transition] NumVehicles: 28 -> 29
+[22:57:59] [Transition] Event: SME_ENTER (15)
+[22:57:59] [Transition] Event: SME_EXIT (11)
+[22:57:59] [Transition] Event: SME_STARTUP (10)
+[22:58:04] [Transition] Event: SME_STARTUP (10)
+[22:58:09] [Transition] Event: SME_STARTUP (16)
+[22:58:14] [Transition] Event: SME_STARTUP (16)
+[22:58:19] [Transition] Event: SME_STARTUP (16)
+[22:58:25] [Transition] Event: SME_STARTUP (10)
+[22:58:27] [Transition] NumVehicles: 29 -> 30
+[22:58:30] [Transition] Event: SME_STARTUP (16)
+[22:58:35] [Transition] Event: SME_STARTUP (10)
+[22:58:40] [Transition] Event: SME_STARTUP (10)
+[22:58:45] [Transition] Event: SME_STARTUP (10)
+[22:58:50] [Transition] Event: SME_STARTUP (10)
+[22:58:55] [Transition] Event: SME_STARTUP (16)
+[22:59:00] [Transition] Event: SME_STARTUP (10)
+[22:59:05] [Transition] Event: SME_STARTUP (16)
+[22:59:10] [Transition] Event: SME_STARTUP (16)
+[22:59:15] [Transition] Event: SME_STARTUP (10)
+[22:59:20] [Transition] Event: SME_STARTUP (10)
+[22:59:25] [Transition] Event: SME_STARTUP (16)
+[22:59:30] [Transition] Event: SME_STARTUP (10)
+[22:59:35] [Transition] Event: SME_STARTUP (10)
+[22:59:40] [Transition] Event: SME_STARTUP (16)
+[22:59:46] [Transition] Event: SME_STARTUP (10)
+[22:59:51] [Transition] Event: SME_STARTUP (16)
+[22:59:56] [Transition] Event: SME_STARTUP (10)
+[23:00:01] [Transition] Event: SME_STARTUP (16)
+[23:00:06] [Transition] Event: SME_STARTUP (16)
+[23:00:11] [Transition] Event: SME_STARTUP (10)
+[23:00:15] [Transition] Event: SME_EXIT (8)
+[23:00:26] [Transition] Event: SME_ENTER (11)
+[23:00:26] [Transition] Event: SME_EXIT (15)
+[23:00:26] [Transition] Event: SME_ENTER (15)
+[23:00:26] [Transition] Event: SME_EXIT (11)
+[23:00:26] [Transition] Event: SME_STARTUP (10)
+[23:00:26] [Transition] InRealtime: false -> true
+[23:00:26] [Transition] Control: 1 -> 0 (Player)
+[23:00:26] [Safety] mControl Transition: 1 -> 0
+[23:00:26] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:00:26] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:00:26]            Active Window: [Window Tracking Disabled]
+[23:00:26] [DI] Attempting to promote to Exclusive Mode...
+[23:00:26] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:00:29] [Transition] Control: 0 -> 2 (Remote)
+[23:00:29] [Transition] PitState: 5 -> 0 (None)
+[23:00:29] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> '911GT3R Custom Team 2025 #397'
+[23:00:29] [Metadata] Vehicle Change Detected: '911GT3R Custom Team 2025 #397' (Brand: 'Porsche', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_911GT3R')
+[23:00:29] [Safety] mControl Transition: 0 -> 2
+[23:00:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:00:29] [Transition] Control: 2 -> 0 (Player)
+[23:00:29] [Transition] PitState: 0 -> 5 (Unknown)
+[23:00:29] [Transition] Vehicle: '911GT3R Custom Team 2025 #397' -> 'D'Station Racing 2024 #777:LM'
+[23:00:29] [Transition] NumVehicles: 30 -> 29
+[23:00:29] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[23:00:29] [Safety] mControl Transition: 2 -> 0
+[23:00:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:00:31] [Transition] Event: SME_STARTUP (16)
+[23:00:34] [Safety] FFB Unmuted
+[23:00:34] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:00:36] [Transition] Event: SME_STARTUP (16)
+[23:00:41] [Transition] Event: SME_STARTUP (10)
+[23:00:46] [Transition] Event: SME_STARTUP (16)
+[23:00:51] [Transition] Event: SME_STARTUP (16)
+[23:00:56] [Transition] Event: SME_STARTUP (10)
+[23:01:01] [Transition] Event: SME_STARTUP (10)
+[23:01:05] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:01:05]            Active Window: [Window Tracking Disabled]
+[23:01:05] [DI] Attempting to promote to Exclusive Mode...
+[23:01:05] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:01:06] [Transition] Event: SME_STARTUP (16)
+[23:01:09] [Transition] PitState: 5 -> 0 (None)
+[23:01:10] [Transition] NumVehicles: 29 -> 28
+[23:01:11] [Transition] Event: SME_STARTUP (10)
+[23:01:16] [Transition] Event: SME_STARTUP (16)
+[23:01:22] [Transition] Event: SME_STARTUP (10)
+[23:01:25] [Transition] NumVehicles: 28 -> 27
+[23:01:27] [Transition] Event: SME_STARTUP (16)
+[23:01:32] [Transition] Event: SME_STARTUP (10)
+[23:01:37] [Transition] Event: SME_STARTUP (10)
+[23:01:42] [Transition] Event: SME_STARTUP (16)
+[23:01:47] [Transition] Event: SME_STARTUP (10)
+[23:01:52] [Transition] Event: SME_STARTUP (16)
+[23:01:57] [Transition] Event: SME_STARTUP (10)
+[23:02:02] [Transition] Event: SME_STARTUP (16)
+[23:02:02] [Transition] NumVehicles: 27 -> 26
+[23:02:07] [Transition] Event: SME_STARTUP (10)
+[23:02:12] [Transition] Event: SME_STARTUP (16)
+[23:02:14] [Transition] NumVehicles: 26 -> 25
+[23:02:18] [Transition] Event: SME_STARTUP (10)
+[23:02:23] [Transition] Event: SME_STARTUP (10)
+[23:02:28] [Transition] Event: SME_STARTUP (16)
+[23:02:33] [Transition] Event: SME_STARTUP (16)
+[23:02:38] [Transition] Event: SME_STARTUP (10)
+[23:02:38] [Transition] NumVehicles: 25 -> 26
+[23:02:43] [Transition] Event: SME_EXIT (10)
+[23:02:43] [Transition] NumVehicles: 26 -> 27
+[23:02:43] [Transition] Event: SME_EXIT (11)
+[23:02:43] [Transition] Event: SME_STARTUP (16)
+[23:02:48] [Transition] Event: SME_STARTUP (10)
+[23:02:53] [Transition] Event: SME_STARTUP (16)
+[23:02:58] [Transition] Event: SME_STARTUP (16)
+[23:03:03] [Transition] Event: SME_STARTUP (16)
+[23:03:08] [Transition] Event: SME_STARTUP (10)
+[23:03:08] [Transition] NumVehicles: 27 -> 26
+[23:03:11] [Transition] Event: SME_ENTER (10)
+[23:03:11] [Transition] Event: SME_EXIT (16)
+[23:03:11] [Transition] NumVehicles: 26 -> 27
+[23:03:11] [Transition] Event: SME_ENTER (15)
+[23:03:11] [Transition] Event: SME_EXIT (11)
+[23:03:13] [Transition] Event: SME_STARTUP (10)
+[23:03:15] [Transition] NumVehicles: 27 -> 26
+[23:03:18] [Transition] Event: SME_STARTUP (16)
+[23:03:23] [Transition] Event: SME_STARTUP (10)
+[23:03:28] [Transition] Event: SME_STARTUP (10)
+[23:03:33] [Transition] Event: SME_STARTUP (16)
+[23:03:39] [Transition] Event: SME_STARTUP (10)
+[23:03:44] [Transition] Event: SME_STARTUP (16)
+[23:03:49] [Transition] Event: SME_STARTUP (10)
+[23:03:54] [Transition] Event: SME_STARTUP (16)
+[23:03:59] [Transition] Event: SME_STARTUP (10)
+[23:04:04] [Transition] Event: SME_STARTUP (16)
+[23:04:08] [Transition] Event: SME_EXIT (10)
+[23:04:08] [Transition] NumVehicles: 26 -> 27
+[23:04:08] [Transition] Event: SME_ENTER (11)
+[23:04:08] [Transition] Event: SME_EXIT (15)
+[23:04:08] [Transition] Event: SME_ENTER (15)
+[23:04:08] [Transition] Event: SME_EXIT (11)
+[23:04:09] [Transition] Event: SME_STARTUP (16)
+[23:04:14] [Transition] Event: SME_STARTUP (10)
+[23:04:19] [Transition] Event: SME_STARTUP (16)
+[23:04:19] [Transition] Control: 0 -> 2 (Remote)
+[23:04:19] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> '911GT3R Custom Team 2025 #397'
+[23:04:19] [Metadata] Vehicle Change Detected: '911GT3R Custom Team 2025 #397' (Brand: 'Porsche', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_911GT3R')
+[23:04:19] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:04:19] [Safety] mControl Transition: 0 -> 2
+[23:04:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:04:19] [Transition] Control: 2 -> 0 (Player)
+[23:04:19] [Transition] Vehicle: '911GT3R Custom Team 2025 #397' -> 'D'Station Racing 2024 #777:LM'
+[23:04:19] [Transition] NumVehicles: 27 -> 26
+[23:04:19] [Metadata] Vehicle Change Detected: 'D'Station Racing 2024 #777:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group36', Filename: '777_24_DST8B5349B6')
+[23:04:19] [Safety] FFB Unmuted
+[23:04:19] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:04:19] [Safety] mControl Transition: 2 -> 0
+[23:04:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:04:22] [Transition] Event: SME_ENTER (10)
+[23:04:22] [Transition] Event: SME_EXIT (16)
+[23:04:22] [Transition] NumVehicles: 26 -> 27
+[23:04:22] [Transition] Event: SME_ENTER (15)
+[23:04:22] [Transition] Event: SME_EXIT (11)
+[23:04:24] [Transition] Event: SME_STARTUP (16)
+[23:04:29] [Transition] Event: SME_STARTUP (10)
+[23:04:34] [Transition] Event: SME_STARTUP (16)
+[23:04:40] [Transition] Event: SME_STARTUP (10)
+[23:04:43] [Transition] NumVehicles: 27 -> 26
+[23:04:45] [Transition] Event: SME_STARTUP (10)
+[23:04:50] [Transition] Event: SME_STARTUP (16)
+[23:04:55] [Transition] Event: SME_STARTUP (10)
+[23:05:00] [Transition] Event: SME_STARTUP (16)
+[23:05:05] [Transition] Event: SME_STARTUP (16)
+[23:05:07] [Transition] NumVehicles: 26 -> 25
+[23:05:10] [Transition] Event: SME_STARTUP (10)
+[23:05:15] [Transition] Event: SME_STARTUP (16)
+[23:05:20] [Transition] Event: SME_STARTUP (16)
+[23:05:24] [Transition] Event: SME_EXIT (10)
+[23:05:24] [Transition] NumVehicles: 25 -> 26
+[23:05:24] [Transition] Event: SME_ENTER (11)
+[23:05:24] [Transition] Event: SME_EXIT (15)
+[23:05:24] [Transition] Event: SME_ENTER (15)
+[23:05:24] [Transition] Event: SME_EXIT (11)
+[23:05:25] [Transition] Event: SME_STARTUP (10)
+[23:05:30] [Transition] Event: SME_STARTUP (16)
+[23:05:35] [Transition] Event: SME_STARTUP (10)
+[23:05:40] [Transition] Event: SME_STARTUP (16)
+[23:05:46] [Transition] Event: SME_STARTUP (10)
+[23:05:51] [Transition] Event: SME_STARTUP (16)
+[23:05:56] [Transition] Event: SME_STARTUP (16)
+[23:06:01] [Transition] Event: SME_STARTUP (10)
+[23:06:06] [Transition] Event: SME_STARTUP (10)
+[23:06:07] [Transition] Event: SME_EXIT (10)
+[23:06:07] [Transition] NumVehicles: 26 -> 27
+[23:06:07] [Transition] Event: SME_ENTER (11)
+[23:06:07] [Transition] Event: SME_EXIT (15)
+[23:06:07] [Transition] Event: SME_ENTER (15)
+[23:06:07] [Transition] Event: SME_EXIT (11)
+[23:06:11] [Transition] Event: SME_STARTUP (16)
+[23:06:16] [Transition] Event: SME_STARTUP (10)
+[23:06:21] [Transition] Event: SME_STARTUP (16)
+[23:06:26] [Transition] Event: SME_STARTUP (10)
+[23:06:31] [Transition] Event: SME_STARTUP (16)
+[23:06:35] [Transition] NumVehicles: 27 -> 26
+[23:06:36] [Transition] Event: SME_STARTUP (10)
+[23:06:36] [Transition] Event: SME_EXIT (10)
+[23:06:36] [Transition] NumVehicles: 26 -> 27
+[23:06:36] [Transition] Event: SME_EXIT (11)
+[23:06:41] [Transition] Event: SME_STARTUP (16)
+[23:06:42] [Transition] NumVehicles: 27 -> 26
+[23:06:46] [Transition] Event: SME_STARTUP (16)
+[23:06:52] [Transition] Event: SME_STARTUP (10)
+[23:06:57] [Transition] Event: SME_STARTUP (10)
+[23:07:02] [Transition] Event: SME_STARTUP (16)
+[23:07:07] [Transition] Event: SME_STARTUP (10)
+[23:07:12] [Transition] Event: SME_STARTUP (16)
+[23:07:17] [Transition] Event: SME_STARTUP (10)
+[23:07:20] [Transition] NumVehicles: 26 -> 25
+[23:07:22] [Transition] Event: SME_STARTUP (16)
+[23:07:27] [Transition] Event: SME_STARTUP (10)
+[23:07:32] [Transition] Event: SME_STARTUP (16)
+[23:07:36] [Transition] NumVehicles: 25 -> 24
+[23:07:37] [Transition] Event: SME_STARTUP (10)
+[23:07:42] [Transition] Event: SME_STARTUP (10)
+[23:07:43] [Transition] NumVehicles: 24 -> 23
+[23:07:47] [Transition] Event: SME_STARTUP (16)
+[23:07:48] [Transition] Event: SME_EXIT (9)
+[23:07:48] [Transition] Event: SME_EXIT (11)
+[23:07:48] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:07:48]            Active Window: [Window Tracking Disabled]
+[23:07:48] [DI] Attempting to promote to Exclusive Mode...
+[23:07:48] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:07:48] [Transition] InRealtime: true -> false
+[23:07:48] [Diag] De-realtime snapshot: track='Silverstone National Circuit' optionsLoc=0 numVehicles=23 playerHasVehicle=true smUpdateScoring=16
+[23:07:48] [Transition] Control: 0 -> 1 (AI)
+[23:07:48] [Transition] PitState: 0 -> 5 (Unknown)
+[23:07:48] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:07:48] [Safety] mControl Transition: 0 -> 1
+[23:07:48] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:07:50] [Transition] Event: SME_EXIT (7)
+[23:07:50] [Transition] Event: SME_ENTER (14)
+[23:07:50] [Transition] Event: SME_EXIT (16)
+[23:07:50] [Transition] Event: SME_ENTER (5)
+[23:07:59] [Transition] Event: SME_ENTER (1)
+[23:07:59] [Transition] Event: SME_ENTER (13)
+[23:21:44] [Config] Applied preset: RA merc
+[23:22:55] [Transition] Event: SME_EXIT (14)
+[23:22:55] [Transition] Event: SME_STARTUP (12)
+[23:22:55] [Transition] Event: SME_SHUTDOWN (2)
+[23:22:55] [Transition] Event: SME_LOAD (16)
+[23:22:55] [Transition] Event: SME_UNLOAD (16)
+[23:22:55] [Transition] Event: SME_START_SESSION (16)
+[23:22:55] [Transition] Event: SME_END_SESSION (16)
+[23:22:55] [Transition] Event: SME_ENTER_REALTIME (16)
+[23:22:55] [Transition] Event: SME_EXIT_REALTIME (16)
+[23:22:55] [Transition] Event: SME_INIT_APPLICATION (16)
+[23:22:55] [Transition] Event: SME_UNINIT_APPLICATION (16)
+[23:22:55] [Transition] GamePhase: 5 -> 0 (Before Session)
+[23:22:55] [Transition] Session: 1 -> 0 (Test Day)
+[23:22:55] [Transition] Track: 'Silverstone National Circuit' -> ''
+[23:22:55] [Transition] PlayerHasVehicle: true -> false
+[23:22:55] [Transition] NumVehicles: 23 -> 0
+[23:23:40] [Transition] Event: SME_ENTER (4)
+[23:23:40] [Transition] Event: SME_EXIT (16)
+[23:23:40] [Transition] Event: SME_STARTUP (16)
+[23:23:40] [Transition] Event: SME_SHUTDOWN (16)
+[23:23:42] [Transition] Event: SME_ENTER (6)
+[23:23:44] [Transition] Event: SME_ENTER (10)
+[23:23:44] [Transition] Session: 0 -> 1 (Practice)
+[23:23:44] [Transition] Track: '' -> 'Circuit de Spa-Francorchamps'
+[23:23:44] [Transition] Event: SME_ENTER (11)
+[23:23:44] [Transition] Event: SME_EXIT (15)
+[23:23:44] [Transition] Event: SME_ENTER (15)
+[23:23:44] [Transition] Event: SME_EXIT (11)
+[23:23:46] [Transition] Event: SME_EXIT (10)
+[23:23:46] [Transition] NumVehicles: 0 -> 1
+[23:23:46] [Transition] Event: SME_ENTER (10)
+[23:23:46] [Transition] Event: SME_EXIT (16)
+[23:23:46] [Transition] NumVehicles: 1 -> 2
+[23:23:47] [Transition] NumVehicles: 2 -> 3
+[23:23:48] [Transition] NumVehicles: 3 -> 4
+[23:23:48] [Transition] NumVehicles: 4 -> 5
+[23:23:49] [Transition] NumVehicles: 5 -> 6
+[23:23:49] [Transition] NumVehicles: 6 -> 7
+[23:23:50] [Transition] NumVehicles: 7 -> 8
+[23:23:50] [Transition] Event: SME_ENTER (11)
+[23:23:50] [Transition] Event: SME_EXIT (15)
+[23:23:50] [Transition] Event: SME_STARTUP (10)
+[23:23:51] [Transition] Event: SME_ENTER (10)
+[23:23:51] [Transition] Event: SME_EXIT (16)
+[23:23:51] [Transition] GamePhase: 0 -> 5 (Green Flag)
+[23:23:51] [Transition] NumVehicles: 8 -> 9
+[23:23:51] [Transition] Event: SME_ENTER (11)
+[23:23:51] [Transition] Event: SME_EXIT (15)
+[23:23:51] [Transition] NumVehicles: 9 -> 10
+[23:23:51] [Transition] Event: SME_ENTER (15)
+[23:23:51] [Transition] Event: SME_EXIT (11)
+[23:23:52] [Transition] Event: SME_EXIT (10)
+[23:23:52] [Transition] NumVehicles: 10 -> 11
+[23:23:52] [Transition] Event: SME_EXIT (11)
+[23:23:53] [Transition] PitState: 5 -> 0 (None)
+[23:23:53] [Transition] Vehicle: 'D'Station Racing 2024 #777:LM' -> 'Genesis Magma Racing 2026 #17:WEC'
+[23:23:53] [Transition] PlayerHasVehicle: false -> true
+[23:23:53] [Metadata] Vehicle Change Detected: 'Genesis Magma Racing 2026 #17:WEC' (Brand: 'Unknown', Class: 'Hyper', PitGroup: 'Group99', Filename: '17_26_GENE14CD51B0')
+[23:23:53] [Transition] Control: 1 -> 2 (Remote)
+[23:23:53] [Transition] PitState: 0 -> 5 (Unknown)
+[23:23:53] [Safety] mControl Transition: 1 -> 2
+[23:23:53] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:23:53] [Transition] Control: 2 -> 1 (AI)
+[23:23:53] [Transition] PitState: 5 -> 0 (None)
+[23:23:53] [Transition] NumVehicles: 11 -> 10
+[23:23:53] [Safety] mControl Transition: 2 -> 1
+[23:23:53] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:23:55] [Transition] Event: SME_STARTUP (10)
+[23:24:00] [Transition] Event: SME_STARTUP (10)
+[23:24:04] [Transition] Event: SME_EXIT (8)
+[23:24:04] [Transition] Event: SME_ENTER (11)
+[23:24:04] [Transition] Event: SME_EXIT (15)
+[23:24:04] [Transition] Event: SME_ENTER (15)
+[23:24:04] [Transition] Event: SME_EXIT (11)
+[23:24:04] [Transition] InRealtime: false -> true
+[23:24:04] [Transition] Control: 1 -> 0 (Player)
+[23:24:04] [Transition] PitState: 0 -> 5 (Unknown)
+[23:24:04] [Safety] mControl Transition: 1 -> 0
+[23:24:04] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:24:04] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:24:04]            Active Window: [Window Tracking Disabled]
+[23:24:04] [DI] Attempting to promote to Exclusive Mode...
+[23:24:04] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:24:05] [Transition] Event: SME_STARTUP (10)
+[23:24:08] [Safety] FFB Unmuted
+[23:24:08] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:24:10] [Safety] Soft Lock Engaged: Steering -100.1%
+[23:24:10] [Safety] Soft Lock Significant Influence: 12.6 Nm
+[23:24:10] [Safety] Soft Lock Significant Influence: 29.8 Nm
+[23:24:10] [Safety] Soft Lock Significant Influence: 24.0 Nm
+[23:24:10] [Safety] Soft Lock Disengaged
+[23:24:10] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:24:10] [Safety] Soft Lock Disengaged
+[23:24:11] [Transition] Event: SME_STARTUP (10)
+[23:24:16] [Transition] Event: SME_STARTUP (10)
+[23:24:21] [Transition] Event: SME_STARTUP (10)
+[23:24:25] [Transition] Event: SME_EXIT (9)
+[23:24:26] [Transition] Event: SME_EXIT (11)
+[23:24:26] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:24:26]            Active Window: [Window Tracking Disabled]
+[23:24:26] [DI] Attempting to promote to Exclusive Mode...
+[23:24:26] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:24:26] [Transition] Event: SME_STARTUP (10)
+[23:24:26] [Transition] InRealtime: true -> false
+[23:24:26] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=10 playerHasVehicle=true smUpdateScoring=16
+[23:24:26] [Transition] Control: 0 -> 1 (AI)
+[23:24:26] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:24:26] [Safety] mControl Transition: 0 -> 1
+[23:24:26] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:24:31] [Transition] Event: SME_STARTUP (10)
+[23:24:36] [Transition] Event: SME_STARTUP (10)
+[23:24:41] [Transition] Event: SME_STARTUP (10)
+[23:24:46] [Transition] Event: SME_STARTUP (10)
+[23:24:51] [Transition] Event: SME_STARTUP (10)
+[23:24:56] [Transition] Event: SME_STARTUP (10)
+[23:25:01] [Transition] Event: SME_STARTUP (10)
+[23:25:06] [Transition] Event: SME_STARTUP (10)
+[23:25:11] [Transition] Event: SME_STARTUP (10)
+[23:25:16] [Transition] Event: SME_STARTUP (10)
+[23:25:21] [Transition] Event: SME_STARTUP (10)
+[23:25:26] [Transition] Event: SME_STARTUP (10)
+[23:25:31] [Transition] Event: SME_STARTUP (10)
+[23:25:36] [Transition] Event: SME_STARTUP (10)
+[23:25:42] [Transition] Event: SME_STARTUP (10)
+[23:25:47] [Transition] Event: SME_STARTUP (10)
+[23:25:52] [Transition] Event: SME_STARTUP (10)
+[23:25:57] [Transition] Event: SME_STARTUP (10)
+[23:26:02] [Transition] Event: SME_STARTUP (10)
+[23:26:07] [Transition] Event: SME_STARTUP (10)
+[23:26:09] [Transition] NumVehicles: 10 -> 11
+[23:26:12] [Transition] Event: SME_STARTUP (10)
+[23:26:12] [Transition] Event: SME_EXIT (10)
+[23:26:12] [Transition] NumVehicles: 11 -> 12
+[23:26:12] [Transition] Event: SME_EXIT (11)
+[23:26:17] [Transition] Event: SME_STARTUP (10)
+[23:26:22] [Transition] Event: SME_STARTUP (10)
+[23:26:27] [Transition] Event: SME_STARTUP (10)
+[23:26:29] [Transition] Event: SME_ENTER (8)
+[23:26:29] [Transition] Event: SME_EXIT (16)
+[23:26:30] [Transition] Event: SME_ENTER (15)
+[23:26:30] [Transition] Event: SME_EXIT (11)
+[23:26:30] [Transition] InRealtime: false -> true
+[23:26:30] [Transition] Control: 1 -> 0 (Player)
+[23:26:30] [Safety] mControl Transition: 1 -> 0
+[23:26:30] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:26:30] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:26:30]            Active Window: [Window Tracking Disabled]
+[23:26:30] [DI] Attempting to promote to Exclusive Mode...
+[23:26:30] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:26:32] [Transition] Event: SME_STARTUP (10)
+[23:26:32] [Safety] FFB Unmuted
+[23:26:32] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:26:37] [Transition] Event: SME_STARTUP (10)
+[23:26:42] [Transition] Event: SME_STARTUP (10)
+[23:26:47] [Transition] Event: SME_STARTUP (10)
+[23:26:48] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:26:48]            Active Window: [Window Tracking Disabled]
+[23:26:48] [DI] Attempting to promote to Exclusive Mode...
+[23:26:48] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:26:52] [Transition] Event: SME_STARTUP (10)
+[23:26:56] [Transition] PitState: 5 -> 0 (None)
+[23:26:57] [Transition] Event: SME_STARTUP (10)
+[23:27:02] [Transition] Event: SME_STARTUP (10)
+[23:27:07] [Transition] Event: SME_STARTUP (10)
+[23:27:12] [Transition] Event: SME_STARTUP (10)
+[23:27:17] [Transition] Event: SME_STARTUP (10)
+[23:27:22] [Transition] Event: SME_STARTUP (10)
+[23:27:27] [Transition] Event: SME_STARTUP (10)
+[23:27:32] [Transition] Event: SME_STARTUP (10)
+[23:27:35] [Transition] Control: 0 -> 2 (Remote)
+[23:27:35] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:27:35] [Safety] mControl Transition: 0 -> 2
+[23:27:35] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:27:35] [Transition] Control: 2 -> 0 (Player)
+[23:27:35] [Transition] NumVehicles: 12 -> 11
+[23:27:35] [Safety] FFB Unmuted
+[23:27:35] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:27:35] [Safety] mControl Transition: 2 -> 0
+[23:27:35] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:27:37] [Transition] Event: SME_STARTUP (16)
+[23:27:42] [Transition] Event: SME_STARTUP (10)
+[23:27:47] [Transition] Event: SME_STARTUP (10)
+[23:27:52] [Transition] Event: SME_STARTUP (10)
+[23:27:57] [Transition] Event: SME_STARTUP (16)
+[23:28:02] [Transition] Event: SME_STARTUP (16)
+[23:28:07] [Transition] Event: SME_STARTUP (10)
+[23:28:12] [Transition] Event: SME_STARTUP (16)
+[23:28:17] [Transition] Event: SME_STARTUP (10)
+[23:28:22] [Transition] Event: SME_STARTUP (10)
+[23:28:27] [Transition] Event: SME_STARTUP (10)
+[23:28:32] [Transition] Event: SME_STARTUP (16)
+[23:28:37] [Transition] Event: SME_STARTUP (10)
+[23:28:42] [Transition] Event: SME_STARTUP (10)
+[23:28:47] [Transition] Event: SME_STARTUP (16)
+[23:28:48] [Transition] Control: 0 -> 2 (Remote)
+[23:28:48] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:28:48] [Safety] mControl Transition: 0 -> 2
+[23:28:48] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:28:48] [Transition] Control: 2 -> 0 (Player)
+[23:28:48] [Transition] NumVehicles: 11 -> 10
+[23:28:48] [Safety] FFB Unmuted
+[23:28:48] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:28:48] [Safety] mControl Transition: 2 -> 0
+[23:28:48] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:28:53] [Transition] Event: SME_STARTUP (10)
+[23:28:58] [Transition] Event: SME_STARTUP (16)
+[23:29:03] [Transition] Event: SME_STARTUP (16)
+[23:29:03] [Safety] Soft Lock Engaged: Steering -100.1%
+[23:29:03] [Safety] Soft Lock Significant Influence: 9.0 Nm
+[23:29:03] [Safety] Soft Lock Significant Influence: 8.5 Nm
+[23:29:03] [Safety] Soft Lock Disengaged
+[23:29:03] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:03] [Safety] Soft Lock Disengaged
+[23:29:03] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:03] [Safety] Soft Lock Disengaged
+[23:29:03] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:03] [Safety] Soft Lock Disengaged
+[23:29:03] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:03] [Safety] Soft Lock Disengaged
+[23:29:03] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:03] [Safety] Soft Lock Disengaged
+[23:29:03] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:04] [Safety] Soft Lock Disengaged
+[23:29:04] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:04] [Safety] Soft Lock Disengaged
+[23:29:08] [Transition] Event: SME_STARTUP (10)
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Significant Influence: -5.5 Nm
+[23:29:10] [Safety] Soft Lock Significant Influence: -9.7 Nm
+[23:29:10] [Safety] Soft Lock Significant Influence: -7.8 Nm
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:10] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:29:10] [Safety] Soft Lock Disengaged
+[23:29:13] [Transition] Event: SME_STARTUP (16)
+[23:29:18] [Transition] Event: SME_STARTUP (16)
+[23:29:23] [Transition] Event: SME_STARTUP (16)
+[23:29:28] [Safety] Soft Lock Engaged: Steering -100.1%
+[23:29:28] [Safety] Soft Lock Significant Influence: 11.8 Nm
+[23:29:28] [Safety] Soft Lock Significant Influence: 12.3 Nm
+[23:29:28] [Safety] Soft Lock Disengaged
+[23:29:28] [Safety] Soft Lock Engaged: Steering -100.1%
+[23:29:28] [Safety] Soft Lock Significant Influence: 7.5 Nm
+[23:29:28] [Safety] Soft Lock Disengaged
+[23:29:28] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:28] [Safety] Soft Lock Disengaged
+[23:29:28] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:28] [Transition] Event: SME_STARTUP (10)
+[23:29:28] [Safety] Soft Lock Disengaged
+[23:29:28] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:28] [Safety] Soft Lock Disengaged
+[23:29:28] [Safety] Soft Lock Engaged: Steering -100.0%
+[23:29:28] [Safety] Soft Lock Disengaged
+[23:29:32] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:29:32]            Active Window: [Window Tracking Disabled]
+[23:29:32] [DI] Attempting to promote to Exclusive Mode...
+[23:29:32] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:29:33] [Transition] Event: SME_STARTUP (10)
+[23:29:38] [Transition] Event: SME_STARTUP (16)
+[23:29:43] [Transition] Event: SME_STARTUP (16)
+[23:29:48] [Transition] Event: SME_STARTUP (16)
+[23:29:53] [Transition] Event: SME_STARTUP (10)
+[23:29:58] [Transition] Event: SME_STARTUP (10)
+[23:30:01] [Transition] Event: SME_EXIT (9)
+[23:30:01] [Transition] Event: SME_EXIT (11)
+[23:30:01] [Transition] InRealtime: true -> false
+[23:30:01] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=10 playerHasVehicle=true smUpdateScoring=16
+[23:30:01] [Transition] Control: 0 -> 1 (AI)
+[23:30:01] [Transition] PitState: 0 -> 5 (Unknown)
+[23:30:01] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:30:01] [Safety] mControl Transition: 0 -> 1
+[23:30:01] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:30:03] [Transition] Event: SME_STARTUP (10)
+[23:30:08] [Transition] Event: SME_STARTUP (10)
+[23:30:13] [Transition] Event: SME_STARTUP (10)
+[23:30:18] [Transition] Event: SME_STARTUP (16)
+[23:30:23] [Transition] Event: SME_STARTUP (16)
+[23:30:29] [Transition] Event: SME_STARTUP (10)
+[23:30:29] [Transition] Event: SME_EXIT (8)
+[23:30:29] [Transition] Event: SME_EXIT (11)
+[23:30:29] [Transition] InRealtime: false -> true
+[23:30:29] [Transition] Control: 1 -> 0 (Player)
+[23:30:29] [Safety] mControl Transition: 1 -> 0
+[23:30:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:30:29] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:30:29]            Active Window: [Window Tracking Disabled]
+[23:30:29] [DI] Attempting to promote to Exclusive Mode...
+[23:30:29] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:30:30] [Transition] GamePhase: 5 -> 8 (Over)
+[23:30:30] [Transition] Event: SME_ENTER (14)
+[23:30:30] [Transition] Event: SME_EXIT (16)
+[23:30:30] [Transition] Event: SME_ENTER (15)
+[23:30:30] [Transition] Event: SME_EXIT (11)
+[23:30:31] [Safety] FFB Unmuted
+[23:30:31] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:32] [Safety] Soft Lock Significant Influence: -6.9 Nm
+[23:30:32] [Safety] Soft Lock Significant Influence: -21.7 Nm
+[23:30:32] [Safety] Soft Lock Significant Influence: -19.0 Nm
+[23:30:32] [Safety] Soft Lock Disengaged
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:32] [Safety] Soft Lock Significant Influence: -8.6 Nm
+[23:30:32] [Safety] Soft Lock Significant Influence: -7.3 Nm
+[23:30:32] [Safety] Soft Lock Significant Influence: -5.8 Nm
+[23:30:32] [Safety] Soft Lock Significant Influence: -6.1 Nm
+[23:30:32] [Safety] Soft Lock Disengaged
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:32] [Safety] Soft Lock Disengaged
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:32] [Safety] Soft Lock Disengaged
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:32] [Safety] Soft Lock Disengaged
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:32] [Safety] Soft Lock Disengaged
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:32] [Safety] Soft Lock Disengaged
+[23:30:32] [Safety] Soft Lock Engaged: Steering 100.0%
+[23:30:33] [Safety] Soft Lock Disengaged
+[23:30:34] [Transition] Event: SME_STARTUP (16)
+[23:30:38] [Transition] Control: 0 -> 2 (Remote)
+[23:30:38] [Transition] PitState: 5 -> 0 (None)
+[23:30:38] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:30:38] [Safety] mControl Transition: 0 -> 2
+[23:30:38] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:30:38] [Transition] Control: 2 -> 0 (Player)
+[23:30:38] [Transition] PitState: 0 -> 5 (Unknown)
+[23:30:38] [Transition] NumVehicles: 10 -> 9
+[23:30:38] [Safety] FFB Unmuted
+[23:30:38] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:30:38] [Safety] mControl Transition: 2 -> 0
+[23:30:38] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:30:39] [Transition] Event: SME_STARTUP (10)
+[23:30:44] [Transition] Event: SME_STARTUP (10)
+[23:30:49] [Transition] Event: SME_STARTUP (10)
+[23:30:52] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:30:52]            Active Window: [Window Tracking Disabled]
+[23:30:52] [DI] Attempting to promote to Exclusive Mode...
+[23:30:52] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:30:52] [Transition] InRealtime: true -> false
+[23:30:52] [Diag] De-realtime snapshot: track='Circuit de Spa-Francorchamps' optionsLoc=0 numVehicles=9 playerHasVehicle=true smUpdateScoring=16
+[23:30:52] [Transition] Control: 0 -> 1 (AI)
+[23:30:52] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:30:52] [Safety] mControl Transition: 0 -> 1
+[23:30:52] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:30:54] [Transition] Event: SME_STARTUP (16)
+[23:30:59] [Transition] Event: SME_STARTUP (10)
+[23:31:00] [Transition] Event: SME_ENTER (5)
+[23:31:00] [Transition] Event: SME_EXIT (16)
+[23:33:01] [Config] Applied preset: Simagic Alpha 15 Nm (0404)
+[23:40:41] [FFB] Loop Stopped.
+[23:40:41] Shutting down GUI...
+[23:40:41] Stopping FFB Thread...
+[23:40:41] FFB Thread Stopped.
+[23:40:41] [DI] Device released by user.
+[23:40:41] Main Loop Ended. Clean Exit.
+[23:40:41] [DI] Device released by user.
+Logger Shutdown.
