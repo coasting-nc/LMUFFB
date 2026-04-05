@@ -997,12 +997,23 @@ def plot_slip_vs_latg(
         y_valid = binned_envelope[valid_idx].astype(float).values
         
         if len(x_valid) > 5:
-            y_smooth = pd.Series(y_valid).rolling(window=5, center=True, min_periods=1).mean().values
-            ax.plot(x_valid, y_smooth, color=colors[name], linewidth=3, label=f'{name} Envelope')
+            # Group by x and mean to handle duplicate bin centers
+            df_smooth = pd.DataFrame({'x': x_valid, 'y': y_valid}).groupby('x', observed=True).mean().reset_index()
+            x_s = df_smooth['x'].values
+            y_s = df_smooth['y'].rolling(window=5, center=True, min_periods=1).mean().values
             
-            # Gradient Analysis for Knee
-            dy = np.gradient(y_smooth, x_valid)
-            early_mask = x_valid < 0.08
+            # Filter out non-finite values and ensure strictly increasing x for gradient
+            mask = np.isfinite(x_s) & np.isfinite(y_s)
+            x_s, y_s = x_s[mask], y_s[mask]
+
+            if len(x_s) > 5:
+                ax.plot(x_s, y_s, color=colors[name], linewidth=3, label=f'{name} Envelope')
+
+                # Gradient Analysis for Knee
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    dy = np.gradient(y_s, x_s)
+
+                early_mask = x_s < 0.08
             if early_mask.any():
                 max_dy = np.max(dy[early_mask])
                 # Knee is where slope drops to 20% of max, after 0.03 rad
@@ -1010,9 +1021,9 @@ def plot_slip_vs_latg(
                 
                 if len(knee_candidates) > 0:
                     knee_idx = knee_candidates[0]
-                    ax.plot(x_valid[knee_idx], y_smooth[knee_idx], marker='*', color=colors[name], 
+                    ax.plot(x_s[knee_idx], y_s[knee_idx], marker='*', color=colors[name],
                             markersize=16, markeredgecolor='black', 
-                            label=f'{name[:9]} Knee ~{x_valid[knee_idx]:.3f} rad')
+                            label=f'{name[:9]} Knee ~{x_s[knee_idx]:.3f} rad')
 
     ax.set_xlabel('Absolute Slip Angle (rad)')
     ax.set_ylabel('Absolute Lateral G')
@@ -1098,20 +1109,31 @@ def plot_slip_ratio_vs_long_g(
         y_valid = binned_envelope[valid_idx].astype(float).values
         
         if len(x_valid) > 5:
-            y_smooth = pd.Series(y_valid).rolling(window=5, center=True, min_periods=1).mean().values
-            ax.plot(x_valid, y_smooth, color=colors[name], linewidth=3, label=f'{name} Envelope')
-            
-            dy = np.gradient(y_smooth, x_valid)
-            early_mask = x_valid < 0.10
+            # Group by x and mean to handle duplicate bin centers
+            df_smooth = pd.DataFrame({'x': x_valid, 'y': y_valid}).groupby('x', observed=True).mean().reset_index()
+            x_s = df_smooth['x'].values
+            y_s = df_smooth['y'].rolling(window=5, center=True, min_periods=1).mean().values
+
+            # Filter out non-finite values and ensure strictly increasing x for gradient
+            mask = np.isfinite(x_s) & np.isfinite(y_s)
+            x_s, y_s = x_s[mask], y_s[mask]
+
+            if len(x_s) > 5:
+                ax.plot(x_s, y_s, color=colors[name], linewidth=3, label=f'{name} Envelope')
+
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    dy = np.gradient(y_s, x_s)
+
+                early_mask = x_s < 0.10
             if early_mask.any():
                 max_dy = np.max(dy[early_mask])
                 knee_candidates = np.where((dy < max_dy * 0.20) & (x_valid > 0.03))[0]
                 
                 if len(knee_candidates) > 0:
                     knee_idx = knee_candidates[0]
-                    ax.plot(x_valid[knee_idx], y_smooth[knee_idx], marker='*', color=colors[name], 
+                    ax.plot(x_s[knee_idx], y_s[knee_idx], marker='*', color=colors[name],
                             markersize=16, markeredgecolor='black', 
-                            label=f'{name[:13]} Knee ~{x_valid[knee_idx]:.3f}')
+                            label=f'{name[:13]} Knee ~{x_s[knee_idx]:.3f}')
 
     ax.set_xlabel('Absolute Slip Ratio (Front Axle Avg)')
     ax.set_ylabel('Absolute Longitudinal G (Braking)')

@@ -86,8 +86,9 @@ def calculate_suspension_velocity(df: pd.DataFrame) -> pd.DataFrame:
     for col in cols:
         if col in df.columns:
             vel_col = col.replace('Deflection', 'Velocity')
-            # Use Time column for gradient
-            df[vel_col] = np.gradient(df[col], df[time_col])
+            # Use Time column for gradient. Wrap in errstate to ignore potential divide by zero from duplicates.
+            with np.errstate(divide='ignore', invalid='ignore'):
+                df[vel_col] = np.gradient(df[col], df[time_col])
 
     return df
 

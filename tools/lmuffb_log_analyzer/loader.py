@@ -7,8 +7,8 @@ from typing import Tuple, Optional
 from datetime import datetime
 from .models import SessionMetadata
 
-# Define the LogFrame dtype matching C++ LogFrame struct exactly (v0.7.129)
-# 2 doubles (16) + 123 floats (492) + 3 uint8 (3) = 511 bytes
+# Define the LogFrame dtype matching C++ LogFrame struct exactly (v1.1)
+# 2 doubles (16) + 129 floats (516) + 3 uint8 (3) = 535 bytes
 LOG_FRAME_DTYPE_V11 = np.dtype([
     ('timestamp', np.float64),
     ('delta_time', np.float64),
@@ -179,6 +179,7 @@ LOG_FRAME_DTYPE_V11 = np.dtype([
 ])
 
 # v1.2 adds ffb_stationary_damping (v0.7.206)
+# 2 doubles (16) + 130 floats (520) + 3 uint8 (3) = 539 bytes
 LOG_FRAME_DTYPE_V12 = np.dtype([
     ('timestamp', np.float64),
     ('delta_time', np.float64),
