@@ -102,6 +102,17 @@ bool IsVersionLessEqual(const std::string& v1, const std::string& v2) {
     return true;
 }
 
+// Resolve relative m_user_presets_path (e.g. "user_presets") against the process CWD once at load
+// time so preset save/load does not follow the working directory after Win32 file dialogs.
+void EnsureUserPresetsPathAbsolute() {
+    std::filesystem::path p(Config::m_user_presets_path);
+    if (p.is_absolute()) return;
+    std::error_code ec;
+    std::filesystem::path abs = std::filesystem::absolute(p, ec);
+    if (ec) return;
+    Config::m_user_presets_path = abs.lexically_normal().string();
+}
+
 // --- TOML Serialization Helpers ---
 
 toml::table PresetToToml(const Preset& p) {
@@ -864,6 +875,8 @@ void Config::ParsePresetLine(const std::string& line, Preset& current_preset, st
 void Config::Load(FFBEngine& engine, const std::string& filename) {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
 
+    EnsureUserPresetsPathAbsolute();
+
     std::string final_path = filename.empty() ? m_config_path : filename;
     if (!std::filesystem::exists(final_path)) {
         // Auto-migration check (one-time)
@@ -1031,6 +1044,9 @@ void Config::Save(const FFBEngine& engine, const std::string& filename) {
 
 void Config::LoadPresets() {
     std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
+
+    EnsureUserPresetsPathAbsolute();
+
     presets.clear();
 
 #ifdef _WIN32
@@ -1331,7 +1347,7 @@ void Config::ExportPreset(int index, const std::string& filename) {
         }
     } else {
         // For user presets, just copy the file
-        std::string source = "user_presets/" + SanitizeFilename(presets[index].name) + ".toml";
+        std::string source = m_user_presets_path + "/" + SanitizeFilename(presets[index].name) + ".toml";
         if (std::filesystem::exists(source)) {
             try {
                 std::filesystem::copy_file(source, filename, std::filesystem::copy_options::overwrite_existing);

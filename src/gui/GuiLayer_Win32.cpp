@@ -111,7 +111,7 @@ public:
         ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
         ofn.lpstrFile = filename;
         ofn.nMaxFile = MAX_PATH;
-        ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+        ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
         ofn.lpstrDefExt = "ini";
         if (GetOpenFileNameA(&ofn)) {
             outPath = filename;
@@ -130,7 +130,7 @@ public:
         ofn.lpstrFilter = "Preset Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
         ofn.lpstrFile = filename;
         ofn.nMaxFile = MAX_PATH;
-        ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+        ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
         ofn.lpstrDefExt = "ini";
         if (GetSaveFileNameA(&ofn)) {
             outPath = filename;

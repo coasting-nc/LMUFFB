@@ -263,7 +263,7 @@ void GuiLayer::DrawMenuBar(LMUFFB::FFB::FFBEngine& engine) {
             bool can_delete = (m_selected_preset >= 0 && m_selected_preset < (int)Config::presets.size() && !Config::presets[m_selected_preset].is_builtin);
             if (ImGui::MenuItem("Delete", nullptr, false, can_delete)) { Config::DeletePreset(m_selected_preset, engine); m_selected_preset = 0; Config::ApplyPreset(0, engine); }
             ImGui::Separator();
-            if (ImGui::MenuItem("Import...")) { std::string path; if (OpenPresetFileDialogPlatform(path)) { if (Config::ImportPreset(path, engine)) m_selected_preset = (int)Config::presets.size() - 1; } }
+            if (ImGui::MenuItem("Import...")) { std::string path; if (OpenPresetFileDialogPlatform(path)) { if (Config::ImportPreset(path, engine)) m_selected_preset = (int)Config::presets.size() - 1; Config::ApplyPreset(m_selected_preset, engine);} }
             if (ImGui::MenuItem("Export...", nullptr, false, m_selected_preset >= 0)) { std::string path; std::string defaultName = Config::presets[m_selected_preset].name + ".ini"; if (SavePresetFileDialogPlatform(path, defaultName)) Config::ExportPreset(m_selected_preset, path); }
             ImGui::Separator();
             auto DrawCatMenu = [&](const char* cat, auto filter) {
