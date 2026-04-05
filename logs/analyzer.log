@@ -1,0 +1,133 @@
+Processing: lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona.bin
+┌──────────────────────── Log File Info ────────────────────────┐
+│ Session Information                                           │
+│                                                               │
+│ Driver: Auto                                                  │
+│ Vehicle: Genesis Magma Racing 2026 #17:WEC (Unknown Hypercar) │
+│ Track: Circuit de Barcelona                                   │
+│ Duration: 986.5 seconds                                       │
+│ Frames: 195033                                                │
+│ App Version: 0.7.275                                          │
+└───────────────────────────────────────────────────────────────┘
+            Slope Detection Analysis
+┌────────────────────┬───────────────┬──────────┐
+│ Metric             │ Value         │ Status   │
+├────────────────────┼───────────────┼──────────┤
+│ Slope Std Dev      │ 13.60         │ HIGH     │
+│ Slope Range        │ -20.0 to 20.0 │ WIDE     │
+│ Active %           │ 58.8%         │ OK       │
+│ Floor Hits         │ 0.0%          │ OK       │
+│ Oscillation Events │ 715           │ MANY     │
+│ Singularity Events │ 76459         │ CRITICAL │
+│ Worst Singularity  │ 20.0          │ WARN     │
+└────────────────────┴───────────────┴──────────┘
+Grip Estimation Accuracy (Friction Circle
+                Fallback)
+┌──────────────────────┬───────┬────────┐
+│ Metric               │ Value │ Status │
+├──────────────────────┼───────┼────────┤
+│ Correlation (r)      │ 0.653 │ LOW    │
+│ Mean Error (Sliding) │ 0.371 │ INFO   │
+│ False Positive Rate  │ 0.1%  │ OK     │
+└──────────────────────┴───────┴────────┘
+           Yaw & Clipping Analysis
+┌─────────────────────────┬─────────┬────────┐
+│ Metric                  │ Value   │ Status │
+├─────────────────────────┼─────────┼────────┤
+│ Threshold Crossing Rate │ 3.53 Hz │ OK     │
+│ Yaw Kick Contribution   │ 296.7%  │ HIGH   │
+│ Total Clipping          │ 0.8%    │ OK     │
+└─────────────────────────┴─────────┴────────┘
+          Lateral Load Analysis
+┌──────────────────────┬────────┬────────┐
+│ Metric               │ Value  │ Status │
+├──────────────────────┼────────┼────────┤
+│ Load Transfer Corr   │ -0.890 │ LOW    │
+│ Load Contribution    │ 44.0%  │ INFO   │
+│ G-Force Contribution │ 56.0%  │ INFO   │
+└──────────────────────┴────────┴────────┘
+
+Issues Detected:
+  • HIGH SLOPE VARIANCE (13.60) - Algorithm may be unstable
+  • LOW GRIP ON STRAIGHTS (0.78) - Slope stuck at negative
+  • HIGH SIGNAL NOISE (9.3 Hz) - Slope signal is jittery
+  • POOR GRIP CORRELATION (0.52) - Slope detection is not matching game physics.
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_timeseries.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_tire_curve.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_tire_curve_longitudinal.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_dalpha_hist.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_slope_corr.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_yaw_diag.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_health.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_yaw_fft.png
+  [OK] Created: logs\analysis
+lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_yaw_thrashing.png
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: divide by zero encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: invalid value encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: divide by zero encountered in divide b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: invalid value encountered in divide  b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: divide by zero encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: invalid value encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in multiply  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in add  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1307: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1314: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: divide by zero encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: invalid value encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: divide by zero encountered in divide  b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: invalid value encountered in divide  b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: divide by zero encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: invalid value encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in multiply  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in add  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1307: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1314: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: divide by zero encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: invalid value encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: divide by zero encountered in divide  b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: invalid value encountered in divide  b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: divide by zero encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: invalid value encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in multiply  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in add  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1307: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1314: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: divide by zero encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1290: RuntimeWarning: invalid value encountered in divide  a = -(dx2)/(dx1 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: divide by zero encountered in divide  b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1291: RuntimeWarning: invalid value encountered in divide  b = (dx2 - dx1) / (dx1 * dx2)
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: divide by zero encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1292: RuntimeWarning: invalid value encountered in divide  c = dx1 / (dx2 * (dx1 + dx2))
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in multiply  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1298: RuntimeWarning: invalid value encountered in add  out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1307: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
+Python\Python310\lib\site-packages\numpy\lib\_function_base_impl.py:1314: RuntimeWarning: invalid value encountered in scalar divide  out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_susp_corr.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_bottoming.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_clipping.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_pull_detector.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_unopposed.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_lateral_diag.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_longitudinal_diag.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_raw_telemetry.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_load_estimation.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_grip_estimation.png
+C:\Users\Dennis\source\repos\LMUFFB\build\Release\tools\lmuffb_log_analyzer\plots.py:1406: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  pure_lat_df['SlipBin'] = pd.cut(np.abs(pure_lat_df['SlipAngleFL']), bins)
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_true_tire_curve.png
+  [OK] Created: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona\lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona_report.txt
+
+Analysis complete! Results saved to: logs\analysis lmuffb_log_2026-04-06_03-04-17_Unknown_Hypercar_Circuit_de_Barcelona
+
