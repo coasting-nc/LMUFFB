@@ -9,7 +9,7 @@ from .models import SessionMetadata
 
 # Define the LogFrame dtype matching C++ LogFrame struct exactly (v0.7.129)
 # 2 doubles (16) + 123 floats (492) + 3 uint8 (3) = 511 bytes
-LOG_FRAME_DTYPE = np.dtype([
+LOG_FRAME_DTYPE_V11 = np.dtype([
     ('timestamp', np.float64),
     ('delta_time', np.float64),
 
@@ -178,6 +178,180 @@ LOG_FRAME_DTYPE = np.dtype([
     ('marker', np.uint8)
 ])
 
+# v1.2 adds ffb_stationary_damping (v0.7.206)
+LOG_FRAME_DTYPE_V12 = np.dtype([
+    ('timestamp', np.float64),
+    ('delta_time', np.float64),
+
+    # --- PROCESSED 400Hz DATA (Smooth) ---
+    ('speed', np.float32),
+    ('lat_accel', np.float32),
+    ('long_accel', np.float32),
+    ('yaw_rate', np.float32),
+
+    ('steering', np.float32),
+    ('throttle', np.float32),
+    ('brake', np.float32),
+
+    # --- RAW 100Hz GAME DATA (Step-function) ---
+    ('raw_steering', np.float32),
+    ('raw_throttle', np.float32),
+    ('raw_brake', np.float32),
+    ('raw_lat_accel', np.float32),
+    ('raw_long_accel', np.float32),
+    ('raw_game_yaw_accel', np.float32),
+    ('raw_game_shaft_torque', np.float32),
+    ('raw_game_gen_torque', np.float32),
+
+    ('raw_load_fl', np.float32),
+    ('raw_load_fr', np.float32),
+    ('raw_load_rl', np.float32),
+    ('raw_load_rr', np.float32),
+
+    ('raw_slip_vel_lat_fl', np.float32),
+    ('raw_slip_vel_lat_fr', np.float32),
+    ('raw_slip_vel_lat_rl', np.float32),
+    ('raw_slip_vel_lat_rr', np.float32),
+
+    ('raw_slip_vel_long_fl', np.float32),
+    ('raw_slip_vel_long_fr', np.float32),
+    ('raw_slip_vel_long_rl', np.float32),
+    ('raw_slip_vel_long_rr', np.float32),
+
+    ('raw_ride_height_fl', np.float32),
+    ('raw_ride_height_fr', np.float32),
+    ('raw_ride_height_rl', np.float32),
+    ('raw_ride_height_rr', np.float32),
+
+    ('raw_susp_deflection_fl', np.float32),
+    ('raw_susp_deflection_fr', np.float32),
+    ('raw_susp_deflection_rl', np.float32),
+    ('raw_susp_deflection_rr', np.float32),
+
+    ('raw_susp_force_fl', np.float32),
+    ('raw_susp_force_fr', np.float32),
+    ('raw_susp_force_rl', np.float32),
+    ('raw_susp_force_rr', np.float32),
+
+    ('raw_brake_pressure_fl', np.float32),
+    ('raw_brake_pressure_fr', np.float32),
+    ('raw_brake_pressure_rl', np.float32),
+    ('raw_brake_pressure_rr', np.float32),
+
+    ('raw_rotation_fl', np.float32),
+    ('raw_rotation_fr', np.float32),
+    ('raw_rotation_rl', np.float32),
+    ('raw_rotation_rr', np.float32),
+
+    # --- ALGORITHM STATE (400Hz) ---
+    ('slip_angle_fl', np.float32),
+    ('slip_angle_fr', np.float32),
+    ('slip_angle_rl', np.float32),
+    ('slip_angle_rr', np.float32),
+
+    ('slip_ratio_fl', np.float32),
+    ('slip_ratio_fr', np.float32),
+    ('slip_ratio_rl', np.float32),
+    ('slip_ratio_rr', np.float32),
+
+    ('grip_fl', np.float32),
+    ('grip_fr', np.float32),
+    ('grip_rl', np.float32),
+    ('grip_rr', np.float32),
+
+    ('load_fl', np.float32),
+    ('load_fr', np.float32),
+    ('load_rl', np.float32),
+    ('load_rr', np.float32),
+
+    ('ride_height_fl', np.float32),
+    ('ride_height_fr', np.float32),
+    ('ride_height_rl', np.float32),
+    ('ride_height_rr', np.float32),
+
+    ('susp_deflection_fl', np.float32),
+    ('susp_deflection_fr', np.float32),
+    ('susp_deflection_rl', np.float32),
+    ('susp_deflection_rr', np.float32),
+
+    ('calc_slip_angle_front', np.float32),
+    ('calc_slip_angle_rear', np.float32),
+    ('calc_grip_front', np.float32),
+    ('calc_grip_rear', np.float32),
+    ('grip_delta', np.float32),
+    ('calc_rear_lat_force', np.float32),
+
+    ('smoothed_yaw_accel', np.float32),
+    ('lat_load_norm', np.float32),
+
+    ('dG_dt', np.float32),
+    ('dAlpha_dt', np.float32),
+    ('slope_current', np.float32),
+    ('slope_raw_unclamped', np.float32),
+    ('slope_numerator', np.float32),
+    ('slope_denominator', np.float32),
+    ('hold_timer', np.float32),
+    ('input_slip_smoothed', np.float32),
+    ('slope_smoothed', np.float32),
+    ('confidence', np.float32),
+
+    ('surface_type_fl', np.float32),
+    ('surface_type_fr', np.float32),
+    ('slope_torque', np.float32),
+    ('slew_limited_g', np.float32),
+
+    ('session_peak_torque', np.float32),
+    ('long_load_factor', np.float32),
+    ('structural_mult', np.float32),
+    ('vibration_mult', np.float32),
+    ('steering_angle_deg', np.float32),
+    ('steering_range_deg', np.float32),
+    ('debug_freq', np.float32),
+    ('tire_radius', np.float32),
+
+    # --- FFB COMPONENTS (400Hz) ---
+    ('ffb_total', np.float32),
+    ('ffb_base', np.float32),
+    ('ffb_understeer_drop', np.float32),
+    ('ffb_oversteer_boost', np.float32),
+    ('ffb_sop', np.float32),
+    ('ffb_rear_torque', np.float32),
+    ('ffb_scrub_drag', np.float32),
+    ('ffb_yaw_kick', np.float32),
+    ('ffb_gyro_damping', np.float32),
+    ('ffb_stationary_damping', np.float32),
+    ('ffb_road_texture', np.float32),
+    ('ffb_slide_texture', np.float32),
+    ('ffb_lockup_vibration', np.float32),
+    ('ffb_spin_vibration', np.float32),
+    ('ffb_bottoming_crunch', np.float32),
+    ('ffb_abs_pulse', np.float32),
+    ('ffb_soft_lock', np.float32),
+
+    ('extrapolated_yaw_accel', np.float32),
+    ('derived_yaw_accel', np.float32),
+
+    ('ffb_shaft_torque', np.float32),
+    ('ffb_gen_torque', np.float32),
+    ('ffb_grip_factor', np.float32),
+    ('speed_gate', np.float32),
+    ('front_load_peak_ref', np.float32),
+
+    ('approx_load_fl', np.float32),
+    ('approx_load_fr', np.float32),
+    ('approx_load_rl', np.float32),
+    ('approx_load_rr', np.float32),
+
+    # --- SYSTEM (400Hz) ---
+    ('physics_rate', np.float32),
+    ('clipping', np.uint8),
+    ('warn_bits', np.uint8),
+    ('marker', np.uint8)
+])
+
+# Default for latest
+LOG_FRAME_DTYPE = LOG_FRAME_DTYPE_V12
+
 def load_log(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
     """
     Load lmuFFB telemetry log file (Binary or CSV).
@@ -250,6 +424,16 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
                     is_lz4 = True
                     break
 
+        # Select dtype based on version
+        dtype = LOG_FRAME_DTYPE_V12
+        if metadata.log_version in ["v1.0", "v1.1"]:
+            dtype = LOG_FRAME_DTYPE_V11
+        elif metadata.log_version == "v1.2":
+            dtype = LOG_FRAME_DTYPE_V12
+        else:
+            # Try to guess based on file size vs element size if version is unknown
+            pass
+
         if is_lz4:
             all_data = []
             while True:
@@ -261,11 +445,32 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
                 if len(compressed_data) < compressed_size:
                     break
                 uncompressed_data = lz4.block.decompress(compressed_data, uncompressed_size=uncompressed_size)
-                all_data.append(np.frombuffer(uncompressed_data, dtype=LOG_FRAME_DTYPE))
-            data = np.concatenate(all_data) if all_data else np.array([], dtype=LOG_FRAME_DTYPE)
+
+                # Verify buffer size matches multiple of element size
+                if len(uncompressed_data) % dtype.itemsize != 0:
+                    # Fallback/Auto-detect if version mismatch
+                    if len(uncompressed_data) % LOG_FRAME_DTYPE_V11.itemsize == 0:
+                        dtype = LOG_FRAME_DTYPE_V11
+                    elif len(uncompressed_data) % LOG_FRAME_DTYPE_V12.itemsize == 0:
+                        dtype = LOG_FRAME_DTYPE_V12
+
+                all_data.append(np.frombuffer(uncompressed_data, dtype=dtype))
+            data = np.concatenate(all_data) if all_data else np.array([], dtype=dtype)
         else:
             # Read the rest of the file into a numpy array
-            data = np.fromfile(f, dtype=LOG_FRAME_DTYPE)
+            # For uncompressed, we can also try to auto-detect if version is weird
+            pos = f.tell()
+            f.seek(0, 2)
+            file_size = f.tell() - pos
+            f.seek(pos)
+
+            if file_size % dtype.itemsize != 0:
+                if file_size % LOG_FRAME_DTYPE_V11.itemsize == 0:
+                    dtype = LOG_FRAME_DTYPE_V11
+                elif file_size % LOG_FRAME_DTYPE_V12.itemsize == 0:
+                    dtype = LOG_FRAME_DTYPE_V12
+
+            data = np.fromfile(f, dtype=dtype)
 
     df = pd.DataFrame(data)
 
@@ -383,6 +588,7 @@ def load_bin(filepath: str) -> Tuple[SessionMetadata, pd.DataFrame]:
         'ffb_scrub_drag': 'FFBScrubDrag',
         'ffb_yaw_kick': 'FFBYawKick',
         'ffb_gyro_damping': 'FFBGyroDamping',
+        'ffb_stationary_damping': 'FFBStationaryDamping',
         'ffb_road_texture': 'FFBRoadTexture',
         'ffb_slide_texture': 'FFBSlideTexture',
         'ffb_lockup_vibration': 'FFBLockupVibration',
@@ -448,12 +654,15 @@ def _parse_header(path: Path) -> SessionMetadata:
                 key, value = line.split(':', 1)
                 header_data[key.strip().lower().replace(' ', '_')] = value.strip()
             elif 'LMUFFB Telemetry Log' in line:
-                parts = line.split(':')
-                if len(parts) > 1:
-                    header_data['log_version'] = parts[1].strip()
+                if 'v1.2' in line:
+                    header_data['log_version'] = 'v1.2'
+                elif 'v1.1' in line:
+                    header_data['log_version'] = 'v1.1'
+                elif 'v1.0' in line:
+                    header_data['log_version'] = 'v1.0'
 
     return SessionMetadata(
-        log_version=header_data.get('lmuffb_telemetry_log', 'unknown'),
+        log_version=header_data.get('log_version', header_data.get('lmuffb_telemetry_log', 'unknown')),
         timestamp=_parse_datetime(header_data.get('date', '')),
         app_version=header_data.get('app_version', 'unknown'),
         driver_name=header_data.get('driver', 'Unknown'),
@@ -472,9 +681,10 @@ def _parse_header(path: Path) -> SessionMetadata:
         optimal_slip_ratio=float(header_data.get('optimal_slip_ratio', 0.12)),
         slope_enabled=header_data.get('slope_detection', '').lower() == 'enabled',
         slope_sensitivity=float(header_data.get('slope_sensitivity', 0.5)),
-        slope_threshold=float(header_data.get('slope_threshold', -0.3)),
+        slope_threshold=float(header_data.get('slope_min_threshold', header_data.get('slope_threshold', -0.3))),
         slope_alpha_threshold=_safe_float(header_data.get('slope_alpha_threshold')),
         slope_decay_rate=_safe_float(header_data.get('slope_decay_rate')),
         dynamic_normalization=header_data.get('dynamic_normalization', '').lower() == 'enabled',
         auto_load_normalization=header_data.get('auto_load_normalization', '').lower() == 'enabled',
+        stationary_damping=float(header_data.get('stationary_damping', 0.0)),
     )
