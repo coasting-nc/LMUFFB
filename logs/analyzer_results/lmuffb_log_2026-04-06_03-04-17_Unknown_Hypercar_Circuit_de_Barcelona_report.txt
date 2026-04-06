@@ -1,0 +1,100 @@
+============================================================
+               LMUFFB DIAGNOSTIC REPORT
+============================================================
+
+SESSION INFORMATION
+--------------------
+Driver:       Auto
+Vehicle:      Genesis Magma Racing 2026 #17:WEC
+Car Class:    Hypercar
+Car Brand:    Unknown
+Track:        Circuit de Barcelona
+Date:         2026-04-06 09:34:53.161091
+App Version:  0.7.275
+Duration:     986.5 seconds
+
+SETTINGS
+--------------------
+Gain:               1.00
+Understeer Effect:  0.66
+SOP Effect:          0.78
+Lateral Load Effect: 0.83
+Long. Load Effect:   0.45
+SOP Scale:           1.00
+SOP Smoothing:       0.010
+Slope Detection:    Enabled
+Slope Sensitivity:  0.50
+Slope Threshold:    -0.30
+Dynamic Norm (Torque): Disabled
+Auto Load Norm (Vib):  Enabled
+
+SLOPE ANALYSIS
+--------------------
+Slope Mean:       4.87
+Slope Std Dev:    13.60
+Slope Range:      -20.0 to 20.0
+Active Time:      58.8%
+Floor Hits:       0.0%
+Grip Correlation: 0.519
+False Pos. Rate:  0.0%
+Oscillations:      715 events detected
+Singularities:     76459 events detected (Worst: 20.0)
+
+LATERAL LOAD ANALYSIS
+--------------------
+Load Transfer Corr:  -0.890
+LatG vs Load Corr:   0.958
+Load Contribution:   44.0%
+G-Force Contribution: 56.0%
+
+LONGITUDINAL LOAD ANALYSIS
+--------------------
+Multiplier Mean:     0.99x
+Multiplier Range:    0.24x to 3.13x
+Status:              ACTIVE
+
+GRIP ESTIMATION ACCURACY (Friction Circle Fallback)
+--------------------
+Correlation (r):       0.653
+Mean Error (Sliding):  0.371
+False Positive Rate:   0.1%
+Evaluation:            POOR (Consider tuning Optimal Slip Angle/Ratio)
+
+LOAD ESTIMATION ACCURACY (Fallback Diagnostics)
+--------------------
+Note: FFB relies on the 'Dynamic Ratio' (Current / Static), not absolute Newtons.
+Absolute Mean Error: -542.2 N
+Dynamic Ratio Error: 0.116x
+Dynamic Correlation: 0.909
+Status:              EXCELLENT (Approximation perfectly matches real dynamics)
+
+SIGNAL QUALITY & STABILITY
+--------------------
+Zero-Crossing Rate: 9.33 Hz
+Binary Residence:   49.0%
+D-Energy Ratio:     5.19
+
+YAW KICK & STABILITY
+--------------------
+Threshold Crossing Rate: 3.53 Hz
+Yaw Kick Contribution:  296.7%
+Straightaway Yaw Mean:   -0.001 Nm
+
+CLIPPING ANALYSIS
+--------------------
+Total Clipping Time: 0.8%
+Top Contributors during clipping:
+  - FFBBase: 8.61 Nm
+  - FFBYawKick: 4.69 Nm
+  - FFBUndersteerDrop: 0.72 Nm
+
+ISSUES DETECTED
+--------------------
+  [!] HIGH SLOPE VARIANCE (13.60) - Algorithm may be unstable
+  [!] LOW GRIP ON STRAIGHTS (0.78) - Slope stuck at negative
+  [!] HIGH SIGNAL NOISE (9.3 Hz) - Slope signal is jittery
+  [!] POOR GRIP CORRELATION (0.52) - Slope detection is not matching game physics.
+  [!] EXCESSIVE YAW KICK (296.7%) - Yaw kick is dominating FFB
+  [!] LONGITUDINAL LOAD: Braking in a straight line produces near-zero FFB because the effect is a multiplier on base steering force (which is zero when driving straight). Turn the wheel slightly to feel the weight transfer.
+
+============================================================
