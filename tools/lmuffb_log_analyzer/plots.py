@@ -1405,7 +1405,7 @@ def plot_true_tire_curve(
     
     # Extract pure lateral points (low longitudinal slip) to see the clean curve
     pure_lat_mask = np.abs(plot_df['SlipRatioFL']) < 0.02
-    pure_lat_df = plot_df[pure_lat_mask]
+    pure_lat_df = plot_df[pure_lat_mask].copy()
 
     fig, ax = plt.subplots(figsize=(12, 8))
     
