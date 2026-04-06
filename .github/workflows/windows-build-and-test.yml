@@ -465,14 +465,14 @@ jobs:
     name: Deploy Hub to GitHub Pages
     runs-on: ubuntu-latest
     needs: [windows-release, windows-python-tests, linux-coverage, linux-sanitizers]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
     permissions:
       contents: write
       pages: write
       id-token: write
     environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      name: ${{ github.ref == 'refs/heads/main' && 'github-pages' || 'branch-previews' }}
+      url: ${{ steps.deployment.outputs.page_url }}${{ steps.target.outputs.subdir == '.' && '' || '/' }}${{ steps.target.outputs.subdir }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -505,9 +505,22 @@ jobs:
         path: temp_download
         merge-multiple: true
 
+    - name: Determine Deployment Target
+      id: target
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "subdir=." >> $GITHUB_OUTPUT
+          echo "is_main=true" >> $GITHUB_OUTPUT
+        else
+          # Sanitize branch name for URL (replace / with -)
+          SAFE_NAME=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
+          echo "subdir=branches/$SAFE_NAME" >> $GITHUB_OUTPUT
+          echo "is_main=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Generate Content
       run: |
-        SUBDIR="."
+        SUBDIR="${{ steps.target.outputs.subdir }}"
         
         # Clear existing content for this subdir to avoid stale artifacts
         rm -rf "site/$SUBDIR/report"
@@ -525,10 +538,17 @@ jobs:
         cp -f icon/icon.png "site/$SUBDIR/icon.png"
         
         # Generate the landing page for this target
-        PAGE_TITLE="lmuFFB Nightly Hub"
-        PAGE_DESC="Automated builds and reports from the <code>main</code> branch."
-        BRANCH_INFO=""
-        BACK_LINK=""
+        if [[ "${{ steps.target.outputs.is_main }}" == "true" ]]; then
+          PAGE_TITLE="lmuFFB Nightly Hub"
+          PAGE_DESC="Automated builds and reports from the <code>main</code> branch."
+          BRANCH_INFO=""
+          BACK_LINK=""
+        else
+          PAGE_TITLE="lmuFFB Development Preview"
+          PAGE_DESC="Automated builds and reports from the experimental <code>${{ github.ref_name }}</code> branch."
+          BRANCH_INFO="<p style='background: #fffbdd; padding: 10px; border: 1px solid #d4a017; border-radius: 6px;'>⚠️ <strong>Notice:</strong> This is a development build from a feature branch. For the latest nightly build (main branch), visit the <a href='../../'>Main Hub</a>.</p>"
+          BACK_LINK="<p><a href='../../'>&larr; Back to Main Hub</a></p>"
+        fi
 
         cat <<EOF > "site/$SUBDIR/index.html"
         <!DOCTYPE html>
@@ -596,7 +616,7 @@ jobs:
         
         # Only commit and push if there are changes
         if [ -n "$(git status --porcelain)" ]; then
-          git commit -m "Update site from ${{ github.ref_name }}@${{ github.sha }}"
+          git commit -m "Update ${{ steps.target.outputs.subdir }} from ${{ github.ref_name }}@${{ github.sha }}"
           
           # Robust push with retries and rebase to handle concurrency
           MAX_RETRIES=5
@@ -615,7 +635,7 @@ jobs:
             echo "⚠️ Push failed (likely a race condition). Pulling latest and rebasing..."
             # Fetch and rebase to incorporate remote changes
             git fetch origin gh-pages
-            # Use rebase to keep history clean
+            # Use rebase to keep history clean; since each branch uses its own subdir, conflicts are unlikely
             git rebase origin/gh-pages || git rebase --abort
             
             # Wait a bit before retrying with some jitter
