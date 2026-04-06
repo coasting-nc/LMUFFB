@@ -83,12 +83,27 @@ def calculate_suspension_velocity(df: pd.DataFrame) -> pd.DataFrame:
     if time_col not in df.columns:
         return df
 
+    # To handle potential duplicate timestamps that cause division by zero in np.gradient,
+    # we first calculate the gradient on unique timestamps and then map it back.
+    df_unique = df.drop_duplicates(subset=[time_col])
+
+    if len(df_unique) < 2:
+        for col in cols:
+            if col in df.columns:
+                df[col.replace('Deflection', 'Velocity')] = 0.0
+        return df
+
     for col in cols:
         if col in df.columns:
             vel_col = col.replace('Deflection', 'Velocity')
-            # Use Time column for gradient. Wrap in errstate to ignore potential divide by zero from duplicates.
+
+            # Calculate gradient on unique timestamps
             with np.errstate(divide='ignore', invalid='ignore'):
-                df[vel_col] = np.gradient(df[col], df[time_col])
+                unique_vel = np.gradient(df_unique[col], df_unique[time_col])
+
+            # Map back to original dataframe
+            vel_series = pd.Series(unique_vel, index=df_unique.index)
+            df[vel_col] = vel_series.reindex(df.index, method='ffill').fillna(0.0)
 
     return df
 
