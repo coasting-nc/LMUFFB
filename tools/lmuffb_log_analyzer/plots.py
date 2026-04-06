@@ -998,7 +998,7 @@ def plot_slip_vs_latg(
         
         if len(x_valid) > 5:
             # Group by x and mean to handle duplicate bin centers
-            df_smooth = pd.DataFrame({'x': x_valid, 'y': y_valid}).groupby('x', observed=True).mean().reset_index()
+            df_smooth = pd.DataFrame({'x': x_valid, 'y': y_valid}).groupby('x', observed=False).mean().reset_index()
             x_s = df_smooth['x'].values
             y_s = df_smooth['y'].rolling(window=5, center=True, min_periods=1).mean().values
             
@@ -1017,7 +1017,7 @@ def plot_slip_vs_latg(
             if early_mask.any():
                 max_dy = np.max(dy[early_mask])
                 # Knee is where slope drops to 20% of max, after 0.03 rad
-                knee_candidates = np.where((dy < max_dy * 0.20) & (x_valid > 0.03))[0]
+                knee_candidates = np.where((dy < max_dy * 0.20) & (x_s > 0.03))[0]
                 
                 if len(knee_candidates) > 0:
                     knee_idx = knee_candidates[0]
@@ -1110,7 +1110,7 @@ def plot_slip_ratio_vs_long_g(
         
         if len(x_valid) > 5:
             # Group by x and mean to handle duplicate bin centers
-            df_smooth = pd.DataFrame({'x': x_valid, 'y': y_valid}).groupby('x', observed=True).mean().reset_index()
+            df_smooth = pd.DataFrame({'x': x_valid, 'y': y_valid}).groupby('x', observed=False).mean().reset_index()
             x_s = df_smooth['x'].values
             y_s = df_smooth['y'].rolling(window=5, center=True, min_periods=1).mean().values
 
@@ -1127,7 +1127,7 @@ def plot_slip_ratio_vs_long_g(
                 early_mask = x_s < 0.10
             if early_mask.any():
                 max_dy = np.max(dy[early_mask])
-                knee_candidates = np.where((dy < max_dy * 0.20) & (x_valid > 0.03))[0]
+                knee_candidates = np.where((dy < max_dy * 0.20) & (x_s > 0.03))[0]
                 
                 if len(knee_candidates) > 0:
                     knee_idx = knee_candidates[0]
