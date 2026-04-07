@@ -30,6 +30,7 @@ class SessionMetadata(BaseModel):
     slope_decay_rate: Optional[float] = None
     dynamic_normalization: bool = False
     auto_load_normalization: bool = False
+    stationary_damping: float = 0.0 # v0.7.206
 
 class MarkerEvent(BaseModel):
     """User-triggered marker"""
