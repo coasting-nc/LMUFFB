@@ -497,28 +497,14 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     ImGui::PushTextWrapPos(0.0f); // Wrap text to the active column/window width.
                     ImGui::TableNextColumn();
 
-                    bool use_in_game_ffb = (engine.m_front_axle.torque_source == 1);
-                    if (GuiWidgets::Checkbox("Use In-Game FFB (400Hz Native)", &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) {
-                        std::lock_guard<std::recursive_mutex> lock(g_engine_mutex);
-                        engine.m_front_axle.torque_source = use_in_game_ffb ? 1 : 0;
-                        Config::Save(engine);
-                      }
-                    if (engine.m_front_axle.torque_source == 0) {
-                        const char* recon_modes[] = { "Zero Latency (Extrapolation)", "Smooth (Interpolation)" };
-                        IntSetting("  FFB Reconstruction", &engine.m_front_axle.steering_100hz_reconstruction, recon_modes, sizeof(recon_modes)/sizeof(recon_modes[0]), Tooltips::STEERING_100HZ_RECONSTRUCTION);
-                    }
-                    
                     BoolSetting("Invert FFB Signal", &engine.m_invert_force, Tooltips::INVERT_FFB);
 
-                    bool prev_structural = engine.m_general.dynamic_normalization_enabled;
-                    if (GuiWidgets::Checkbox("Enable Dynamic Normalization (Session Peak)", &engine.m_general.dynamic_normalization_enabled, Tooltips::DYNAMIC_NORMALIZATION_ENABLE).changed) {
-                        if (prev_structural && !engine.m_general.dynamic_normalization_enabled) {
-                            engine.ResetNormalization();
-                          }
+                    bool use_in_game_ffb = (engine.m_front_axle.torque_source == 1);
+                    if (GuiWidgets::Checkbox("In-Game FFB", &use_in_game_ffb, Tooltips::USE_INGAME_FFB).changed) {
+                        std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); engine.m_front_axle.torque_source = use_in_game_ffb ? 1 : 0;
                         Config::Save(engine);
-                      }
-
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    }
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     FloatSetting("Master Gain", &engine.m_general.gain, 0.0f, 2.0f, FormatPct(engine.m_general.gain), Tooltips::MASTER_GAIN);
@@ -528,17 +514,22 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     FloatSetting("Min Force", &engine.m_general.min_force, 0.0f, 0.20f, "%.3f", Tooltips::MIN_FORCE);
                     ImGui::Unindent();
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
                     BoolSetting("Steering Soft Lock", &engine.m_advanced.soft_lock_enabled, Tooltips::SOFT_LOCK_ENABLE);
                     if (engine.m_advanced.soft_lock_enabled) {
-                            ImGui::Indent();
-                            FloatSetting("Stiffness", &engine.m_advanced.soft_lock_stiffness, 0.0f, 100.0f, "%.1f", Tooltips::SOFT_LOCK_STIFFNESS);
-                            FloatSetting("Damping", &engine.m_advanced.soft_lock_damping, 0.0f, 5.0f, "%.2f", Tooltips::SOFT_LOCK_DAMPING);
-                            ImGui::Unindent();
-                          }
+                        ImGui::AdvanceRow();
+                        ImGui::Indent();
+                        ImGui::TextDisabled("Steering: %.1f° (%.0f)", m_latest_steering_angle, m_latest_steering_range); 
+                        ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); //blank column
+                        ImGui::TableNextColumn();
+                        BoolSetting("Steerlock from REST API", &engine.m_advanced.rest_api_enabled, Tooltips::REST_API_ENABLE);
+                        FloatSetting("Stiffness", &engine.m_advanced.soft_lock_stiffness, 0.0f, 100.0f, "%.1f", Tooltips::SOFT_LOCK_STIFFNESS);
+                        FloatSetting("Damping", &engine.m_advanced.soft_lock_damping, 0.0f, 5.0f, "%.2f", Tooltips::SOFT_LOCK_DAMPING);
+                        ImGui::Unindent();
+                    }
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
                     // Dynamically format the tooltip to show the exact fade-out speed in km/h
                     char stat_damp_tooltip[512];
@@ -549,18 +540,16 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
 
                     if (!engine.m_advanced.stationary_damping == 0) {
                     ImGui::Indent();
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextDisabled("Stationary Enabled:"); 
-                    ImGui::TableSetColumnIndex(1); 
-                    float lower_kmh = engine.m_advanced.speed_gate_lower * 3.6f;
-                    if (ImGui::SliderFloat("below", &lower_kmh, 0.0f, 20.0f, "%.1f km/h")) {
+                    ImGui::AdvanceRow(); 
+                    ImGui::TextDisabled("Stationary Enabled:"); ImGui::TableSetColumnIndex(1); float lower_kmh = engine.m_advanced.speed_gate_lower * 3.6f;
+                    if (ImGui::SliderFloat("below", &lower_kmh, 0.0f, 20.0f, "%.1f km/h")) { 
                         engine.m_advanced.speed_gate_lower = lower_kmh / 3.6f;
-                        if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f)
-                        engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
-                        }
+                        if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f) engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
+                    }
                     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::MUTE_BELOW);
                     if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextDisabled("Stationary Disabled:"); 
+                    ImGui::AdvanceRow(); ImGui::TextDisabled("Stationary Disabled:"); 
                     ImGui::TableSetColumnIndex(1); 
                     float upper_kmh = engine.m_advanced.speed_gate_upper * 3.6f;
                     if (ImGui::SliderFloat("above", &upper_kmh, 1.0f, 50.0f, "%.1f km/h")) {
@@ -573,50 +562,63 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     ImGui::Unindent();
                     }
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Advanced/ Experimental settings:");
-                    ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); //blank column
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextDisabled("Steering: %.1f° (%.0f)", m_latest_steering_angle, m_latest_steering_range); 
-                    ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); //blank column
-                    ImGui::TableNextColumn();
-                    BoolSetting("Steerlock from REST API", &engine.m_advanced.rest_api_enabled, Tooltips::REST_API_ENABLE);
-
-                    BoolSetting("Static Noise Filter", &engine.m_front_axle.static_notch_enabled, Tooltips::STATIC_NOISE_FILTER);
-                    if (engine.m_front_axle.static_notch_enabled) {
-                        ImGui::Indent();
-                        FloatSetting("Target Frequency", &engine.m_front_axle.static_notch_freq, 10.0f, 100.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_FREQ);
-                        FloatSetting("Filter Width", &engine.m_front_axle.static_notch_width, 0.1f, 10.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_WIDTH);
-                        ImGui::Unindent();
-                      }
-
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                    ImGui::TableNextColumn();
-                    const char* recon_modes[] = { "Zero Latency (Predictive)", "Smooth (Delayed)" };
-                    GuiWidgets::Result res = GuiWidgets::Combo("Telemetry Upsampling", &engine.m_advanced.aux_telemetry_reconstruction, recon_modes, 2, Tooltips::AUX_TELEMETRY_RECONSTRUCTION);
-                    if (res.changed) {
-                        engine.UpdateUpsamplerModes();
-                        Config::Save(engine);
+                    ImGui::SkipRow(); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
+                    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.6f, 0.2f, 1.0f)); // Background color
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.0f, 1.0f));   // Text color
+                    if (ImGui::CollapsingHeader("Advanced/ Experimental settings:", ImGuiTreeNodeFlags_CollapsingHeader))
+                    {
+                        ImGui::SkipRow(); // Blank spacer row
+                        ImGui::TableNextColumn();
+                        bool prev_structural = engine.m_general.dynamic_normalization_enabled;
+                        if (GuiWidgets::Checkbox("Dynamic Normalization (Session Peak)", &engine.m_general.dynamic_normalization_enabled, Tooltips::DYNAMIC_NORMALIZATION_ENABLE).changed) {
+                            if (prev_structural && !engine.m_general.dynamic_normalization_enabled) {
+                                engine.ResetNormalization();
+                            }
+                            Config::Save(engine);
                         }
+                        ImGui::TableNextRow();
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0);
-                    if (ImGui::TreeNode("Spike Protection")) {
-                        ImGui::TableNextRow(); ImGui::TableNextColumn();
-                        FloatSetting("Detection Threshold", &engine.m_safety.m_config.spike_detection_threshold, 10.0f, 2000.0f, "%.0f u/s", Tooltips::SPIKE_DETECTION_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-                        FloatSetting("Detection Override", &engine.m_safety.m_config.immediate_spike_threshold, 100.0f, 5000.0f, "%.0f u/s", Tooltips::IMMEDIATE_SPIKE_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-                        FloatSetting("Cut Duration", &engine.m_safety.m_config.window_duration, 0.0f, 10.0f, "%.1f s", Tooltips::SAFETY_WINDOW_DURATION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-                        FloatSetting("Cut Strength", &engine.m_safety.m_config.gain_reduction, 0.0f, 1.0f, FormatPct(engine.m_safety.m_config.gain_reduction), Tooltips::SAFETY_GAIN_REDUCTION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-                        FloatSetting("Cut Smoothing", &engine.m_safety.m_config.smoothing_tau, 0.001f, 1.0f, "%.3f s", Tooltips::SAFETY_SMOOTHING_TAU, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-                        FloatSetting("Cut Slew", &engine.m_safety.m_config.slew_full_scale_time_s, 0.1f, 5.0f, "%.2f s", Tooltips::SAFETY_SLEW_FULL_SCALE_TIME_S, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
-                        
-                        BoolSetting("Protect during Stutters", &engine.m_safety.m_config.stutter_safety_enabled, Tooltips::STUTTER_SAFETY_ENABLE);
-                        if (engine.m_safety.m_config.stutter_safety_enabled) {
-                            FloatSetting("Stutter Threshold", &engine.m_safety.m_config.stutter_threshold, 1.1f, 5.0f, "%.2fx", Tooltips::STUTTER_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                        if (ImGui::TreeNode("Upsampling")) {
+                            ImGui::TableNextRow();
+                            const char* recon_modes[] = { "Zero Latency (Extrapolation)", "Smooth (Interpolation)" };
+                            IntSetting("Steering Reconstruction", &engine.m_front_axle.steering_100hz_reconstruction, recon_modes, sizeof(recon_modes)/sizeof(recon_modes[0]), Tooltips::STEERING_100HZ_RECONSTRUCTION);
+                            
+                            const char* recon_modes[] = { "Zero Latency (Predictive)", "Smooth (Delayed)" };
+                            GuiWidgets::Result res = GuiWidgets::Combo("Telemetry Reconstruction", &engine.m_advanced.aux_telemetry_reconstruction, recon_modes, 2, Tooltips::AUX_TELEMETRY_RECONSTRUCTION);
+                            if (res.changed) {
+                                engine.UpdateUpsamplerModes();
+                                Config::Save(engine);
+                            }
                         }
                         ImGui::TreePop();
-                    } 
+
+                        BoolSetting("Static Noise Filter", &engine.m_front_axle.static_notch_enabled, Tooltips::STATIC_NOISE_FILTER);
+                        if (engine.m_front_axle.static_notch_enabled) {
+                            ImGui::Indent();
+                            FloatSetting("Target Frequency", &engine.m_front_axle.static_notch_freq, 10.0f, 100.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_FREQ);
+                            FloatSetting("Filter Width", &engine.m_front_axle.static_notch_width, 0.1f, 10.0f, "%.1f Hz", Tooltips::STATIC_NOTCH_WIDTH);
+                            ImGui::Unindent();
+                        }
+
+                        ImGui::SkipRow(); // Blank spacer row
+                        if (ImGui::TreeNode("Spike Protection")) {
+                            ImGui::TableNextRow(); ImGui::TableNextColumn();
+                            FloatSetting("Detection Threshold", &engine.m_safety.m_config.spike_detection_threshold, 10.0f, 2000.0f, "%.0f u/s", Tooltips::SPIKE_DETECTION_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                            FloatSetting("Detection Override", &engine.m_safety.m_config.immediate_spike_threshold, 100.0f, 5000.0f, "%.0f u/s", Tooltips::IMMEDIATE_SPIKE_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                            FloatSetting("Cut Duration", &engine.m_safety.m_config.window_duration, 0.0f, 10.0f, "%.1f s", Tooltips::SAFETY_WINDOW_DURATION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                            FloatSetting("Cut Strength", &engine.m_safety.m_config.gain_reduction, 0.0f, 1.0f, FormatPct(engine.m_safety.m_config.gain_reduction), Tooltips::SAFETY_GAIN_REDUCTION, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                            FloatSetting("Cut Smoothing", &engine.m_safety.m_config.smoothing_tau, 0.001f, 1.0f, "%.3f s", Tooltips::SAFETY_SMOOTHING_TAU, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                            FloatSetting("Cut Slew", &engine.m_safety.m_config.slew_full_scale_time_s, 0.1f, 5.0f, "%.2f s", Tooltips::SAFETY_SLEW_FULL_SCALE_TIME_S, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                            
+                            BoolSetting("Protect during Stutters", &engine.m_safety.m_config.stutter_safety_enabled, Tooltips::STUTTER_SAFETY_ENABLE);
+                            if (engine.m_safety.m_config.stutter_safety_enabled) {
+                                FloatSetting("Stutter Threshold", &engine.m_safety.m_config.stutter_threshold, 1.1f, 5.0f, "%.2fx", Tooltips::STUTTER_THRESHOLD, [&]() { std::lock_guard<std::recursive_mutex> lock(g_engine_mutex); });
+                            }
+                        } 
+                        ImGui::TreePop();
+                    }
+                    ImGui::PopStyleColor(2);  
                     ImGui::PopTextWrapPos();
                     ImGui::EndTable();
                 }
@@ -635,7 +637,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     ImGui::TableNextColumn();
                     
                     BoolSetting("Pure Passthrough", &engine.m_front_axle.torque_passthrough, Tooltips::PURE_PASSTHROUGH);
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
                     if (engine.m_front_axle.torque_source == 1) {
                         FloatSetting("In-Game FFB Gain", &engine.m_front_axle.ingame_ffb_gain, 0.0f, 2.0f, FormatPct(engine.m_front_axle.ingame_ffb_gain), Tooltips::INGAME_FFB_GAIN);
@@ -657,14 +659,14 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         FloatSetting("Lateral G Boost (Slide)", &engine.m_rear_axle.oversteer_boost, 0.0f, 4.0f, FormatPct(engine.m_rear_axle.oversteer_boost),Tooltips::OVERSTEER_BOOST);
                     }
                     if (engine.m_slope_detection.enabled && engine.m_rear_axle.oversteer_boost > 0.01f) {
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0);
+                        ImGui::AdvanceRow();
                         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Lateral G Boost (Slide) disabled, Slope Detection is ON.");
                         ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
                         ImGui::TableNextColumn();
                     }
                     FloatSetting("Lateral G", &engine.m_rear_axle.sop_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.sop_effect, FFBEngine::BASE_NM_SOP_LATERAL), Tooltips::LATERAL_G);
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     FloatSetting("Self-Align Torque", &engine.m_rear_axle.rear_align_effect, 0.0f, 2.0f, FormatDecoupled(engine.m_rear_axle.rear_align_effect, FFBEngine::BASE_NM_REAR_ALIGN),Tooltips::REAR_ALIGN_TORQUE);
@@ -674,7 +676,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         
                     }
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     FloatSetting("Yaw Kick", &engine.m_rear_axle.sop_yaw_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_rear_axle.sop_yaw_gain, FFBEngine::BASE_NM_YAW_KICK),Tooltips::YAW_KICK);
@@ -713,10 +715,10 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         }
                     }
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn(); ImGui::TextColored(ImVec4(0.0f, 0.6f, 0.85f, 1.0f), "Advanced SoP");
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     FloatSetting("Gyro Damping", &engine.m_advanced.gyro_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_advanced.gyro_gain, FFBEngine::BASE_NM_GYRO_DAMPING), Tooltips::GYRO_DAMPING);
@@ -766,7 +768,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         }
                         ImGui::Unindent();
                     }
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     FloatSetting("Longitudinal G-Force", &engine.m_load_forces.long_load_effect, 0.0f, 10.0f, FormatPct(engine.m_load_forces.long_load_effect), Tooltips::DYNAMIC_WEIGHT);
@@ -781,7 +783,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         }
                         ImGui::Unindent();
                     }
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     FloatSetting("Chassis Inertia (Load)", &engine.m_grip_estimation.chassis_inertia_smoothing, 0.000f, 0.100f, "%.3f s",
@@ -791,8 +793,8 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                             ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "Simulation: %d ms", ms);
                         });
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     if (GuiWidgets::Checkbox("Dynamic Load Sensitivity", &engine.m_grip_estimation.load_sensitivity_enabled, Tooltips::LOAD_SENSITIVITY_ENABLE).deactivated) {
@@ -814,7 +816,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         }
                         
                     if (!engine.m_slope_detection.enabled) {
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                        ImGui::SkipRow(); // Blank spacer row
                         ImGui::TableNextColumn();
                         FloatSetting("Slip Angle Smoothing", &engine.m_grip_estimation.slip_angle_smoothing, 0.000f, 0.100f, "%.3f s",Tooltips::SLIP_ANGLE_SMOOTHING,
                         [&]() {
@@ -826,18 +828,18 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         FloatSetting("Optimal Slip Ratio", &engine.m_grip_estimation.optimal_slip_ratio, 0.04f, 0.20f, "%.3f",Tooltips::OPTIMAL_SLIP_RATIO);
                     }
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
                     ImGui::Text("Live Slope: %.3f | Grip: %.0f%%", engine.m_slope_current, engine.m_slope_smoothed_output * 100.0f);
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     
                     if (engine.m_slope_detection.enabled) {                    
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Slope Detection (Adv/Experimental)");
+                        ImGui::SkipRow(); // Blank spacer row
+                        ImGui::SkipRow(); // Blank spacer row
+                        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Slope Detection (Adv/Experimental)");
                         ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); //blank column
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                        ImGui::SkipRow(); // Blank spacer row
                         
                         ImGui::TableNextColumn(); 
                         BoolSetting("Slope Confidence Gate", &engine.m_slope_detection.confidence_enabled, Tooltips::SLOPE_CONFIDENCE_GATE);
@@ -846,7 +848,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         FloatSetting("Slope Decay Rate", &engine.m_slope_detection.decay_rate, 0.5f, 20.0f, "%.1f", Tooltips::SLOPE_DECAY_RATE);
                         FloatSetting("Slope Threshold", &engine.m_slope_detection.min_threshold, -1.0f, 0.0f, "%.2f", Tooltips::SLOPE_THRESHOLD);
                         FloatSetting("Slope Alpha Threshold", &engine.m_slope_detection.alpha_threshold, 0.001f, 0.100f, "%.3f", Tooltips::SLOPE_ALPHA_THRESHOLD);
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0);
+                        ImGui::AdvanceRow();
                         ImGui::Text("Slope Filter Size");
                         ImGui::TableSetColumnIndex(1);
                         int window = engine.m_slope_detection.sg_window;
@@ -888,7 +890,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         Config::Save(engine);
                     }
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     BoolSetting("Lockup Vibration", &engine.m_braking.lockup_enabled, Tooltips::LOCKUP_VIBRATION);
@@ -903,7 +905,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         ImGui::Unindent(); 
                     }
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     BoolSetting("ABS Pulse", &engine.m_braking.abs_pulse_enabled, Tooltips::ABS_PULSE);
@@ -914,7 +916,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         ImGui::Unindent(); 
                     }
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     BoolSetting("Flatspot Suppression", &engine.m_front_axle.flatspot_suppression, Tooltips::FLATSPOT_SUPPRESSION);
@@ -930,12 +932,12 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     
                     if (engine.m_braking.lockup_enabled) {
                                         
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Advanced settings:");
+                        ImGui::SkipRow(); // Blank spacer row
+                        ImGui::SkipRow(); // Blank spacer row
+                        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Advanced settings:");
                         ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); //blank column
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0);
+                        ImGui::SkipRow(); // Blank spacer row
+                        ImGui::AdvanceRow();
                         if (ImGui::TreeNode("Lockup Response/ Prediction:")) {
                             ImGui::TableNextRow(); ImGui::TableNextColumn();
                             FloatSetting("Progression Curve", &engine.m_braking.lockup_gamma, 0.1f, 3.0f, "%.1f", Tooltips::LOCKUP_GAMMA);
@@ -973,8 +975,8 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                     FloatSetting("Vibration Gain", &engine.m_vibration.vibration_gain, 0.0f, 2.0f, FormatPct(engine.m_vibration.vibration_gain), Tooltips::VIBRATION_GAIN);
                     FloatSetting("Vibration Limit", &engine.m_vibration.texture_load_cap, 1.0f, 3.0f, "%.2fx", Tooltips::TEXTURE_LOAD_CAP);
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
                     
 
@@ -988,7 +990,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         ImGui::Unindent();  
                     }
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     BoolSetting("Road Details", &engine.m_vibration.road_enabled, Tooltips::ROAD_DETAILS);
@@ -1000,7 +1002,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         }
                     }
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     BoolSetting("Spin Vibration", &engine.m_vibration.spin_enabled, Tooltips::SPIN_VIBRATION);
@@ -1011,12 +1013,12 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         ImGui::Unindent();  
                     }
 
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     FloatSetting("Scrub Drag", &engine.m_vibration.scrub_drag_gain, 0.0f, 1.0f, FormatDecoupled(engine.m_vibration.scrub_drag_gain, FFBEngine::BASE_NM_SCRUB_DRAG), Tooltips::SCRUB_DRAG);
                     
-                    ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f)); ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f)); // Blank spacer row
+                    ImGui::SkipRow(); // Blank spacer row
                     ImGui::TableNextColumn();
 
                     BoolSetting("Bottoming Effect", &engine.m_vibration.bottoming_enabled, Tooltips::BOTTOMING_EFFECT);
