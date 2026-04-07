@@ -595,6 +595,8 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
                         engine.m_advanced.speed_gate_lower = lower_kmh / 3.6f;
                         if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f) engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
                     }
+                        if (engine.m_advanced.speed_gate_upper <= engine.m_advanced.speed_gate_lower + 0.1f) engine.m_advanced.speed_gate_upper = engine.m_advanced.speed_gate_lower + 0.5f;
+                    }
                     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tooltips::MUTE_BELOW);
                     if (ImGui::IsItemDeactivatedAfterEdit()) Config::Save(engine);
                     
