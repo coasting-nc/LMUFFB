@@ -151,6 +151,7 @@ bool GuiLayer::Init() {
 
     ImPlot::CreateContext();
     SetupGUIStyle();
+    SetupPlotStyle();
 
     ImGui_ImplGlfw_InitForOpenGL(g_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
