@@ -2,23 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.276]
+## [0.7.275]
 
 ### Fixed
-- **Preset Path Resolution**: Resolved an issue where relative user preset paths (e.g., "user_presets") would drift if the process working directory was changed by Windows file dialogs. The path is now resolved to an absolute location at load time.
+- **Robust Correlation Calculation**: Resolved `RuntimeWarning: invalid value encountered in divide` in `np.corrcoef` by implementing `safe_corrcoef` which handles zero-variance signals (e.g., stationary car) by returning 0.0.
+- **Log Analyzer Buffer Mismatch**: Fixed "buffer size must be a multiple of element size" error by adding version-aware loading for v1.2 telemetry logs (539 bytes) while maintaining backward compatibility with v1.1 (535 bytes).
+- **Numerical Stability**: Resolved `RuntimeWarning` (division by zero) in `plots.py` and `yaw_analyzer.py` by handling duplicate timestamps and non-unique bin centers.
+- **Pandas Warnings**: Fixed `SettingWithCopyWarning` in `plot_true_tire_curve` by ensuring explicit `.copy()` calls on sliced DataFrames.
 
 ### Added
-- **Immediate Preset Application**: Updated the GUI to automatically select and apply settings from a preset immediately after it is imported, streamlining the user workflow.
-
-### Optimized
-- **FFB Core Loop ("Bolt")**:
-    - **UPSAMPLED TIC**: Implemented real-time upsampling for the 100Hz In-Game Direct Torque (TIC) source to 400Hz, eliminating 100Hz step noise and graininess for TIC users.
-    - **Conditional Snapshots**: Optimized the 400Hz physics loop by conditionally skipping expensive FFB state snapshots when the Analysis graphs are not visible.
-    - **Fast Math**: Replaced expensive `std::pow` calls in the critical path with a `fast_pow` implementation for common gamma values (1.0, 2.0).
-
----
-
-## [0.7.275]
+- **Log Loading Auto-detection**: Implemented a robust fallback in `loader.py` that auto-detects the record size based on the buffer's modulo if the version header is missing or incorrect.
+- **New Unit Tests**: Added `tools/lmuffb_log_analyzer/tests/test_version_compat.py` and `test_corrcoef_robustness.py` to verify compatibility with multiple log formats and robust math handling.
 
 ### Updated
 - Recompiled with new LMU 1.3 shared memory interface.
@@ -26,7 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Cumulative changes from version 0.7.272 till 0.7.276
+## Cumulative changes from version 0.7.272 till 0.7.275
 
 ## [0.7.275]
 ### Updated
@@ -3353,16 +3347,6 @@ test_ffb_persistent_load.cpp, switched to strncpy_s on Windows.
   - **Eliminated "Fixed but not Called" Bug**: Tests are now automatically registered at startup, removing the need to manually add them to `Run_Category()` functions.
   - **Code Cleanup**: Removed all `Run_*` legacy runner functions from `test_ffb_common.cpp` and `test_ffb_common.h`.
   - **Verification**: All 591 tests passing.
-
-## [0.7.8] - 2026-02-12
-### Fixed
-- **Log Analyzer Buffer Mismatch**: Fixed "buffer size must be a multiple of element size" error by adding version-aware loading for v1.2 telemetry logs (539 bytes) while maintaining backward compatibility with v1.1 (535 bytes).
-- **Numerical Stability**: Resolved `RuntimeWarning` (division by zero) in `plots.py` and `yaw_analyzer.py` by handling duplicate timestamps and non-unique bin centers.
-- **Pandas Warnings**: Fixed `SettingWithCopyWarning` in `plot_true_tire_curve` by ensuring explicit `.copy()` calls on sliced DataFrames.
-
-### Added
-- **Log Loading Auto-detection**: Implemented a robust fallback in `loader.py` that auto-detects the record size based on the buffer's modulo if the version header is missing or incorrect.
-- **New Unit Tests**: Added `tools/lmuffb_log_analyzer/tests/test_version_compat.py` to verify compatibility with multiple log formats and auto-detection logic.
 
 ## [0.7.7] - 2026-02-04
 ### Changed

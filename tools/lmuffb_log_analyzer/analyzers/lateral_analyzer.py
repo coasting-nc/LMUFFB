@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any
 from ..models import SessionMetadata
+from ..utils import safe_corrcoef
 
 def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
     """
@@ -123,7 +124,7 @@ def analyze_load_estimation(df: pd.DataFrame) -> Dict[str, Any]:
             # How closely does the approximation match the real dynamic shape?
             ratio_error = np.abs(approx_ratio - raw_ratio)
             results['ratio_error_mean'] = float(ratio_error.mean())
-            results['ratio_correlation'] = float(np.corrcoef(raw_ratio, approx_ratio)[0, 1])
+            results['ratio_correlation'] = float(safe_corrcoef(raw_ratio, approx_ratio))
 
     return results
 

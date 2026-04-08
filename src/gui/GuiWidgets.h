@@ -30,18 +30,6 @@ namespace GuiWidgets {
     private:
         bool previous;
     };
-    
-    inline void SkipRow() {
-        ImGui::TableNextRow(); 
-        ImGui::TableSetColumnIndex(0); ImGui::Dummy(ImVec2(0.0f, 4.0f));
-        ImGui::TableSetColumnIndex(1); ImGui::Dummy(ImVec2(0.0f, 4.0f));
-        ImGui::TableNextRow(); 
-        ImGui::TableSetColumnIndex(0);
-    }
-
-    inline void AdvanceRow() {
-        ImGui::TableNextRow(); ImGui::TableSetColumnIndex(0);
-    }
 
     inline void AdvanceColumn() {
         if (UseTableLayoutFlag()) {

@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Any
+from ..utils import safe_corrcoef
 
 def analyze_slope_stability(df: pd.DataFrame, metadata=None, threshold: float = 0.02) -> Dict[str, Any]:
     """
@@ -104,7 +105,7 @@ def analyze_slope_stability(df: pd.DataFrame, metadata=None, threshold: float = 
         # Only evaluate correlation when the car is actually sliding
         slip_mask = (raw_front_grip < 0.98) | (df[grip_col] < 0.98)
         if slip_mask.sum() > 50:
-            results['slope_grip_correlation'] = float(np.corrcoef(raw_front_grip[slip_mask], df.loc[slip_mask, grip_col])[0, 1])
+            results['slope_grip_correlation'] = float(safe_corrcoef(raw_front_grip[slip_mask], df.loc[slip_mask, grip_col]))
 
             # False Positive Rate: Slope says sliding (<0.9), but Raw says gripping (>0.98)
             false_positives = (df[grip_col] < 0.9) & (raw_front_grip > 0.98)

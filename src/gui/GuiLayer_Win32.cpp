@@ -204,7 +204,6 @@ bool GuiLayer::Init() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     ImPlot::CreateContext();
     SetupGUIStyle();
-    SetupPlotStyle();
     ImGui_ImplWin32_Init(g_hwnd);
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
     return true;

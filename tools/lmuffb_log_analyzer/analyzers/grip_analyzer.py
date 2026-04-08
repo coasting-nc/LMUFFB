@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any
 from ..models import SessionMetadata
+from ..utils import safe_corrcoef
 
 def analyze_grip_estimation(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
     results = {}
@@ -70,10 +71,7 @@ def analyze_grip_estimation(df: pd.DataFrame, metadata: SessionMetadata) -> Dict
         results['mean_error_during_slip'] = float(np.abs(error).mean())
         results['std_error_during_slip'] = float(error.std())
 
-        if raw_front_grip[slip_mask].std() > 0 and approx_grip[slip_mask].std() > 0:
-            results['correlation'] = float(np.corrcoef(raw_front_grip[slip_mask], approx_grip[slip_mask])[0, 1])
-        else:
-            results['correlation'] = 0.0
+        results['correlation'] = float(safe_corrcoef(raw_front_grip[slip_mask], approx_grip[slip_mask]))
 
         false_positives = (approx_grip < 0.9) & (raw_front_grip > 0.98)
         results['false_positive_rate'] = float(false_positives.mean() * 100.0)

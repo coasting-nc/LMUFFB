@@ -109,10 +109,7 @@ void EnsureUserPresetsPathAbsolute() {
     if (p.is_absolute()) return;
     std::error_code ec;
     std::filesystem::path abs = std::filesystem::absolute(p, ec);
-    if (ec) {
-        Logger::Get().Log("[Config] Error resolving absolute path for presets: %s", ec.message().c_str());
-        return;
-    }
+    if (ec) return;
     Config::m_user_presets_path = abs.lexically_normal().string();
 }
 

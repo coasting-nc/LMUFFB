@@ -6,6 +6,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Optional, List
 from .models import SessionMetadata
+from .utils import safe_corrcoef
 from .analyzers.yaw_analyzer import get_fft, calculate_suspension_velocity
 
 def _safe_legend(ax, loc='upper right'):
@@ -376,7 +377,7 @@ def plot_load_estimation_diagnostic(
         valid_mask = (raw_avg > 1.0) & (approx_avg > 1.0)
         if valid_mask.sum() > 100:
             ratio_error_mean = np.abs(approx_ratio[valid_mask] - raw_ratio[valid_mask]).mean()
-            ratio_corr = np.corrcoef(raw_ratio[valid_mask], approx_ratio[valid_mask])[0, 1]
+            ratio_corr = safe_corrcoef(raw_ratio[valid_mask], approx_ratio[valid_mask])
             stats_text = f"Dynamic Corr: {ratio_corr:.3f}\nMean Error: {ratio_error_mean:.3f}x"
         else:
             stats_text = "Stats: N/A (Insufficient Data)"
@@ -416,7 +417,7 @@ def plot_load_estimation_diagnostic(
     # Panel 7: Correlation Scatter
     ax_corr = fig.add_subplot(gs[3, 0])
     if len(raw_filt) > 0:
-        correlation = np.corrcoef(raw_filt, approx_filt)[0, 1]
+        correlation = safe_corrcoef(raw_filt, approx_filt)
         ax_corr.scatter(raw_filt, approx_filt, alpha=0.1, s=2, color='#9C27B0')
 
         # Identity line
@@ -479,10 +480,7 @@ def plot_grip_estimation_diagnostic(
     if slip_mask.sum() > 50:
         error_array = approx_grip[slip_mask] - raw_front_grip[slip_mask]
         mean_err = error_array.mean()
-        if raw_front_grip[slip_mask].std() > 0 and approx_grip[slip_mask].std() > 0:
-            corr = np.corrcoef(raw_front_grip[slip_mask], approx_grip[slip_mask])[0, 1]
-        else:
-            corr = 0.0
+        corr = safe_corrcoef(raw_front_grip[slip_mask], approx_grip[slip_mask])
         stats_text = f"During Slip Events:\nCorrelation (r): {corr:.3f}\nMean Error: {mean_err:.3f}"
     else:
         stats_text = "Not enough slip events\nto calculate stats."
