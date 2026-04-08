@@ -670,7 +670,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
         }; 
         
 
-        if (engine.m_front_axle.torque_passthrough == 0) {
+        //if (engine.m_front_axle.torque_passthrough == 0) {
             if (ImGui::BeginTabItem("Steering")) { 
                 ImGui::Indent();                 
                 if (ImGui::BeginTable("SteeringTable", 2, ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_SizingStretchProp)) {
@@ -893,7 +893,7 @@ void GuiLayer::DrawTuningWindow(LMUFFB::FFB::FFBEngine& engine) {
             ImGui::Unindent(); 
             ImGui::EndTabItem(); 
             }
-        }
+        //}
           
         if (ImGui::BeginTabItem("Braking")) { 
                 ImGui::Indent();                 
