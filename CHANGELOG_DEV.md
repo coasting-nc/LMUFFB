@@ -3354,6 +3354,16 @@ test_ffb_persistent_load.cpp, switched to strncpy_s on Windows.
   - **Code Cleanup**: Removed all `Run_*` legacy runner functions from `test_ffb_common.cpp` and `test_ffb_common.h`.
   - **Verification**: All 591 tests passing.
 
+## [0.7.8] - 2026-02-12
+### Fixed
+- **Log Analyzer Buffer Mismatch**: Fixed "buffer size must be a multiple of element size" error by adding version-aware loading for v1.2 telemetry logs (539 bytes) while maintaining backward compatibility with v1.1 (535 bytes).
+- **Numerical Stability**: Resolved `RuntimeWarning` (division by zero) in `plots.py` and `yaw_analyzer.py` by handling duplicate timestamps and non-unique bin centers.
+- **Pandas Warnings**: Fixed `SettingWithCopyWarning` in `plot_true_tire_curve` by ensuring explicit `.copy()` calls on sliced DataFrames.
+
+### Added
+- **Log Loading Auto-detection**: Implemented a robust fallback in `loader.py` that auto-detects the record size based on the buffer's modulo if the version header is missing or incorrect.
+- **New Unit Tests**: Added `tools/lmuffb_log_analyzer/tests/test_version_compat.py` to verify compatibility with multiple log formats and auto-detection logic.
+
 ## [0.7.7] - 2026-02-04
 ### Changed
 - **Test Suite Refactoring**:
