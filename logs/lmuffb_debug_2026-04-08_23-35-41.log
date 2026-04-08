@@ -1,0 +1,432 @@
+[23:35:41] Logger Initialized. Version: 0.7.276
+[23:35:41] Starting lmuFFB (C++ Port)...
+[23:35:41] Application Started. Version: 0.7.276
+[23:35:41] Mode: GUI
+[23:35:41] Logger Initialized. Version: 0.7.276
+[23:35:41] Logger re-initialized with user path: logs/
+[23:35:41] Window Created: 0000000000060614
+[23:35:41] D3D11 Device and Flip-Model Swap Chain Created. Feature Level: 0xB000
+[23:35:41] [DI] Initialized.
+[23:35:41] [Warning] Legacy rFactor 2 Shared Memory Plugin detected. This may conflict with LMU 1.2 data.
+[23:35:41] [Info] Legacy rF2 plugin detected (not a problem for LMU 1.2+)
+[23:35:41] [GameConnector] Connected to LMU Shared Memory.
+[23:35:41] [GUI] Main Loop Started.
+[23:35:41] [FFB] Loop Started.
+[23:35:41] [Transition] Event: SME_ENTER (5)
+[23:35:41] [Transition] Event: SME_EXIT (16)
+[23:35:41] [Transition] Event: SME_STARTUP (16)
+[23:35:41] [Transition] Event: SME_SHUTDOWN (16)
+[23:35:41] [Transition] Event: SME_LOAD (16)
+[23:35:41] [Transition] Event: SME_UNLOAD (16)
+[23:35:41] [Transition] Event: SME_START_SESSION (16)
+[23:35:41] [Transition] Event: SME_END_SESSION (16)
+[23:35:41] [Transition] Event: SME_ENTER_REALTIME (16)
+[23:35:41] [Transition] Event: SME_EXIT_REALTIME (16)
+[23:35:41] [Transition] Event: SME_INIT_APPLICATION (16)
+[23:35:41] [Transition] Event: SME_UNINIT_APPLICATION (16)
+[23:35:41] [Transition] OptionsLocation: 255 -> 0 (Main UI)
+[23:35:41] [Transition] GamePhase: 255 -> 5 (Green Flag)
+[23:35:41] [Transition] Session: -1 -> 1 (Practice)
+[23:35:41] [Transition] Track: '' -> 'Circuit de Barcelona'
+[23:35:41] [Transition] Control: -2 -> 1 (AI)
+[23:35:41] [Transition] PitState: 255 -> 5 (Unknown)
+[23:35:41] [Transition] Vehicle: '' -> 'Racing Spirit of Léman 2025 #10:LM'
+[23:35:41] [Transition] SteeringRange: -1.00 -> 0.00
+[23:35:41] [Transition] PlayerHasVehicle: false -> true
+[23:35:41] [Transition] NumVehicles: -1 -> 16
+[23:35:41] [Metadata] Vehicle Change Detected: 'Racing Spirit of Léman 2025 #10:LM' (Brand: 'Unknown', Class: 'GT3', PitGroup: 'Group10', Filename: '10_25_RSLM3C7CA220')
+[23:35:41] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:35:41] [WARNING] Invalid PhysicalSteeringWheelRange (<=0) for Racing Spirit of Léman 2025 #10:LM. Soft Lock and Steering UI may be incorrect.
+[23:35:41] [DI] Device released by user.
+[23:35:41] [DI] Attempting to create device...
+[23:35:41] [DI] Setting Data Format...
+[23:35:41] [DI] Attempting to set Cooperative Level (Exclusive | Background)...
+[23:35:41] [DI] Cooperative Level set to EXCLUSIVE.
+[23:35:41] [DI] Acquiring device...
+[23:35:41] [DI] Device Acquired in EXCLUSIVE mode.
+[23:35:41] [DI] SUCCESS: Physical Device fully initialized and FFB Effect created.
+[23:36:28] [Transition] Event: SME_ENTER (4)
+[23:36:30] [Transition] Event: SME_ENTER (6)
+[23:36:32] [Transition] Event: SME_ENTER (10)
+[23:36:32] [Transition] GamePhase: 5 -> 0 (Before Session)
+[23:36:32] [Transition] NumVehicles: 16 -> 0
+[23:36:32] [Transition] Event: SME_ENTER (15)
+[23:36:32] [Transition] Event: SME_EXIT (11)
+[23:36:32] [Transition] PlayerHasVehicle: true -> false
+[23:36:33] [Transition] Event: SME_EXIT (10)
+[23:36:33] [Transition] NumVehicles: 0 -> 1
+[23:36:34] [Transition] Event: SME_ENTER (10)
+[23:36:34] [Transition] Event: SME_EXIT (16)
+[23:36:34] [Transition] NumVehicles: 1 -> 2
+[23:36:35] [Transition] NumVehicles: 2 -> 3
+[23:36:35] [Transition] NumVehicles: 3 -> 4
+[23:36:36] [Transition] NumVehicles: 4 -> 5
+[23:36:36] [Transition] NumVehicles: 5 -> 6
+[23:36:37] [Transition] NumVehicles: 6 -> 7
+[23:36:37] [Transition] NumVehicles: 7 -> 8
+[23:36:38] [Transition] NumVehicles: 8 -> 9
+[23:36:38] [Transition] NumVehicles: 9 -> 10
+[23:36:39] [Transition] NumVehicles: 10 -> 11
+[23:36:39] [Transition] NumVehicles: 11 -> 12
+[23:36:40] [Transition] NumVehicles: 12 -> 13
+[23:36:41] [Transition] NumVehicles: 13 -> 14
+[23:36:41] [Transition] NumVehicles: 14 -> 15
+[23:36:41] [Transition] NumVehicles: 15 -> 16
+[23:36:42] [Transition] NumVehicles: 16 -> 17
+[23:36:42] [Transition] NumVehicles: 17 -> 18
+[23:36:43] [Transition] NumVehicles: 18 -> 19
+[23:36:43] [Transition] Event: SME_ENTER (15)
+[23:36:43] [Transition] Event: SME_EXIT (11)
+[23:36:43] [Transition] Event: SME_STARTUP (10)
+[23:36:43] [Transition] GamePhase: 0 -> 5 (Green Flag)
+[23:36:44] [Transition] Event: SME_EXIT (10)
+[23:36:44] [Transition] NumVehicles: 19 -> 20
+[23:36:44] [Transition] Event: SME_EXIT (11)
+[23:36:45] [Transition] Control: 1 -> 2 (Remote)
+[23:36:45] [Transition] PitState: 5 -> 0 (None)
+[23:36:45] [Transition] Vehicle: 'Racing Spirit of Léman 2025 #10:LM' -> 'DKR Engineering #4:ELMS25'
+[23:36:45] [Transition] PlayerHasVehicle: false -> true
+[23:36:45] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:36:45] [Safety] mControl Transition: 1 -> 2
+[23:36:45] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:36:45] [Transition] Event: SME_EXIT (10)
+[23:36:45] [Transition] Control: 2 -> 1 (AI)
+[23:36:45] [Transition] NumVehicles: 20 -> 21
+[23:36:45] [Transition] Event: SME_ENTER (11)
+[23:36:45] [Transition] Event: SME_EXIT (15)
+[23:36:45] [Transition] Event: SME_ENTER (15)
+[23:36:45] [Transition] Event: SME_EXIT (11)
+[23:36:45] [Safety] mControl Transition: 2 -> 1
+[23:36:45] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:36:50] [Transition] Control: 1 -> 2 (Remote)
+[23:36:50] [Transition] PitState: 0 -> 5 (Unknown)
+[23:36:50] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> '296GT3 Custom Team 2025 #397'
+[23:36:50] [Metadata] Vehicle Change Detected: '296GT3 Custom Team 2025 #397' (Brand: 'Ferrari', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_296GT3')
+[23:36:50] [Safety] mControl Transition: 1 -> 2
+[23:36:50] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:36:50] [Transition] Event: SME_STARTUP (10)
+[23:36:50] [Transition] Control: 2 -> 1 (AI)
+[23:36:50] [Transition] PitState: 5 -> 0 (None)
+[23:36:50] [Transition] Vehicle: '296GT3 Custom Team 2025 #397' -> 'DKR Engineering #4:ELMS25'
+[23:36:50] [Transition] NumVehicles: 21 -> 20
+[23:36:50] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:36:50] [Safety] mControl Transition: 2 -> 1
+[23:36:50] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:36:55] [Transition] Event: SME_STARTUP (10)
+[23:37:00] [Transition] Event: SME_STARTUP (10)
+[23:37:06] [Transition] Event: SME_STARTUP (10)
+[23:37:08] [Transition] Event: SME_EXIT (8)
+[23:37:08] [Transition] Event: SME_ENTER (11)
+[23:37:08] [Transition] Event: SME_EXIT (15)
+[23:37:08] [Transition] Event: SME_ENTER (15)
+[23:37:08] [Transition] Event: SME_EXIT (11)
+[23:37:08] [Transition] InRealtime: false -> true
+[23:37:08] [Transition] Control: 1 -> 0 (Player)
+[23:37:08] [Transition] PitState: 0 -> 5 (Unknown)
+[23:37:08] [Safety] mControl Transition: 1 -> 0
+[23:37:08] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:37:09] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:37:09]            Active Window: [Window Tracking Disabled]
+[23:37:09] [DI] Attempting to promote to Exclusive Mode...
+[23:37:09] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:37:09] 
+========================================
+[SUCCESS] Dynamic Promotion Active!
+lmuFFB has successfully recovered exclusive
+control after detecting a conflict.
+This feature will continue to protect your
+FFB experience automatically.
+========================================
+
+[23:37:10] Warning: Data for mTireLoad from the game seems to be missing for this car (DKR Engineering #4:ELMS25). (Likely Encrypted/DLC Content). Using Suspension-based Fallback.
+[23:37:10] Warning: Data for mGripFract from the game seems to be missing for this car (DKR Engineering #4:ELMS25). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[23:37:10] Warning: Data for mGripFract from the game seems to be missing for this car (DKR Engineering #4:ELMS25). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[23:37:11] [Transition] Event: SME_STARTUP (10)
+[23:37:11] [Safety] FFB Unmuted
+[23:37:11] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:37:11] Warning: Data for mLateralForce (Front) from the game seems to be missing for this car (DKR Engineering #4:ELMS25). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[23:37:11] Warning: Data for mLateralForce (Rear) from the game seems to be missing for this car (DKR Engineering #4:ELMS25). (Likely Encrypted/DLC Content). A fallback estimation will be used.
+[23:37:13] [FFB] Latched and saved static loads for DKR Engineering #4:ELMS25: F=3635.14N, R=4420.97N
+[23:37:16] [Transition] Event: SME_STARTUP (10)
+[23:37:21] [Transition] Event: SME_STARTUP (10)
+[23:37:24] [Transition] PitState: 5 -> 0 (None)
+[23:37:26] [Transition] Event: SME_STARTUP (10)
+[23:37:31] [Transition] Event: SME_STARTUP (10)
+[23:37:36] [Transition] Event: SME_STARTUP (10)
+[23:37:41] [Transition] Event: SME_STARTUP (10)
+[23:37:46] [Transition] Event: SME_STARTUP (10)
+[23:37:51] [Transition] Event: SME_STARTUP (10)
+[23:37:56] [Transition] Event: SME_STARTUP (10)
+[23:38:01] [Transition] Event: SME_STARTUP (10)
+[23:38:06] [Transition] Event: SME_STARTUP (10)
+[23:38:11] [Transition] Event: SME_STARTUP (10)
+[23:38:16] [Transition] Event: SME_STARTUP (10)
+[23:38:21] [Transition] Event: SME_STARTUP (10)
+[23:38:26] [Transition] Event: SME_STARTUP (10)
+[23:38:31] [Transition] Event: SME_STARTUP (10)
+[23:38:36] [Transition] Event: SME_STARTUP (10)
+[23:38:41] [Transition] Event: SME_STARTUP (10)
+[23:38:46] [Transition] Event: SME_STARTUP (10)
+[23:38:51] [Transition] Event: SME_STARTUP (10)
+[23:38:56] [Transition] Event: SME_STARTUP (10)
+[23:39:01] [Transition] Event: SME_STARTUP (10)
+[23:39:06] [Transition] Event: SME_STARTUP (10)
+[23:39:11] [Transition] Event: SME_STARTUP (10)
+[23:39:16] [Transition] Event: SME_STARTUP (10)
+[23:39:21] [Transition] Event: SME_STARTUP (10)
+[23:39:26] [Transition] Event: SME_STARTUP (10)
+[23:39:31] [Transition] Event: SME_STARTUP (10)
+[23:39:36] [Transition] Event: SME_STARTUP (10)
+[23:39:41] [Transition] Event: SME_STARTUP (10)
+[23:39:46] [Transition] Event: SME_STARTUP (10)
+[23:39:52] [Transition] Event: SME_STARTUP (16)
+[23:39:57] [Transition] Event: SME_STARTUP (10)
+[23:40:02] [Transition] Event: SME_STARTUP (10)
+[23:40:02] [Transition] NumVehicles: 20 -> 19
+[23:40:07] [Transition] Event: SME_STARTUP (16)
+[23:40:12] [Transition] Event: SME_STARTUP (10)
+[23:40:14] [Transition] NumVehicles: 19 -> 18
+[23:40:17] [Transition] Event: SME_STARTUP (10)
+[23:40:22] [Transition] Event: SME_STARTUP (10)
+[23:40:27] [Transition] Event: SME_STARTUP (10)
+[23:40:31] [Transition] Control: 0 -> 2 (Remote)
+[23:40:31] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> '296GT3 Custom Team 2025 #397'
+[23:40:31] [Metadata] Vehicle Change Detected: '296GT3 Custom Team 2025 #397' (Brand: 'Ferrari', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_296GT3')
+[23:40:31] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:40:31] [Safety] mControl Transition: 0 -> 2
+[23:40:31] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:40:31] [Transition] Control: 2 -> 0 (Player)
+[23:40:31] [Transition] Vehicle: '296GT3 Custom Team 2025 #397' -> 'DKR Engineering #4:ELMS25'
+[23:40:31] [Transition] NumVehicles: 18 -> 17
+[23:40:31] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:40:31] [Safety] FFB Unmuted
+[23:40:31] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:40:31] [Safety] mControl Transition: 2 -> 0
+[23:40:31] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:40:32] [Transition] Event: SME_STARTUP (10)
+[23:40:37] [Transition] Event: SME_STARTUP (10)
+[23:40:42] [Transition] Event: SME_STARTUP (10)
+[23:40:47] [Transition] Event: SME_STARTUP (10)
+[23:40:52] [Transition] Event: SME_STARTUP (10)
+[23:40:57] [Transition] Event: SME_STARTUP (10)
+[23:41:02] [Transition] Event: SME_STARTUP (10)
+[23:41:07] [Transition] Event: SME_STARTUP (10)
+[23:41:12] [Transition] Event: SME_STARTUP (10)
+[23:41:12] [Transition] NumVehicles: 17 -> 18
+[23:41:17] [Transition] Event: SME_STARTUP (10)
+[23:41:22] [Transition] Event: SME_STARTUP (16)
+[23:41:23] [Transition] Control: 0 -> 2 (Remote)
+[23:41:23] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> '296GT3 Custom Team 2025 #397'
+[23:41:23] [Metadata] Vehicle Change Detected: '296GT3 Custom Team 2025 #397' (Brand: 'Ferrari', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_296GT3')
+[23:41:23] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:41:23] [Safety] mControl Transition: 0 -> 2
+[23:41:23] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:41:23] [Transition] Control: 2 -> 0 (Player)
+[23:41:23] [Transition] Vehicle: '296GT3 Custom Team 2025 #397' -> 'DKR Engineering #4:ELMS25'
+[23:41:23] [Transition] NumVehicles: 18 -> 17
+[23:41:23] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:41:23] [Safety] FFB Unmuted
+[23:41:23] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:41:23] [Safety] mControl Transition: 2 -> 0
+[23:41:23] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:41:27] [Transition] Event: SME_STARTUP (16)
+[23:41:32] [Transition] Event: SME_STARTUP (10)
+[23:41:37] [Transition] Event: SME_STARTUP (16)
+[23:41:41] [Transition] Control: 0 -> 2 (Remote)
+[23:41:41] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> '296GT3 Custom Team 2025 #397'
+[23:41:41] [Metadata] Vehicle Change Detected: '296GT3 Custom Team 2025 #397' (Brand: 'Ferrari', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_296GT3')
+[23:41:41] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:41:41] [Safety] mControl Transition: 0 -> 2
+[23:41:41] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:41:42] [Transition] Control: 2 -> 0 (Player)
+[23:41:42] [Transition] Vehicle: '296GT3 Custom Team 2025 #397' -> 'DKR Engineering #4:ELMS25'
+[23:41:42] [Transition] NumVehicles: 17 -> 16
+[23:41:42] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:41:42] [Safety] FFB Unmuted
+[23:41:42] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:41:42] [Safety] mControl Transition: 2 -> 0
+[23:41:42] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:41:42] [Transition] Event: SME_STARTUP (10)
+[23:41:47] [Transition] Event: SME_STARTUP (10)
+[23:41:52] [Transition] Event: SME_STARTUP (10)
+[23:41:57] [Transition] Event: SME_STARTUP (16)
+[23:42:03] [Transition] Event: SME_STARTUP (10)
+[23:42:08] [Transition] Event: SME_STARTUP (10)
+[23:42:13] [Transition] Event: SME_STARTUP (10)
+[23:42:18] [Transition] Event: SME_STARTUP (16)
+[23:42:23] [Transition] Event: SME_STARTUP (16)
+[23:42:28] [Transition] Event: SME_STARTUP (10)
+[23:42:33] [Transition] Event: SME_STARTUP (10)
+[23:42:38] [Transition] Event: SME_STARTUP (10)
+[23:42:43] [Transition] Event: SME_STARTUP (16)
+[23:42:48] [Transition] Event: SME_STARTUP (16)
+[23:42:53] [Transition] Event: SME_STARTUP (10)
+[23:42:58] [Transition] Event: SME_STARTUP (16)
+[23:43:03] [Transition] Event: SME_STARTUP (16)
+[23:43:08] [Transition] Event: SME_STARTUP (10)
+[23:43:13] [Transition] Event: SME_STARTUP (16)
+[23:43:18] [Transition] Event: SME_STARTUP (10)
+[23:43:23] [Transition] Event: SME_STARTUP (10)
+[23:43:28] [Transition] Event: SME_STARTUP (16)
+[23:43:34] [Transition] Event: SME_STARTUP (10)
+[23:43:39] [Transition] Event: SME_STARTUP (16)
+[23:43:44] [Transition] Event: SME_STARTUP (10)
+[23:43:49] [Transition] Event: SME_STARTUP (16)
+[23:43:54] [Transition] Event: SME_STARTUP (10)
+[23:43:59] [Transition] Event: SME_STARTUP (16)
+[23:44:04] [Transition] Event: SME_STARTUP (16)
+[23:44:09] [Transition] Event: SME_STARTUP (10)
+[23:44:14] [Transition] Event: SME_STARTUP (10)
+[23:44:19] [Transition] Event: SME_STARTUP (16)
+[23:44:24] [Transition] Event: SME_STARTUP (10)
+[23:44:29] [Transition] Event: SME_STARTUP (10)
+[23:44:34] [Transition] Event: SME_STARTUP (16)
+[23:44:40] [Transition] Event: SME_STARTUP (10)
+[23:44:45] [Transition] Event: SME_STARTUP (10)
+[23:44:50] [Transition] Event: SME_STARTUP (16)
+[23:44:55] [Transition] Event: SME_STARTUP (16)
+[23:45:00] [Transition] Event: SME_STARTUP (10)
+[23:45:05] [Transition] Event: SME_STARTUP (10)
+[23:45:10] [Transition] Event: SME_STARTUP (16)
+[23:45:15] [Transition] Event: SME_STARTUP (10)
+[23:45:20] [Transition] Event: SME_STARTUP (10)
+[23:45:22] [Transition] Event: SME_EXIT (10)
+[23:45:22] [Transition] NumVehicles: 16 -> 17
+[23:45:22] [Transition] Event: SME_EXIT (11)
+[23:45:25] [Transition] Event: SME_STARTUP (16)
+[23:45:30] [Transition] Event: SME_STARTUP (16)
+[23:45:35] [Transition] Event: SME_STARTUP (10)
+[23:45:40] [Transition] Event: SME_STARTUP (10)
+[23:45:45] [Transition] Event: SME_STARTUP (16)
+[23:45:50] [Transition] Event: SME_STARTUP (10)
+[23:45:53] [Transition] Control: 0 -> 2 (Remote)
+[23:45:53] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> '296GT3 Custom Team 2025 #397'
+[23:45:53] [Metadata] Vehicle Change Detected: '296GT3 Custom Team 2025 #397' (Brand: 'Ferrari', Class: 'GT3', PitGroup: 'Group99', Filename: '397_25_296GT3')
+[23:45:53] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:45:53] [Safety] mControl Transition: 0 -> 2
+[23:45:53] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:45:53] [Transition] Control: 2 -> 0 (Player)
+[23:45:53] [Transition] Vehicle: '296GT3 Custom Team 2025 #397' -> 'DKR Engineering #4:ELMS25'
+[23:45:53] [Transition] NumVehicles: 17 -> 16
+[23:45:53] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:45:53] [Safety] FFB Unmuted
+[23:45:53] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:45:53] [Safety] mControl Transition: 2 -> 0
+[23:45:53] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:45:55] [Transition] Event: SME_STARTUP (16)
+[23:45:57] [Transition] NumVehicles: 16 -> 15
+[23:46:01] [Transition] Event: SME_STARTUP (10)
+[23:46:02] [Transition] Control: 0 -> 2 (Remote)
+[23:46:02] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> 'Vector Sport #10:ELMS25'
+[23:46:02] [Metadata] Vehicle Change Detected: 'Vector Sport #10:ELMS25' (Brand: 'Oreca', Class: 'LMP2_ELMS', PitGroup: 'Group3', Filename: '10_25_VECTEBE95FDC')
+[23:46:02] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:46:02] [Safety] mControl Transition: 0 -> 2
+[23:46:02] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:46:02] [Transition] Control: 2 -> 0 (Player)
+[23:46:02] [Transition] Vehicle: 'Vector Sport #10:ELMS25' -> 'DKR Engineering #4:ELMS25'
+[23:46:02] [Transition] NumVehicles: 15 -> 14
+[23:46:02] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:46:02] [Safety] FFB Unmuted
+[23:46:02] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:46:02] [Safety] mControl Transition: 2 -> 0
+[23:46:02] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:46:06] [Transition] Event: SME_STARTUP (16)
+[23:46:11] [Transition] Event: SME_STARTUP (16)
+[23:46:16] [Transition] Event: SME_STARTUP (10)
+[23:46:21] [Transition] Event: SME_STARTUP (10)
+[23:46:26] [Transition] Event: SME_STARTUP (16)
+[23:46:31] [Transition] Event: SME_STARTUP (10)
+[23:46:36] [Transition] Event: SME_STARTUP (16)
+[23:46:41] [Transition] Event: SME_STARTUP (10)
+[23:46:46] [Transition] Event: SME_STARTUP (10)
+[23:46:51] [Transition] Event: SME_STARTUP (16)
+[23:46:56] [Transition] Event: SME_STARTUP (10)
+[23:47:01] [Transition] Event: SME_STARTUP (16)
+[23:47:06] [Transition] Event: SME_STARTUP (16)
+[23:47:12] [Transition] Event: SME_STARTUP (10)
+[23:47:17] [Transition] Event: SME_STARTUP (16)
+[23:47:22] [Transition] Event: SME_STARTUP (16)
+[23:47:27] [Transition] Event: SME_STARTUP (10)
+[23:47:32] [Transition] Event: SME_STARTUP (10)
+[23:47:37] [Transition] Event: SME_STARTUP (16)
+[23:47:42] [Transition] Event: SME_STARTUP (10)
+[23:47:47] [Transition] Event: SME_STARTUP (10)
+[23:47:52] [Transition] Event: SME_STARTUP (10)
+[23:47:57] [Transition] Event: SME_STARTUP (16)
+[23:48:02] [Transition] Event: SME_STARTUP (10)
+[23:48:07] [Transition] Event: SME_STARTUP (10)
+[23:48:12] [Transition] Event: SME_STARTUP (16)
+[23:48:17] [Transition] Event: SME_STARTUP (16)
+[23:48:22] [Transition] Event: SME_STARTUP (10)
+[23:48:27] [Transition] Event: SME_STARTUP (10)
+[23:48:32] [Transition] Event: SME_STARTUP (16)
+[23:48:38] [Transition] Event: SME_STARTUP (10)
+[23:48:43] [Transition] Event: SME_STARTUP (16)
+[23:48:48] [Transition] Event: SME_STARTUP (10)
+[23:48:53] [Transition] Event: SME_STARTUP (16)
+[23:48:58] [Transition] Event: SME_STARTUP (16)
+[23:49:03] [Transition] Event: SME_STARTUP (10)
+[23:49:08] [Transition] Event: SME_STARTUP (16)
+[23:49:13] [Transition] Event: SME_STARTUP (10)
+[23:49:18] [Transition] Event: SME_STARTUP (16)
+[23:49:19] [Transition] Control: 0 -> 2 (Remote)
+[23:49:19] [Transition] PitState: 0 -> 5 (Unknown)
+[23:49:19] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> 'Iron Lynx - Proton #9:ELMS25'
+[23:49:19] [Metadata] Vehicle Change Detected: 'Iron Lynx - Proton #9:ELMS25' (Brand: 'Porsche', Class: 'LMP2_ELMS', PitGroup: 'Group2', Filename: '9_25_IRONL246BF580')
+[23:49:19] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:49:19] [Safety] mControl Transition: 0 -> 2
+[23:49:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:49:19] [Transition] Control: 2 -> 0 (Player)
+[23:49:19] [Transition] PitState: 5 -> 0 (None)
+[23:49:19] [Transition] Vehicle: 'Iron Lynx - Proton #9:ELMS25' -> 'DKR Engineering #4:ELMS25'
+[23:49:19] [Transition] NumVehicles: 14 -> 13
+[23:49:19] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:49:19] [Safety] FFB Unmuted
+[23:49:19] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:49:19] [Safety] mControl Transition: 2 -> 0
+[23:49:19] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:49:23] [Transition] Control: 0 -> 2 (Remote)
+[23:49:23] [Transition] PitState: 0 -> 5 (Unknown)
+[23:49:23] [Transition] Vehicle: 'DKR Engineering #4:ELMS25' -> 'Iron Lynx - Proton #9:ELMS25'
+[23:49:23] [Metadata] Vehicle Change Detected: 'Iron Lynx - Proton #9:ELMS25' (Brand: 'Porsche', Class: 'LMP2_ELMS', PitGroup: 'Group2', Filename: '9_25_IRONL246BF580')
+[23:49:23] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:49:23] [Safety] mControl Transition: 0 -> 2
+[23:49:23] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:49:23] [Transition] Event: SME_STARTUP (10)
+[23:49:23] [Transition] Control: 2 -> 0 (Player)
+[23:49:23] [Transition] PitState: 5 -> 0 (None)
+[23:49:23] [Transition] Vehicle: 'Iron Lynx - Proton #9:ELMS25' -> 'DKR Engineering #4:ELMS25'
+[23:49:23] [Transition] NumVehicles: 13 -> 12
+[23:49:23] [Metadata] Vehicle Change Detected: 'DKR Engineering #4:ELMS25' (Brand: 'Unknown', Class: 'LMP3', PitGroup: 'Group22', Filename: '4_25_DKR_E8E7FBE8C')
+[23:49:23] [Safety] FFB Unmuted
+[23:49:23] [Safety] Triggered Safety Window (0.0s). Reason: FFB Unmuted
+[23:49:23] [Safety] mControl Transition: 2 -> 0
+[23:49:23] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:49:28] [Transition] Event: SME_STARTUP (16)
+[23:49:29] [Transition] Event: SME_EXIT (9)
+[23:49:29] [Transition] Event: SME_EXIT (11)
+[23:49:29] [DI ERROR] Failed to update force. Error: The operation cannot be performed unless the device is acquired in DISCL_EXCLUSIVE mode. [CRITICAL: Game has stolen priority! DISABLE IN-GAME FFB] (0x80040205)
+[23:49:29]            Active Window: [Window Tracking Disabled]
+[23:49:29] [DI] Attempting to promote to Exclusive Mode...
+[23:49:29] [DI RECOVERY] Device re-acquired successfully. FFB motor restarted.
+[23:49:29] [Transition] InRealtime: true -> false
+[23:49:29] [Diag] De-realtime snapshot: track='Circuit de Barcelona' optionsLoc=0 numVehicles=12 playerHasVehicle=true smUpdateScoring=16
+[23:49:29] [Transition] Control: 0 -> 1 (AI)
+[23:49:29] [Transition] PitState: 0 -> 5 (Unknown)
+[23:49:29] [Safety] FFB Muted (Reason: Game/State Mute)
+[23:49:29] [Safety] mControl Transition: 0 -> 1
+[23:49:29] [Safety] Triggered Safety Window (0.0s). Reason: Control Transition
+[23:49:34] [Transition] Event: SME_STARTUP (10)
+[23:49:39] [Transition] Event: SME_STARTUP (16)
+[23:49:44] [Transition] Event: SME_STARTUP (16)
+[23:49:46] [Transition] Event: SME_ENTER (14)
+[23:49:46] [Transition] Event: SME_EXIT (16)
+[23:49:46] [Transition] Event: SME_ENTER (5)
+[23:50:17] [FFB] Loop Stopped.
+[23:50:17] Shutting down GUI...
+[23:50:17] Stopping FFB Thread...
+[23:50:17] FFB Thread Stopped.
+[23:50:17] [DI] Device released by user.
+[23:50:17] Main Loop Ended. Clean Exit.
+[23:50:17] [DI] Device released by user.
+Logger Shutdown.
