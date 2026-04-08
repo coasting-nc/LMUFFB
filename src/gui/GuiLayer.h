@@ -19,6 +19,7 @@ public:
     
     static void* GetWindowHandle(); // Returns HWND on Windows, GLFWwindow* on Linux
     static void SetupGUIStyle();   // Setup professional theme
+    static void SetupPlotStyle();
 
     // Returns true if the GUI is active/focused (affects lazy rendering)
     static bool Render(LMUFFB::FFB::FFBEngine& engine);

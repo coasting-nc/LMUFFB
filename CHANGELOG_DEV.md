@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.276]
+
+### Fixed
+- **Preset Path Resolution**: Resolved an issue where relative user preset paths (e.g., "user_presets") would drift if the process working directory was changed by Windows file dialogs. The path is now resolved to an absolute location at load time.
+
+### Added
+- **Immediate Preset Application**: Updated the GUI to automatically select and apply settings from a preset immediately after it is imported, streamlining the user workflow.
+
+### Optimized
+- **FFB Core Loop ("Bolt")**:
+    - **UPSAMPLED TIC**: Implemented real-time upsampling for the 100Hz In-Game Direct Torque (TIC) source to 400Hz, eliminating 100Hz step noise and graininess for TIC users.
+    - **Conditional Snapshots**: Optimized the 400Hz physics loop by conditionally skipping expensive FFB state snapshots when the Analysis graphs are not visible.
+    - **Fast Math**: Replaced expensive `std::pow` calls in the critical path with a `fast_pow` implementation for common gamma values (1.0, 2.0).
+
+---
+
 ## [0.7.275]
 
 ### Updated
@@ -10,7 +26,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Cumulative changes from version 0.7.272 till 0.7.275
+## Cumulative changes from version 0.7.272 till 0.7.276
 
 ## [0.7.275]
 ### Updated
