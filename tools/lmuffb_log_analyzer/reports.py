@@ -113,7 +113,7 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
             report.append(f"  [!] {warn}")
         report.append("")
 
-    if grip_est_results:
+    if grip_est_results and 'status' in grip_est_results:
         report.append("GRIP ESTIMATION ACCURACY (Friction Circle Fallback)")
         report.append("-" * 20)
         status = grip_est_results.get('status')
@@ -121,10 +121,12 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
             report.append("Status: Cannot evaluate (Raw telemetry is encrypted/missing).")
         elif status == "NO_SLIP_EVENTS":
             report.append("Status: Cannot evaluate (No significant sliding occurred).")
-        else:
+        elif 'correlation' in grip_est_results:
             report.append(f"Correlation (r):       {grip_est_results['correlation']:.3f}")
-            report.append(f"Mean Error (Sliding):  {grip_est_results['mean_error_during_slip']:.3f}")
-            report.append(f"False Positive Rate:   {grip_est_results['false_positive_rate']:.1f}%")
+            if 'mean_error_during_slip' in grip_est_results:
+                report.append(f"Mean Error (Sliding):  {grip_est_results['mean_error_during_slip']:.3f}")
+            if 'false_positive_rate' in grip_est_results:
+                report.append(f"False Positive Rate:   {grip_est_results['false_positive_rate']:.1f}%")
 
             if grip_est_results['correlation'] > 0.85:
                 report.append("Evaluation:            EXCELLENT (Fallback closely matches game engine)")
@@ -186,6 +188,10 @@ def generate_text_report(metadata: SessionMetadata, df: pd.DataFrame) -> str:
 
     # Overall Issues
     all_issues = slope_results['issues'].copy()
+    if 'issues' in grip_est_results:
+        all_issues.extend(grip_est_results['issues'])
+    if 'issues' in lateral_results:
+        all_issues.extend(lateral_results['issues'])
 
     threshold_crossing_rate = yaw_results.get('threshold_crossing_rate')
     if threshold_crossing_rate is not None and threshold_crossing_rate > 5.0:

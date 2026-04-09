@@ -2,12 +2,19 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any
 from ..models import SessionMetadata
+from ..utils import safe_corrcoef, find_invalid_signals
 
 def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
     """
     Analyze SoP Lateral components and Load Transfer.
     """
     results = {}
+    results['issues'] = []
+
+    # Check for invalid signals
+    invalid_signals = find_invalid_signals(df, ['LatLoadNorm', 'RawLatLoadNorm', 'LatAccel', 'FFBSoP'])
+    if invalid_signals:
+        results['issues'].append(f"Invalid values (NaN/Inf) detected in: {', '.join(invalid_signals)}")
 
     # 1. Raw Load Transfer
     if 'RawLoadFL' in df.columns and 'RawLoadFR' in df.columns:
@@ -22,7 +29,7 @@ def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dic
 
     # 2. Compare Smoothed vs Raw Load Transfer
     if 'LatLoadNorm' in df.columns and 'RawLatLoadNorm' in df.columns:
-        results['load_transfer_correlation'] = float(df['LatLoadNorm'].corr(df['RawLatLoadNorm']))
+        results['load_transfer_correlation'] = float(safe_corrcoef(df['LatLoadNorm'], df['RawLatLoadNorm']))
         # Calculate lag? (Maybe too complex for now)
 
     # 3. Decompose FFBSoP
@@ -77,7 +84,7 @@ def analyze_lateral_dynamics(df: pd.DataFrame, metadata: SessionMetadata) -> Dic
 
     # 4. Correlation with Lateral G
     if 'LatAccel' in df.columns and 'LatLoadNorm' in df.columns:
-        results['lat_g_vs_load_correlation'] = float(df['LatAccel'].corr(df['LatLoadNorm']))
+        results['lat_g_vs_load_correlation'] = float(safe_corrcoef(df['LatAccel'], df['LatLoadNorm']))
 
     return results
 
@@ -123,7 +130,7 @@ def analyze_load_estimation(df: pd.DataFrame) -> Dict[str, Any]:
             # How closely does the approximation match the real dynamic shape?
             ratio_error = np.abs(approx_ratio - raw_ratio)
             results['ratio_error_mean'] = float(ratio_error.mean())
-            results['ratio_correlation'] = float(np.corrcoef(raw_ratio, approx_ratio)[0, 1])
+            results['ratio_correlation'] = float(safe_corrcoef(raw_ratio, approx_ratio))
 
     return results
 
