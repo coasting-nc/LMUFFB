@@ -1,13 +1,19 @@
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Any
-from ..utils import safe_corrcoef
+from ..utils import safe_corrcoef, find_invalid_signals
 
 def analyze_slope_stability(df: pd.DataFrame, metadata=None, threshold: float = 0.02) -> Dict[str, Any]:
     """
     Analyze the stability of slope detection algorithm.
     """
     results = {}
+    results['issues'] = []
+
+    # Check for invalid signals
+    invalid_signals = find_invalid_signals(df, ['SlopeCurrent', 'dAlpha_dt', 'GripFactor', 'SlopeSmoothed'])
+    if invalid_signals:
+        results['issues'].append(f"Invalid values (NaN/Inf) detected in: {', '.join(invalid_signals)}")
     
     # Basic slope statistics
     slope = df['SlopeCurrent']
@@ -71,7 +77,6 @@ def analyze_slope_stability(df: pd.DataFrame, metadata=None, threshold: float = 
         results['derivative_energy_ratio'] = None
 
     # Issue detection
-    results['issues'] = []
     
     if results['slope_std'] > 5.0:
         results['issues'].append(
@@ -180,12 +185,12 @@ def analyze_grip_correlation(df: pd.DataFrame) -> Dict[str, float]:
         # Correlation with absolute slip angle
         if 'calc_slip_angle_front' in df.columns:
             slip = np.abs(df['calc_slip_angle_front'])
-            results['grip_vs_slip_correlation'] = float(-df[grip_col].corr(slip))
+            results['grip_vs_slip_correlation'] = float(-safe_corrcoef(df[grip_col], slip))
         
         # Correlation with lateral G
         if 'LatAccel' in df.columns:
             lat_g = np.abs(df['LatAccel'])
-            results['grip_vs_latg_correlation'] = float(df[grip_col].corr(lat_g))
+            results['grip_vs_latg_correlation'] = float(safe_corrcoef(df[grip_col], lat_g))
     
     return results
 

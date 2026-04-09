@@ -2,13 +2,20 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any
 from ..models import SessionMetadata
-from ..utils import safe_corrcoef
+from ..utils import safe_corrcoef, find_invalid_signals
 
 def analyze_grip_estimation(df: pd.DataFrame, metadata: SessionMetadata) -> Dict[str, Any]:
     results = {}
+    results['issues'] = []
+
     cols =['GripFL', 'GripFR', 'SlipAngleFL', 'SlipAngleFR', 'SlipRatioFL', 'SlipRatioFR', 'Speed']
     if not all(c in df.columns for c in cols):
         return results
+
+    # Check for invalid signals
+    invalid_signals = find_invalid_signals(df, cols)
+    if invalid_signals:
+        results['issues'].append(f"Invalid values (NaN/Inf) detected in: {', '.join(invalid_signals)}")
 
     raw_front_grip = (df['GripFL'] + df['GripFR']) / 2.0
 

@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [0.7.275]
 
 ### Fixed
+- **Log Analyzer Robustness**: Resolved `RuntimeWarning: invalid value encountered in divide` by enhancing `safe_corrcoef` to handle `NaN`, `Inf`, and zero-variance signals while suppressing NumPy internal warnings.
+- **Traceability**: Added `find_invalid_signals` utility to identify and report the specific telemetry columns containing non-finite values (NaN/Inf).
+- **Analyzer Stability**: Updated Lateral, Grip, and Slope analyzers to use robust correlation logic and report data quality issues in the diagnostic report.
 - **Robust Correlation Calculation**: Resolved `RuntimeWarning: invalid value encountered in divide` in `np.corrcoef` by implementing `safe_corrcoef` which handles zero-variance signals (e.g., stationary car) by returning 0.0.
 - **Log Analyzer Buffer Mismatch**: Fixed "buffer size must be a multiple of element size" error by adding version-aware loading for v1.2 telemetry logs (539 bytes) while maintaining backward compatibility with v1.1 (535 bytes).
 - **Numerical Stability**: Resolved `RuntimeWarning` (division by zero) in `plots.py` and `yaw_analyzer.py` by handling duplicate timestamps and non-unique bin centers.
