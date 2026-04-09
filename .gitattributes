@@ -1,0 +1,5 @@
+src/** merge=ours
+logs/** merge=ours
+.gitignore merge=ours
+VERSION merge=ours
+docs/dev_docs/reviews/code_review_534.md merge=ours
