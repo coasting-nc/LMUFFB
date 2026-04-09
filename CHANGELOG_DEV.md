@@ -4,19 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.276]
 
-### Fixed
-- **Preset Path Resolution**: Resolved an issue where relative user preset paths (e.g., "user_presets") would drift if the process working directory was changed by Windows file dialogs. The path is now resolved to an absolute location at load time.
-
 ### Added
+- **ImGUI: Major UI Overhaul - Tabbed Interface & Advanced Menus**:
+- Multi-level Main Menu: Added 'Presets', 'Devices', 'UI Settings' and 'Logging' top-level menus.
+- Tabbed Tuning Window: Reorganized over 50 settings into 10 logical tabs (General, Front Axle, Safety, Loads, etc.).
+- UI State Persistence: Moved UI-only state (device lists, popup flags) into static members of GuiLayer for better encapsulation.
+- Code Polish: Unified telemetry plotting logic into reusable helpers and fixed numerous scoping/formatting issues.
+- **ImPlot Implementation:**
+- Transitioned the entire telemetry analysis UI from basic ImGui::PlotLines to the ImPlot 2D plotting library.
+- Integrate ImPlot via CMake FetchContent
+- Implement CMake policy CMP0169 to OLD for compatibility with FetchContent_Populate().
 - **Immediate Preset Application**: Updated the GUI to automatically select and apply settings from a preset immediately after it is imported, streamlining the user workflow.
+- **Log Loading Auto-detection**: Implemented a robust fallback in `loader.py` that auto-detects the record size based on the buffer's modulo if the version header is missing or incorrect.
+- **New Unit Tests**: Added `tools/lmuffb_log_analyzer/tests/test_version_compat.py` and `test_corrcoef_robustness.py` to verify compatibility with multiple log formats and robust math handling.
 
-### Optimized
-- **FFB Core Loop ("Bolt")**:
-    - **UPSAMPLED TIC**: Implemented real-time upsampling for the 100Hz In-Game Direct Torque (TIC) source to 400Hz, eliminating 100Hz step noise and graininess for TIC users.
-    - **Conditional Snapshots**: Optimized the 400Hz physics loop by conditionally skipping expensive FFB state snapshots when the Analysis graphs are not visible.
-    - **Fast Math**: Replaced expensive `std::pow` calls in the critical path with a `fast_pow` implementation for common gamma values (1.0, 2.0).
+### Fixed
+- **Bugfix**: Fix UBSan alignment error in FFBEngine.cpp and GripLoadEstimation.cpp
+- **Preset Path Resolution**: Resolved an issue where relative user preset paths (e.g., "user_presets") would drift if the process working directory was changed by Windows file dialogs. The path is now resolved to an absolute location at load time.
+- **Log Analyzer Robustness**: Resolved `RuntimeWarning: invalid value encountered in divide` by enhancing `safe_corrcoef` to handle `NaN`, `Inf`, and zero-variance signals while suppressing NumPy internal warnings.
+- **Traceability**: Added `find_invalid_signals` utility to identify and report the specific telemetry columns containing non-finite values (NaN/Inf).
+- **Analyzer Stability**: Updated Lateral, Grip, and Slope analyzers to use robust correlation logic and report data quality issues in the diagnostic report.
+- **Robust Correlation Calculation**: Resolved `RuntimeWarning: invalid value encountered in divide` in `np.corrcoef` by implementing `safe_corrcoef` which handles zero-variance signals (e.g., stationary car) by returning 0.0.
+- **Log Analyzer Buffer Mismatch**: Fixed "buffer size must be a multiple of element size" error by adding version-aware loading for v1.2 telemetry logs (539 bytes) while maintaining backward compatibility with v1.1 (535 bytes).
+- **Numerical Stability**: Resolved `RuntimeWarning` (division by zero) in `plots.py` and `yaw_analyzer.py` by handling duplicate timestamps and non-unique bin centers.
+- **Pandas Warnings**: Fixed `SettingWithCopyWarning` in `plot_true_tire_curve` by ensuring explicit `.copy()` calls on sliced DataFrames.
 
----
 
 ## [0.7.275]
 
