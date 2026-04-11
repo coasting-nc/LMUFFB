@@ -1,0 +1,30 @@
+END USER LICENSE AGREEMENT (EULA) & LIABILITY WAIVER
+
+IMPORTANT - PLEASE READ CAREFULLY
+
+This software interfaces with Direct Drive sim-racing wheelbases capable of extreme torque.
+Improper configuration, software bugs, or unexpected behavior CAN CAUSE SEVERE PHYSICAL INJURY.
+
+This EULA supplements and incorporates by reference the Proprietary Freeware License distributed with this Software (LICENSE.txt).
+
+1. BETA SOFTWARE: This software is provided "AS IS", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. It is in a beta/pre-release state. Safety mechanisms are implemented but are NOT guaranteed to prevent dangerous force spikes in all scenarios.
+
+2. ASSUMPTION OF RISK: You expressly acknowledge that using this software with a Direct Drive wheelbase involves inherent physical risks, including but not limited to the risk of severe physical injury from unexpected torque spikes. You assume all responsibility for any personal injury, property damage, or other harm that may result from its use.
+
+3. USER DUTY OF CARE: You agree to observe the following precautions:
+   a) Always test the application initially with your wheelbase hardware set to a LOW STRENGTH (10-20% of maximum torque) before incrementally increasing forces.
+   b) Keep hands, fingers, and loose clothing clear of the wheel rim when not actively in control.
+   c) It is STRONGLY RECOMMENDED to have a physical Emergency Stop (E-stop) button within easy reach at all times.
+   d) Immediately cease using the software if you observe erratic or unexpected wheel behavior.
+
+4. LIMITATION OF LIABILITY: IN NO EVENT SHALL THE DEVELOPER BE LIABLE FOR ANY CLAIMS, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE, INCLUDING BUT NOT LIMITED TO PERSONAL INJURY, PROPERTY DAMAGE, HARDWARE DAMAGE, OR LOSS OF DATA.
+
+5. CLOSED SOURCE & REVERSE ENGINEERING: This software is proprietary. You may not decompile, reverse engineer, disassemble, or attempt to derive the source code of this software.
+
+6. NO REDISTRIBUTION: You may not redistribute this software without explicit written permission from the developer. The software must be obtained from official developer-approved channels.
+
+7. DONATIONS AND FUTURE MONETIZATION: This software is currently provided free of charge. The developer may accept voluntary donations. Such donations do not constitute a purchase of the software and do not grant any additional rights, warranties, or support guarantees. The developer reserves the right to introduce paid versions, licenses, or features in the future.
+
+8. SEVERABILITY: If any provision of this Agreement is held to be invalid or unenforceable by a court of competent jurisdiction, the remaining provisions shall continue in full force and effect.
+
+By clicking "I Accept", you acknowledge that you have read, understood, and agree to be bound by all terms of this agreement.

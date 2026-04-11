@@ -1,0 +1,26 @@
+PROPRIETARY FREEWARE LICENSE
+
+Copyright (C) 2026 lmuFFB Developer @ SimApps Mega Corp. All rights reserved.
+
+This software ("Software") is currently provided as freeware for personal, non-commercial use. 
+
+1. GRANT OF LICENSE
+The Developer grants you a limited, non-exclusive, non-transferable, and revocable license to use the Software for personal, non-commercial purposes, free of charge.
+
+2. RESTRICTIONS ON USE (CLOSED SOURCE)
+You may not (and may not permit any third party to) copy, modify, adapt, translate, create derivative works from, reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code of the Software. 
+
+3. REDISTRIBUTION RESTRICTIONS
+You may not distribute, sell, rent, lease, sublicense, or otherwise transfer the Software or any rights granted under this License to any third party without prior written consent from the Developer. The Software must be obtained from official Developer-approved channels.
+
+4. INTELLECTUAL PROPERTY AND OWNERSHIP
+The Software is licensed, not sold. The Developer retains all right, title, and interest in and to the Software, including all copyrights, patents, trademarks, and other intellectual property rights.
+
+5. DONATIONS AND MONETIZATION
+The Software is currently provided free of charge. The Developer may accept voluntary donations. Such donations do not constitute a purchase of the Software and do not grant any additional rights, warranties, or support guarantees. The Developer reserves the right to introduce paid versions, licenses, or features in the future.
+
+6. DISCLAIMER OF WARRANTIES
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.
+
+7. LIMITATION OF LIABILITY
+IN NO EVENT SHALL THE DEVELOPER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE, INCLUDING BUT NOT LIMITED TO PERSONAL INJURY, PROPERTY DAMAGE, OR LOSS OF DATA.
