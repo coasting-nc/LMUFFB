@@ -173,10 +173,4 @@ rF2 will be supported again in a future version, in particular to compare our gr
 
  It is planned for a future release. See https://github.com/coasting-nc/LMUFFB/issues/30
 
- ## Clips, Videos, Reviews, etc.
 
-GamerMuscle explaining a yuge effect in lmuFFB ("brake feel")
-
-[![IMAGE ALT TEXT HERE](https://i.ibb.co/F4b5Rr5b/image.png)](https://youtube.com/clip/Ugkx_Kv3UX1IGGGLx6n6w-wiX8npJzVup6J0)
-
-https://youtube.com/clip/Ugkx_Kv3UX1IGGGLx6n6w-wiX8npJzVup6J0
