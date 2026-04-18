@@ -1,6 +1,7 @@
 # Introduction to LMUFFB
-> This document is not up to date, it is based on an older version of the app.
-TODO: update this document, vJoy is no longer used, all references to it should be removed or updated / reworded appropriately.
+
+> [!WARNING]
+> This document is not up to date and is based on an older version of the app.
 
 **LMUFFB** (Le Mans Ultimate Force Feedback) is a specialized high-performance application designed to enhance the driving experience in the *Le Mans Ultimate* simulator. Its primary goal is to provide **Force Feedback (FFB)** signals that communicate tire physics—specifically tire grip and loss of traction—more effectively than the game's native output.
 

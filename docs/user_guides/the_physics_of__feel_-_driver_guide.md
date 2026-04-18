@@ -1,5 +1,7 @@
 # The Physics of Feel: LMUFFB Driver's Guide
-> This document is not up to date, it is based on an older version of the app.
+
+> [!WARNING]
+> This document is not up to date and is based on an older version of the app.
 
 This guide explains how LMUFFB translates raw telemetry data into tactile sensations. It details what you should feel in specific driving situations and provides a blueprint for visualizing these relationships through telemetry graphs.
 
