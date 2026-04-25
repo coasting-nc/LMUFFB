@@ -1,5 +1,5 @@
-lmuFFB - Le Mans Ultimate Force Feedback
-========================================
+lmuFFB - Telemetry-Based Force Feedback App for Le Mans Ultimate
+================================================================
 
 See README.md for full documentation with images and links.
 
