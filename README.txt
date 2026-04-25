@@ -114,17 +114,47 @@ Any other issue:
     forum posts are harder to track:
     https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/
 
+FAQ
+---
+
+Q: Does the app constitute an unfair advantage ("cheating")?
+
+A: No. Multiple wheelbase manufacturers already provide or are implementing 
+telemetry-based force feedback (including VNM, Simucube, and Simagic). 
+By the same logic, those would constitute an "unfair advantage" too.
+
+Additionally, bassshakers/transducers, active pedals, motion platforms, and 
+other simracing equipment also give similar additional telemetry-based 
+information (tire lockup, wheelspin, car behavior, etc.), and are not 
+considered an unfair advantage either.
+
+The app allows everybody to have the option of having additional 
+telemetry-based feedback information, not just the owners of expensive 
+equipment or particular wheelbases.
+
+Q: Does the app have an option to "remove flatspots"? Is that an unfair 
+advantage?
+
+A: No. The app had a "Notch Filter" option that is also present in Simucube 
+wheelbase software (and possibly other wheelbases), so that is a legitimate 
+feature. The feature was supposed to reduce specific user-defined frequencies 
+from the FFB signal, like in the Simucube software. It was improperly named 
+"Flatspot Suppression", but it could attenuate any frequency, like in other 
+wheelbase software. Early testing suggested it was not actually doing anything 
+(it wasn't working). The feature has in any case been removed in recent 
+versions of the app, since it was a legacy effect that was not working and was 
+not really necessary for the app.
+
 UPCOMING FEATURES
 -----------------
 
-* Basic mode with only main sliders and auto adjustment of other settings
-* Adaptive Optimal Slip Angle
+* Basic mode with only main sliders and auto adjustments of more advanced 
+  settings
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires 
-  are on dry or wet surface, and if there is grip or not
-* Per wheel Hydro-Grain to give information about a drying racing line 
-  (e.g., left tires on dry, right tires on wet)
-* Longitudinal Dynamic Weight Transfer: feeling of the car getting heavy 
-  under braking and light under acceleration
+  are on dry or wet surface, and if there is grip or not. This tries to 
+  replical some the particular wet track grip and dynamics that can be felt in 
+  real life cars.
+* Support for other Sims (AC Evo, RaceRoom, AC, ACC, rF2).
 
 
 FEEDBACK & SUPPORT
@@ -143,12 +173,6 @@ For full documentation, advanced settings, and tuning tips,
 see README.md or visit:
 - FFB Tuning Recommendations: https://github.com/coasting-nc/LMUFFB/blob/main/docs/FFB%20Tuning%20Recommendations.md
 - Main Project Page: https://github.com/coasting-nc/LMUFFB
-
-CONTRIBUTING
-------------
-Want to contribute? See the step-by-step guide for contributors:
-docs/dev_docs/contribute_to_the_project/how_to_contribute_to_the_project.md
-
 
 ===============================================================================
 RFACTOR 2 COMPATIBILITY
