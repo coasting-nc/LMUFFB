@@ -70,10 +70,24 @@ Your testing and feedback is greatly appreciated!
 TROUBLESHOOTING
 ---------------
 
+I am getting excessive oscillations while on straights
+ - Try setting "Smarts Hands-off Protection" to 10% - 20 % or more (it should 
+ work on GT3s, but might not for LMP2s and Hypercars)
+ - Increase at at least 1.0 the "Threshold" slider for "Yaw Kick" and "Power Yaw Kick" (if they are enabled).
+
+I am getting too much vibrations while braking
+ - Reduce "Lockup Strenght" of the "Lockup Vibration" effect (eg. down to 20%).
+ - Also adjust the other settings of the "Lockup Vibration" effect (but you might need different setting by car class):
+   - Gamme (increase this to make the effect start weaker and more progressively)
+   - Start slip (increase this to delay the start of the effect, requiring more tire slip to trigger)
+   - End slip (increase this to make the effect reach its maximum strength later)
+   - Sensitivity (increase this to make the effect trigger later, requiring more wheel angular deceleration)
+
 Unable to save settings or config.ini errors:
   - This usually happens if you placed the lmuFFB app or folder in a location 
     without write permissions (e.g., inside C:\Program Files)
-  - Solution: Keep the entire lmuFFB folder to a location where the app can have full write access, such as a subfolder in your Downloads folder
+  - Solution: Keep the entire lmuFFB folder to a location where the app can have 
+  full write access, such as a subfolder in your Downloads folder
   
 Inverted FFB (Force pushes away from center):
   - If the FFB feels "backwards" or "inverted" while driving (wheel pushes 
@@ -87,11 +101,6 @@ No FFB:
   - Verify the FFB strength in your device driver is not too low
   - Increase Master Gain or reduce Max Torque Ref
   - Check the lmuFFB console for errors
-
-Baseline vibration from the FFB:
-  - That is known to come from the Steering Shaft Torque from the game (you can temporarily disable Steering Shaft Gain to confirm it)
-  - To fix it, enable the "Static Noise Filter" in lmuFFB and set a Target Frequency of 10-12 Hz
-  - If some noise is still present, you can increase the Steering Shaft Smoothing.
 
 FFB too weak:
   - Increase Master Gain
@@ -132,8 +141,8 @@ The app allows everybody to have the option of having additional
 telemetry-based feedback information, not just the owners of expensive 
 equipment or particular wheelbases.
 
-Q: Does the app have an option to "remove flatspots"? Is that an unfair 
-advantage?
+Q: Does the app have an option to remove the feeling of flatspots vibrations 
+from FFB? Is that an unfair advantage?
 
 A: No. The app had a "Notch Filter" option that is also present in Simucube 
 wheelbase software (and possibly other wheelbases), so that is a legitimate 
