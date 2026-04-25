@@ -52,8 +52,18 @@ This is an **experimental release**, the FFB formulas may require refinement bas
 Your testing and feedback is greatly appreciated! 🙏
 
 
-## Troubleshooting
+### Troubleshooting
 
+-   **I am getting excessive oscillations while on straights**:
+    -   Try setting "Smart Hands-off Protection" to 10% - 20% or more (it should work on GT3s, but might not for LMP2s and Hypercars).
+    -   Increase at least to 1.0 the "Threshold" slider for "Yaw Kick" and "Power Yaw Kick" (if they are enabled).
+-   **I am getting too much vibrations while braking**:
+    -   Reduce "Lockup Strength" of the "Lockup Vibration" effect (e.g., down to 20%).
+    -   Also adjust the other settings of the "Lockup Vibration" effect (you might need different settings per car class):
+        -   **Gamma**: increase this to make the effect start weaker and more progressively.
+        -   **Start slip**: increase this to delay the start of the effect, requiring more tire slip to trigger.
+        -   **End slip**: increase this to make the effect reach its maximum strength later.
+        -   **Sensitivity**: increase this to make the effect trigger later, requiring more wheel angular deceleration.
 -   **Unable to save settings or config.ini errors**:
     - This usually happens if you placed the lmuFFB app or folder in a location without write permissions (e.g., inside `C:\Program Files`).
     - **Solution**: Keep the entire lmuFFB folder to a location where the app can have full write access, such as a subfolder in your **Downloads** folder.
@@ -90,7 +100,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   **Preferred**: [Open a GitHub Issue](https://github.com/coasting-nc/LMUFFB/issues). This is the best way to ensure your issue is tracked and addressed. Our AI agents periodically scan and attempt to fix GitHub issues.
     -   Alternatively, post in the [LMU Forum Thread](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/), but be aware that forum posts are harder to track.
 
-## FAQ
+### FAQ
 
 **Q: Does the app constitute an unfair advantage ("cheating")?**
 
@@ -104,7 +114,9 @@ The app allows everybody to have the option of having additional telemetry-based
 
 **A:** No. The app had a "Notch Filter" option that is also present in Simucube wheelbase software (and possibly other wheelbases), so that is a legitimate feature. The feature was supposed to reduce specific user-defined frequencies from the FFB signal, like in the Simucube software. It was improperly named "Flatspot Suppression", but it could attenuate any frequency, like in other wheelbase software. Early testing suggested it was not actually doing anything (it wasn't working). The feature has in any case been removed in recent versions of the app, since it was a legacy effect that was not working and was not really necessary for the app.
 
-## Upcoming Features
+
+
+### Upcoming Features
 
 * Basic mode with only main sliders and auto adjustments of more advanced settings
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not. This tries to replical some the particular wet track grip and dynamics that can be felt in real life cars.
