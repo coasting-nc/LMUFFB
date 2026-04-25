@@ -52,7 +52,7 @@ This is an **experimental release**, the FFB formulas may require refinement bas
 Your testing and feedback is greatly appreciated! 🙏
 
 
-### Troubleshooting
+## Troubleshooting
 
 -   **Unable to save settings or config.ini errors**:
     - This usually happens if you placed the lmuFFB app or folder in a location without write permissions (e.g., inside `C:\Program Files`).
@@ -90,7 +90,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   **Preferred**: [Open a GitHub Issue](https://github.com/coasting-nc/LMUFFB/issues). This is the best way to ensure your issue is tracked and addressed. Our AI agents periodically scan and attempt to fix GitHub issues.
     -   Alternatively, post in the [LMU Forum Thread](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/), but be aware that forum posts are harder to track.
 
-### FAQ
+## FAQ
 
 **Q: Does the app constitute an unfair advantage ("cheating")?**
 
@@ -104,7 +104,7 @@ The app allows everybody to have the option of having additional telemetry-based
 
 **A:** No. The app had a "Notch Filter" option that is also present in Simucube wheelbase software (and possibly other wheelbases), so that is a legitimate feature. The feature was supposed to reduce specific user-defined frequencies from the FFB signal, like in the Simucube software. It was improperly named "Flatspot Suppression", but it could attenuate any frequency, like in other wheelbase software. Early testing suggested it was not actually doing anything (it wasn't working). The feature has in any case been removed in recent versions of the app, since it was a legacy effect that was not working and was not really necessary for the app.
 
-### Upcoming Features
+## Upcoming Features
 
 * Basic mode with only main sliders and auto adjustments of more advanced settings
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not. This tries to replical some the particular wet track grip and dynamics that can be felt in real life cars.
