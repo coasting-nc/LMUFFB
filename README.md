@@ -100,7 +100,7 @@ Additionally, bassshakers/transducers, active pedals, motion platforms, and othe
 
 The app allows everybody to have the option of having additional telemetry-based feedback information, not just the owners of expensive equipment or particular wheelbases.
 
-**Q: Does the app have an option to "remove flatspots"? Is that an unfair advantage?**
+**Q: Does the app have an option to remove the feeling of flatspots vibrations from FFB? Is that an unfair advantage?**
 
 **A:** No. The app had a "Notch Filter" option that is also present in Simucube wheelbase software (and possibly other wheelbases), so that is a legitimate feature. The feature was supposed to reduce specific user-defined frequencies from the FFB signal, like in the Simucube software. It was improperly named "Flatspot Suppression", but it could attenuate any frequency, like in other wheelbase software. Early testing suggested it was not actually doing anything (it wasn't working). The feature has in any case been removed in recent versions of the app, since it was a legacy effect that was not working and was not really necessary for the app.
 
