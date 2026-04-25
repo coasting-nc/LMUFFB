@@ -119,7 +119,7 @@ The app allows everybody to have the option of having additional telemetry-based
 ## Upcoming Features
 
 * Basic mode with only main sliders and auto adjustments of more advanced settings
-* Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not. This tries to replical some the particular wet track grip and dynamics that can be felt in real life cars.
+* Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not. This tries to replicate some the particular wet track grip and dynamics that can be felt in real life cars.
 * Support for other Sims (AC Evo, RaceRoom, AC, ACC, rF2).
   
 ## Feedback & Support
