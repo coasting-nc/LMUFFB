@@ -111,6 +111,10 @@ The app allows everybody to have the option of having additional telemetry-based
 **A:** No. The app had a "Notch Filter" option that is also present in Simucube wheelbase software (and possibly other wheelbases), so that is a legitimate feature. The feature was supposed to reduce specific user-defined frequencies from the FFB signal, like in the Simucube software. It was improperly named "Flatspot Suppression", but it could attenuate any frequency, like in other wheelbase software. Early testing suggested it was not actually doing anything (it wasn't working). The feature has in any case been removed in recent versions of the app, since it was a legacy effect that was not working and was not really necessary for the app.
 
 
+**Q: How is the app getting the telemetry data from the game?**
+
+**A:** The app is using the official LMU Shared Memory Interface that was introduced with LMU 1.2 in December 2025.
+
 
 ## Upcoming Features
 
