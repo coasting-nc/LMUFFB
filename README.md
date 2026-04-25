@@ -52,7 +52,7 @@ This is an **experimental release**, the FFB formulas may require refinement bas
 Your testing and feedback is greatly appreciated! 🙏
 
 
-### Troubleshooting
+## Troubleshooting
 
 -   **I am getting excessive oscillations while on straights**:
     -   Try setting "Smart Hands-off Protection" to 10% - 20% or more (it should work on GT3s, but might not for LMP2s and Hypercars).
@@ -100,7 +100,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   **Preferred**: [Open a GitHub Issue](https://github.com/coasting-nc/LMUFFB/issues). This is the best way to ensure your issue is tracked and addressed. Our AI agents periodically scan and attempt to fix GitHub issues.
     -   Alternatively, post in the [LMU Forum Thread](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/), but be aware that forum posts are harder to track.
 
-### FAQ
+## FAQ
 
 **Q: Does the app constitute an unfair advantage ("cheating")?**
 
@@ -116,7 +116,7 @@ The app allows everybody to have the option of having additional telemetry-based
 
 
 
-### Upcoming Features
+## Upcoming Features
 
 * Basic mode with only main sliders and auto adjustments of more advanced settings
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not. This tries to replical some the particular wet track grip and dynamics that can be felt in real life cars.
