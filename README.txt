@@ -141,6 +141,7 @@ The app allows everybody to have the option of having additional
 telemetry-based feedback information, not just the owners of expensive 
 equipment or particular wheelbases.
 
+
 Q: Does the app have an option to remove the feeling of flatspots vibrations 
 from FFB? Is that an unfair advantage?
 
@@ -153,6 +154,13 @@ wheelbase software. Early testing suggested it was not actually doing anything
 (it wasn't working). The feature has in any case been removed in recent 
 versions of the app, since it was a legacy effect that was not working and was 
 not really necessary for the app.
+
+
+Q: How is the app getting the telemetry data from the game?
+
+A: The app is using the official LMU Shared Memory Interface that was 
+introduced with LMU 1.2 in December 2025.
+
 
 UPCOMING FEATURES
 -----------------
