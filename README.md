@@ -97,6 +97,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   Alternatively, post in the [LMU Forum Thread](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/), but be aware that forum posts are harder to track.
 
 
+
 ### 🔄 Clarification about the Interaction Between In-Game FFB (from LMU) and the FFB from the App
 
 The app takes **exclusive control** of the FFB sent to your wheelbase, which means that it is the only program sending force feedback to your wheelbase. This is required by DirectInput, and it is the reason why the app displays "Game FFB is blocked."
@@ -107,7 +108,7 @@ However, among the many telemetry channels that the App uses, lmuFFB includes a 
 
 The "In-Game FFB" stream is the FFB produced by LMU. It is mostly based on the Steering Rack Torque (which is why in the app you can select it as one of the two possible steering torque sources), plus any additional effect and processing that LMU might be doing on it behind the scenes (eg. adding damping, smoothing, vibrotactile effects, etc.).
 
-This stream is impacted by any setting that you might change from the game FFB Settings (see below)
+This stream is impacted by any setting that you might change from the game FFB Settings (see below).
 
 You can control the impact of the In-Game FFB on the final FFB produced by lmuFFB in several ways:
 
@@ -117,7 +118,7 @@ You can control the impact of the In-Game FFB on the final FFB produced by lmuFF
 
 ### In-Game FFB (400Hz) vs. Shaft Torque (100Hz Legacy)
 
-In the App, you have two options for your base steering torque ("Steer Torque Source"):
+In the App (**"Front Grip" section**), you have two options for your base steering torque ("Steer Torque Source"):
 
 1.  **In-Game FFB**:
     *   **Pros**: High sample rate (400Hz), includes LMU's built-in processing (eg. smoothing) and specialized effects (eg. vibrotactile effects).
