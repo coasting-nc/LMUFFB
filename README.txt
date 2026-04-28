@@ -123,6 +123,57 @@ Any other issue:
     forum posts are harder to track:
     https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/
 
+CLARIFICATION ABOUT THE INTERACTION BETWEEN IN-GAME FFB (from LMU) AND the FFB from the App
+-------------------------------------------------------------------------------------------
+
+The app takes exclusive control of the FFB sent to your wheelbase, which means that it is the only program sending force feedback to your wheelbase. This is required by DirectInput, and it is the reason why the app displays "Game FFB is blocked."
+
+However, among the many telemetry channels that the App uses, lmuFFB includes a 
+specific telemetry channel called "In-Game FFB", which allows you to still 
+include the LMU original FFB signal within the final FFB that the app produces.
+
+How it Works:
+
+The "In-Game FFB" stream is the FFB produced by LMU. It is mostly based on the 
+Steering Rack Torque (which is why in the app you can select it as one of the 
+two possible steering torque sources), plus any additional effect and 
+processing that LMU might be doing on it behind the scenes (eg. adding 
+damping, smoothing, vibrotactile effects, etc.).
+
+This stream is impacted by any setting that you might change in LMU's FFB Settings (see below)
+
+You can control the impact of the In-Game FFB on the final FFB produced by 
+lmuFFB in several ways:
+
+- You can enable or disable it: by selecting "In-Game FFB" as your Steer Torque 
+  Source in the app, it will be combined with all other telemetry-based forces 
+  processed by lmuFFB to produce the final FFB you feel.
+
+- Game Settings: Any changes you make to LMU's internal FFB settings 
+  (strength, smoothing, vibrotactile effects, etc.) should directly affect 
+  what lmuFFB receives through this channel.
+
+- In App Gain slider: The "In-Game FFB Gain" slider in lmuFFB acts as an 
+  additional multiplier to change the strength of this specific channel.
+
+In-Game FFB (400Hz) vs. Shaft Torque (100Hz Legacy):
+
+In the App, you have two options for your base steering torque ("Steer Torque Source"):
+
+1. In-Game FFB:
+   - Pros: High sample rate (400Hz), includes LMU's built-in processing 
+     (e.g., smoothing) and specialized effects (e.g., vibrotactile effects).
+   - Cons: If you don't like the game built-in processing.
+
+2. Shaft Torque (100Hz Legacy):
+   - Pros: A "pure" source of steering rack torque information without 
+     game-side processing.
+   - Cons: Lower sample rate (100Hz), potentially slightly higher latency 
+     (though usually unnoticeable), and may require gain adjustments via the 
+     "Steering Shaft Gain" slider, because it might have a very different 
+     baseline strength compared to In-Game FFB.
+
+
 FAQ
 ---
 
@@ -169,7 +220,7 @@ UPCOMING FEATURES
   settings
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires 
   are on dry or wet surface, and if there is grip or not. This tries to 
-  replical some the particular wet track grip and dynamics that can be felt in 
+  replicate some the particular wet track grip and dynamics that can be felt in 
   real life cars.
 * Support for other Sims (AC Evo, RaceRoom, AC, ACC, rF2).
 
