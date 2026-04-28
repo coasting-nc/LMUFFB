@@ -98,7 +98,7 @@ Your testing and feedback is greatly appreciated! 🙏
 
 
 
-### 🔄 Clarification about the Interaction Between In-Game FFB (from LMU) and the FFB from the App
+### Clarification about the Interaction Between In-Game FFB (from LMU) and the FFB from the App
 
 The app takes **exclusive control** of the FFB sent to your wheelbase, which means that it is the only program sending force feedback to your wheelbase. This is required by DirectInput, and it is the reason why the app displays "Game FFB is blocked."
 
