@@ -140,7 +140,7 @@ two possible steering torque sources), plus any additional effect and
 processing that LMU might be doing on it behind the scenes (eg. adding 
 damping, smoothing, vibrotactile effects, etc.).
 
-This stream is impacted by any setting that you might change in LMU's FFB Settings (see below)
+This stream is impacted by any setting that you might change from the game FFB Settings (see below).
 
 You can control the impact of the In-Game FFB on the final FFB produced by 
 lmuFFB in several ways:
