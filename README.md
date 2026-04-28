@@ -107,7 +107,7 @@ However, among the many telemetry channels that the App uses, lmuFFB includes a 
 
 The "In-Game FFB" stream is the FFB produced by LMU. It is mostly based on the Steering Rack Torque (which is why in the app you can select it as one of the two possible steering torque sources), plus any additional effect and processing that LMU might be doing on it behind the scenes (eg. adding damping, smoothing, vibrotactile effects, etc.).
 
-This stream is impacted by any setting that you might change in LMU's FFB Settings (see below)
+This stream is impacted by any setting that you might change from the game FFB Settings (see below)
 
 You can control the impact of the In-Game FFB on the final FFB produced by lmuFFB in several ways:
 
