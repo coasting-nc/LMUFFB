@@ -98,13 +98,13 @@ Your testing and feedback is greatly appreciated! 🙏
 
 
 
-### Clarification about the Interaction Between In-Game FFB (from LMU) and the FFB from the App
+## Clarification about the Interaction Between In-Game FFB (from LMU) and the FFB from the App
 
 The app takes **exclusive control** of the FFB sent to your wheelbase, which means that it is the only program sending force feedback to your wheelbase. This is required by DirectInput, and it is the reason why the app displays "Game FFB is blocked."
 
 However, among the many telemetry channels that the App uses, lmuFFB includes a specific telemetry channel called **"In-Game FFB"**, which allows you to still include the LMU original FFB signal within the final FFB that the app produces.
 
-#### How it Works
+### How it Works
 
 The "In-Game FFB" stream is the FFB produced by LMU. It is mostly based on the Steering Rack Torque (which is why in the app you can select it as one of the two possible steering torque sources), plus any additional effect and processing that LMU might be doing on it behind the scenes (eg. adding damping, smoothing, vibrotactile effects, etc.).
 
