@@ -158,7 +158,7 @@ lmuFFB in several ways:
 
 In-Game FFB (400Hz) vs. Shaft Torque (100Hz Legacy):
 
-In the App, you have two options for your base steering torque ("Steer Torque Source"):
+In the App ("Front Grip" section), you have two options for your base steering torque ("Steer Torque Source"):
 
 1. In-Game FFB:
    - Pros: High sample rate (400Hz), includes LMU's built-in processing 
