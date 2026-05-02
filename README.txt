@@ -77,6 +77,7 @@ I am getting excessive oscillations while on straights
 
 I am getting too much vibrations while braking
  - Reduce "Lockup Strenght" of the "Lockup Vibration" effect (eg. down to 20%).
+ - Increase Steering Shaft Smoothing ("Front Grip" section) to 8 ms.
  - Also adjust the other settings of the "Lockup Vibration" effect (but you might need different setting by car class):
    - Gamme (increase this to make the effect start weaker and more progressively)
    - Start slip (increase this to delay the start of the effect, requiring more tire slip to trigger)
