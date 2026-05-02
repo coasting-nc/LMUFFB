@@ -59,6 +59,7 @@ Your testing and feedback is greatly appreciated! 🙏
     -   Increase at least to 1.0 the "Threshold" slider for "Yaw Kick" and "Power Yaw Kick" (if they are enabled).
 -   **I am getting too much vibrations while braking**:
     -   Reduce "Lockup Strength" of the "Lockup Vibration" effect (e.g., down to 20%).
+    -   Increase **Steering Shaft Smoothing** ("Front Grip" section) to 8 ms.
     -   Also adjust the other settings of the "Lockup Vibration" effect (you might need different settings per car class):
         -   **Gamma**: increase this to make the effect start weaker and more progressively.
         -   **Start slip**: increase this to delay the start of the effect, requiring more tire slip to trigger.
