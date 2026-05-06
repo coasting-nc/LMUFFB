@@ -162,9 +162,6 @@ For feedback, questions, or support:
 *   **GitHub Issues (Recommended for Bugs)**: [Report bugs or request features](https://github.com/coasting-nc/LMUFFB/issues). GitHub issues are easier for us to track and are periodically tackled by AI development agents.
 *   **LMU Forum Thread**: [lmuFFB App](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/). Best for general discussion and sharing settings.
 
-See also this Reddit thread: 
-* https://www.reddit.com/r/LeMansUltimateWEC/comments/1quwx67/lmuffb_telemetry_based_ffb_for_lmu/
-
 ## Documentation
 
 Note: this documentation is not up to date.
@@ -178,3 +175,14 @@ Note: this documentation is not up to date.
 *   [FFB Math Formulas](docs/dev_docs/references/FFB_formulas.md)
 
 
+##  Videos and Reviews
+
+UKOG: [This FFB App is Blowing Up… But is it Actually Better? (Le Mans Ultimate)](https://www.youtube.com/watch?v=4OVys-06StM)
+[![UKOG](https://img.youtube.com/vi/4OVys-06StM/hqdefault.jpg)](https://www.youtube.com/watch?v=4OVys-06StM)
+
+Gamer Muscle: [This FFB App Completely Transforms LMU – Full Setup, Profiles & Download](https://www.youtube.com/watch?v=CQJRmhMaoPU)
+[![Gamer Muscle](https://img.youtube.com/vi/CQJRmhMaoPU/hqdefault.jpg)](https://www.youtube.com/watch?v=CQJRmhMaoPU)
+
+For lmuFFB profiles checkout:
+* UKOG discord, which has a section with user profiles and discussions for specific wheelbases: https://discord.gg/ukog
+* Gamer Muscle Patreon (free): from which you can download GM profiles for GT3s, LMP2, Hypercars, and a specific profile for lower Nm wheelbases (4 Nm): https://www.patreon.com/posts/lmuffb-app-gamer-155277185
