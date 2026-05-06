@@ -166,13 +166,11 @@ For feedback, questions, or support:
 
 Note: this documentation is not up to date.
 
-*   [FFB Tuning Recommendations](docs/FFB%20Tuning%20Recommendations.md) 
-*   [Driver's Guide to Testing LMUFFB](docs/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
-*   [The Physics of Feel - Driver's Guide](docs/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
-*   [FFB Effects & Customization Guide](docs/ffb_effects.md)
-*   [Log Analyzer Tool](tools/lmuffb_log_analyzer/README.md) - Diagnostic tool for analyzing telemetry logs and slope detection performance
+*   [FFB Tuning Recommendations](docs/user_guides/FFB%20Tuning%20Recommendations.md) 
+*   [Driver's Guide to Testing LMUFFB](docs/user_guides/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
+*   [The Physics of Feel - Driver's Guide](docs/user_guides/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
+*   [FFB Effects & Customization Guide](docs/user_guides/ffb_effects.md)
 *   [Telemetry Data Reference](docs/dev_docs/references/Reference - telemetry_data_reference.md)
-*   [FFB Math Formulas](docs/dev_docs/references/FFB_formulas.md)
 
 
 ##  Videos and Reviews
