@@ -160,6 +160,18 @@ For feedback, questions, or support:
 *   **GitHub Issues (Recommended for Bugs)**: [Report bugs or request features](https://github.com/coasting-nc/LMUFFB/issues). GitHub issues are easier for us to track and are periodically tackled by AI development agents.
 *   **LMU Forum Thread**: [lmuFFB App](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/). Best for general discussion and sharing settings.
 
+## Licensing & Project Status
+
+As of April 11th 2026, this project has transitioned to a proprietary, closed-source model. 
+
+### Statement on Independent Development and Licensing:
+- **Ownership & Originality:** The current codebase is entirely proprietary and owned solely by the author. It has been developed independently from scratch.
+- **No Third-Party GPL Code:** This software does not use, fork, incorporate, or depend on code from any other GPL-licensed projects. 
+- **Transition from Open-Source:** Prior to April 11th 2026, an early prototype of this project was briefly hosted as open-source under the GPL license. 
+- **Purging of Community Contributions:** To ensure complete compliance with open-source licenses, all of the previous minor contributions by external developers (including merged pull requests and community-suggested code snippets) have been entirely discarded and rewritten from scratch using clean-room, independent implementations. No community-contributed code remains in the current codebase.
+
+We take intellectual property rights seriously and have taken exhaustive measures to ensure this software is entirely independent.
+
 ## Documentation
 
 Note: this documentation is not up to date.
