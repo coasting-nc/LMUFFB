@@ -1,4 +1,6 @@
 # The Physics of Feel: LMUFFB Driver's Guide
+
+> [!WARNING]
 > This document is not up to date, it is based on an older version of the app.
 
 This guide explains how LMUFFB translates raw telemetry data into tactile sensations. It details what you should feel in specific driving situations and provides a blueprint for visualizing these relationships through telemetry graphs.
@@ -162,13 +164,13 @@ This section details how LMUFFB handles conflicting signals to create a cohesive
 
 ---
 
-### 6. Dynamic Slope Detection (Advanced Understeer, v0.7.40)
+### 6. Dynamic Slope Detection (Advanced Understeer, v0.7.400)
 
 **The Situation:** Instead of using fixed "optimal slip" numbers (which change based on car and track), the app actively watches the shape of the tire's grip curve.
 
 **The FFB Sensation:**
 A much more precise and progressive lightening of the wheel. It correctly communicates the "peak" of grip regardless of whether you are driving a GT3 or a Prototype.
 
-**How it Works (v0.7.40):**
+**How it Works (v0.7.400):**
 1.  **G-Slope**: Monitors the relationship between Lateral G and Slip Angle. When G stops increasing despite more slip, the slope goes negative, and the wheel lightens.
 2.  **Torque-Slope**: Monitors the drop in pneumatic trail (Steering Torque vs. Angle). This provides an even earlier "warning" cue before the car actually starts to wash wide.

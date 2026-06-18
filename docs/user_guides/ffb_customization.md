@@ -1,4 +1,6 @@
 # Customization of Tire Grip FFB
+
+> [!WARNING]
 > This document is not up to date, it is based on an older version of the app.
 
 One of the primary advantages of external FFB applications like LMUFFB is the ability to tailor the force feedback sensation to the driver's preference.
@@ -12,7 +14,7 @@ The C++ version of LMUFFB implements the following customizable effects:
     *   **100% (1.0)**: Maximal lightness when understeering.
     *   **0% (0.0)**: Force follows game physics purely (heavy even when sliding).
 
-## 2. Slope Detection (Dynamic Understeer, v0.7.40)
+## 2. Slope Detection (Dynamic Understeer, v0.7.400)
 *   **Description**: An advanced algorithm that detects the tire's physical limit by analyzing the relationship between Lateral G and Slip Angle (and optionally Steering Torque).
 *   **Benefits**: Provides a much more organic and consistent "light wheel" feel than static thresholds.
 *   **Key Settings**:
@@ -48,15 +50,15 @@ LMUFFB allows you to save and share your configurations easily.
 ### Saving Custom Presets
 1. Adjust the sliders to your preference.
 2. Enter a name in the text box next to **"Save New"**.
-3. Click **"Save New"**. Your preset is now saved to `config.ini` and will appear in the **"Load Preset"** dropdown.
+3. Click **"Save New"**. Your preset is now saved to `config.toml` and will appear in the **"Load Preset"** dropdown.
 
 ### Exporting for Sharing
 1. Select the preset you want to share from the **"Load Preset"** dropdown.
 2. Click **"Export Selected..."**.
-3. Choose a location to save the `.ini` file. This file contains all your settings and can be sent to other users.
+3. Choose a location to save the `.toml` file. This file contains all your settings and can be sent to other users.
 
 ### Importing a Shared Preset
 1. Click **"Import Preset..."**.
-2. Select the `.ini` file you received.
+2. Select the `.toml` (or old `.ini`) file you received.
 3. LMUFFB will automatically add it to your user presets. If a preset with the same name exists, it will be renamed (e.g., "FastGT3 (1)").
-4. The imported preset is automatically saved to your `config.ini` for future use.
+4. The imported preset is automatically saved to your `config.toml` for future use.

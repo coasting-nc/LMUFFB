@@ -1,4 +1,6 @@
 # FFB Effects & Customization Guide
+
+> [!WARNING]
 > This document is not up to date, it is based on an older version of the app.
 
 This document details the Force Feedback effects implemented in LMUFFB, how they are derived from telemetry, and how to customize them.
