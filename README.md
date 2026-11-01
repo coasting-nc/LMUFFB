@@ -1,3 +1,5 @@
+![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) [Donate to Support this App](https://ffbhub-shop.fourthwall.com)
+
 # FFBHUB (formerly LMUFFB)
 
 A Telemetry-based Force Feedback app for LMU.
