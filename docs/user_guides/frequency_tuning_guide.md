@@ -2,6 +2,8 @@
 
 **Version:** 0.6.20+  
 **Last Updated:** 2025-12-27
+
+> [!WARNING]
 > This document is not up to date, it is based on an older version of the app.
 
 ---
