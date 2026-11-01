@@ -1,6 +1,12 @@
-# lmuFFB
+# FFBHUB (formerly LMUFFB)
 
 A Telemetry-based Force Feedback app for LMU.
+
+LMUFFB is being renamed to FFBHUB as we expand support to additional racing simulators.
+
+![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) **Support FFBHUB:** [Make a donation](https://ffbhub-shop.fourthwall.com)
+
+If you find this app useful, consider making a voluntary donation to support ongoing development, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
 
 ![lmuFFB GUI](docs/screenshots/v0.7.400.png)
 
