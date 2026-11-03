@@ -19,6 +19,8 @@ If you find this app useful, consider contributing to support ongoing developmen
 
 ## Installation & Configuration (LMU 1.2+)
 
+Disclaimer: This document is temporarily out of date as it still largely describes LMU only and when the app was called lmuFFB.
+
 ### Step-by-Step Setup
 
 > [!IMPORTANT]
