@@ -2,7 +2,7 @@
 
 # FFBHUB (formerly LMUFFB)
 
-A Telemetry-based Force Feedback app for LMU.
+A Telemetry-based Force Feedback app for LMU and RaceRoom.
 
 LMUFFB is being renamed to FFBHUB as we expand support to additional racing simulators.
 
