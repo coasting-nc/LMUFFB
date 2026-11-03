@@ -10,7 +10,8 @@ LMUFFB is being renamed to FFBHUB as we expand support to additional racing simu
 
 If you find this app useful, consider contributing to support ongoing development, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
 
-![lmuFFB GUI](docs/screenshots/v0.7.400.png)
+![lmuFFB GUI](docs/screenshots/ffbhub_main_window_raceroom.png)
+
 
 ## 📥 Download
 
