@@ -197,14 +197,14 @@ Note: this documentation is not up to date.
 UKOG: [This FFB App is Blowing Up… But is it Actually Better? (Le Mans Ultimate)](https://www.youtube.com/watch?v=4OVys-06StM)
 [![UKOG](https://img.youtube.com/vi/4OVys-06StM/hqdefault.jpg)](https://www.youtube.com/watch?v=4OVys-06StM)
 
-Dalking: [LMU FFB App Explained in Detail | Settings, Effects & My Setup](https://www.youtube.com/watch?v=qAvCqoPBkys)
-
 Gamer Muscle: [This FFB App Completely Transforms LMU – Full Setup, Profiles & Download](https://www.youtube.com/watch?v=CQJRmhMaoPU)
 [![Gamer Muscle](https://img.youtube.com/vi/CQJRmhMaoPU/hqdefault.jpg)](https://www.youtube.com/watch?v=CQJRmhMaoPU)
 
+Dalking: [LMU FFB App Explained in Detail | Settings, Effects & My Setup](https://www.youtube.com/watch?v=qAvCqoPBkys)
+
 [Dalking's video](https://www.youtube.com/watch?v=qAvCqoPBkys) is an excellent step by step guide for setting up the app from scratch, tuning each effect in the most effective order, and explaining what each effect does.
 
-For lmuFFB profiles checkout:
+To find and share lmuFFB profiles:
 * Dalking LMUFFB profile, developed for a 18 Nm VNM wheelbase, from his discord: https://discord.gg/xfwJwUa
 * UKOG discord, which has a section with user profiles and discussions for specific wheelbases: https://discord.gg/ukog
 * Gamer Muscle Patreon (free): from which you can download GM profiles for GT3s, LMP2, Hypercars, and a specific profile for lower Nm wheelbases (4 Nm): https://www.patreon.com/posts/lmuffb-app-gamer-155277185
