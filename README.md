@@ -21,7 +21,7 @@ If you find this app useful, consider contributing to support ongoing developmen
 
 Disclaimer: This document is temporarily out of date as it still largely describes LMU only and when the app was called lmuFFB.
 
-This should work for both LMU and RaceRoom:
+For both LMU and RaceRoom:
 
 1. Extract the zip to a folder where you can write files, such as a folder in Downloads. Do not use Program Files.
 2. Start FFBHUB.exe
