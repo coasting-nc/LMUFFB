@@ -189,7 +189,7 @@ Dalking: [LMU FFB App Explained in Detail | Settings, Effects & My Setup](https:
 
 [![Dalking](https://img.youtube.com/vi/qAvCqoPBkys/hqdefault.jpg)](https://www.youtube.com/watch?v=qAvCqoPBkys)
 
-[Dalking's video](https://www.youtube.com/watch?v=qAvCqoPBkys) is an excellent step by step guide for setting up the app from scratch, tuning each effect in the most effective order, and explaining what each effect does.
+[Dalking's video](https://www.youtube.com/watch?v=qAvCqoPBkys) is an excellent step by step guide for setting up the app from scratch for LMU, tuning each effect in the most effective order, and explaining what each effect does.
 
 To find and share lmuFFB profiles, see:
 * Dalking LMUFFB profile, developed for a 18 Nm VNM wheelbase, from his discord: https://discord.gg/xfwJwUa
