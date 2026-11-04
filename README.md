@@ -41,7 +41,7 @@ If you want the LMU native FFB to be able to be mixed in with the app FFB, do th
 1. **Report issues** - For bugs and technical issues, **it is much better to [open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues)** rather than posting on forums.
 2. For LMU, **Share your results** - Post screenshots, thoughts and settings to the [LMU Forum Thread for the lmuFFB App](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/)
 
-## Troubleshooting
+## Troubleshooting (LMU)
 
 -   **I am getting excessive oscillations while on straights**:
     -   Try setting "Smart Hands-off Protection" to 10% - 20% or more (it should work on GT3s, but might not for LMP2s and Hypercars).
