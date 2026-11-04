@@ -30,14 +30,14 @@ Make sure the game **Display Mode** is **Borderless** (Prevents crashes/minimizi
 
 ### Additional LMU-only instructions
 
-If you want the LMU native FFB to be able to be mixed in with the app FFB, do these **In-Game Force Feedback settings in LMU**:
+If you want the LMU native FFB to be able to be mixed in with the app FFB, set these **In-Game Force Feedback settings in LMU**:
     *   In-game Force Feedback **Enabled and with Strength % greater than zero**.
-    *   In this case, the FFB strength % you set in-game will be exactly the strength lmuFFB receives (before mixing it with other FFB effects). So set in-game FFB strenght to the value you generally prefer for in-game FFB when not using the app.
+    *   In this case, the FFB strength % you set in-game will be exactly the strength the FFB-HUB app receives (before mixing it with other FFB effects). So set in-game FFB strenght to the value you generally prefer for in-game FFB when not using the app.
 
 ## Help us improve the app
 
 1. **Report issues** - For bugs and technical issues, **it is much better to [open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues)** rather than posting on forums.
-2. For LMU, **Share your results** - Post screenshots, thoughts and settings to the [LMU Forum Thread for the lmuFFB App](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/)
+2. For LMU, post screenshots, thoughts and settings to the [LMU Forum Thread for the lmuFFB App](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/)
 
 ## Troubleshooting (LMU)
 
@@ -53,17 +53,17 @@ If you want the LMU native FFB to be able to be mixed in with the app FFB, do th
         -   **End slip**: increase this to make the effect reach its maximum strength later.
         -   **Sensitivity**: increase this to make the effect trigger later, requiring more wheel angular deceleration.
 -   **Unable to save settings or config.ini errors**:
-    - This usually happens if you placed the lmuFFB app or folder in a location without write permissions (e.g., inside `C:\Program Files`).
-    - **Solution**: Keep the entire lmuFFB folder to a location where the app can have full write access, such as a subfolder in your **Downloads** folder.
+    - This usually happens if you placed the FFB-HUB app or folder in a location without write permissions (e.g., inside `C:\Program Files`).
+    - **Solution**: Keep the entire FFB-HUB app folder to a location where the app can have full write access, such as a subfolder in your **Downloads** folder.
 -   **Inverted FFB (Force pushes away from center)**:
-    -   If the FFB feels "backwards" or "inverted" while driving (wheel pushes away from center instead of pulling toward it), check the **"Invert FFB"** checkbox in the lmuFFB GUI.
+    -   If the FFB feels "backwards" or "inverted" while driving (wheel pushes away from center instead of pulling toward it), check the **"Invert FFB"** checkbox in the FFB-HUB app GUI.
     -   This reverses the force direction to match your wheel's expected behavior.
 -   **No FFB**: 
-    - Ensure the "FFB Device" in lmuFFB is your real wheel
+    - Ensure the "FFB Device" in FFB-HUB app is your real wheel
     - Check if Connected to Le Mans Ultimate" appear in the GUI
     - Verify the FFB strength in your device driver is not too low
     - Increase Master Gain or reduce Max Torque Ref
-    - Check the lmuFFB console for errors
+    - Check the FFB-HUB app console for errors
 -   **FFB too weak**:
     -   Increase **Master Gain** (slider ranges from 0% to 200%, so you can boost beyond 100%).
     -   Or reduce **Max Torque Ref** (this amplifies the signal by setting a lower reference point for maximum torque).
@@ -90,7 +90,7 @@ If you want the LMU native FFB to be able to be mixed in with the app FFB, do th
 
 The app takes **exclusive control** of the FFB sent to your wheelbase, which means that it is the only program sending force feedback to your wheelbase. This is required by DirectInput, and it is the reason why the app displays "Game FFB is blocked."
 
-However, among the many telemetry channels that the App uses, lmuFFB includes a specific telemetry channel called **"In-Game FFB"**, which allows you to still include the LMU original FFB signal within the final FFB that the app produces.
+However, among the many telemetry channels that it uses, the FFB-HUB app includes a specific telemetry channel called **"In-Game FFB"**, which allows you to still include the LMU original FFB signal within the final FFB that the app produces.
 
 ### How it Works
 
@@ -98,11 +98,11 @@ The "In-Game FFB" stream is the FFB produced by LMU. It is mostly based on the S
 
 This stream is impacted by any setting that you might change from the game FFB Settings (see below).
 
-You can control the impact of the In-Game FFB on the final FFB produced by lmuFFB in several ways:
+You can control the impact of the In-Game FFB on the final FFB produced by the FFB-HUB app in several ways:
 
-*   You can enable or disabled it: by selecting "In-Game FFB" as your **Steer Torque Source** in the app, it will be combined with all other telemetry-based forces processed by lmuFFB to produce the final FFB you feel.
-*   **Game Settings**: Any changes you make to LMU's internal FFB settings (strength, smoothing, vibrotactile effects, etc.) should directly affect what lmuFFB receives through this channel.
-*   In App **Gain** slider: The **"In-Game FFB Gain"** slider in lmuFFB acts as an additional multiplier to change the strenght of this specific channel.
+*   You can enable or disabled it: by selecting "In-Game FFB" as your **Steer Torque Source** in the app, it will be combined with all other telemetry-based forces processed by the FFB-HUB app to produce the final FFB you feel.
+*   **Game Settings**: Any changes you make to LMU's internal FFB settings (strength, smoothing, vibrotactile effects, etc.) should directly affect what the FFB-HUB app receives through this channel.
+*   In App **Gain** slider: The **"In-Game FFB Gain"** slider in the FFB-HUB app acts as an additional multiplier to change the strenght of this specific channel.
 
 ### In-Game FFB (400Hz) vs. Shaft Torque (100Hz Legacy)
 
@@ -167,10 +167,10 @@ Note: this documentation is not up to date.
 
 *   [FFB Tuning Recommendations](docs/user_guides/FFB%20Tuning%20Recommendations.md) 
 *   [Driver's Guide to Testing LMUFFB](docs/user_guides/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
-*   [The Physics of Feel - Driver's Guide](docs/user_guides/the_physics_of__feel_-_driver_guide.md) - Explains how lmuFFB translates telemetry into tactile sensations, with telemetry visualizations
+*   [The Physics of Feel - Driver's Guide](docs/user_guides/the_physics_of__feel_-_driver_guide.md) - Explains how the FFB-HUB app translates telemetry into tactile sensations, with telemetry visualizations
 *   [FFB Effects & Customization Guide](docs/user_guides/ffb_effects.md)
 
-##  Videos and Reviews
+##  Videos, Reviews and Tutorials
 
 UKOG: [This FFB App is Blowing Up… But is it Actually Better? (Le Mans Ultimate)](https://www.youtube.com/watch?v=4OVys-06StM)
 [![UKOG](https://img.youtube.com/vi/4OVys-06StM/hqdefault.jpg)](https://www.youtube.com/watch?v=4OVys-06StM)
