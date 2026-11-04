@@ -4,7 +4,7 @@
 
 A Telemetry-based Force Feedback app for LMU and RaceRoom.
 
-LMUFFB is being renamed **FFB-HUB** as we expand support to additional racing simulators.
+LMUFFB is being renamed **FFB-HUB** as we expand support for additional racing simulators.
 
 ![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) **Support FFB-HUB:** [Make a donation](https://ffbhub-shop.fourthwall.com)
 
