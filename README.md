@@ -204,7 +204,7 @@ Dalking: [LMU FFB App Explained in Detail | Settings, Effects & My Setup](https:
 
 [Dalking's video](https://www.youtube.com/watch?v=qAvCqoPBkys) is an excellent step by step guide for setting up the app from scratch, tuning each effect in the most effective order, and explaining what each effect does.
 
-To find and share lmuFFB profiles:
+To find and share lmuFFB profiles, see:
 * Dalking LMUFFB profile, developed for a 18 Nm VNM wheelbase, from his discord: https://discord.gg/xfwJwUa
 * UKOG discord, which has a section with user profiles and discussions for specific wheelbases: https://discord.gg/ukog
 * Gamer Muscle Patreon (free): from which you can download GM profiles for GT3s, LMP2, Hypercars, and a specific profile for lower Nm wheelbases (4 Nm): https://www.patreon.com/posts/lmuffb-app-gamer-155277185
