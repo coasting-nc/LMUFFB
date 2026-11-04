@@ -179,9 +179,10 @@ Gamer Muscle: [This FFB App Completely Transforms LMU – Full Setup, Profiles &
 [![Gamer Muscle](https://img.youtube.com/vi/CQJRmhMaoPU/hqdefault.jpg)](https://www.youtube.com/watch?v=CQJRmhMaoPU)
 
 For the RaceRoom side of the app: Gamer Muscle: [RaceRoom FFB Just Got A HUGE Upgrade! You NEED This App! - FFB-HUB](https://www.youtube.com/watch?v=OprLKlyj4r8)
-[![Gamer Muscle](https://img.youtube.com/vi/OprLKlyj4r8/hqdefault.jpg)](https://www.youtube.com/watch?v=OprLKlyj4r8)
+[![Gamer MuscleRR](https://img.youtube.com/vi/OprLKlyj4r8/hqdefault.jpg)](https://www.youtube.com/watch?v=OprLKlyj4r8)
 
 Dalking: [LMU FFB App Explained in Detail | Settings, Effects & My Setup](https://www.youtube.com/watch?v=qAvCqoPBkys)
+[![Dalking](https://img.youtube.com/vi/qAvCqoPBkys/hqdefault.jpg)](https://www.youtube.com/watch?v=qAvCqoPBkys)
 
 [Dalking's video](https://www.youtube.com/watch?v=qAvCqoPBkys) is an excellent step by step guide for setting up the app from scratch, tuning each effect in the most effective order, and explaining what each effect does.
 
