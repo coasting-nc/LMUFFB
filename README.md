@@ -1,12 +1,12 @@
 ![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) [Donate to Support this App](https://ffbhub-shop.fourthwall.com)
 
-# FFBHUB (formerly LMUFFB)
+# FFB-HUB (formerly LMUFFB)
 
 A Telemetry-based Force Feedback app for LMU and RaceRoom.
 
-LMUFFB is being renamed to FFBHUB as we expand support to additional racing simulators.
+LMUFFB is being renamed to FFB-HUB as we expand support to additional racing simulators.
 
-![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) **Support FFBHUB:** [Make a donation](https://ffbhub-shop.fourthwall.com)
+![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) **Support FFB-HUB:** [Make a donation](https://ffbhub-shop.fourthwall.com)
 
 If you find this app useful, consider contributing to support ongoing development, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
 
