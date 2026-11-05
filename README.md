@@ -2,9 +2,19 @@
 
 # FFB-HUB (formerly LMUFFB)
 
-A Telemetry-based Force Feedback app for LMU and RaceRoom.
+### Feel what the car is doing, before it gets away from you.
 
-LMUFFB is being renamed **FFB-HUB** as we expand support for additional racing simulators.
+Your sim wheel tells you how heavy the steering is. It doesn't tell you much about what the tyres are doing. **FFB-HUB reads the game's live physics telemetry and turns it into force feedback you can feel**, so you can sense the limit instead of finding it by crashing.
+
+- **Feel understeer coming.** The wheel goes light as the front tyres lose grip, before you run wide.
+- **Catch slides earlier.** Lateral-G, rear-axle and yaw-kick cues tell you the rear is stepping out, and which way to correct.
+- **Find the braking limit by feel.** Progressive lockup vibration lets you brake at the threshold without looking at a screen.
+- **Spot wheelspin on corner exit.** You feel traction loss through the rim.
+- **Tune it your way.** Per-effect sliders, shareable presets, and a choice of base torque source (LMU's 400 Hz in-game FFB or raw shaft torque).
+
+Works with any DirectInput wheel. Supports **Le Mans Ultimate** and **RaceRoom**, with more sims planned.
+
+A telemetry-based force feedback app for LMU and RaceRoom, being renamed from LMUFFB as we expand support for additional racing simulators.
 
 ![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) **Support FFB-HUB:** [Make a donation](https://ffbhub-shop.fourthwall.com)
 
