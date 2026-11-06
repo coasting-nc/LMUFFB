@@ -25,6 +25,7 @@ For both LMU and RaceRoom:
 2. Start FFBHUB.exe
 3. Select your wheel under FFB Device.
 4. Choose RaceRoom using the Game selector at the top of the app.
+5. Run the game (LMU or RaceRoom) in Borderless Mode (if not in VR) and when in-game toggle FFB off.
 
 Make sure the game **Display Mode** is **Borderless** (Prevents crashes/minimizing).
 
