@@ -10,14 +10,15 @@ LMUFFB is being renamed **FFB-HUB** as we expand support for additional racing s
 
 If you find this app useful, consider contributing to support ongoing development, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
 
-Some of the advantages of this app are:
+Some of the advantages of this app (with the right settings and a direct drive wheelbase) are:
 
 * Usually clearer FFB than with in-game FFB. Driving cues are easier to feel.
+* You can still get some FFB improvements even in lower-end wheels (G29, T300), or DDs at 3-5 Nm
 * Brake Feel and Understeer effects in RaceRoom
 * Brake Feel effect in LMU
 * For LMU, being able to catch power oversteer slides out of corners thanks to the Yaw Kick effects
 * For LMU, more noticeable detail at comfortable (lower) force levels, while with the game FFB you usually have to make the FFB very strong in order to feel details that remain very subtle.
-* FFB-HUB avoids having too strong FFB where is not needed, and too weak when it is needed. The app gives a nicer, more balanced, more informative FFB experience.
+* FFB-HUB avoids having too strong FFB where it is not needed, and too weak when it is needed. The app gives a nicer, more balanced, more informative FFB experience.
 * Some drivers describe the improvement in FFB that you can achieve with this app as much greater than the difference between direct drive wheelbases.
 * Being able to customize the FFB to tailor it to your preferences. Reduce effects you find excessive and emphasize the information you find useful.
 
