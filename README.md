@@ -12,13 +12,16 @@ If you find this app useful, consider contributing to support ongoing developmen
 
 Some of the advantages of this app are:
 
-* Usually more clear FFB than with in-game FFB
+* Usually clearer FFB than with in-game FFB. Driving cues are easier to feel.
 * Brake Feel and Understeer effects in RaceRoom
 * Brake Feel effect in LMU
-* For LMU, being able to catch power oversteer slides out of corners thanks to the Yaw Kick effect
-* For LMU, being able to have detailed FFB at lower strength, while with the game FFB you usually have to make the FFB very strong in order to feel details that remain very subtle.
+* For LMU, being able to catch power oversteer slides out of corners thanks to the Yaw Kick effects
+* For LMU, more noticeable detail at comfortable (lower) force levels, while with the game FFB you usually have to make the FFB very strong in order to feel details that remain very subtle.
 * FFB-HUB avoids having too strong FFB where is not needed, and too weak when it is needed. The app gives a nicer, more balanced, more informative FFB experience.
-* For example, at Bathurst with GT3 cars in RaceRoom, in turn T3/T4 you can feel the load shifts as you go up and down on the track undulations, and you can tell if it is the front or the rear of the car that is washing out.
+* Some drivers describe the improvement in FFB that you can achieve with this app as much greater than the difference between direct drive wheelbases.
+* Being able to customize the FFB to tailor it to your preferences. Reduce effects you find excessive and emphasize the information you find useful.
+
+For example, in RaceRoom’s GT3 cars at Bathurst, in turn T3/T4 you can feel the load shifts as you go up and down on the track undulations, and you can tell if it is the front or the rear of the car that is washing out.
 
 ![lmuFFB GUI](docs/screenshots/ffbhub_main_window_raceroom.png)
 
