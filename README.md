@@ -10,8 +10,17 @@ LMUFFB is being renamed **FFB-HUB** as we expand support for additional racing s
 
 If you find this app useful, consider contributing to support ongoing development, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
 
-![lmuFFB GUI](docs/screenshots/ffbhub_main_window_raceroom.png)
+Some of the advantages of this app are:
 
+* Usually more clear FFB than with in-game FFB
+* Brake Feel and Understeer effects in RaceRoom
+* Brake Feel effect in LMU
+* For LMU: being able to catch power oversteer slides out of corners thanks to the Yaw Kick effect
+* For LMU, being able to have detailed FFB at lower strenght, while with the game FFB you usually have to make the FFB very strong in order to feel details that remain very subtle.
+* FFB-HUB avoids having too strong FFB where is not needed, and too weak when it is needed. The app gives a nicer, more balanced, more informative FFB experience.
+* For example, at Bathurst with GT3 cars in RaceRoom, in turn T3/T4 you can feel the load shifts as you go up and down on the track  ondulations, and you can tell if it is the front or the rear of the car that is washing out.
+
+![lmuFFB GUI](docs/screenshots/ffbhub_main_window_raceroom.png)
 
 ## 📥 Download
 
