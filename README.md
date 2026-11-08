@@ -16,7 +16,7 @@ Some of the advantages of this app are:
 * Brake Feel and Understeer effects in RaceRoom
 * Brake Feel effect in LMU
 * For LMU: being able to catch power oversteer slides out of corners thanks to the Yaw Kick effect
-* For LMU, being able to have detailed FFB at lower strenght, while with the game FFB you usually have to make the FFB very strong in order to feel details that remain very subtle.
+* For LMU, being able to have detailed FFB at lower strength, while with the game FFB you usually have to make the FFB very strong in order to feel details that remain very subtle.
 * FFB-HUB avoids having too strong FFB where is not needed, and too weak when it is needed. The app gives a nicer, more balanced, more informative FFB experience.
 * For example, at Bathurst with GT3 cars in RaceRoom, in turn T3/T4 you can feel the load shifts as you go up and down on the track  ondulations, and you can tell if it is the front or the rear of the car that is washing out.
 
@@ -42,7 +42,7 @@ Make sure the game **Display Mode** is **Borderless** (Prevents crashes/minimizi
 
 If you want the LMU native FFB to be able to be mixed in with the app FFB, set these **In-Game Force Feedback settings in LMU**:
     *   In-game Force Feedback **Enabled and with Strength % greater than zero**.
-    *   In this case, the FFB strength % you set in-game will be exactly the strength the FFB-HUB app receives (before mixing it with other FFB effects). So set in-game FFB strenght to the value you generally prefer for in-game FFB when not using the app.
+    *   In this case, the FFB strength % you set in-game will be exactly the strength the FFB-HUB app receives (before mixing it with other FFB effects). So set in-game FFB strength to the value you generally prefer for in-game FFB when not using the app.
 
 ## Help us improve the app
 
@@ -112,7 +112,7 @@ You can control the impact of the In-Game FFB on the final FFB produced by the F
 
 *   You can enable or disabled it: by selecting "In-Game FFB" as your **Steer Torque Source** in the app, it will be combined with all other telemetry-based forces processed by the FFB-HUB app to produce the final FFB you feel.
 *   **Game Settings**: Any changes you make to LMU's internal FFB settings (strength, smoothing, vibrotactile effects, etc.) should directly affect what the FFB-HUB app receives through this channel.
-*   In App **Gain** slider: The **"In-Game FFB Gain"** slider in the FFB-HUB app acts as an additional multiplier to change the strenght of this specific channel.
+*   In App **Gain** slider: The **"In-Game FFB Gain"** slider in the FFB-HUB app acts as an additional multiplier to change the strength of this specific channel.
 
 ### In-Game FFB (400Hz) vs. Shaft Torque (100Hz Legacy)
 
