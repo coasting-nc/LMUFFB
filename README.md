@@ -37,16 +37,12 @@ For both LMU and RaceRoom:
 1. Extract the zip to a folder where you can write files, such as a folder in Downloads. Do not use Program Files.
 2. Start FFBHUB.exe
 3. Select your wheel under FFB Device.
-4. Choose RaceRoom using the Game selector at the top of the app.
-5. Run the game (LMU or RaceRoom) in Borderless Mode (or in VR) and when in-game toggle FFB off.
+4. Choose LMU or RaceRoom using the Game selector at the top of the app.
+5. Run the game in Borderless Mode or VR (you can run the game before or after the app, it does not make any difference). 
+6. In RaceRoom, turn off FFB.
+7. For LMU, turn off “Use Constant Steering Force Effect” (to prevent the game from trying to take control of the wheel and send FFB), and set FFB Strength to 100% (the maximum) which allows the app to properly scale the wheel strength when using **In-Game FFB** option as the "Torque Source" in FFB-HUB.
 
-Make sure the game **Display Mode** is **Borderless** (Prevents crashes/minimizing).
-
-### Additional LMU-only instructions
-
-If you want the LMU native FFB to be able to be mixed in with the app FFB, set these **In-Game Force Feedback settings in LMU**:
-    *   In-game Force Feedback **Enabled and with Strength % greater than zero**.
-    *   In this case, the FFB strength % you set in-game will be exactly the strength the FFB-HUB app receives (before mixing it with other FFB effects). So set in-game FFB strength to the value you generally prefer for in-game FFB when not using the app.
+When not in VR, make sure the game **Display Mode** is **Borderless** (Prevents crashes/minimizing).
 
 ## Help us improve the app
 
