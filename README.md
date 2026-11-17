@@ -8,7 +8,7 @@ LMUFFB is being renamed **FFB-HUB** as we expand support for additional racing s
 
 ![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) **Support FFB-HUB:** [Make a donation](https://ffbhub-shop.fourthwall.com)
 
-If you find this app useful, consider contributing to support ongoing development, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
+If you find this app useful, consider contributing to support ongoing development, making the app easier to setup, better default profiles, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
 
 Some of the advantages of this app (with the right settings and a direct drive wheelbase) are:
 
