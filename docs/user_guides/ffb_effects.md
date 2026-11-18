@@ -1,106 +1,58 @@
-# FFB Effects & Customization Guide
-> This document is not up to date, it is based on an older version of the app.
+# Force Feedback Effects Guide
 
-This document details the Force Feedback effects implemented in LMUFFB, how they are derived from telemetry, and how to customize them.
+> Updated November 2026 (app 0.8.007).
 
-## 1. Understeer (Front Grip Loss)
-*   **Goal**: To communicate when the front tires are losing grip and sliding (pushing).
-*   **Telemetry**: Derived from `mGripFract` (Grip Fraction) of the **Front Left (FL)** and **Front Right (FR)** tires.
-*   **Mechanism**: Modulates the main steering force.
-    *   `Output = GameForce * (1.0 - (1.0 - FrontGrip) * UndersteerGain)`
-    *   As front grip drops, the wheel becomes lighter ("goes light"), simulating the loss of pneumatic trail and self-aligning torque.
-*   **Customization**:
-    *   **Understeer Effect (Slider)**: Controls the intensity of the lightening effect.
+This guide describes what each LMUFFB effect makes you feel and which control adjusts it.
 
-## 2. Oversteer (Rear Grip Loss)
-*   **Goal**: To communicate when the rear tires are losing grip (loose/sliding), allowing the driver to catch a slide early.
-*   **Current Multi-Effect Implementation (v0.6+)**:
-    The oversteer system uses multiple distinct effects that work together:
-    
-    1. **Lateral G (SoP)**: Injects chassis lateral acceleration into wheel torque, providing "weight" cues during cornering. Calculated in `calculate_sop_lateral()`.
-    
-    2. **Lateral G Boost (Slide)**: Amplifies the SoP force when rear grip is lower than front grip (oversteer condition). Formula: `SoP *= (1.0 + (FrontGrip - RearGrip) * OversteerBoost * 2.0)`.
-    
-    3. **Rear Align Torque (SoP Self-Aligning)**: Calculates a synthetic aligning torque for the rear axle using slip angle and estimated load. Provides directional counter-steering pull during slides.
-    
-    4. **Yaw Kick**: Sharp momentary impulse at the onset of rotation. Derived from `mLocalRotAccel.y` with configurable activation threshold (`m_yaw_kick_threshold`, default 0.2 rad/s²) to filter road noise.
+## 1. Understeer (front grip loss)
+* **Goal:** tell you when the front tyres are sliding and the car is pushing wide.
+* **What you feel:** the steering goes light ("hollow") as front grip runs out. Unwind the wheel and the weight returns.
+* **Controls:** **Understeer Effect** (how much lighter) and **Understeer Curve** (how early and how sharply).
 
-## 3. Braking Lockup (Progressive Scrub)
-*   **Goal**: To signal when tires have stopped rotating during braking (flat-spotting risk), allowing the driver to find the threshold.
-*   **Current Dynamic Implementation (v0.2.2+)**:
-    *   **Progressive Vibration**: Signal is derived from `SlipRatio` deviation.
-    *   **Range**: -0.1 (Peak Grip) to -0.5 (Locking).
-    *   **Frequency**: Transitions from High Pitch (60Hz) at the limit to Low Pitch (10Hz) at full lock.
-    *   **Amplitude**: Scales linearly with severity.
-*   **Customization**:
-    *   **Lockup Rumble (Toggle)**: Enable/Disable.
-    *   **Lockup Gain (Slider)**: Intensity of the vibration.
+## 2. Oversteer (rear grip loss)
+* **Goal:** tell you when the rear is stepping out, early enough to catch it.
+* **Effects that work together:**
+    1. **Cornering Feel:** the car's weight in your hands through the corner.
+    2. **Cornering Feel Boost (Slide):** extra weight while the car slides.
+    3. **SoP Self-Aligning Torque:** a pull in the counter-steer direction during the slide.
+    4. **Rotation Kick:** a short kick at the moment the rear starts to rotate. Raise its **Activation Threshold** if kerbs trigger it.
 
-## 4. Wheel Spin (Traction Loss)
-*   **Goal**: To signal when the driven wheels are spinning under power.
-*   **Current Dynamic Implementation (v0.2.2+)**:
-    *   **Torque Reduction**: As rear wheel slip increases, the total FFB force is reduced (simulating "floating" rear end).
-    *   **Vibration**: Frequency scales with wheel speed difference (Slip Ratio), giving a "revving up" sensation through the rim.
-*   **Customization**:
-    *   **Spin Traction Loss (Toggle)**: Enable/Disable.
-    *   **Spin Gain (Slider)**: Intensity.
+## 3. Braking lock-up
+* **Goal:** warn you when the wheels stop turning under braking, so you can find the limit and avoid flat spots.
+* **What you feel:** a vibration that grows as the lock-up gets worse. Its pitch changes with speed: higher at high speed, lower and heavier as the car slows.
+* **Controls:** **Lockup Vibration** on or off, **Lockup Strength**, and the lock-up pitch.
 
-## 5. Road & Slide Texture
-*   **Slide Texture**: Adds "scrubbing" vibration when any tire is sliding laterally (high Slip Angle).
-*   **Road Texture**: Adds "bumps" based on suspension velocity changes (High-Pass Filter).
+## 4. Wheelspin (traction loss)
+* **Goal:** tell you when the driven wheels spin under power.
+* **What you feel:** **Spin Vibration** adds a hum that rises in pitch as the wheels spin up. It adds rumble only; it does not lighten the steering.
+* **Wheelspin Force Reduction** (optional, off by default) also lightens the steering during wheelspin. It can hide useful information while you catch a slide, so leave it at 0% unless you prefer that feel. Older personal profiles keep the amount they had; reapplying an updated built-in profile sets it back to 0%.
+
+## 5. Road and slide textures
+* **Slide Texture:** a scrubbing vibration when the tyres slide sideways.
+* **Road Texture:** kerbs, bumps and the road surface.
 
 ---
 
-## Signal Interference & Clarity
+## Keeping the signals clear
 
-A critical challenge in FFB design is managing the "Noise Floor". When multiple effects are active simultaneously, they can interfere with each other or mask the underlying physics.
+### 1. One effect hiding another
+Strong vibrations (lock-up, road texture) can drown out subtle weight changes (understeer, cornering weight). If you miss the rear stepping out during a heavy lock-up or over kerbs, lower the vibration strengths before raising the forces.
 
-### 1. Signal Masking
-*   **The Issue**: High-frequency vibrations (like **Lockup Rumble** or **Road Texture**) can physically overpower subtle torque changes (like **Understeer Lightness** or **SoP**). If the wheel is vibrating violently due to a lockup, the driver might miss the feeling of the rear end stepping out (SoP).
-*   **Mitigation**:
-    *   **Priority System** *(Planned, Not Yet Implemented)*: A future version will implement "Side-chaining" or "Ducking" to dynamically reduce lower-priority effects when higher-priority signals need headroom. For example, if understeer occurs during curb contact, the system would reduce Road Texture to preserve the grip information signal.
-    *   **Frequency Separation**: Ideally, "Information" (Grip/SoP) should be low-frequency (< 20Hz), while "Texture" (Lockup/Spin/Road) should be high-frequency (> 50Hz). This helps the human hand distinguish them.
+### 2. Running out of force
+When everything adds up to more than your wheel can deliver, the force flattens at its maximum and you lose detail. Lower **Master Gain** until the strongest corners no longer hit that ceiling, so the effects still have room.
 
-### 2. Clipping
-*   **The Issue**: Summing multiple effects (Game Torque + SoP + Rumble) can easily exceed the 100% force capability of the motor.
-*   **Result**: The signal "clips" (flattens at max force). Information is lost. E.g., if you are cornering at 90% torque and a 20% SoP effect is added, you hit 100% and lose the detail of the SoP ramp-up.
-*   **Mitigation**:
-    *   **Master Limiter**: A soft-clip algorithm that compresses dynamic range rather than hard-clipping.
-    *   **Tuning**: Users are advised to set "Master Gain" such that peak cornering forces hover around 70-80%, leaving headroom for dynamic effects.
+### 3. Telling lock-up from wheelspin
+Lock-up and wheelspin both vibrate. Context usually tells you which is which (braking or accelerating), and their different pitch helps you react without thinking.
 
-### 3. Ambiguity (Texture Confusion)
-*   **The Issue**: **Lockup** and **Wheel Spin** often use similar "Synthetic Rumble" effects. In the heat of battle, a driver might confuse one for the other if relying solely on the tactile cue without context (pedal position).
-*   **Mitigation**:
-    *   **Distinct Frequencies**: Future updates will tune Lockup to be "Sharper/Higher Pitch" (square wave) and Wheel Spin to be "Rougher/Lower Pitch" (sawtooth or randomized).
-    *   **Context**: Since the driver knows if they are braking or accelerating, this ambiguity is usually resolved by context, but distinct tactile signatures help subconscious reaction times.
-
-
-### 4. Interaction of Spin vs SoP Effects
-
-*   The **Spin** effect reduces `total_force` (Torque Drop).
-*   The **SoP** effect boosts force during oversteer.
-*   **Result**: These two will fight slightly during a power slide. This is actually a good "natural" balance—the wheel tries to self-align (SoP), but the loss of traction makes it feel lighter/vaguer (Spin Drop). This should feel intuitive to the driver.
-
-### 5. Robustness & Telemetry Health
-LMUFFB includes a "Sanity Check" layer that protects effects against telemetry glitches (common in some game builds).
-*   **Missing Load**: If the game reports 0 Load on tires, texture effects (Slide/Road/Lockup) will use a fallback value instead of going silent.
-*   **Missing Grip**: If Grip data is missing, the Understeer effect defaults to "Full Grip" so you don't lose FFB entirely.
-*   *Note:* If these fallbacks are triggered, a **Red Warning** will appear in the Telemetry Inspector GUI.
+### 4. When the game data drops out
+If the game briefly stops sending usable data, the app keeps the effects sensible instead of letting them go silent or spike, and shows a warning in the troubleshooting window.
 
 ---
 
-## Comparison of Implementation with iRFFB and Marvin's AIRA
+## Comparison with iRFFB and Marvin's AIRA
 
-| Effect | iRFFB (iRacing) | Marvin's AIRA (iRacing) | LMUFFB (LMU/rF2) |
+| Effect | iRFFB (iRacing) | Marvin's AIRA (iRacing) | LMUFFB (LMU) |
 | :--- | :--- | :--- | :--- |
-| **Oversteer** | **SoP (Lateral G)** + Yaw logic | **Layered Effect**: Separate "Slip" channel. | **Rear Aligning Torque + SoP**: Synthetic rear-axle torque integration. |
-| **Lockup** | Not explicit (part of "Understeer" feel in iRacing logic) | **Pedal Haptics** (often sent to pedals, but can be on wheel) | **Progressive Wheel Scrub**: Dynamic frequency/amplitude based on slip ratio. |
-| **Wheel Spin** | Not explicit | **Pedal Haptics** / Wheel Rumble | **Torque Drop + Vibration**: Simulates traction loss + progressive rumble. |
-
----
-
-## Legacy Implementation Notes (Pre-v0.2.2)
-
-*   **Old Oversteer**: Relied solely on Grip Delta between Front/Rear to boost SoP.
-*   **Old Lockup**: Binary rumble triggered when `SlipRatio < -0.2`.
-*   **Old Wheel Spin**: Binary rumble triggered when `SlipRatio > 0.2`.
+| **Oversteer** | Lateral weight plus rotation cues | A separate slip layer | A counter-steer pull plus cornering weight and a rotation kick |
+| **Lock-up** | Not a separate effect | Often sent to pedal haptics | A vibration on the wheel that grows with the lock-up and follows speed |
+| **Wheelspin** | Not a separate effect | Pedal haptics or wheel rumble | A vibration, plus an optional steering lightening (off by default) |

@@ -11,7 +11,7 @@ All safety events are recorded in `lmuffb_debug.log`. You can find this file in 
 If you feel a violent movement of the wheel, check the log for these lines:
 
 *   **`[Safety] High Spike Detected: Requested Rate=XXX (Capped at YYY)`**
-    *   **Meaning**: The physics engine requested a force change faster than `500 units/s` for more than 5 consecutive frames.
+    *   **Meaning**: The force tried to change much faster than normal driving produces, for a sustained moment.
     *   **Action Taken**: The app capped the rate and entered **Safety Mode** (see below) to blunt the impact.
 
 *   **`[Safety] Entered Safety Mode (Reason: High Spike)`**
@@ -23,7 +23,7 @@ This happens when the app enters **Safety Mode**. During this time (2 seconds), 
 Check the log for the reason why Safety Mode was triggered:
 
 *   **`[Safety] Entered Safety Mode (Reason: Lost Frames)`**
-    *   **Meaning**: The app detected a gap in telemetry data (game stutter).
+    *   **Meaning**: The app detected a gap in the data from the game (game stutter).
     *   **Perception**: You might notice the wheel become lighter and smoother for 2 seconds immediately following a game hitch.
 
 *   **`[Safety] Entered Safety Mode (Reason: Control Transition)`**
@@ -59,6 +59,6 @@ Soft lock prevents the wheel from turning past the car's physical limits.
     *   **Meaning**: You turned the wheel back into the valid range.
 
 ## 3. How to Provide Feedback
-If you experience a jolt that was **NOT** recorded in the log, please report it. It indicates that our detection thresholds (e.g., 500 units/s) might need to be lower to align with user perception.
+If you experience a jolt that was **NOT** recorded in the log, please report it. It indicates that our detection might need to be more sensitive to align with user perception.
 
 If you find Safety Mode is triggering too often (constant "muffled" feel), please provide your log so we can see if your system is experiencing frequent frame drops.

@@ -2,7 +2,6 @@
 
 **Version:** 0.6.20+  
 **Last Updated:** 2025-12-27
-> This document is not up to date, it is based on an older version of the app.
 
 ---
 
@@ -52,7 +51,7 @@ lmuFFB provides three independent frequency tuning parameters:
 
 **How it feels:**
 - **0.5x:** Lower, "grumbling" lockup (belt-driven friendly)
-- **1.0x:** Default speed-based frequency (10Hz + speed × 1.5)
+- **1.0x:** Default pitch, rising with speed
 - **2.0x:** Higher, "screeching" lockup (DD-wheel optimized)
 
 ### 3. Spin Vibration Pitch
@@ -64,7 +63,7 @@ lmuFFB provides three independent frequency tuning parameters:
 
 **How it feels:**
 - **0.5x:** Slower, "juddering" spin (feels like fighting for grip)
-- **1.0x:** Default speed-based frequency (10Hz + slip speed × 2.5)
+- **1.0x:** Default pitch, rising as the wheels spin faster
 - **2.0x:** Faster, "screaming" spin (high-RPM burnout feel)
 
 ---
@@ -182,60 +181,13 @@ Spin Vibration Pitch:    1.5x
 
 ---
 
-## Advanced Tuning: Understanding the Math
+## How the pitch behaves
 
-### ABS Pulse Frequency (Absolute)
+- **ABS Pulse Frequency** is fixed: the pulse repeats at the same rate whatever your speed or brake pressure.
+- **Lock-up pitch** rises with car speed, so a lock-up at high speed sounds higher. The pitch setting raises or lowers it.
+- **Spin pitch** rises as the wheels spin faster. The pitch setting raises or lowers it, up to a safe maximum.
 
-**Formula:** `sin(m_abs_freq_hz * 2π * time)`
-
-**What this means:**
-- This is a **fixed frequency** oscillator
-- 20 Hz = 20 complete vibration cycles per second
-- Higher values = faster pulses
-- **Independent of car speed or brake pressure**
-
-**Use Case:** Match your wheel's resonance for maximum ABS clarity.
-
----
-
-### Lockup Vibration Pitch (Speed-Based Scalar)
-
-**Formula:** `(10 Hz + car_speed_m/s × 1.5) × m_lockup_freq_scale`
-
-**What this means:**
-- Base frequency starts at **10 Hz** (standing still)
-- Increases with **car speed** (realistic - faster lockup = higher pitch)
-- At 20 m/s (~45 mph): `10 + 20×1.5 = 40 Hz`
-- Your **pitch scalar multiplies this**
-
-**Examples:**
-- `0.5x` at 20 m/s: `40 × 0.5 = 20 Hz` (low, grumbling)
-- `1.0x` at 20 m/s: `40 × 1.0 = 40 Hz` (default)
-- `2.0x` at 20 m/s: `40 × 2.0 = 80 Hz` (high, screeching)
-
-**Use Case:** Lower the scalar if high-speed lockups feel too harsh on your wheel.
-
----
-
-### Spin Vibration Pitch (Slip-Speed-Based Scalar)
-
-**Formula:** `(10 Hz + slip_speed_m/s × 2.5) × m_spin_freq_scale`
-
-**What this means:**
-- Base frequency starts at **10 Hz** (minimal slip)
-- Increases with **slip speed** (how fast the tire is spinning vs. ground speed)
-- At 10 m/s slip (~22 mph difference): `10 + 10×2.5 = 35 Hz`
-- Your **pitch scalar multiplies this**
-- **Capped at 80 Hz** to prevent ultrasonic frequencies
-
-**Examples:**
-- `0.5x` at 10 m/s slip: `35 × 0.5 = 17.5 Hz` (low, juddering)
-- `1.0x` at 10 m/s slip: `35 × 1.0 = 35 Hz` (default)
-- `2.0x` at 10 m/s slip: `35 × 2.0 = 70 Hz` (high, screaming)
-
-**Use Case:** Lower the scalar if burnouts feel too "buzzy" on your wheel.
-
----
+Lower a pitch setting if that vibration feels harsh or buzzy on your wheel.
 
 ## Troubleshooting
 
@@ -408,7 +360,7 @@ The pitch scalar lets you adjust this relationship to taste.
 
 ### Q: What's the maximum safe frequency?
 
-**A:** The engine caps spin vibration at **80 Hz** to prevent:
+**A:** The app keeps the spin vibration pitch within a comfortable range for wheel hardware, to prevent:
 - Ultrasonic frequencies (inaudible, feel like continuous buzz)
 - Potential motor overheating on some wheels
 - Fatigue from constant high-frequency vibration
@@ -456,8 +408,6 @@ Save and switch presets as needed.
 
 ## Additional Resources
 
-- **FFB Formulas:** `docs/dev_docs/FFB_formulas.md` - Mathematical details
-- **Telemetry Reference:** `docs/dev_docs/references/Reference - telemetry_data_reference.md` - Parameter ranges
 - **Community Presets:** (Coming soon) Share your optimal settings!
 
 ---

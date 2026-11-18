@@ -1,18 +1,17 @@
 # Introduction to LMUFFB
-> This document is not up to date, it is based on an older version of the app.
-TODO: update this document, vJoy is no longer used, all references to it should be removed or updated / reworded appropriately.
 
-**LMUFFB** (Le Mans Ultimate Force Feedback) is a specialized high-performance application designed to enhance the driving experience in the *Le Mans Ultimate* simulator. Its primary goal is to provide **Force Feedback (FFB)** signals that communicate tire physics—specifically tire grip and loss of traction—more effectively than the game's native output.
+> Updated November 2026 (app 0.8.007).
 
-This project is a response to the community's need for tools similar to **iRFFB** and **Marvin's AIRA**, which have transformed the FFB landscape for simulators like iRacing.
+**LMUFFB** (Le Mans Ultimate Force Feedback) is an app that improves the force feedback you feel in *Le Mans Ultimate*. Its goal is to tell you, through the steering wheel, what the tyres and the car are doing: how much grip you have, when you reach the limit, and when the car starts to slide.
 
-## Scope & Goal
+It follows the idea of tools such as **iRFFB** and **Marvin's AIRA**, which changed how force feedback feels in iRacing.
 
-The core scope of LMUFFB is:
-1.  **Telemetry Acquisition**: Reading high-fidelity vehicle physics data from the simulator in real-time.
-2.  **FFB Processing**: Applying algorithms to this data to calculate a "synthetic" steering force that emphasizes the "Seat of Pants" (SoP) feel and pneumatic trail effects.
-3.  **Signal Output**: Sending this calculated force to the player's steering wheel via a virtual joystick driver (vJoy).
+## What it does
 
-By doing so, LMUFFB allows players to feel when the car is understeering or oversteering through the steering wheel's resistance, a critical feedback loop for driving at the limit.
+1. **Reads the car's behaviour from the game** while you drive.
+2. **Builds a richer steering force:** you feel the car's weight in corners, the steering going light when the front tyres slide, and a pull to counter-steer when the rear steps out.
+3. **Drives your wheel directly.** No virtual joystick or extra driver is needed: bind steering to your physical wheel in LMU and start the app.
 
-**Current Status**: The project has migrated from a Python prototype to a **native C++ application** to ensure sub-millisecond latency and consistent 400Hz update rates.
+With it you can feel understeer and oversteer through the wheel, which helps you drive at the limit and catch slides earlier.
+
+For setup and tuning, see the other guides in this folder.

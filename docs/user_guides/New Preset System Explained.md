@@ -38,7 +38,7 @@ Sharing your FFB settings with friends is now incredibly easy:
 * **To Import:** You can either drop a downloaded `.toml` file directly into your `user_presets` folder, or use the **"Import Preset..."** button in the lmuFFB UI.
 
 **"What if I download an old `.ini` preset from an old Discord post?"**
-Don't worry! The "Import Preset" button in the UI is fully backwards-compatible. If you import an old `.ini` preset, lmuFFB will automatically upgrade its physics math to the latest version and save it into your `user_presets` folder as a shiny new `.toml` file.
+Don't worry! The "Import Preset" button in the UI is fully backwards-compatible. If you import an old `.ini` preset, lmuFFB will automatically upgrade it to the latest version and save it into your `user_presets` folder as a shiny new `.toml` file.
 
 ---
 
