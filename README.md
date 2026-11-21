@@ -8,7 +8,7 @@ LMUFFB is being renamed **FFB-HUB** as we expand support for additional racing s
 
 ![Coffee](https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/coffee.svg) **Support FFB-HUB:** [Make a donation](https://ffbhub-shop.fourthwall.com)
 
-If you find this app useful, consider contributing to support ongoing development, making the app easier to setup, better default profiles, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
+If you find this app useful, consider contributing to support ongoing development, bug fixes, and compatibility with more simulators (RaceRoom, Assetto Corsa EVO, and others).
 
 Some of the advantages of this app (with the right settings and a direct drive wheelbase) are:
 
@@ -16,7 +16,7 @@ Some of the advantages of this app (with the right settings and a direct drive w
 * You can still get some FFB improvements even in lower-end wheels (G29, T300), or DDs at 3-5 Nm
 * Brake Feel and Understeer effects in RaceRoom
 * Brake Feel effect in LMU
-* For LMU, being able to catch power oversteer slides out of corners thanks to the Yaw Kick effects
+* For LMU, being able to catch power oversteer slides out of corners thanks to the Rotation Kick effects
 * For LMU, more noticeable detail at comfortable (lower) force levels, while with the game FFB you usually have to make the FFB very strong in order to feel details that remain very subtle.
 * FFB-HUB avoids having too strong FFB where it is not needed, and too weak when it is needed. The app gives a nicer, more balanced, more informative FFB experience.
 * Some drivers describe the improvement in FFB that you can achieve with this app as much greater than the differences between direct drive wheelbases.
@@ -34,15 +34,50 @@ For example, in RaceRoom’s GT3 cars at Bathurst, in turn T3/T4 you can feel th
 
 For both LMU and RaceRoom:
 
-1. Extract the zip to a folder where you can write files, such as a folder in Downloads. Do not use Program Files.
+1. Extract the zip to a folder where you can write files, such as a folder in Documents or Downloads. Do not use Program Files.
 2. Start FFBHUB.exe
 3. Select your wheel under FFB Device.
 4. Choose LMU or RaceRoom using the Game selector at the top of the app.
 5. Run the game in Borderless Mode or VR (you can run the game before or after the app, it does not make any difference). 
 6. In RaceRoom, turn off FFB.
-7. For LMU, turn off “Use Constant Steering Force Effect” (to prevent the game from trying to take control of the wheel and send FFB), and set FFB Strength to 100% (the maximum) which allows the app to properly scale the wheel strength when using **In-Game FFB** option as the "Torque Source" in FFB-HUB.
+7. In LMU, turn off "Use Constant Steering Force Effect" so the game does not tries to send its own FFB to the wheel at the same time. This should avoid FFB losses.
+8. With the default **Shaft Torque** source, LMU's FFB Strength and other FFB settings do not change what you feel. LMU's settings (eg. strength, smoothing, minimum force, sensitivity) change what you feel if you choose Front Axle tab -> **In-Game FFB**; in this case, set LMU's FFB Strength to 100%, and adjust the strength in the app.
+9. Set **Wheelbase Max Torque** to your wheel's real maximum torque, choose a profile (see "Choosing a profile" below) and adjust **Master Gain**.
 
-When not in VR, make sure the game **Display Mode** is **Borderless** (Prevents crashes/minimizing).
+When not in VR, make sure the game **Display Mode** is **Borderless** (prevents crashes and minimizing, and lets FFB-HUB's on-screen messages appear over the game).
+
+
+### Where your settings are
+
+- FFB-HUB keeps your settings and profiles in the **settings-v2** folder next to FFBHUB.exe (profiles in `settings-v2/user_presets`). The folder button next to the profile list opens it.
+- When you update from an older version, your settings and profiles are converted once, and the original files are kept in `settings-v2/legacy-backup`.
+- To use a profile someone shared, use **Import** (any folder works), or copy it into `settings-v2/user_presets`. A profile copied into the old `user_presets` folder is imported at the next start.
+- To go back to an older version, run it from its own folder.
+
+### Choosing a profile for LMU (FFB-HUB 0.8.40 and later)
+
+| Profile | Effects | Balance |
+| --- | --- | --- |
+| **Pure Cornering (DD Default)** | • The most direct and raw<br>• Strongest **Cornering Feel** and a firm **SoP Self-Aligning Torque**<br>• The only default profile with **Center Feel** and **Direction Change Weight**<br>• The earliest **Rotation Kick** and strongest **Power Kick**<br>• Off: **Understeer Effect**, **Brake Feel**, **Smart Hands-off Protection** and all added vibrations (lock-up, ABS, slide) | What the car does in corners, with nothing added on top. |
+| **Balanced Feel** | • The all-round profile<br>• Medium **Cornering Feel** with **Cornering Feel Boost (Slide)**<br>• The strongest **Brake Feel**<br>• A clear **Understeer Effect** and a noticeable **Slide Rumble**<br>• Moderate kicks, light smoothing, some **Kerb Calming** and light **Smart Hands-off Protection**<br>• Off: lock-up and ABS vibrations | Every cue present at a moderate level, a little softer than Pure Cornering. |
+| **Clean Steering + Lock-Up** | • The braking profile<br>• The only one with **Lock-up Vibration** and **ABS Pulse** on<br>• Strong **Cornering Feel** (slightly smoothed)<br>• The strongest **SoP Self-Aligning Torque**, **Braking Kick** and **Cornering Weight**<br>• Some **Brake Feel** and a clear **Understeer Effect**<br>• Off: **Power Kick**<br>• Slightly lower Steering Scale and Master Gain than the others | Steering-led, with clear feedback when you brake hard or lock a tyre. |
+| **Clean Steering** | • Mostly the car's own steering force<br>• Light **Cornering Feel**, **SoP Self-Aligning Torque**, **Understeer Effect** and **Brake Feel**<br>• A small **Power Kick**<br>• Off: **Braking Kick** and all added vibrations | Clean and steering-led, with few added effects. |
+| **Minimalist Steering** | • The calmest<br>• The weakest **Cornering Feel**, **SoP Self-Aligning Torque** and **Understeer Effect**<br>• The strongest **Kerb Calming** and the most smoothing<br>• A light **Slide Rumble** and light **Cornering Weight**<br>• Off: **Brake Feel**<br>• Vibrations a little quieter overall | Smooth and calm, with soft kerbs. |
+
+Other profiles:
+- T300 Default: Thrustmaster T300 and similar belt or gear wheels.
+
+### Strength and vibration settings (LMU)
+
+- **Car Steering Strength** (Front Axle tab): each car starts at a similar strength automatically. If one car feels too heavy or too light, adjust it here, also while driving or with a wheel button; FFB-HUB remembers it for that car on your computer. A higher value makes the steering lighter.
+- **Minimum Vibration Strength** (General tab, Wheelbase Configuration): on weaker wheels, raise it if road, lock-up or other vibrations feel too faint. It belongs to your wheel, not to the profile.
+
+### Button bindings
+
+- In the **Button Bindings** tab you can bind wheel or controller buttons to Master Gain, other settings, profile switching and **Start / Stop Logging**.
+- Bindings work whenever LMU is running (garage, pits, menus or on track), even when FFB-HUB is not the active window. Settings that can only change while parked show a message if you press them while moving.
+- **Logging:** with one button bound, it starts and stops logging. Bind a second button if you want separate Start and Stop buttons.
+- **On-screen messages** confirm each change. Starting a recording shows a red circle and "STARTED RECORDING"; stopping shows a grey square and "STOPPED RECORDING" with the saved file name. They appear over the game in borderless or windowed mode, not in exclusive fullscreen or VR. You can turn them off with "Show overlay confirmation" in the Button Bindings tab.
 
 ## Help us improve the app
 
@@ -51,20 +86,17 @@ When not in VR, make sure the game **Display Mode** is **Borderless** (Prevents 
 
 ## Troubleshooting (LMU)
 
--   **I am getting excessive oscillations while on straights**:
-    -   Try setting "Smart Hands-off Protection" to 10% - 20% or more (it should work on GT3s, but might not for LMP2s and Hypercars).
-    -   Increase at least to 1.0 the "Threshold" slider for "Yaw Kick" and "Power Yaw Kick" (if they are enabled).
+-   **The wheel oscillates on straights or jerks on corner exits**:
+    -   Lower **Rotation Kick** (for example to 10-15%) and **SoP Self-Aligning Torque**.
+    -   Lower **Direction Change Weight** if the first degrees of turn-in also feel heavy.
+    -   Keep your hands on the wheel on fast straights; most wheels oscillate when released at speed.
 -   **I am getting too much vibrations while braking**:
-    -   Reduce "Lockup Strength" of the "Lockup Vibration" effect (e.g., down to 20%).
-    -   Increase **Steering Shaft Smoothing** ("Front Grip" section) to 8 ms.
-    -   Also adjust the other settings of the "Lockup Vibration" effect (you might need different settings per car class):
-        -   **Gamma**: increase this to make the effect start weaker and more progressively.
-        -   **Start slip**: increase this to delay the start of the effect, requiring more tire slip to trigger.
-        -   **End slip**: increase this to make the effect reach its maximum strength later.
-        -   **Sensitivity**: increase this to make the effect trigger later, requiring more wheel angular deceleration.
--   **Unable to save settings or config.ini errors**:
-    - This usually happens if you placed the FFB-HUB app or folder in a location without write permissions (e.g., inside `C:\Program Files`).
-    - **Solution**: Keep the entire FFB-HUB app folder to a location where the app can have full write access, such as a subfolder in your **Downloads** folder.
+    -   Reduce the strength of **Lockup Vibration** (for example to 20%), or raise its **Start Slip** so it starts later and **Full Slip** so it reaches full strength later.
+    -   Increase **Steering Smoothing** (Front Axle tab) to 8 ms.
+    -   A shake when ABS works comes from the game's own steering force. Lower **In-Game FFB Gain**, or use LMU's own Smoothing setting (it adds a little delay).
+-   **FFB-HUB says it could not set up its settings folder, or cannot save settings**:
+    - This happens if the FFB-HUB folder is in a location without write permissions (for example inside `C:\Program Files`) or in a synchronised folder.
+    - **Solution**: move the whole FFB-HUB folder to a normal folder, such as Documents or Downloads, and start it again.
 -   **Inverted FFB (Force pushes away from center)**:
     -   If the FFB feels "backwards" or "inverted" while driving (wheel pushes away from center instead of pulling toward it), check the **"Invert FFB"** checkbox in the FFB-HUB app GUI.
     -   This reverses the force direction to match your wheel's expected behavior.
@@ -72,20 +104,19 @@ When not in VR, make sure the game **Display Mode** is **Borderless** (Prevents 
     - Ensure the "FFB Device" in FFB-HUB app is your real wheel
     - Check if Connected to Le Mans Ultimate" appear in the GUI
     - Verify the FFB strength in your device driver is not too low
-    - Increase Master Gain or reduce Max Torque Ref
+    - Increase Master Gain
     - Check the FFB-HUB app console for errors
--   **FFB too weak**:
-    -   Increase **Master Gain** (slider ranges from 0% to 200%, so you can boost beyond 100%).
-    -   Or reduce **Max Torque Ref** (this amplifies the signal by setting a lower reference point for maximum torque).
+-   **FFB too weak or too strong**:
+    -   Adjust **Master Gain** (0% to 200%) or **Steering Scale**.
+    -   If only one car feels too weak or too strong, adjust that car's **Car Steering Strength** (Front Axle tab, or a wheel button while driving).
 -   **Violent oscillations or shaking**:
-    -   If you experience violent oscillations that the Smoothing or Speed Gate settings don't catch, try **increasing Max Torque Ref** (e.g., from 45 to 60-80 Nm).
-    -   Higher Max Torque Ref values reduce clipping and noise, which can cause oscillations.
-    -   **Tuning Tip**: Max Torque Ref is the primary way to control the balance between clipping/noise and steering weight. Start at 45 Nm and adjust based on your preference.
+    -   Lower **Master Gain** a little, and check that **Wheelbase Max Torque** matches your wheel.
+    -   Lower **Rotation Kick** and **SoP Self-Aligning Torque**.
 -   **Strange pull in some scenarios**:
     -   If you feel a strange pull in specific driving situations, try reducing the **Rear Align Torque**.
-- **Sharing Presets**:
-    -   You can now easily share your FFB settings with others using the **"Export Selected..."** and **"Import Preset..."** buttons in the Presets section.
-    -   Exported presets are saved as small `.ini` files that can be sent to other users.
+- **Sharing profiles**:
+    -   Share your FFB settings with the **Export** and **Import** buttons in the profile section.
+    -   Exported profiles are small `.toml` files. They keep their balance on any wheel; the app tells you which wheel a profile was made on.
 -   **The app has too many options and it's confusing**:
     -   A future version will include a **"Basic Mode"** with auto adjustment and defaults for most settings.
     -   We need to first determine which settings work best for most users and wheel types (Direct Drive vs Belt/Gear).
@@ -93,38 +124,6 @@ When not in VR, make sure the game **Display Mode** is **Borderless** (Prevents 
 -   **Any other issue**:
     -   **Preferred**: [Open a GitHub Issue](https://github.com/coasting-nc/LMUFFB/issues). This is the best way to ensure your issue is tracked and addressed. Our AI agents periodically scan and attempt to fix GitHub issues.
     -   Alternatively, post in the [LMU Forum Thread](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/), but be aware that forum posts are harder to track.
-
-
-
-## Clarification about the Interaction Between In-Game FFB (from LMU) and the FFB from the App
-
-The app takes **exclusive control** of the FFB sent to your wheelbase, which means that it is the only program sending force feedback to your wheelbase. This is required by DirectInput, and it is the reason why the app displays "Game FFB is blocked."
-
-However, among the many telemetry channels that it uses, the FFB-HUB app includes a specific telemetry channel called **"In-Game FFB"**, which allows you to still include the LMU original FFB signal within the final FFB that the app produces.
-
-### How it Works
-
-The "In-Game FFB" stream is the FFB produced by LMU. It is mostly based on the Steering Rack Torque (which is why in the app you can select it as one of the two possible steering torque sources), plus any additional effect and processing that LMU might be doing on it behind the scenes (eg. adding damping, smoothing, vibrotactile effects, etc.).
-
-This stream is impacted by any setting that you might change from the game FFB Settings (see below).
-
-You can control the impact of the In-Game FFB on the final FFB produced by the FFB-HUB app in several ways:
-
-*   You can enable or disabled it: by selecting "In-Game FFB" as your **Steer Torque Source** in the app, it will be combined with all other telemetry-based forces processed by the FFB-HUB app to produce the final FFB you feel.
-*   **Game Settings**: Any changes you make to LMU's internal FFB settings (strength, smoothing, vibrotactile effects, etc.) should directly affect what the FFB-HUB app receives through this channel.
-*   In App **Gain** slider: The **"In-Game FFB Gain"** slider in the FFB-HUB app acts as an additional multiplier to change the strength of this specific channel.
-
-### In-Game FFB (400Hz) vs. Shaft Torque (100Hz Legacy)
-
-In the App (**"Front Grip" section**), you have two options for your base steering torque ("Steer Torque Source"):
-
-1.  **In-Game FFB**:
-    *   **Pros**: High sample rate (400Hz), includes LMU's built-in processing (eg. smoothing) and specialized effects (eg. vibrotactile effects).
-    *   **Cons**: if you don't like the game built-in processing.
-
-2.  **Shaft Torque (100Hz Legacy)**:
-    *   **Pros**: A "pure" source of steering rack torque information without game-side processing.
-    *   **Cons**: Lower sample rate (100Hz), potentially slightly higher latency (though usually unnoticeable), and may require gain adjustments via the **"Steering Shaft Gain"** slider, because it might have a very different baseline strength compared to In-Game FFB.
 
 
 ## FAQ
@@ -139,19 +138,19 @@ The app allows everybody to have the option of having additional telemetry-based
 
 **Q: Does the app have an option to remove the feeling of flatspots vibrations from FFB? Is that an unfair advantage?**
 
-**A:** No. The app had a "Notch Filter" option that is also present in Simucube wheelbase software (and possibly other wheelbases), so that is a legitimate feature. The feature was supposed to reduce specific user-defined frequencies from the FFB signal, like in the Simucube software. It was improperly named "Flatspot Suppression", but it could attenuate any frequency, like in other wheelbase software. Early testing suggested it was not actually doing anything (it wasn't working). The feature has in any case been removed in recent versions of the app, since it was a legacy effect that was not working and was not really necessary for the app.
+**A:** No. The app used to have an option to soften one chosen vibration, like the similar option in Simucube's and other wheelbase software, so it was a legitimate feature. Despite its name ("Flatspot Suppression"), it did not target flat spots, and early testing showed it had no noticeable effect. It has been removed from the app.
 
 
-**Q: How is the app getting the telemetry data from the game?**
+**Q: Where does the app get its data from the game?**
 
-**A:** The app is using the official LMU Shared Memory Interface that was introduced with LMU 1.2 in December 2025.
+**A:** From the official data interface that LMU provides for external apps, introduced with LMU 1.2 in December 2025.
 
 
 ## Upcoming Features
 
 * Basic mode with only main sliders and auto adjustments of more advanced settings
 * Wet Weather Haptics (Hydro-Grain): vibration cues telling when the tires are on dry or wet surface, and if there is grip or not. This tries to replicate some the particular wet track grip and dynamics that can be felt in real life cars.
-* Support for other Sims (AC Evo, RaceRoom, AC, ACC, rF2).
+* Support for other Sims (AC Evo, AC, ACC, rF2).
   
 ## Feedback & Support
 
@@ -173,12 +172,12 @@ We take intellectual property rights seriously and have taken exhaustive measure
 
 ## Documentation
 
-Note: this documentation is not up to date.
+Note: these guides were written for older versions. Setting names and units have changed since; the sections above describe version 0.8.
 
-*   [FFB Tuning Recommendations](docs/user_guides/FFB%20Tuning%20Recommendations.md) 
-*   [Driver's Guide to Testing LMUFFB](docs/user_guides/Driver's%20Guide%20to%20Testing%20LMUFFB.md) - Suggestions for specific driving scenarios and car setups to test each FFB effect 
-*   [The Physics of Feel - Driver's Guide](docs/user_guides/the_physics_of__feel_-_driver_guide.md) - Explains how the FFB-HUB app translates telemetry into tactile sensations, with telemetry visualizations
-*   [FFB Effects & Customization Guide](docs/user_guides/ffb_effects.md)
+*   [Step-by-step tuning guide](docs/user_guides/step_by_step_tuning_guide.md) - Build a profile from a clean start
+*   [FFB troubleshooting guide](docs/user_guides/ffb_troubleshooting_guide.md) - What to change for what you feel
+*   [FFB strength controls](docs/user_guides/FFB_Strength_UI_Guide.md) and the [Steering Scale guide](docs/user_guides/Cornering_Steering_Weight_Guide.md)
+*   [Vibration pitch guide](docs/user_guides/frequency_tuning_guide.md)
 
 ##  Videos, Reviews and Tutorials
 
