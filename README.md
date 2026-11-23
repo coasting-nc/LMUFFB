@@ -96,23 +96,19 @@ Whenever you run into a problem or feel something on the wheel you dislike, reco
 
       <img width="758" height="270" alt="image" src="https://github.com/user-attachments/assets/cd119429-e7d4-4328-8527-27b69bcb3022" />
 
-2. **Or start and stop from the app window:**
-   - Click **START LOGGING** near the top of the app window before driving, and **STOP LOG** when you finish.
-   - The app shows **`ARMED`** while waiting for the car on track and **`REC`** while it is recording. You can also press **MARKER** while driving to mark an exact moment.
+2. Overlay Confirmation Messages
+   - Optional: The app shows overlay messages to confirm when it starts or stops recording a log.
+   - To see these messages, tick the **Show overlay confirmation** option **Button Bindings**, and have the game in Borderless mode.
 
-![START LOGGING and STOP LOG controls in the app window](docs/images/logs_controls.png)
+     <img width="560" height="114" alt="image" src="https://github.com/user-attachments/assets/49747892-0cf2-401f-9a74-d54aa361de43" />
 
-3. **Confirm on screen while driving:**
-   - When **Show overlay confirmation** is checked in **Button Bindings** (and the game runs in Borderless or Windowed mode), a short message appears when you press your button:
-   - Starting shows a red circle and **`STARTED RECORDING`**.
-   - Stopping shows a grey square, **`STOPPED RECORDING`**, and the saved file name.
+     <img width="559" height="114" alt="image" src="https://github.com/user-attachments/assets/75a45c35-f15a-47f0-9c6e-c3368ca690ac" />
 
-![On-screen STARTED RECORDING and STOPPED RECORDING confirmation messages](docs/images/recording_notifications.png)
-
-4. **Find the log and attach it to a GitHub issue:**
-   - Logs are saved inside the **`logs`** folder next to `FFBHUB.exe`. (Changing car or track starts a separate file for that session.)
-   - [Open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues), describe what you felt along with the car, track and wheelbase, and **attach the log files as they are** from the `logs` folder.
-   - GitHub limits single attachments to **25 MB**. If a recording is larger or you are sending more than one file, compress the files into a `.zip` archive first (or record a shorter clip around the moment the problem happens).
+3. **Find the log and attach it to a GitHub issue:**
+   - Logs are saved inside the **`logs`** folder next to `FFBHUB.exe`.
+   - Zip the whole folder or just one log file (Note: If you change car or track while recording, the app automatically splits the log into a new file)
+   - [Open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues), describe the problem and attach the log or zip file.
+   - Note: GitHub limits single attachments to **25 MB**. If you need to attach larger files, upload them to another website and post the link here.
 
 ## Troubleshooting (LMU)
 
