@@ -84,6 +84,35 @@ Other profiles:
 1. **Report issues** - For bugs and technical issues, **it is much better to [open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues)** rather than posting on forums.
 2. For LMU, post screenshots, thoughts and settings to the [LMU Forum Thread for the lmuFFB App](https://community.lemansultimate.com/index.php?threads/lmuffb-app.10440/)
 
+### Recording a log to report a problem
+
+Whenever you run into a problem or feel something on the wheel you dislike, recording a log right as it happens helps us see what occurred and fix it quickly.
+
+1. **Bind a wheel button to Start / Stop Logging (recommended):**
+   - Open the **Button Bindings** tab and find **Start / Stop Logging**.
+   - Click **Click to assign** in the **Increase / Toggle** column and press a button on your wheel (`Esc` cancels).
+   - With **one button** bound, it acts as a toggle: press it once while driving to start recording as soon as you feel the issue, and press it a second time to stop. If you want separate buttons instead, bind a second button under **Decrease** (the first starts, the second stops).
+
+![Assigning a wheel button to Start / Stop Logging in Button Bindings](docs/images/button_bindings_logging.png)
+
+2. **Or start and stop from the app window:**
+   - Click **START LOGGING** near the top of the app window before driving, and **STOP LOG** when you finish.
+   - The app shows **`ARMED`** while waiting for the car on track and **`REC`** while it is recording. You can also press **MARKER** while driving to mark an exact moment.
+
+![START LOGGING and STOP LOG controls in the app window](docs/images/logs_controls.png)
+
+3. **Confirm on screen while driving:**
+   - When **Show overlay confirmation** is checked in **Button Bindings** (and the game runs in Borderless or Windowed mode), a short message appears when you press your button:
+   - Starting shows a red circle and **`STARTED RECORDING`**.
+   - Stopping shows a grey square, **`STOPPED RECORDING`**, and the saved file name.
+
+![On-screen STARTED RECORDING and STOPPED RECORDING confirmation messages](docs/images/recording_notifications.png)
+
+4. **Find the log and attach it to a GitHub issue:**
+   - Logs are saved inside the **`logs`** folder next to `FFBHUB.exe`. (Changing car or track starts a separate file for that session.)
+   - [Open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues), describe what you felt along with the car, track and wheelbase, and **attach the log files as they are** from the `logs` folder.
+   - GitHub limits single attachments to **25 MB**. If a recording is larger or you are sending more than one file, compress the files into a `.zip` archive first (or record a shorter clip around the moment the problem happens).
+
 ## Troubleshooting (LMU)
 
 -   **The wheel oscillates on straights or jerks on corner exits**:
