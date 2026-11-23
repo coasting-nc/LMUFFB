@@ -106,10 +106,11 @@ Whenever you run into a problem or feel something on the wheel you dislike, reco
 
 3. **Find the log and attach it to a GitHub issue:**
    - Logs are saved inside the **`logs`** folder next to `FFBHUB.exe`.
-   - Zip the whole folder or just one log file (Note: If you change car or track while recording, the app automatically splits the log into a new file)
-   - [Open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues), describe the problem and attach the log or zip file.
-   - Note: GitHub limits single attachments to **25 MB**. If you need to attach larger files, upload them to another website and post the link here.
-
+   - **Keep recordings short:** start recording just before the problem and stop soon after it. A log grows by about 10 MB per minute of driving.
+   - If you change car or track while recording, the app starts a new log file, so a single recording can generate multiple logs files. But you can just zip the whole logs folder and share that for convenience
+   - [Open a GitHub issue](https://github.com/coasting-nc/LMUFFB/issues), describe the problem and attach the `.log` files, or zip the whole **`logs`** folder and attach the zip.
+   - GitHub limits single attachments to **25 MB** (about two minutes of driving). For a larger file, upload it to a file-sharing site (for example Google Drive, OneDrive or Dropbox) and post the link in the issue.
+     
 ## Troubleshooting (LMU)
 
 -   **The wheel oscillates on straights or jerks on corner exits**:
