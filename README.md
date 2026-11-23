@@ -90,10 +90,11 @@ Whenever you run into a problem or feel something on the wheel you dislike, reco
 
 1. **Bind a wheel button to Start / Stop Logging (recommended):**
    - Open the **Button Bindings** tab and find **Start / Stop Logging**.
-   - Click **Click to assign** in the **Increase / Toggle** column and press a button on your wheel (`Esc` cancels).
-   - With **one button** bound, it acts as a toggle: press it once while driving to start recording as soon as you feel the issue, and press it a second time to stop. If you want separate buttons instead, bind a second button under **Decrease** (the first starts, the second stops).
+   - **Click to assign** in the **Increase / Toggle / On** column and press a button on your wheel (`Esc` cancels).
+   - With **one button** bound, it acts as a toggle: press it once while driving to start recording as soon as you feel the issue, and press it a second time to stop.
+   - If you want separate buttons instead, bind a second button under **Decrease / Off**.
 
-![Assigning a wheel button to Start / Stop Logging in Button Bindings](docs/images/button_bindings_logging.png)
+      <img width="758" height="270" alt="image" src="https://github.com/user-attachments/assets/cd119429-e7d4-4328-8527-27b69bcb3022" />
 
 2. **Or start and stop from the app window:**
    - Click **START LOGGING** near the top of the app window before driving, and **STOP LOG** when you finish.
